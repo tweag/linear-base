@@ -1,0 +1,11 @@
+# Configures GHC to be the 8.2 variant from the Docker image
+# See https://hub.docker.com/r/tweag/linear-types/
+resolver: ghc-8.2
+compiler: ghc-8.2
+system-ghc: true
+docker:
+  enable: true
+  image: tweag/linear-types:0.1.6
+
+packages:
+- '.'
