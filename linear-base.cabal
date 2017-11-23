@@ -22,6 +22,7 @@ library
   hs-source-dirs:      src
   exposed-modules:
                   Linear.Prelude
+                , Linear.Unsafe
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
 
