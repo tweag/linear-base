@@ -30,17 +30,17 @@ type ReleaseMap = Map Int (Naked.IO ())
 -- | The type of resources. Each safe resource is implemented as an abstract
 -- newtype wrapper around @Resource R@ where @R@ is the unsafe variant of the
 -- resource.
-data Resource a where
-  Resource :: Int -> a -> Resource a
+data UnsafeResource a where
+  UnsafeResource :: Int -> a -> Resource a
   -- Note that both components are unrestricted.
 
-release :: Resource a -> IO ()
-release (Resource key _) = IO $ \ releaseMap -> releaseWith key releaseMap
+unsafeRelease :: Resource a -> IO ()
+unsafeRelease (Resource key _) = IO $ \ releaseMap -> releaseWith key releaseMap
   where
     releaseWith key releaseMap = do
         releaser
         Naked.return ((), Unrestricted nextMap)
       where
-        Naked.Builder {..} = Naked.builder
+        Naked.Builder {..} = Naked.builder -- used in the do-notation
         releaser = releaseMap Map.! key
         nextMap = Map.delete key releaseMap
