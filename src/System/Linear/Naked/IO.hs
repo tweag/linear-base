@@ -1,6 +1,7 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UnboxedTuples #-}
 
@@ -40,6 +41,11 @@ import qualified System.IO as System (IO)
 newtype IO a = IO (State# RealWorld ->. (# State# RealWorld, a #))
 type role IO representational
 
+-- Defined separately because projections from newtypes are considered like
+-- general projections of data types, which take an unrestricted argument.
+unIO :: IO a ->. State# RealWorld ->. (# State# RealWorld, a #)
+unIO (IO action) = action
+
 -- | Coerces a standard IO action into a linear IO action
 ofIO :: System.IO a ->. IO a
 ofIO = Unsafe.coerce
@@ -61,6 +67,41 @@ runInternal = Unsafe.coerce -- basically just subtyping
 
 run :: IO (Unrestricted a) -> System.IO a
 run action = unUnrestricted <$> (runInternal action)
+
+-- $monad
+
+-- TODO: example of builder
+
+return :: a ->. IO a
+return a = IO $ \s -> (# s, a #)
+
+-- | Type of 'Builer'
+data BuilderType = Builder
+  { (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
+  , (>>) :: forall b. IO () ->. IO b ->. IO b }
+
+-- | A builder to be used with @-XRebindableSyntax@ in conjunction with
+-- @RecordWildCards@
+builder :: BuilderType
+builder =
+  let
+    (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
+    x >>= f = IO $ \s ->
+        cont (unIO x s) f
+      where
+        -- XXX: long line
+        cont :: (# State# RealWorld, a #) ->. (a ->. IO b) ->. (# State# RealWorld, b #)
+        cont (# s', a #) f = unIO (f a) s'
+
+    (>>) :: forall b. IO () ->. IO b ->. IO b
+    x >> y = IO $ \s ->
+        cont (unIO x s) y
+      where
+        cont :: (# State# RealWorld, () #) ->. IO b ->. (# State# RealWorld, b #)
+        cont (# s', () #) y = unIO y s'
+
+  in
+    Builder { .. }
 
 -- $exceptions
 --
