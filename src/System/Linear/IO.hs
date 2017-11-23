@@ -22,10 +22,11 @@ import Linear.Prelude hiding (IO)
 import qualified System.Linear.Naked.IO as Naked
 
 newtype IO a = IO (ReleaseMap -> Naked.IO (a, Unrestricted ReleaseMap))
+-- The implementation of resource-safe @IO@ is based on the ResourceT monad
 
 type ReleaseMap = Map Int (Naked.IO ())
 
--- * Creating new resources
+-- * Creating new types of resources
 
 -- | The type of resources. Each safe resource is implemented as an abstract
 -- newtype wrapper around @Resource R@ where @R@ is the unsafe variant of the
