@@ -22,7 +22,9 @@ module System.Linear.Naked.IO
   , run
   -- * Monadic primitives
   -- $monad
-
+  , BuilderType(..)
+  , builder
+  , return
   -- * Exceptions
   -- $exceptions
   , throwIO
@@ -32,7 +34,7 @@ module System.Linear.Naked.IO
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch)
 import GHC.Exts (State#, RealWorld)
-import Linear.Prelude hiding (IO)
+import Linear.Prelude hiding (IO, return)
 import qualified Linear.Unsafe as Unsafe
 import qualified System.IO as System (IO)
 
