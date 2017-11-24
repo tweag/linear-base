@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Linear.Prelude
+module Prelude.Linear
     ( -- * Standard 'Prelude' function with linear types
       -- $linearized-prelude
       ($)

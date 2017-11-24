@@ -17,9 +17,9 @@ cabal-version: >=1.10
 library
   hs-source-dirs: src
   exposed-modules:
-    Linear.Prelude
-    Linear.Unsafe
-    System.Linear.IO
+    Prelude.Linear
+    Unsafe.Linear
+    System.IO.Linear
     System.Linear.Naked.IO
   build-depends:
     base >= 4.7 && < 5,
