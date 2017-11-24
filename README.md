@@ -1,4 +1,4 @@
 Linear base
 ===========
 
-Prototype of a basic library for Haskell with linear types
+Basic facilities for working with linear types.
