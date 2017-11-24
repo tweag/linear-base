@@ -5,11 +5,7 @@
 -- | This module defines a resource-safe linear IO monad. It provide facilities
 -- to add in your own resources.
 --
--- Functions in this module are meant to be qualified
---
--- @
---      import qualified System.Linear.IO as Resource
--- @
+-- Functions in this module are meant to be qualified.
 
 -- XXX: This would be better as a multiplicity-parametric relative monad, but
 -- until we have multiplicity polymorphism, we use a linear monad.
