@@ -16,7 +16,7 @@
 --     import qualified System.Linear.Naked.IO as Naked
 -- @
 
-module System.Linear.Naked.IO
+module System.IO.Linear.Internal
   ( IO(..)
   , ofIO
   , run
