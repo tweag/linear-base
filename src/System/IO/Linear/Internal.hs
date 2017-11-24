@@ -9,12 +9,6 @@
 -- around standard IO primitives, and doesn't enforce interesting invariants by
 -- itself. It is intended as a starting point to implement IO-like monads with
 -- stronger invariants.
---
--- Functions in this module are intended to be qualified
---
--- @
---     import qualified System.Linear.Naked.IO as Naked
--- @
 
 module System.IO.Linear.Internal
   ( IO(..)
