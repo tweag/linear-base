@@ -23,7 +23,7 @@ module Prelude.Linear
   , module Prelude
   ) where
 
-import qualified Linear.Unsafe as Unsafe
+import qualified Unsafe.Linear as Unsafe
 import Prelude hiding
   ( ($) -- XXX: Temporary as `($)` should get its typing rule directly from the
         -- type inference mechanism

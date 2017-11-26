@@ -10,12 +10,12 @@
 -- XXX: This would be better as a multiplicity-parametric relative monad, but
 -- until we have multiplicity polymorphism, we use a linear monad.
 
-module System.Linear.IO where
+module System.IO.Linear where
 
 import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map)
-import Linear.Prelude hiding (IO)
-import qualified System.Linear.Naked.IO as Naked
+import Prelude.Linear hiding (IO)
+import qualified System.IO.Linear.Internal as Naked
 
 newtype IO a = IO (ReleaseMap -> Naked.IO (a, Unrestricted ReleaseMap))
 -- The implementation of resource-safe @IO@ is based on the ResourceT monad

@@ -28,9 +28,9 @@ module System.IO.Linear.Internal
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch)
 import GHC.Exts (State#, RealWorld)
-import Linear.Prelude hiding (IO, return)
-import qualified Linear.Unsafe as Unsafe
-import qualified System.IO as System (IO)
+import Prelude.Linear hiding (IO, return)
+import qualified Unsafe.Linear as Unsafe
+import qualified System.IO as System
 
 -- | Like the standard IO monad, but as a linear state monad. Thanks to the
 -- linear arrow, we can safely expose the internal representation.
