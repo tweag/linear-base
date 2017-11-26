@@ -2,13 +2,10 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeInType #-}
 
--- | This module declares unsafe coercions for linearly typed code.
+-- | Unsafe coercions for linearly typed code.
 --
--- This functions in this module are intended to be qualified
---
--- @
---      import qualified Linear.Unsafe as Unsafe
--- @
+-- This module is intended to be imported qualified. /All/ functions in this
+-- module are unsafe.
 
 module Unsafe.Linear where
 
@@ -22,15 +19,15 @@ coerce :: a ->. b
 coerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
 
 -- | Converts an unrestricted function into a linear function
-castLinear
+toLinear
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2).
      (a -> b) ->. (a ->. b)
-castLinear = coerce
+toLinear = coerce
 
 -- | Like 'castLinear' but for two-argument functions
-castLinear2
+toLinear2
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep) (r3 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3).
      (a -> b -> c) ->. (a ->. b ->. c)
-castLinear2 = coerce
+toLinear2 = coerce
