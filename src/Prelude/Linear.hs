@@ -31,7 +31,7 @@ import Prelude hiding
   , seq
   , swap
   )
-import qualified Prelude
+import qualified Prelude as P
 
 -- $linearized-prelude
 
