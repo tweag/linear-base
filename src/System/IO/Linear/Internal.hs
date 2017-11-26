@@ -5,15 +5,14 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UnboxedTuples #-}
 
--- | This module defines a naked linear IO monad. It is just a thin wrapper
--- around standard IO primitives, and doesn't enforce interesting invariants by
--- itself. It is intended as a starting point to implement IO-like monads with
--- stronger invariants.
+-- | This module redefines 'IO' with linear types. It defines a drop-in
+-- replacement for 'System.IO.IO' in "System.IO". This module will be deprecated
+-- if the definition for 'IO' found here is upstreamed in "System.IO".
 
 module System.IO.Linear.Internal
   ( IO(..)
-  , ofIO
-  , run
+  , fromSystemIO
+  , withLinearIO
   -- * Monadic primitives
   -- $monad
   , BuilderType(..)
@@ -37,39 +36,47 @@ import qualified System.IO as System
 newtype IO a = IO (State# RealWorld ->. (# State# RealWorld, a #))
 type role IO representational
 
+unIO :: IO a ->. State# RealWorld ->. (# State# RealWorld, a #)
 -- Defined separately because projections from newtypes are considered like
 -- general projections of data types, which take an unrestricted argument.
-unIO :: IO a ->. State# RealWorld ->. (# State# RealWorld, a #)
 unIO (IO action) = action
 
 -- | Coerces a standard IO action into a linear IO action
-ofIO :: System.IO a ->. IO a
-ofIO = Unsafe.coerce
-  -- The implementation relies on the fact that the monad abstraction for IO
-  -- actually enforces linear use of the @RealWorld@ token.
-  --
-  -- There are potential difficulties coming from the fact that usage differs:
-  -- returned value in @System.IO@ can be used unrestrictedly, which is not
-  -- typically possible of linear @IO@. This means that @System.IO@ action are
-  -- not actually mere translations of linear @IO@ action. Still I [aspiwack]
-  -- think that it is safe, hence no "unsafe" in the name.
+fromSystemIO :: System.IO a ->. IO a
+-- The implementation relies on the fact that the monad abstraction for IO
+-- actually enforces linear use of the @RealWorld@ token.
+--
+-- There are potential difficulties coming from the fact that usage differs:
+-- returned value in 'System.IO' can be used unrestrictedly, which is not
+-- typically possible of linear 'IO'. This means that 'System.IO' action are
+-- not actually mere translations of linear 'IO' action. Still I [aspiwack]
+-- think that it is safe, hence no "unsafe" in the name.
+fromSystemIO = Unsafe.coerce
 
 -- TODO:
 -- unrestrictedOfIO :: System.IO a -> IO (Unrestricted a)
 -- Needs an unsafe cast @a ->. Unrestricted a@
 
-runInternal :: IO (Unrestricted a) -> System.IO (Unrestricted a)
-runInternal = Unsafe.coerce -- basically just subtyping
+toSystemIO :: IO (Unrestricted a) -> System.IO (Unrestricted a)
+toSystemIO = Unsafe.coerce -- basically just subtyping
 
-run :: IO (Unrestricted a) -> System.IO a
-run action = unUnrestricted <$> (runInternal action)
+-- | Use at the top of @main@ function in your program to switch to the linearly
+-- typed version of 'IO':
+--
+-- @
+-- main :: IO ()
+-- main = withLinearIO $ do
+--     ...
+-- @
+withLinearIO :: IO (Unrestricted a) -> System.IO a
+withLinearIO action = unUnrestricted <$> (toSystemIO action)
 
 -- $monad
 
--- TODO: example of builder
-
 return :: a ->. IO a
 return a = IO $ \s -> (# s, a #)
+
+-- TODO: example of builder
 
 -- | Type of 'Builer'
 data BuilderType = Builder
@@ -102,15 +109,14 @@ builder =
 
 -- $exceptions
 --
--- Note that the types of @throw@ and @catch@ sport only unrestricted
--- arrows. Having any of the arrow be linear seems to break linearity guarantees
--- in presence of IO.
+-- Note that the types of @throw@ and @catch@ sport only unrestricted arrows.
+-- Having any of the arrows be linear is unsound.
 
 throwIO :: Exception e => e -> IO a
-throwIO e = ofIO $ System.throwIO e
+throwIO e = fromSystemIO $ System.throwIO e
 
 catch
   :: Exception e
   => IO (Unrestricted a) -> (e -> IO (Unrestricted a)) -> IO (Unrestricted a)
 catch body handler =
-  ofIO $ System.catch (runInternal body) (\e -> runInternal (handler e))
+  fromSystemIO $ System.catch (toSystemIO body) (\e -> toSystemIO (handler e))
