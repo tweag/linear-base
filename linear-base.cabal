@@ -18,9 +18,9 @@ library
   hs-source-dirs: src
   exposed-modules:
     Prelude.Linear
-    Unsafe.Linear
     System.IO.Linear
-    System.Linear.Naked.IO
+    System.IO.Linear.Internal
+    Unsafe.Linear
   build-depends:
     base >= 4.7 && < 5,
     containers
