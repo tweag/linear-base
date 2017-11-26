@@ -12,15 +12,18 @@
 
 module System.IO.Linear where
 
-import qualified Data.Map.Strict as Map
-import Data.Map.Strict (Map)
+import qualified Data.IntMap.Strict as IntMap
+import Data.IntMap.Strict (IntMap)
 import Prelude.Linear hiding (IO)
-import qualified System.IO.Linear.Internal as Naked
+import qualified System.IO.Linear.Internal as Internal
 
-newtype IO a = IO (ReleaseMap -> Naked.IO (a, Unrestricted ReleaseMap))
--- The implementation of resource-safe @IO@ is based on the ResourceT monad
+newtype ReleaseMap = ReleaseMap (IntMap (Internal.IO ()))
 
-type ReleaseMap = Map Int (Naked.IO ())
+newtype IO a = IO {
+  unIO
+    :: ReleaseMap
+    -> Internal.IO (a, Unrestricted ReleaseMap)
+  }
 
 -- * Creating new types of resources
 
@@ -31,33 +34,35 @@ data UnsafeResource a where
   UnsafeResource :: Int -> a -> UnsafeResource a
   -- Note that both components are unrestricted.
 
--- XXX: long line
 unsafeRelease :: UnsafeResource a -> IO ()
-unsafeRelease (UnsafeResource key _) = IO $ \ releaseMap -> releaseWith key releaseMap
+unsafeRelease (UnsafeResource key _) = IO (releaseWith key)
   where
-    releaseWith key releaseMap = do
+    releaseWith key (ReleaseMap releaseMap) = do
         releaser
-        Naked.return ((), Unrestricted nextMap)
+        Internal.return ((), Unrestricted (ReleaseMap nextMap))
       where
-        Naked.Builder {..} = Naked.builder -- used in the do-notation
-        releaser = releaseMap Map.! key
-        nextMap = Map.delete key releaseMap
+        Internal.Builder {..} = Internal.builder -- used in the do-notation
+        releaser = releaseMap IntMap.! key
+        nextMap = IntMap.delete key releaseMap
 
 -- XXX: long lines
-unsafeAquire :: Naked.IO (Unrestricted a) -> (a->Naked.IO ()) -> IO (UnsafeResource a)
-unsafeAquire acquire release = IO $ \ releaseMap -> do
+unsafeAquire
+  :: Internal.IO (Unrestricted a)
+  -> (a -> Internal.IO ())
+  -> IO (UnsafeResource a)
+unsafeAquire acquire release = IO $ \releaseMap -> do
     Unrestricted resource <- acquire
     makeRelease releaseMap resource
   where
-    Naked.Builder {..} = Naked.builder -- used in the do-notation
-    makeRelease releaseMap resource =
-        Naked.return (UnsafeResource releaseKey resource, Unrestricted nextMap)
+    Internal.Builder {..} = Internal.builder -- used in the do-notation
+    makeRelease (ReleaseMap releaseMap) resource =
+        Internal.return (UnsafeResource releaseKey resource, Unrestricted (ReleaseMap nextMap))
       where
         releaseKey =
-          case Map.null releaseMap of
+          case IntMap.null releaseMap of
             True -> 0
-            False -> fst (Map.findMax releaseMap) + 1
+            False -> fst (IntMap.findMax releaseMap) + 1
         releaseAction =
           release resource
         nextMap =
-          Map.insert releaseKey releaseAction releaseMap
+          IntMap.insert releaseKey releaseAction releaseMap
