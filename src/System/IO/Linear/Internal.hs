@@ -74,7 +74,8 @@ return a = IO $ \s -> (# s, a #)
 -- | Type of 'Builer'
 data BuilderType = Builder
   { (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
-  , (>>) :: forall b. IO () ->. IO b ->. IO b }
+  , (>>) :: forall b. IO () ->. IO b ->. IO b
+  }
 
 -- | A builder to be used with @-XRebindableSyntax@ in conjunction with
 -- @RecordWildCards@
@@ -97,7 +98,7 @@ builder =
         cont (# s', () #) y = unIO y s'
 
   in
-    Builder { .. }
+    Builder{..}
 
 -- $exceptions
 --

@@ -2,36 +2,36 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Prelude.Linear
-    ( -- * Standard 'Prelude' function with linear types
-      -- $linearized-prelude
-      ($)
-    , const
-    , swap
-    , seq
-      -- * Unrestricted
-      -- $ unrestricted
-    , Unrestricted(..)
-    , unUnrestricted
-      -- * Typeclasses for non-linear actions
-      -- $ comonoid
-    , Consumable
-    , Dupable
-    , Movable
-    , lseq
+  ( -- * Standard 'Prelude' function with linear types
+    -- $linearized-prelude
+    ($)
+  , const
+  , swap
+  , seq
+    -- * Unrestricted
+    -- $ unrestricted
+  , Unrestricted(..)
+  , unUnrestricted
+    -- * Typeclasses for non-linear actions
+    -- $ comonoid
+  , Consumable
+  , Dupable
+  , Movable
+  , lseq
 
-      -- * Re-exports from the standard 'Prelude' for convenience
-    , module Prelude
-    ) where
+    -- * Re-exports from the standard 'Prelude' for convenience
+  , module Prelude
+  ) where
 
 import qualified Linear.Unsafe as Unsafe
 import Prelude hiding
-  ( -- Hides all the functions that we want to redefine
-    ($) -- XXX: Temporary as `($)` should get its typing rule directly from the
+  ( ($) -- XXX: Temporary as `($)` should get its typing rule directly from the
         -- type inference mechanism
   , const
   , seq
-  , swap )
-import qualified Prelude as P
+  , swap
+  )
+import qualified Prelude
 
 -- $linearized-prelude
 
@@ -41,7 +41,7 @@ import qualified Prelude as P
 
 -- | Beware: @($)@ is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
-($) :: (a->.b) ->. a ->. b
+($) :: (a ->. b) ->. a ->. b
 ($) f x = f x
 
 infixr 0 $
@@ -61,7 +61,6 @@ seq x = Unsafe.castLinear (P.seq x)
 -- $ unrestricted
 
 -- | @Unrestricted a@ represents unrestricted values of type @a@ in a linear context,
---
 data Unrestricted a where
   Unrestricted :: a -> Unrestricted a
 
