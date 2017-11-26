@@ -25,13 +25,12 @@ module Prelude.Linear
 
 import qualified Unsafe.Linear as Unsafe
 import Prelude hiding
-  ( ($) -- XXX: Temporary as `($)` should get its typing rule directly from the
-        -- type inference mechanism
+  ( ($)
   , const
   , seq
   , swap
   )
-import qualified Prelude as P
+import qualified Prelude
 
 -- $linearized-prelude
 
@@ -42,6 +41,8 @@ import qualified Prelude as P
 -- | Beware: @($)@ is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
 ($) :: (a ->. b) ->. a ->. b
+-- XXX: Temporary as `($)` should get its typing rule directly from the type
+-- inference mechanism.
 ($) f x = f x
 
 infixr 0 $
@@ -56,7 +57,7 @@ swap (x,y) = (y,x)
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
 seq :: a -> b ->. b
-seq x = Unsafe.castLinear (P.seq x)
+seq x = Unsafe.castLinear (Prelude.seq x)
 
 -- $ unrestricted
 
