@@ -71,7 +71,7 @@ data UnsafeResource a where
   -- Note that both components are unrestricted.
 
 unsafeRelease :: UnsafeResource a ->. RIO ()
-unsafeRelease (UnsafeResource key _) = RIO (Linear.mask_ (releaseWith key))
+unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
     releaseWith key rrm = do
         Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
