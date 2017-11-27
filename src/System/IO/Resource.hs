@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- | This module defines a resource-aware IO monad. It provide facilities to add
 -- in your own resources.
@@ -19,10 +20,12 @@ module System.IO.Resource
   , unsafeAquire
   ) where
 
+import Control.Exception (SomeException, catch, throwIO)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Prelude.Linear hiding (IO)
 import qualified System.IO.Linear as Linear
+import qualified System.IO as System
 
 newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 
@@ -34,6 +37,28 @@ newtype RIO a = RIO {
     -> Linear.IO (a, Unrestricted ReleaseMap)
   }
   -- TODO: should be a reader of IORef. But it was quicker to define this way.
+
+run :: RIO (Unrestricted a) -> System.IO a
+run (RIO action) =
+    catch @SomeException
+      (Linear.withLinearIO (dropMapIO $ action (ReleaseMap IntMap.empty)))
+      (\e -> do -- XXX: should be masked
+          -- release stray resources
+          -- Todo
+          -- re-throw exception
+          throwIO e)
+  where
+    -- Helpers, will be removed when the release map is changed to `IORef`
+    dropMap :: (a, Unrestricted b) ->. a
+    dropMap (x, Unrestricted _) = x
+
+    -- will be removed
+    dropMapIO :: Linear.IO (a, Unrestricted b) ->. Linear.IO a
+    dropMapIO action = do
+      result <- action
+      Linear.return $ dropMap result
+
+    Linear.Builder{..} = Linear.builder -- used in the do-notation
 
 -- $new-resources
 
