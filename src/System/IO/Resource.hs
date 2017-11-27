@@ -1,7 +1,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 -- | This module defines a resource-aware IO monad. It provide facilities to add
 -- in your own resources.
@@ -21,7 +20,7 @@ module System.IO.Resource
   , unsafeAquire
   ) where
 
-import Control.Exception (SomeException, catch, throwIO)
+import Control.Exception (onException)
 import qualified Data.IORef as System
 import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
@@ -43,15 +42,13 @@ newtype RIO a = RIO {
 run :: RIO (Unrestricted a) -> System.IO a
 run (RIO action) = do
     rrm <- System.newIORef (ReleaseMap IntMap.empty)
-    catch @SomeException
+    onException
       (Linear.withLinearIO (action rrm))
-      (\e -> do -- TODO: should be masked!
-          -- release stray resources
-          ReleaseMap releaseMap <- System.readIORef rrm
-          forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
-            Linear.withLinearIO (moveLinearIO finaliser))
-          -- re-throw exception
-          throwIO e)
+      (do -- TODO: should be masked!
+         -- release stray resources
+         ReleaseMap releaseMap <- System.readIORef rrm
+         forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
+           Linear.withLinearIO (moveLinearIO finaliser)))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
