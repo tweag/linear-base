@@ -57,7 +57,7 @@ swap (x,y) = (y,x)
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
 seq :: a -> b ->. b
-seq x = Unsafe.castLinear (Prelude.seq x)
+seq x = Unsafe.toLinear (Prelude.seq x)
 
 -- $ unrestricted
 
