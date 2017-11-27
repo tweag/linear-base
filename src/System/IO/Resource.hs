@@ -13,6 +13,7 @@
 
 module System.IO.Resource
   ( RIO
+  , run
     -- * Creating new types of resources
     -- $new-resources
   , UnsafeResource
