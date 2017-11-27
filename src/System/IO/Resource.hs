@@ -2,8 +2,8 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 
--- | This module defines a resource-safe linear IO monad. It provide facilities
--- to add in your own resources.
+-- | This module defines a resource-aware IO monad. It provide facilities to add
+-- in your own resources.
 --
 -- Functions in this module are meant to be qualified.
 
@@ -19,7 +19,9 @@ import qualified System.IO.Linear as Linear
 
 newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 
-newtype IO a = IO {
+-- | The resource-aware I/O monad. This monad guarantees that acquired resources
+-- are always released.
+newtype RIO a = RIO {
   unIO
     :: ReleaseMap
     -> Linear.IO (a, Unrestricted ReleaseMap)
@@ -34,8 +36,8 @@ data UnsafeResource a where
   UnsafeResource :: Int -> a -> UnsafeResource a
   -- Note that both components are unrestricted.
 
-unsafeRelease :: UnsafeResource a -> IO ()
-unsafeRelease (UnsafeResource key _) = IO (releaseWith key)
+unsafeRelease :: UnsafeResource a -> RIO ()
+unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
   where
     releaseWith key (ReleaseMap releaseMap) = do
         releaser
@@ -49,8 +51,8 @@ unsafeRelease (UnsafeResource key _) = IO (releaseWith key)
 unsafeAquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
-  -> IO (UnsafeResource a)
-unsafeAquire acquire release = IO $ \releaseMap -> do
+  -> RIO (UnsafeResource a)
+unsafeAquire acquire release = RIO $ \releaseMap -> do
     Unrestricted resource <- acquire
     makeRelease releaseMap resource
   where
