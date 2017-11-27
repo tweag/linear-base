@@ -19,7 +19,7 @@ library
   exposed-modules:
     Prelude.Linear
     System.IO.Linear
-    System.IO.Linear.Internal
+    System.IO.Resource
     Unsafe.Linear
   build-depends:
     base >= 4.7 && < 5,
