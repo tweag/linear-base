@@ -14,9 +14,9 @@ module Prelude.Linear
   , unUnrestricted
     -- * Typeclasses for non-linear actions
     -- $ comonoid
-  , Consumable
-  , Dupable
-  , Movable
+  , Consumable(..)
+  , Dupable(..)
+  , Movable(..)
   , lseq
 
     -- * Re-exports from the standard 'Prelude' for convenience

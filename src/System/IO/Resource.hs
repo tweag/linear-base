@@ -21,6 +21,7 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (SomeException, catch, throwIO)
+import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Prelude.Linear hiding (IO)
@@ -44,10 +45,23 @@ run (RIO action) =
       (Linear.withLinearIO (dropMapIO $ action (ReleaseMap IntMap.empty)))
       (\e -> do -- XXX: should be masked
           -- release stray resources
-          -- Todo
+          let (ReleaseMap releaseMap) = ReleaseMap IntMap.empty -- TODO: no release map available here. Should really be an IORef.
+          forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
+            Linear.withLinearIO (moveLinearIO finaliser))
           -- re-throw exception
           throwIO e)
+      -- Remarks: resources are guaranteed to be released on non-exceptional
+      -- return. So, contrary to a standard bracket/ResourceT implementation, we
+      -- only release exceptions in the release map upon exception.
   where
+    -- Should be just an application of a linear `(<$>)`.
+    moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
+    moveLinearIO action = do
+        result <- action
+        Linear.return $ move result
+      where
+        Linear.Builder{..} = Linear.builder -- used in the do-notation
+
     -- Helpers, will be removed when the release map is changed to `IORef`
     dropMap :: (a, Unrestricted b) ->. a
     dropMap (x, Unrestricted _) = x
@@ -55,10 +69,10 @@ run (RIO action) =
     -- will be removed
     dropMapIO :: Linear.IO (a, Unrestricted b) ->. Linear.IO a
     dropMapIO action = do
-      result <- action
-      Linear.return $ dropMap result
-
-    Linear.Builder{..} = Linear.builder -- used in the do-notation
+        result <- action
+        Linear.return $ dropMap result
+      where
+        Linear.Builder{..} = Linear.builder -- used in the do-notation
 
 -- $new-resources
 
