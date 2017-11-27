@@ -25,7 +25,7 @@ toLinear
      (a -> b) ->. (a ->. b)
 toLinear = coerce
 
--- | Like 'castLinear' but for two-argument functions
+-- | Like 'toLinear' but for two-argument functions
 toLinear2
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep) (r3 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3).
