@@ -21,12 +21,19 @@ module System.IO.Linear
   , BuilderType(..)
   , builder
   , return
+  -- * Ref
+  -- $ioref
+  , newIORef
+  , readIORef
+  , writeIORef
   -- * Exceptions
   -- $exceptions
   , throwIO
   , catch
   ) where
 
+import Data.IORef (IORef)
+import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch)
 import GHC.Exts (State#, RealWorld)
@@ -56,9 +63,9 @@ fromSystemIO :: System.IO a ->. IO a
 -- think that it is safe, hence no "unsafe" in the name.
 fromSystemIO = Unsafe.coerce
 
--- TODO:
--- unrestrictedOfIO :: System.IO a -> IO (Unrestricted a)
--- Needs an unsafe cast @a ->. Unrestricted a@
+fromSystemIOU :: System.IO a -> IO (Unrestricted a)
+fromSystemIOU action =
+  fromSystemIO (Unrestricted <$> action)
 
 toSystemIO :: IO (Unrestricted a) -> System.IO (Unrestricted a)
 toSystemIO = Unsafe.coerce -- basically just subtyping
@@ -109,6 +116,20 @@ builder =
 
   in
     Builder{..}
+
+-- $ioref
+--
+-- All arrows are unrestricted: IORefs containing linear values can make linear
+-- values escape their scope.
+
+newIORef :: a -> IO (Unrestricted (IORef a))
+newIORef a = fromSystemIOU (System.newIORef a)
+
+readIORef :: IORef a -> IO (Unrestricted a)
+readIORef r = fromSystemIOU (System.readIORef r)
+
+writeIORef :: IORef a -> a -> IO ()
+writeIORef r a = fromSystemIO $ System.writeIORef r a
 
 -- $exceptions
 --
