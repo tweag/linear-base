@@ -30,12 +30,13 @@ module System.IO.Linear
   -- $exceptions
   , throwIO
   , catch
+  , mask_
   ) where
 
 import Data.IORef (IORef)
 import qualified Data.IORef as System
 import Control.Exception (Exception)
-import qualified Control.Exception as System (throwIO, catch)
+import qualified Control.Exception as System (throwIO, catch, mask_)
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO, return)
 import qualified Unsafe.Linear as Unsafe
@@ -67,7 +68,7 @@ fromSystemIOU :: System.IO a -> IO (Unrestricted a)
 fromSystemIOU action =
   fromSystemIO (Unrestricted <$> action)
 
-toSystemIO :: IO (Unrestricted a) -> System.IO (Unrestricted a)
+toSystemIO :: IO a ->. System.IO a
 toSystemIO = Unsafe.coerce -- basically just subtyping
 
 -- | Use at the top of @main@ function in your program to switch to the linearly
@@ -144,3 +145,6 @@ catch
   => IO (Unrestricted a) -> (e -> IO (Unrestricted a)) -> IO (Unrestricted a)
 catch body handler =
   fromSystemIO $ System.catch (toSystemIO body) (\e -> toSystemIO (handler e))
+
+mask_ :: IO a -> IO a
+mask_ action = fromSystemIO (System.mask_ (toSystemIO action))

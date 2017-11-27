@@ -81,17 +81,16 @@ unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
       where
         Linear.Builder {..} = Linear.builder -- used in the do-notation
 
--- TODO: should be masked
 -- XXX: long lines
 unsafeAquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
   -> RIO (UnsafeResource a)
-unsafeAquire acquire release = RIO $ \rrm -> do
+unsafeAquire acquire release = RIO $ \rrm -> Linear.mask_ (do
     Unrestricted resource <- acquire
     Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
     () <- Linear.writeIORef rrm (ReleaseMap (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
-    Linear.return $ UnsafeResource (releaseKey releaseMap) resource
+    Linear.return $ UnsafeResource (releaseKey releaseMap) resource)
   where
     Linear.Builder {..} = Linear.builder -- used in the do-notation
 
