@@ -81,7 +81,7 @@ return a = IO $ \s -> (# s, a #)
 
 -- TODO: example of builder
 
--- | Type of 'Builer'
+-- | Type of 'Builder'
 data BuilderType = Builder
   { (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
   , (>>) :: forall b. IO () ->. IO b ->. IO b
