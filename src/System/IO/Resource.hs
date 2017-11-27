@@ -20,7 +20,7 @@ module System.IO.Resource
   , unsafeAquire
   ) where
 
-import Control.Exception (onException)
+import Control.Exception (onException, mask)
 import qualified Data.IORef as System
 import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
@@ -42,13 +42,13 @@ newtype RIO a = RIO {
 run :: RIO (Unrestricted a) -> System.IO a
 run (RIO action) = do
     rrm <- System.newIORef (ReleaseMap IntMap.empty)
-    onException
-      (Linear.withLinearIO (action rrm))
-      (do -- TODO: should be masked!
-         -- release stray resources
-         ReleaseMap releaseMap <- System.readIORef rrm
-         forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
-           Linear.withLinearIO (moveLinearIO finaliser)))
+    mask (\restore ->
+      onException
+        (restore (Linear.withLinearIO (action rrm)))
+        (do -- release stray resources
+           ReleaseMap releaseMap <- System.readIORef rrm
+           forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
+             Linear.withLinearIO (moveLinearIO finaliser))))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
