@@ -6,8 +6,11 @@
 {-# LANGUAGE UnboxedTuples #-}
 
 -- | This module redefines 'IO' with linear types. It defines a drop-in
--- replacement for 'System.IO.IO' in "System.IO". This module will be deprecated
+-- replacement for 'System.IO.IO' in @System.IO@. This module will be deprecated
 -- if the definition for 'IO' found here is upstreamed in "System.IO".
+--
+-- It will be much more pleasant when multiplicity-polymorphism has been
+-- implemented, in this case it will really superseed IO.
 
 module System.IO.Linear
   ( IO(..)

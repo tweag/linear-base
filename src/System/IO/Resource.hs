@@ -22,10 +22,11 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- | The resource-aware I/O monad. This monad guarantees that acquired resources
 -- are always released.
 newtype RIO a = RIO {
-  unIO
+  unRIO
     :: ReleaseMap
     -> Linear.IO (a, Unrestricted ReleaseMap)
   }
+  -- TODO: should be a reader of IORef. But it was quicker to define this way.
 
 -- * Creating new types of resources
 
@@ -36,6 +37,7 @@ data UnsafeResource a where
   UnsafeResource :: Int -> a -> UnsafeResource a
   -- Note that both components are unrestricted.
 
+-- TODO: should be masked
 unsafeRelease :: UnsafeResource a -> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
   where
@@ -47,6 +49,7 @@ unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
         releaser = releaseMap IntMap.! key
         nextMap = IntMap.delete key releaseMap
 
+-- TODO: should be masked
 -- XXX: long lines
 unsafeAquire
   :: Linear.IO (Unrestricted a)
