@@ -21,8 +21,10 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (SomeException, catch, throwIO)
+import qualified Data.IORef as System
 import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
+import Data.IORef (IORef)
 import Data.IntMap.Strict (IntMap)
 import Prelude.Linear hiding (IO)
 import qualified System.IO.Linear as Linear
@@ -34,18 +36,17 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- are always released.
 newtype RIO a = RIO {
   unRIO
-    :: ReleaseMap
-    -> Linear.IO (a, Unrestricted ReleaseMap)
+    :: IORef ReleaseMap -> Linear.IO a
   }
-  -- TODO: should be a reader of IORef. But it was quicker to define this way.
 
 run :: RIO (Unrestricted a) -> System.IO a
-run (RIO action) =
+run (RIO action) = do
+    rrm <- System.newIORef (ReleaseMap IntMap.empty)
     catch @SomeException
-      (Linear.withLinearIO (dropMapIO $ action (ReleaseMap IntMap.empty)))
-      (\e -> do -- XXX: should be masked
+      (Linear.withLinearIO (action rrm))
+      (\e -> do -- TODO: should be masked!
           -- release stray resources
-          let (ReleaseMap releaseMap) = ReleaseMap IntMap.empty -- TODO: no release map available here. Should really be an IORef.
+          ReleaseMap releaseMap <- System.readIORef rrm
           forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
             Linear.withLinearIO (moveLinearIO finaliser))
           -- re-throw exception
@@ -62,18 +63,6 @@ run (RIO action) =
       where
         Linear.Builder{..} = Linear.builder -- used in the do-notation
 
-    -- Helpers, will be removed when the release map is changed to `IORef`
-    dropMap :: (a, Unrestricted b) ->. a
-    dropMap (x, Unrestricted _) = x
-
-    -- will be removed
-    dropMapIO :: Linear.IO (a, Unrestricted b) ->. Linear.IO a
-    dropMapIO action = do
-        result <- action
-        Linear.return $ dropMap result
-      where
-        Linear.Builder{..} = Linear.builder -- used in the do-notation
-
 -- $new-resources
 
 -- | The type of resources. Each safe resource is implemented as an abstract
@@ -87,13 +76,12 @@ data UnsafeResource a where
 unsafeRelease :: UnsafeResource a ->. RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
   where
-    releaseWith key (ReleaseMap releaseMap) = do
-        releaser
-        Linear.return ((), Unrestricted (ReleaseMap nextMap))
+    releaseWith key rrm = do
+        Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
+        () <- releaseMap IntMap.! key
+        Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
       where
         Linear.Builder {..} = Linear.builder -- used in the do-notation
-        releaser = releaseMap IntMap.! key
-        nextMap = IntMap.delete key releaseMap
 
 -- TODO: should be masked
 -- XXX: long lines
@@ -101,19 +89,15 @@ unsafeAquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
   -> RIO (UnsafeResource a)
-unsafeAquire acquire release = RIO $ \releaseMap -> do
+unsafeAquire acquire release = RIO $ \rrm -> do
     Unrestricted resource <- acquire
-    makeRelease releaseMap resource
+    Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
+    () <- Linear.writeIORef rrm (ReleaseMap (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
+    Linear.return $ UnsafeResource (releaseKey releaseMap) resource
   where
     Linear.Builder {..} = Linear.builder -- used in the do-notation
-    makeRelease (ReleaseMap releaseMap) resource =
-        Linear.return (UnsafeResource releaseKey resource, Unrestricted (ReleaseMap nextMap))
-      where
-        releaseKey =
-          case IntMap.null releaseMap of
-            True -> 0
-            False -> fst (IntMap.findMax releaseMap) + 1
-        releaseAction =
-          release resource
-        nextMap =
-          IntMap.insert releaseKey releaseAction releaseMap
+
+    releaseKey releaseMap =
+      case IntMap.null releaseMap of
+        True -> 0
+        False -> fst (IntMap.findMax releaseMap) + 1
