@@ -17,7 +17,7 @@ module System.IO.Resource
     -- $new-resources
   , UnsafeResource
   , unsafeRelease
-  , unsafeAquire
+  , unsafeAcquire
   ) where
 
 import Control.Exception (onException, mask)
@@ -82,11 +82,11 @@ unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
         Linear.Builder {..} = Linear.builder -- used in the do-notation
 
 -- XXX: long lines
-unsafeAquire
+unsafeAcquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
   -> RIO (UnsafeResource a)
-unsafeAquire acquire release = RIO $ \rrm -> Linear.mask_ (do
+unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
     Unrestricted resource <- acquire
     Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
     () <- Linear.writeIORef rrm (ReleaseMap (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
