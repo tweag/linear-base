@@ -10,7 +10,14 @@
 -- XXX: This would be better as a multiplicity-parametric relative monad, but
 -- until we have multiplicity polymorphism, we use a linear monad.
 
-module System.IO.Resource where
+module System.IO.Resource
+  ( RIO
+    -- * Creating new types of resources
+    -- $new-resources
+  , UnsafeResource
+  , unsafeRelease
+  , unsafeAquire
+  ) where
 
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
@@ -28,7 +35,7 @@ newtype RIO a = RIO {
   }
   -- TODO: should be a reader of IORef. But it was quicker to define this way.
 
--- * Creating new types of resources
+-- $new-resources
 
 -- | The type of resources. Each safe resource is implemented as an abstract
 -- newtype wrapper around @Resource R@ where @R@ is the unsafe variant of the
@@ -38,7 +45,7 @@ data UnsafeResource a where
   -- Note that both components are unrestricted.
 
 -- TODO: should be masked
-unsafeRelease :: UnsafeResource a -> RIO ()
+unsafeRelease :: UnsafeResource a ->. RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (releaseWith key)
   where
     releaseWith key (ReleaseMap releaseMap) = do
