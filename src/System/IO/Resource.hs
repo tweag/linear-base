@@ -20,7 +20,7 @@ module System.IO.Resource
   , unsafeAcquire
   ) where
 
-import Control.Exception (onException, mask)
+import Control.Exception (onException, mask, finally)
 import qualified Data.IORef as System
 import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
@@ -47,12 +47,15 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           forM_ (IntMap.toList releaseMap) (\(_,finaliser) ->
-             Linear.withLinearIO (moveLinearIO finaliser))))
+           safeRelease $ fmap snd $ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
+    safeRelease :: [Linear.IO ()] -> System.IO ()
+    safeRelease [] = return ()
+    safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
+      `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
     moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
     moveLinearIO action = do
