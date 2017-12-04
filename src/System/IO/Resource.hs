@@ -21,19 +21,25 @@ module System.IO.Resource
   , builder
     -- * Files
     -- $files
+  , Handle
   , openFile
   , hClose
+  , hGetChar
+  , hPutChar
     -- * Creating new types of resources
     -- $new-resources
   , UnsafeResource
   , unsafeRelease
   , unsafeAcquire
+  , unsafeFromSystemIOResource
+  , unsafeFromSystemIOResource_
   ) where
 
 import Control.Exception (onException, mask, finally)
 import qualified Data.IORef as System
 import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
+import Data.Coerce
 import Data.IORef (IORef)
 import Data.IntMap.Strict (IntMap)
 import Prelude.Linear hiding (IO, (>>=), (>>), return)
@@ -80,6 +86,10 @@ run (RIO action) = do
       where
         Linear.Builder{..} = Linear.builder -- used in the do-notation
 
+-- | Should not be applied to a function which acquires or releases resources.
+unsafeFromSystemIO :: System.IO a ->. RIO a
+unsafeFromSystemIO action = RIO $ \ _ -> Linear.fromSystemIO action
+
 -- $monad
 
 
@@ -116,6 +126,8 @@ builder =
 
 -- $files
 
+-- Remark: Handle is private, but an alternative would be to export the
+-- constructor and call it `UnsafeMkHandle` or something to that effect.
 newtype Handle = Handle (UnsafeResource System.Handle)
 
 -- | See 'System.IO.openFile'
@@ -130,6 +142,17 @@ openFile path mode = do
 
 hClose :: Handle ->. RIO ()
 hClose (Handle h) = unsafeRelease h
+
+hGetChar :: Handle ->. RIO (Unrestricted Char, Handle)
+hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)
+
+hPutChar :: Handle ->. Char -> RIO Handle
+hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
+  where
+    flipHPutChar :: Char -> Handle ->. RIO Handle
+    flipHPutChar c =
+      coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
+
 
 -- $new-resources
 
@@ -167,3 +190,20 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
       case IntMap.null releaseMap of
         True -> 0
         False -> fst (IntMap.findMax releaseMap) + 1
+
+-- XXX: long lines
+unsafeFromSystemIOResource :: (a -> System.IO b) -> UnsafeResource a ->. RIO (Unrestricted b, UnsafeResource a)
+unsafeFromSystemIOResource action (UnsafeResource key resource) = unsafeFromSystemIO $ do
+    c <- action resource
+    P.return (Unrestricted c, UnsafeResource key resource)
+  where
+    (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
+    (>>=) = (P.>>=)
+
+-- XXX: long lines
+unsafeFromSystemIOResource_ :: (a -> System.IO ()) -> UnsafeResource a ->. RIO (UnsafeResource a)
+unsafeFromSystemIOResource_ action resource = do
+    (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
+    return resource
+  where
+    Builder {..} = builder -- used in the do-notation
