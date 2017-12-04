@@ -26,6 +26,9 @@ module System.IO.Resource
   , hClose
   , hGetChar
   , hPutChar
+  , hGetLine
+  , hPutStr
+  , hPutStrLn
     -- * Creating new types of resources
     -- $new-resources
   , UnsafeResource
@@ -42,6 +45,8 @@ import qualified Data.IORef as System
 import Data.IORef (IORef)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
+import Data.Text (Text)
+import qualified Data.Text.IO as Text
 import Prelude.Linear hiding (IO, (>>=), (>>), return)
 import qualified Prelude as P
 import qualified System.IO.Linear as Linear
@@ -153,6 +158,22 @@ hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
     flipHPutChar c =
       coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
 
+hGetLine :: Handle ->. RIO (Unrestricted Text, Handle)
+hGetLine = coerce (unsafeFromSystemIOResource Text.hGetLine)
+
+hPutStr :: Handle ->. Text -> RIO Handle
+hPutStr h s = flipHPutStr s h -- needs a multiplicity polymorphic flip
+  where
+    flipHPutStr :: Text -> Handle ->. RIO Handle
+    flipHPutStr s =
+      coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStr h' s))
+
+hPutStrLn :: Handle ->. Text -> RIO Handle
+hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
+  where
+    flipHPutStrLn :: Text -> Handle ->. RIO Handle
+    flipHPutStrLn s =
+      coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s))
 
 -- $new-resources
 

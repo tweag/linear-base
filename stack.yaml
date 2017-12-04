@@ -9,3 +9,6 @@ docker:
 
 packages:
 - '.'
+
+extra-deps:
+- text-1.2.2.2
