@@ -16,8 +16,13 @@ module System.IO.Resource
   , run
     -- * Monadic primitives
     -- $monad
+  , return
+  , BuilderType(..)
+  , builder
     -- * Files
     -- $files
+  , openFile
+  , hClose
     -- * Creating new types of resources
     -- $new-resources
   , UnsafeResource
