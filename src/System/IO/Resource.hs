@@ -36,11 +36,11 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (onException, mask, finally)
-import qualified Data.IORef as System
 import Control.Monad (forM_)
-import qualified Data.IntMap.Strict as IntMap
 import Data.Coerce
+import qualified Data.IORef as System
 import Data.IORef (IORef)
+import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Prelude.Linear hiding (IO, (>>=), (>>), return)
 import qualified Prelude as P
