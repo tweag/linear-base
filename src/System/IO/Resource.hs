@@ -131,8 +131,10 @@ builder =
 
 -- $files
 
--- Remark: Handle is private, but an alternative would be to export the
--- constructor and call it `UnsafeMkHandle` or something to that effect.
+-- Remark: Handle needs to be private otherwise `Data.Coerce.coerce` could wreak
+-- Havoc on the abstraction. But we could provide a smart constructor/view to
+-- unsafely convert to file handles in order for the Handle API to be
+-- extensible.
 newtype Handle = Handle (UnsafeResource System.Handle)
 
 -- | See 'System.IO.openFile'
