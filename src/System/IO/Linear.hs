@@ -15,6 +15,7 @@
 module System.IO.Linear
   ( IO(..)
   , fromSystemIO
+  , fromSystemIOU
   , withLinearIO
   -- * Monadic primitives
   -- $monad

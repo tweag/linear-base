@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -13,6 +14,8 @@
 module System.IO.Resource
   ( RIO
   , run
+    -- * Monadic primitives
+    -- $monad
     -- * Creating new types of resources
     -- $new-resources
   , UnsafeResource
@@ -26,7 +29,8 @@ import Control.Monad (forM_)
 import qualified Data.IntMap.Strict as IntMap
 import Data.IORef (IORef)
 import Data.IntMap.Strict (IntMap)
-import Prelude.Linear hiding (IO)
+import Prelude.Linear hiding (IO, (>>=), (>>), return)
+import qualified Prelude as P
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
@@ -34,10 +38,9 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 
 -- | The resource-aware I/O monad. This monad guarantees that acquired resources
 -- are always released.
-newtype RIO a = RIO {
-  unRIO
-    :: IORef ReleaseMap -> Linear.IO a
-  }
+newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
+unRIO :: RIO a ->. IORef ReleaseMap -> Linear.IO a
+unRIO (RIO action) = action
 
 run :: RIO (Unrestricted a) -> System.IO a
 run (RIO action) = do
@@ -52,8 +55,14 @@ run (RIO action) = do
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
+    -- Use regular IO binds
+    (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
+    (>>=) = (P.>>=)
+    (>>) :: System.IO a -> System.IO b -> System.IO b
+    (>>) = (P.>>)
+
     safeRelease :: [Linear.IO ()] -> System.IO ()
-    safeRelease [] = return ()
+    safeRelease [] = P.return ()
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
@@ -63,6 +72,39 @@ run (RIO action) = do
         Linear.return $ move result
       where
         Linear.Builder{..} = Linear.builder -- used in the do-notation
+
+-- $monad
+
+
+return :: a ->. RIO a
+return a = RIO $ \releaseMap -> Linear.return a
+
+-- | Type of 'Builder'
+data BuilderType = Builder
+  { (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
+  , (>>) :: forall b. RIO () ->. RIO b ->. RIO b
+  }
+
+-- | A builder to be used with @-XRebindableSyntax@ in conjunction with
+-- @RecordWildCards@
+builder :: BuilderType
+builder =
+  let
+    (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
+    x >>= f = RIO $ \releaseMap -> do
+        a <- unRIO x releaseMap
+        unRIO (f a) releaseMap
+      where
+        Linear.Builder {..} = Linear.builder -- used in the do-notation
+
+    (>>) :: forall b. RIO () ->. RIO b ->. RIO b
+    x >> y = RIO $ \releaseMap -> do
+        unRIO x releaseMap
+        unRIO y releaseMap
+      where
+        Linear.Builder {..} = Linear.builder -- used in the do-notation
+  in
+    Builder{..}
 
 -- $new-resources
 
