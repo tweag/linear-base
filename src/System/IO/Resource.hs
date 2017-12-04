@@ -16,6 +16,8 @@ module System.IO.Resource
   , run
     -- * Monadic primitives
     -- $monad
+    -- * Files
+    -- $files
     -- * Creating new types of resources
     -- $new-resources
   , UnsafeResource
@@ -105,6 +107,24 @@ builder =
         Linear.Builder {..} = Linear.builder -- used in the do-notation
   in
     Builder{..}
+
+
+-- $files
+
+newtype Handle = Handle (UnsafeResource System.Handle)
+
+-- | See 'System.IO.openFile'
+openFile :: FilePath -> System.IOMode -> RIO Handle
+openFile path mode = do
+    h <- unsafeAcquire
+      (Linear.fromSystemIOU $ System.openFile path mode)
+      (\h -> Linear.fromSystemIO $ System.hClose h)
+    return $ Handle h
+  where
+    Builder {..} = builder -- used in the do-notation
+
+hClose :: Handle ->. RIO ()
+hClose (Handle h) = unsafeRelease h
 
 -- $new-resources
 
