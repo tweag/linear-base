@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
@@ -39,7 +40,6 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (onException, mask, finally)
-import Control.Monad (forM_)
 import Data.Coerce
 import qualified Data.IORef as System
 import Data.IORef (IORef)
@@ -76,8 +76,6 @@ run (RIO action) = do
     -- Use regular IO binds
     (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
     (>>=) = (P.>>=)
-    (>>) :: System.IO a -> System.IO b -> System.IO b
-    (>>) = (P.>>)
 
     safeRelease :: [Linear.IO ()] -> System.IO ()
     safeRelease [] = P.return ()
@@ -85,8 +83,8 @@ run (RIO action) = do
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
     moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
-    moveLinearIO action = do
-        result <- action
+    moveLinearIO action' = do
+        result <- action'
         Linear.return $ move result
       where
         Linear.Builder{..} = Linear.builder -- used in the do-notation
@@ -99,7 +97,7 @@ unsafeFromSystemIO action = RIO $ \ _ -> Linear.fromSystemIO action
 
 
 return :: a ->. RIO a
-return a = RIO $ \releaseMap -> Linear.return a
+return a = RIO $ \_releaseMap -> Linear.return a
 
 -- | Type of 'Builder'
 data BuilderType = Builder

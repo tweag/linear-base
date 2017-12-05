@@ -39,7 +39,7 @@ import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
 import GHC.Exts (State#, RealWorld)
-import Prelude.Linear hiding (IO, return)
+import Prelude.Linear hiding (IO, return, (>>=), (>>))
 import qualified Unsafe.Linear as Unsafe
 import qualified System.IO as System
 
@@ -107,14 +107,14 @@ builder =
       where
         -- XXX: long line
         cont :: (# State# RealWorld, a #) ->. (a ->. IO b) ->. (# State# RealWorld, b #)
-        cont (# s', a #) f = unIO (f a) s'
+        cont (# s', a #) f' = unIO (f' a) s'
 
     (>>) :: forall b. IO () ->. IO b ->. IO b
     x >> y = IO $ \s ->
         cont (unIO x s) y
       where
         cont :: (# State# RealWorld, () #) ->. IO b ->. (# State# RealWorld, b #)
-        cont (# s', () #) y = unIO y s'
+        cont (# s', () #) y' = unIO y' s'
 
   in
     Builder{..}
