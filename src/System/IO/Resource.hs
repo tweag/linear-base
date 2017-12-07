@@ -1,4 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+-- Deactivate warning because it is painful to refactor functions with two
+-- rebinded-do with different bind functions. Such as in the 'run'
+-- function. Which is a good argument for having support for F#-style builders.
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}

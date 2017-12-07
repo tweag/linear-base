@@ -49,8 +49,8 @@ infixr 0 $
 const :: a ->. b -> a
 const x _ = x
 
--- In `base`, this is not a prelude function (it's in `Data.Tuple`), maybe we
--- don't want it to be in `Prelude.Linear`.
+-- XXX: To be decided: In `base`, this is not a prelude function (it's in
+-- `Data.Tuple`), maybe we don't want it to be in `Prelude.Linear`.
 swap :: (a,b) ->. (b,a)
 swap (x,y) = (y,x)
 
