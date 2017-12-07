@@ -4,8 +4,6 @@ jobs:
   build:
     docker:
       - image: tweag/linear-types:0.1.6
-    environment:
-      - stack: stack --no-docker
     steps:
       - checkout
       # Restore last version of the dependencies in cache
@@ -17,8 +15,8 @@ jobs:
           # --jobs=1 because of limitted memory
           name: Build dependencies
           command: |
-            $stack build --jobs=1 --only-dependencies --no-haddock linear-base:lib
-            $stack build --jobs=1 --test --bench --only-snapshot
+            stack --no-docker build --jobs=1 --only-dependencies --no-haddock linear-base:lib
+            stack --no-docker build --jobs=1 --test --bench --only-snapshot
             find . -name "*.cabal" -o -name "stack.yaml" -type f | xargs sha256sum > /tmp/dps_checksum
       - save_cache:
           key: linear-base-stackcache-{{ arch }}-v171204-{{ checksum "/tmp/dps_checksum" }}
@@ -26,4 +24,4 @@ jobs:
             - ~/.stack
       - run:
           name: Main build
-          command: $stack build --pedantic
+          command: stack --no-docker build --pedantic
