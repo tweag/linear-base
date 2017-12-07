@@ -28,7 +28,6 @@ import Prelude hiding
   ( ($)
   , const
   , seq
-  , swap
   )
 import qualified Prelude
 
@@ -50,6 +49,8 @@ infixr 0 $
 const :: a ->. b -> a
 const x _ = x
 
+-- XXX: To be decided: In `base`, this is not a prelude function (it's in
+-- `Data.Tuple`), maybe we don't want it to be in `Prelude.Linear`.
 swap :: (a,b) ->. (b,a)
 swap (x,y) = (y,x)
 
@@ -135,7 +136,7 @@ instance Dupable a => Dupable [a] where
   dup (a:l) = shuffle (dup a) (dup l)
     where
       shuffle :: (a, a) ->. ([a], [a]) ->. ([a], [a])
-      shuffle (a, a') (l, l') = (a:l, a':l')
+      shuffle (a', a'') (l', l'') = (a':l', a'':l'')
 
 instance Movable a => Movable [a] where
   move [] = Unrestricted []
@@ -144,7 +145,7 @@ instance Movable a => Movable [a] where
        -- XXX: this is merely an application of 'Unrestricted' being a linear
        -- applicative functor of some sort.
       liftu :: Unrestricted a ->. Unrestricted [a] ->. Unrestricted [a]
-      liftu (Unrestricted a) (Unrestricted l) = Unrestricted (a:l)
+      liftu (Unrestricted a') (Unrestricted l') = Unrestricted (a':l')
 
 instance Consumable (Unrestricted a) where
   consume (Unrestricted _) = ()
