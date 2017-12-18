@@ -81,6 +81,10 @@ instance Storable (Box a) where
 
 -- TODO: a way to store GC'd data using a StablePtr
 
+-- TODO: reference counted pointer. Remarks: rc pointers are Dupable but not
+-- Movable. In order to be useful, need some kind of borrowing on the values, I
+-- guess. 'Box' can be realloced, but not RC pointers.
+
 -- XXX: We brazenly suppose that the `Storable` API can be seen as exposing
 -- linear functions. It's not very robust. This also ties in the next point.
 
