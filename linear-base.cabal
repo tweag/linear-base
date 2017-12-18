@@ -17,6 +17,7 @@ cabal-version: >=1.10
 library
   hs-source-dirs: src
   exposed-modules:
+    Data.OffHeap
     Prelude.Linear
     System.IO.Linear
     System.IO.Resource
