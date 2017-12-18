@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | This module introduces primitives to /safely/ store data off-heap. The
 -- benefit of off-heap data is that it does not add to the GC pressure, and help
@@ -46,6 +47,7 @@ import Foreign.Ptr
 import Foreign.Storable
 import Prelude.Linear
 import System.IO.Unsafe
+import qualified Unsafe.Linear as Unsafe
 
 -- TODO: ignoring exceptions for the moment. So that I can get some tests to
 -- work first.
@@ -79,24 +81,26 @@ instance Storable (Box a) where
 
 -- TODO: a way to store GC'd data using a StablePtr
 
--- TODO: The fact that the 'a' is unrestricted is a problem. This is due to the
--- `Storable` abstraction. The most immediate workaround is to pretend that
--- `Storable` functions are linear. It's not very robust. This also ties in the
--- next point.
+-- XXX: We brazenly suppose that the `Storable` API can be seen as exposing
+-- linear functions. It's not very robust. This also ties in the next point.
 
 -- TODO: Ideally, we would like to avoid having a boxed representation of the
 -- data before a pointer is created. A better solution is to have a destination
 -- passing-style API (but there is still some design to be done there). This
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
-alloc :: Storable a => a -> Pool ->. (Box a, Pool)
+alloc :: forall a. Storable a => a ->. Pool ->. (Box a, Pool)
 alloc a Pool =
-    (Box thePtr, Pool)
+    mkResult $ Unsafe.toLinear mkPtr a
   where
-    thePtr = unsafeDupablePerformIO $ do
+    mkPtr :: a -> Unrestricted (Ptr a)
+    mkPtr a' = unsafeDupablePerformIO $ do
       ptr <- malloc
-      poke ptr a
-      return ptr
+      poke ptr a'
+      return (Unrestricted ptr)
+
+    mkResult :: Unrestricted (Ptr a) ->. (Box a, Pool)
+    mkResult (Unrestricted ptr) = (Box ptr, Pool)
 
 deconstruct :: Storable a => Box a ->. a
 deconstruct (Box ptr) = unsafeDupablePerformIO $ do
