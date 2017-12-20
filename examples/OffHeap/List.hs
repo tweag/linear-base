@@ -10,7 +10,7 @@ import Data.Word
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude.Linear
+import Prelude.Linear hiding (map, foldl, foldr)
 
 -- XXX: we keep the last Cons in Memory here. A better approach would be to
 -- always keep a Box instead.
@@ -40,11 +40,11 @@ instance Storable a => Storable (List a) where
 --
 -- XXX: We're really starting to need a linear state monad to manage the pool
 --
--- Remark: omap could be tail-recursive in destination-passing style
-omap :: forall a b. (Storable a, Storable b) => (a ->. b) -> List a ->. Pool ->. (List b, Pool)
-omap _f Nil pool = (Nil, pool)
-omap f (Cons a l) pool =
-    rebuild a (omap f (Manual.deconstruct l) pool)
+-- Remark: map could be tail-recursive in destination-passing style
+map :: forall a b. (Storable a, Storable b) => (a ->. b) -> List a ->. Pool ->. (List b, Pool)
+map _f Nil pool = (Nil, pool)
+map f (Cons a l) pool =
+    rebuild a (map f (Manual.deconstruct l) pool)
   where
     rebuild :: a ->. (List b, Pool) ->. (List b, Pool)
     rebuild a' (l', pool') = consS (f a') (Manual.alloc l' pool')
@@ -52,13 +52,13 @@ omap f (Cons a l) pool =
     consS :: b ->. (Box (List b), Pool) ->. (List b, Pool)
     consS b (l', pool') = (Cons b l', pool')
 
-ofoldr :: forall a b. Storable a => (a ->. b ->. b) -> b ->. List a ->. b
-ofoldr _f seed Nil = seed
-ofoldr f seed (Cons a l) = f a (ofoldr f seed (Manual.deconstruct l))
+foldr :: forall a b. Storable a => (a ->. b ->. b) -> b ->. List a ->. b
+foldr _f seed Nil = seed
+foldr f seed (Cons a l) = f a (foldr f seed (Manual.deconstruct l))
 
-ofoldl :: forall a b. Storable a => (b ->. a ->. b) -> b ->. List a ->. b
-ofoldl _f seed Nil = seed
-ofoldl f seed (Cons a l) = ofoldl f (f seed a) (Manual.deconstruct l)
+foldl :: forall a b. Storable a => (b ->. a ->. b) -> b ->. List a ->. b
+foldl _f seed Nil = seed
+foldl f seed (Cons a l) = foldl f (f seed a) (Manual.deconstruct l)
 
 -- Remark: could be tail-recursive with destination-passing style
 -- | Make a 'List' from a stream. 'List' is a type of strict lists, therefore
@@ -91,4 +91,4 @@ ofList :: Storable a => [a] -> Pool ->. (List a, Pool)
 ofList l pool = unfold List.uncons l pool
 
 toList :: Storable a => List a ->. [a]
-toList l = ofoldr (:) [] l
+toList l = foldr (:) [] l
