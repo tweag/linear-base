@@ -20,6 +20,18 @@ eqList l1 l2 pool =
 main :: IO ()
 main = hspec $ do
   describe "Off-heap lists" $ do
+    describe "ofList" $ do
+      it "is invertible" $
+        property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
+          let
+            check :: (List Int, Pool) ->. Unrestricted Bool
+            check (l', pool) = consume pool `lseq` checkUL (move (List.toList l'))
+
+            checkUL :: Unrestricted [Int] ->. Unrestricted Bool
+            checkUL (Unrestricted l') = Unrestricted $ l' == l
+          in
+            check $ List.ofList l pool
+                                                      ))
     describe "map" $ do
       it "of identity if the identity" $
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
