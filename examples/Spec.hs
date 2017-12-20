@@ -25,7 +25,7 @@ main = hspec $ do
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
             check :: (List Int, Pool) ->. Unrestricted Bool
-            check (l', pool) = consume pool `lseq` checkUL (move (List.toList l'))
+            check (l', pool') = consume pool' `lseq` checkUL (move (List.toList l'))
 
             checkUL :: Unrestricted [Int] ->. Unrestricted Bool
             checkUL (Unrestricted l') = Unrestricted $ l' == l
@@ -39,9 +39,9 @@ main = hspec $ do
             mapId = uncurry (List.map (\x -> x))
 
             check :: (List Int, Pool) ->. Unrestricted Bool
-            check (l', pool) = check' l' (List.ofList l pool)
+            check (l', pool') = check' l' (List.ofList l pool')
 
             check' :: List Int ->. (List Int, Pool) ->. Unrestricted Bool
-            check' l1 (l2, pool) = eqList l1 l2 pool
+            check' l1 (l2, pool') = eqList l1 l2 pool'
           in
             check $ mapId $ List.ofList l pool ))
