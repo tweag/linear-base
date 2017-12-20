@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Prelude.Linear
   ( -- * Standard 'Prelude' function with linear types
@@ -23,6 +24,13 @@ module Prelude.Linear
   , Movable(..)
   , lseq
   , dup3
+    -- * Linear monad hierarchy
+    -- $ monad
+  , LFunctor(..)
+  , LApplicative(..)
+  , LMonad(..)
+  , lreturn
+  , ljoin
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
@@ -35,6 +43,9 @@ import Prelude hiding
   , seq
   , curry
   , uncurry
+  , Functor(..)
+  , Applicative(..)
+  , Monad(..)
   )
 import qualified Prelude
 
@@ -239,3 +250,53 @@ instance Dupable (Unrestricted a) where
 
 instance Movable (Unrestricted a) where
   move (Unrestricted a) = Unrestricted (Unrestricted a)
+
+-- $monad
+
+-- XXX: even if the monad hierarchy is in the Prelude. This should probably be
+-- moved somewhere else in order to use namespace rather than the rather
+-- invasive `l` prefix in front of everything (plus, that would make infix
+-- symbols possible again)
+
+-- TODO: explain that the category of linear function is self-enriched, and that
+-- this is a hierarchy of enriched monads. In order to have some common vocabulary.
+
+-- There is also room for another type of functor where map has type `(a ->.b)
+-- -> f a ->. f b`. `[]` and `Maybe` are such functors (they are regular
+-- (endo)functors of the category of linear functions whereas `LFunctor` are
+-- enriched functors). A Traversable hierarchy would start with non-enriched
+-- functors.
+
+-- TODO: make the laws explicit
+
+-- | Enriched linear functors.
+class LFunctor f where
+  lfmap :: (a ->. b) ->. f a ->. f b
+
+-- | Enriched linear applicative functors
+class LFunctor f => LApplicative f where
+  lpure :: a ->. f a
+  lap :: f (a ->. b) ->. f a ->. f b
+
+-- | Enriched linear monads
+class LApplicative m => LMonad m where
+  lbind :: m a ->. (a ->. m b) ->. m b
+  lsc :: m () ->. m a ->. m a
+
+{-# INLINE lreturn #-}
+lreturn :: LMonad m => a ->. m a
+lreturn x = lpure x
+
+ljoin :: LMonad m => m (m a) ->. m a
+ljoin action = action `lbind` (\x -> x)
+
+-- | Type of 'monadBuilder'
+data BuilderType m = Builder
+  { (>>=) :: forall a b. m a ->. (a ->. m b) ->. m b
+  , (>>) :: forall b. m () ->. m b ->. m b
+  }
+
+-- | A builder to be used with @-XRebindableSyntax@ in conjunction with
+-- @RecordWildCards@
+monadBuilder :: LMonad m => BuilderType m
+monadBuilder = Builder { (>>=) = lbind, (>>) = lsc }

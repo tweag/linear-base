@@ -43,6 +43,9 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (onException, mask, finally)
+import Control.Monad (fmap, fail)
+  -- XXX: ^ should be imported qualified. Fail should be made available in a
+  -- builder.
 import Data.Coerce
 import qualified Data.IORef as System
 import Data.IORef (IORef)
@@ -50,9 +53,12 @@ import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import Prelude.Linear hiding (IO, (>>=), (>>), return, ($))
+import Prelude.Linear hiding (IO, ($))
 import Prelude (($))
 import qualified Prelude as P
+  -- XXX: ^ is only imported for a few monadic primitives. Should be replaced by
+  -- importing Control.Monad qualified (for return) and a generic builder for
+  -- monads.
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
