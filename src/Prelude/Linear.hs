@@ -12,7 +12,7 @@ module Prelude.Linear
   , seq
   , curry
   , uncurry
-  , lid
+  , id
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -39,6 +39,7 @@ import qualified Unsafe.Linear as Unsafe
 import GHC.Types
 import Prelude hiding
   ( ($)
+  , id
   , const
   , seq
   , curry
@@ -64,8 +65,8 @@ import qualified Prelude
 
 infixr 0 $
 
-lid :: a ->. a
-lid a = a
+id :: a ->. a
+id x = x
 
 const :: a ->. b -> a
 const x _ = x
@@ -292,7 +293,7 @@ lreturn :: LMonad m => a ->. m a
 lreturn x = lpure x
 
 ljoin :: LMonad m => m (m a) ->. m a
-ljoin action = action `lbind` (\x -> x)
+ljoin action = action `lbind` id
 
 -- | Type of 'monadBuilder'. Note how the constraint on @m@ varies depending on
 -- the field. The constraints are solved lazily when a field is used by the do
