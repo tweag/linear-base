@@ -8,6 +8,8 @@ module Prelude.Linear
   , const
   , swap
   , seq
+  , curry
+  , uncurry
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -28,6 +30,8 @@ import Prelude hiding
   ( ($)
   , const
   , seq
+  , curry
+  , uncurry
   )
 import qualified Prelude
 
@@ -59,6 +63,17 @@ swap (x,y) = (y,x)
 -- cannot be linear in it's first argument.
 seq :: a -> b ->. b
 seq x = Unsafe.toLinear (Prelude.seq x)
+
+
+-- | Beware, 'curry' is not compatible with the standard one because it is
+-- higher-order and we don't have multiplicity polymorphism yet.
+curry :: ((a, b) ->. c) ->. a ->. b ->. c
+curry f x y = f (x, y)
+
+-- | Beware, 'uncurry' is not compatible with the standard one because it is
+-- higher-order and we don't have multiplicity polymorphism yet.
+uncurry :: (a ->. b ->. c) ->. (a, b) ->. c
+uncurry f (x,y) = f x y
 
 -- $ unrestricted
 

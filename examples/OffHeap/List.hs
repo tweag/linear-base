@@ -4,6 +4,7 @@
 module OffHeap.List where
 
 import qualified Data.OffHeap as Manual
+import qualified Data.List as List
 import Data.OffHeap (Pool, Box)
 import Data.Word
 import Foreign.Ptr
@@ -58,3 +59,36 @@ ofoldr f seed (Cons a l) = f a (ofoldr f seed (Manual.deconstruct l))
 ofoldl :: forall a b. Storable a => (b ->. a ->. b) -> b ->. List a ->. b
 ofoldl _f seed Nil = seed
 ofoldl f seed (Cons a l) = ofoldl f (f seed a) (Manual.deconstruct l)
+
+-- Remark: could be tail-recursive with destination-passing style
+-- | Make a 'List' from a stream. 'List' is a type of strict lists, therefore
+-- the stream must terminate otherwise 'unfold' will loop. Not tail-recursive.
+unfold :: forall a s. Storable a => (s -> Maybe (a,s)) -> s -> Pool ->. (List a, Pool)
+unfold step state = dispatch (step state)
+  where
+    dispatch :: Maybe (a, s) -> Pool ->. (List a, Pool)
+    dispatch Nothing pool = (Nil, pool)
+    dispatch (Just (a, next)) pool =
+      consS a (uncurry Manual.alloc (unfold step next pool))
+
+    consS :: a ->. (Box (List a),  Pool) ->. (List a, Pool)
+    consS a (l, pool) = (Cons a l, pool)
+
+-- | Linear variant of 'unfold'. Note how they are implemented exactly
+-- identically. They could be merged if multiplicity polymorphism was supported.
+unfoldL :: forall a s. Storable a => (s ->. Maybe (a,s)) -> s ->. Pool ->. (List a, Pool)
+unfoldL step state = dispatch (step state)
+  where
+    dispatch :: Maybe (a, s) ->. Pool ->. (List a, Pool)
+    dispatch Nothing pool = (Nil, pool)
+    dispatch (Just (a, next)) pool =
+      consS a (uncurry Manual.alloc (unfoldL step next pool))
+
+    consS :: a ->. (Box (List a),  Pool) ->. (List a, Pool)
+    consS a (l, pool) = (Cons a l, pool)
+
+ofList :: Storable a => [a] -> Pool ->. (List a, Pool)
+ofList l pool = unfold List.uncons l pool
+
+toList :: Storable a => List a ->. [a]
+toList l = ofoldr (:) [] l
