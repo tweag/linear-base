@@ -283,6 +283,10 @@ class LApplicative m => LMonad m where
   lbind :: m a ->. (a ->. m b) ->. m b
   lsc :: m () ->. m a ->. m a
 
+-- | Handles pattern-matching failure in do-notation. See 'Control.Monad.Fail'.
+class LMonad m => LMonadFail m where
+  lfail :: String -> m a
+
 {-# INLINE lreturn #-}
 lreturn :: LMonad m => a ->. m a
 lreturn x = lpure x
@@ -290,13 +294,17 @@ lreturn x = lpure x
 ljoin :: LMonad m => m (m a) ->. m a
 ljoin action = action `lbind` (\x -> x)
 
--- | Type of 'monadBuilder'
-data BuilderType m = Builder
-  { (>>=) :: forall a b. m a ->. (a ->. m b) ->. m b
-  , (>>) :: forall b. m () ->. m b ->. m b
+-- | Type of 'monadBuilder'. Note how the constraint on @m@ varies depending on
+-- the field. The constraints are solved lazily when a field is used by the do
+-- notation (in particular, if you don't do a pattern-matching, then you don't
+-- need a 'LMonadFail').
+data BuilderType = Builder
+  { (>>=) :: forall m a b. LMonad m => m a ->. (a ->. m b) ->. m b
+  , (>>) :: forall m b. LMonad m => m () ->. m b ->. m b
+  , fail :: forall m a. LMonadFail m => String -> m a
   }
 
 -- | A builder to be used with @-XRebindableSyntax@ in conjunction with
 -- @RecordWildCards@
-monadBuilder :: LMonad m => BuilderType m
-monadBuilder = Builder { (>>=) = lbind, (>>) = lsc }
+monadBuilder :: BuilderType
+monadBuilder = Builder { (>>=) = lbind, (>>) = lsc, fail = lfail }
