@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Prelude.Linear
@@ -26,6 +27,7 @@ module Prelude.Linear
   ) where
 
 import qualified Unsafe.Linear as Unsafe
+import GHC.Types
 import Prelude hiding
   ( ($)
   , const
@@ -140,7 +142,28 @@ instance Movable Bool where
   move True = Unrestricted True
   move False = Unrestricted False
 
--- TODO: instances for Int, primitive tuples
+instance Consumable Int where
+  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int#' and using it several times. /!\
+  consume (I# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Int where
+  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int#' and using it several times. /!\
+  dup (I# i) = Unsafe.toLinear (\j -> (I# j, I# j)) i
+
+instance Movable Int where
+  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int#' and using it several times. /!\
+  move (I# i) = Unsafe.toLinear (\j -> Unrestricted (I# j)) i
+
+-- TODO: instances for primitive tuples
 
 instance Consumable a => Consumable [a] where
   consume [] = ()

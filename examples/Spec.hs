@@ -22,14 +22,14 @@ main = hspec $ do
   describe "Off-heap lists" $ do
     describe "map" $ do
       it "of identity if the identity" $
-        property (\(l :: [Bool]) -> unUnrestricted (Manual.withPool $ \pool ->
+        property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
             mapId = uncurry (List.map (\x -> x))
 
-            check :: (List Bool, Pool) ->. Unrestricted Bool
+            check :: (List Int, Pool) ->. Unrestricted Bool
             check (l', pool) = check' l' (List.ofList l pool)
 
-            check' :: List Bool ->. (List Bool, Pool) ->. Unrestricted Bool
+            check' :: List Int ->. (List Int, Pool) ->. Unrestricted Bool
             check' l1 (l2, pool) = eqList l1 l2 pool
           in
             check $ mapId $ List.ofList l pool ))
