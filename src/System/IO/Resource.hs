@@ -57,6 +57,9 @@ import Data.Text (Text)
 import qualified Data.Text.IO as Text
 import Prelude.Linear hiding (IO)
 import qualified Prelude as P
+  -- XXX: ^ is only imported for a few monadic primitives. Should be replaced by
+  -- importing Control.Monad qualified (for return) and a generic builder for
+  -- monads.
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
