@@ -4,6 +4,7 @@
 import qualified Data.OffHeap as Manual
 import Data.OffHeap (Pool)
 import Foreign.Storable (Storable)
+import qualified OffHeap.Heap as Heap ()
 import qualified OffHeap.List as List
 import OffHeap.List (List)
 import Prelude.Linear

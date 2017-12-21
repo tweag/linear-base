@@ -121,6 +121,15 @@ class Consumable a => Dupable a where
 class Dupable a => Movable a where
   move :: a ->. Unrestricted a
 
+dup3 :: Dupable a => a ->. (a, a, a)
+dup3 x = oneMore $ dup x
+  where
+    oneMore :: Dupable a => (a, a) ->. (a, a, a)
+    oneMore (y, z) = flatten (y, dup z)
+
+    flatten :: (a, (a, a)) ->. (a, a, a)
+    flatten (y, (z, w)) = (y, z, w)
+
 instance Consumable () where
   consume () = ()
 
@@ -137,15 +146,6 @@ instance Consumable Bool where
 instance Dupable Bool where
   dup True = (True, True)
   dup False = (False, False)
-
-dup3 :: Dupable a => a ->. (a, a, a)
-dup3 x = oneMore $ dup x
-  where
-    oneMore :: Dupable a => (a, a) ->. (a, a, a)
-    oneMore (y, z) = flatten (y, dup z)
-
-    flatten :: (a, (a, a)) ->. (a, a, a)
-    flatten (y, (z, w)) = (y, z, w)
 
 instance Movable Bool where
   move True = Unrestricted True
@@ -191,6 +191,21 @@ instance (Movable a, Movable b) => Movable (a, b) where
        -- applicative functor of some sort.
       liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted (a, b)
       liftu (Unrestricted a') (Unrestricted b') = Unrestricted (a', b')
+
+instance (Consumable a, Consumable b, Consumable c) => Consumable (a, b, c) where
+  consume (a, b, c) = consume a `lseq` consume b `lseq` consume c
+
+instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
+  dup (a, b, c) = shuffle (dup a) (dup b) (dup c)
+    where
+      shuffle :: (a, a) ->. (b, b) ->. (c, c) ->. ((a, b, c), (a, b, c))
+      shuffle (a', a'') (b', b'') (c', c'') = ((a', b', c'), (a'', b'', c''))
+
+instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
+  move (a, b, c) = liftu (move a) (move b) (move c)
+    where
+      liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted c ->. Unrestricted (a, b, c)
+      liftu (Unrestricted a') (Unrestricted b') (Unrestricted c') = Unrestricted (a', b', c')
 
 instance Consumable a => Consumable [a] where
   consume [] = ()

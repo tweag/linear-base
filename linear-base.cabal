@@ -45,6 +45,7 @@ test-suite examples
   main-is: Spec.hs
   other-modules:
     OffHeap.List
+    OffHeap.Heap
   build-depends:
     base,
     hspec,
