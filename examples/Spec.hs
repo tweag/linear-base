@@ -10,12 +10,12 @@ import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Storable a, Movable a, Eq a) => List a ->. List a ->. Pool ->. Unrestricted Bool
-eqList l1 l2 pool =
-    eqUL (move (List.toList l1)) (move (List.toList l2)) (consume pool)
+eqList :: forall a. (Storable a, Movable a, Eq a) => List a ->. List a ->. Unrestricted Bool
+eqList l1 l2 =
+    eqUL (move (List.toList l1)) (move (List.toList l2))
   where
-    eqUL :: Unrestricted [a] ->. Unrestricted [a] ->. () ->. Unrestricted Bool
-    eqUL (Unrestricted as1) (Unrestricted as2) () = Unrestricted (as1 == as2)
+    eqUL :: Unrestricted [a] ->. Unrestricted [a] ->. Unrestricted Bool
+    eqUL (Unrestricted as1) (Unrestricted as2) = Unrestricted (as1 == as2)
 
 main :: IO ()
 main = hspec $ do
@@ -24,24 +24,20 @@ main = hspec $ do
       it "is invertible" $
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
-            check :: (List Int, Pool) ->. Unrestricted Bool
-            check (l', pool') = consume pool' `lseq` checkUL (move (List.toList l'))
-
-            checkUL :: Unrestricted [Int] ->. Unrestricted Bool
-            checkUL (Unrestricted l') = Unrestricted $ l' == l
+            check :: Unrestricted [Int] ->. Unrestricted Bool
+            check (Unrestricted l') = Unrestricted $ l' == l
           in
-            check $ List.ofList l pool
-                                                      ))
+            check $ move (List.toList $ List.ofList l pool)))
+
     describe "map" $ do
       it "of identity if the identity" $
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
-            mapId = uncurry (List.map (\x -> x))
-
-            check :: (List Int, Pool) ->. Unrestricted Bool
-            check (l', pool') = check' l' (List.ofList l pool')
-
-            check' :: List Int ->. (List Int, Pool) ->. Unrestricted Bool
-            check' l1 (l2, pool') = eqList l1 l2 pool'
+            check :: (Pool, Pool, Pool) ->. Unrestricted Bool
+            check (pool1, pool2, pool3) =
+              eqList
+                (List.map (\x -> x) (List.ofList l pool1) pool2)
+                (List.ofList l pool3)
           in
-            check $ mapId $ List.ofList l pool ))
+            check (dup3 pool)))
+

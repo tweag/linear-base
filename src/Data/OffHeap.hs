@@ -52,6 +52,9 @@ import qualified Unsafe.Linear as Unsafe
 -- TODO: ignoring exceptions for the moment. So that I can get some tests to
 -- work first.
 
+-- TODO: Briefly explain the Dupable-reader style of API, below, and fix
+-- details.
+
 -- | A 'Pool' can be 'consume'-ed. This is a no-op: it does not deallocate the
 -- data in that pool. It cannot as there may still be accessible data in the
 -- pool. It simply makes it impossible to add new data to the pool. It is
@@ -66,6 +69,9 @@ withPool scope = scope Pool
 
 instance Consumable Pool where
   consume Pool = ()
+
+instance Dupable Pool where
+  dup Pool = (Pool, Pool)
 
 -- XXX: this indirection is possibly not necessary. It's here because the inner
 -- Ptr must be unrestricted (in order to implement deconstruct at the moment).
@@ -93,18 +99,16 @@ instance Storable (Box a) where
 -- passing-style API (but there is still some design to be done there). This
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
-alloc :: forall a. Storable a => a ->. Pool ->. (Box a, Pool)
+alloc :: forall a. Storable a => a ->. Pool ->. Box a
 alloc a Pool =
-    mkResult $ Unsafe.toLinear mkPtr a
+    Unsafe.toLinear mkPtr a
   where
-    mkPtr :: a -> Unrestricted (Ptr a)
+    mkPtr :: a -> Box a
     mkPtr a' = unsafeDupablePerformIO $ do
       ptr <- malloc
       poke ptr a'
-      return (Unrestricted ptr)
+      return (Box ptr)
 
-    mkResult :: Unrestricted (Ptr a) ->. (Box a, Pool)
-    mkResult (Unrestricted ptr) = (Box ptr, Pool)
 
 deconstruct :: Storable a => Box a ->. a
 deconstruct (Box ptr) = unsafeDupablePerformIO $ do

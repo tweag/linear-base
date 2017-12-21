@@ -21,7 +21,7 @@ module Prelude.Linear
   , Dupable(..)
   , Movable(..)
   , lseq
-
+  , dup3
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
@@ -138,6 +138,15 @@ instance Dupable Bool where
   dup True = (True, True)
   dup False = (False, False)
 
+dup3 :: Dupable a => a ->. (a, a, a)
+dup3 x = oneMore $ dup x
+  where
+    oneMore :: Dupable a => (a, a) ->. (a, a, a)
+    oneMore (y, z) = flatten (y, dup z)
+
+    flatten :: (a, (a, a)) ->. (a, a, a)
+    flatten (y, (z, w)) = (y, z, w)
+
 instance Movable Bool where
   move True = Unrestricted True
   move False = Unrestricted False
@@ -163,7 +172,25 @@ instance Movable Int where
   -- copying an 'Int#' and using it several times. /!\
   move (I# i) = Unsafe.toLinear (\j -> Unrestricted (I# j)) i
 
--- TODO: instances for primitive tuples
+-- TODO: instances for longer primitive tuples
+-- TODO: default instances based on the Generic framework
+
+instance (Consumable a, Consumable b) => Consumable (a, b) where
+  consume (a, b) = consume a `lseq` consume b
+
+instance (Dupable a, Dupable b) => Dupable (a, b) where
+  dup (a, b) = shuffle (dup a) (dup b)
+    where
+      shuffle :: (a, a) ->. (b, b) ->. ((a, b), (a, b))
+      shuffle (a', a'') (b', b'') = ((a', b'), (a'', b''))
+
+instance (Movable a, Movable b) => Movable (a, b) where
+  move (a, b) = liftu (move a) (move b)
+    where
+       -- XXX: this is merely an application of 'Unrestricted' being a linear
+       -- applicative functor of some sort.
+      liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted (a, b)
+      liftu (Unrestricted a') (Unrestricted b') = Unrestricted (a', b')
 
 instance Consumable a => Consumable [a] where
   consume [] = ()

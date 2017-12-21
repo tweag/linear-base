@@ -36,21 +36,17 @@ instance Storable a => Storable (List a) where
 -- Remark: this is a bit wasteful, we could implement an allocation-free map by
 -- reusing the old pointer with realloc.
 --
--- XXX: the mapped function should be of type (a ->. Pool ->. (b, Pool))
---
--- XXX: We're really starting to need a linear state monad to manage the pool
+-- XXX: the mapped function should be of type (a ->. Pool ->. b)
 --
 -- Remark: map could be tail-recursive in destination-passing style
-map :: forall a b. (Storable a, Storable b) => (a ->. b) -> List a ->. Pool ->. (List b, Pool)
-map _f Nil pool = (Nil, pool)
+map :: forall a b. (Storable a, Storable b) => (a ->. b) -> List a ->. Pool ->. List b
+map _f Nil pool = pool `lseq` Nil
 map f (Cons a l) pool =
-    rebuild a (map f (Manual.deconstruct l) pool)
+    withPools (dup pool) a (Manual.deconstruct l)
   where
-    rebuild :: a ->. (List b, Pool) ->. (List b, Pool)
-    rebuild a' (l', pool') = consS (f a') (Manual.alloc l' pool')
-
-    consS :: b ->. (Box (List b), Pool) ->. (List b, Pool)
-    consS b (l', pool') = (Cons b l', pool')
+    withPools :: (Pool, Pool) ->. a ->. List a ->. List b
+    withPools (pool1, pool2) a' l' =
+      Cons (f a') (Manual.alloc (map f l' pool1) pool2)
 
 foldr :: forall a b. Storable a => (a ->. b ->. b) -> b ->. List a ->. b
 foldr _f seed Nil = seed
@@ -63,31 +59,29 @@ foldl f seed (Cons a l) = foldl f (f seed a) (Manual.deconstruct l)
 -- Remark: could be tail-recursive with destination-passing style
 -- | Make a 'List' from a stream. 'List' is a type of strict lists, therefore
 -- the stream must terminate otherwise 'unfold' will loop. Not tail-recursive.
-unfold :: forall a s. Storable a => (s -> Maybe (a,s)) -> s -> Pool ->. (List a, Pool)
-unfold step state = dispatch (step state)
+unfold :: forall a s. Storable a => (s -> Maybe (a,s)) -> s -> Pool ->. List a
+unfold step state pool = dispatch (step state) (dup pool)
+  -- XXX: ^ The reason why we need to `dup` the pool before we know whether the
+  -- next step is a `Nothing` (in which case we don't need the pool at all) or a
+  -- `Just`, is because of the limitation of `case` to the unrestricted
+  -- case. Will be fixed.
   where
-    dispatch :: Maybe (a, s) -> Pool ->. (List a, Pool)
-    dispatch Nothing pool = (Nil, pool)
-    dispatch (Just (a, next)) pool =
-      consS a (uncurry Manual.alloc (unfold step next pool))
-
-    consS :: a ->. (Box (List a),  Pool) ->. (List a, Pool)
-    consS a (l, pool) = (Cons a l, pool)
+    dispatch :: Maybe (a, s) -> (Pool, Pool) ->. List a
+    dispatch Nothing pools = pools `lseq` Nil
+    dispatch (Just (a, next)) (pool1, pool2) =
+      Cons a (Manual.alloc (unfold step next pool1) pool2)
 
 -- | Linear variant of 'unfold'. Note how they are implemented exactly
 -- identically. They could be merged if multiplicity polymorphism was supported.
-unfoldL :: forall a s. Storable a => (s ->. Maybe (a,s)) -> s ->. Pool ->. (List a, Pool)
-unfoldL step state = dispatch (step state)
+unfoldL :: forall a s. Storable a => (s ->. Maybe (a,s)) -> s ->. Pool ->. List a
+unfoldL step state pool = dispatch (step state) (dup pool)
   where
-    dispatch :: Maybe (a, s) ->. Pool ->. (List a, Pool)
-    dispatch Nothing pool = (Nil, pool)
-    dispatch (Just (a, next)) pool =
-      consS a (uncurry Manual.alloc (unfoldL step next pool))
+    dispatch :: Maybe (a, s) ->. (Pool, Pool) ->. List a
+    dispatch Nothing pools = pools `lseq` Nil
+    dispatch (Just (a, next)) (pool1, pool2) =
+      Cons a (Manual.alloc (unfoldL step next pool1) pool2)
 
-    consS :: a ->. (Box (List a),  Pool) ->. (List a, Pool)
-    consS a (l, pool) = (Cons a l, pool)
-
-ofList :: Storable a => [a] -> Pool ->. (List a, Pool)
+ofList :: Storable a => [a] -> Pool ->. List a
 ofList l pool = unfold List.uncons l pool
 
 toList :: Storable a => List a ->. [a]
