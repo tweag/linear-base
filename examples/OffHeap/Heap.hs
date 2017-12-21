@@ -5,6 +5,7 @@
 
 module OffHeap.Heap where
 
+import qualified Data.List as List
 import qualified Data.OffHeap as Manual
 import Data.OffHeap (Pool, Box)
 import qualified OffHeap.List as List
@@ -121,3 +122,19 @@ unfold step seed pool = dispatch (step seed) pool
     mkStep :: k -> a -> s -> (Pool, Pool, Pool) ->. Heap k a
     mkStep k a next (pool1, pool2, pool3) =
       merge (singleton k a pool1) (unfold step next pool2) pool3
+
+-- TODO: linear unfold: could apply to off-heap lists!
+
+ofList :: (Storable k, Storable a, Movable k, Ord k) => [(k, a)] -> Pool ->. Heap k a
+ofList l pool = unfold List.uncons l pool
+
+-- XXX: sorts in reverse
+toList :: (Storable k, Storable a, Movable k, Ord k) => Heap k a ->. Pool ->. [(k, a)]
+toList h pool = foldl (\l k a -> (k,a):l) [] h pool
+
+sort :: forall k a. (Storable k, Storable a, Movable k, Ord k, Movable a) => [(k, a)] -> [(k,a)]
+sort l = unUnrestricted $ Manual.withPool (\pool -> move $ sort' l (dup pool))
+    -- XXX: can we avoid this call to `move`?
+  where
+    sort' :: [(k, a)] -> (Pool, Pool) ->. [(k,a)]
+    sort' l' (pool1, pool2) = toList (ofList l' pool1) pool2
