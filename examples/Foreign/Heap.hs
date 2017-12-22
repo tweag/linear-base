@@ -3,13 +3,13 @@
 
 -- | Implementation of pairing heaps stored off-heap
 
-module OffHeap.Heap where
+module Foreign.Heap where
 
 import qualified Data.List as List
-import qualified Data.OffHeap as Manual
-import Data.OffHeap (Pool, Box)
-import qualified OffHeap.List as List
-import OffHeap.List (List)
+import qualified Foreign.List as List
+import Foreign.List (List)
+import qualified Foreign.Marshal.Pure as Manual
+import Foreign.Marshal.Pure (Pool, Box)
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()

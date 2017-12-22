@@ -1,12 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module OffHeap.List where
+module Foreign.List where
 
-import qualified Data.OffHeap as Manual
 import qualified Data.List as List
-import Data.OffHeap (Pool, Box)
 import Data.Word
+import qualified Foreign.Marshal.Pure as Manual
+import Foreign.Marshal.Pure (Pool, Box)
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()

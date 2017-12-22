@@ -17,7 +17,7 @@ cabal-version: >=1.10
 library
   hs-source-dirs: src
   exposed-modules:
-    Data.OffHeap
+    Foreign.Marshal.Pure
     Prelude.Linear
     System.IO.Linear
     System.IO.Resource
@@ -44,8 +44,8 @@ test-suite examples
   hs-source-dirs: examples
   main-is: Spec.hs
   other-modules:
-    OffHeap.List
-    OffHeap.Heap
+    Foreign.List
+    Foreign.Heap
   build-depends:
     base,
     hspec,

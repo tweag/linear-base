@@ -34,7 +34,7 @@
 -- TODO: add link to an example in module header
 -- TODO: change some words into link to the relevant API entry in the above description.
 
-module Data.OffHeap
+module Foreign.Marshal.Pure
   ( Pool
   , withPool
   , Box

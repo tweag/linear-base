@@ -2,12 +2,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 import qualified Data.List as L
-import qualified Data.OffHeap as Manual
-import Data.OffHeap (Pool)
+import qualified Foreign.Heap as Heap
+import qualified Foreign.List as List
+import Foreign.List (List)
+import qualified Foreign.Marshal.Pure as Manual
+import Foreign.Marshal.Pure (Pool)
 import Foreign.Storable (Storable)
-import qualified OffHeap.Heap as Heap
-import qualified OffHeap.List as List
-import OffHeap.List (List)
 import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
