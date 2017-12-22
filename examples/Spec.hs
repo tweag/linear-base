@@ -1,10 +1,11 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+import qualified Data.List as L
 import qualified Data.OffHeap as Manual
 import Data.OffHeap (Pool)
 import Foreign.Storable (Storable)
-import qualified OffHeap.Heap as Heap ()
+import qualified OffHeap.Heap as Heap
 import qualified OffHeap.List as List
 import OffHeap.List (List)
 import Prelude.Linear
@@ -42,3 +43,8 @@ main = hspec $ do
           in
             check (dup3 pool)))
 
+
+  describe "Off-heap heaps" $ do
+    describe "sort" $ do
+      it "sorts" $
+        property (\(l :: [(Int, ())]) -> Heap.sort l == (L.reverse $ L.sort l))
