@@ -109,7 +109,6 @@ alloc a Pool =
       poke ptr a'
       return (Box ptr)
 
-
 deconstruct :: Storable a => Box a ->. a
 deconstruct (Box ptr) = unsafeDupablePerformIO $ do
   res <- peek ptr
