@@ -12,6 +12,7 @@ module Prelude.Linear
     -- $ unrestricted
   , Unrestricted(..)
   , unUnrestricted
+  , WithUnrestricted(..)
     -- * Typeclasses for non-linear actions
     -- $ comonoid
   , Consumable(..)
@@ -70,6 +71,11 @@ data Unrestricted a where
 -- linear, then we get only a linear value out.
 unUnrestricted :: Unrestricted a ->. a
 unUnrestricted (Unrestricted a) = a
+
+-- | A variant of 'Unrestricted' which captures the very common pattern of
+-- returning a pair of an unrestricted value and a linear value.
+data WithUnrestricted a l where
+  WithUnrestricted :: a -> l ->. WithUnrestricted a l
 
 -- $ comonoid
 

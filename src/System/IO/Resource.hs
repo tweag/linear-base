@@ -151,7 +151,7 @@ openFile path mode = do
 hClose :: Handle ->. RIO ()
 hClose (Handle h) = unsafeRelease h
 
-hGetChar :: Handle ->. RIO (Unrestricted Char, Handle)
+hGetChar :: Handle ->. RIO (WithUnrestricted Char Handle)
 hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)
 
 hPutChar :: Handle ->. Char -> RIO Handle
@@ -161,7 +161,7 @@ hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
     flipHPutChar c =
       coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
 
-hGetLine :: Handle ->. RIO (Unrestricted Text, Handle)
+hGetLine :: Handle ->. RIO (WithUnrestricted Text Handle)
 hGetLine = coerce (unsafeFromSystemIOResource Text.hGetLine)
 
 hPutStr :: Handle ->. Text -> RIO Handle
@@ -216,10 +216,10 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         False -> fst (IntMap.findMax releaseMap) + 1
 
 -- XXX: long lines
-unsafeFromSystemIOResource :: (a -> System.IO b) -> UnsafeResource a ->. RIO (Unrestricted b, UnsafeResource a)
+unsafeFromSystemIOResource :: (a -> System.IO b) -> UnsafeResource a ->. RIO (WithUnrestricted b (UnsafeResource a))
 unsafeFromSystemIOResource action (UnsafeResource key resource) = unsafeFromSystemIO $ do
     c <- action resource
-    P.return (Unrestricted c, UnsafeResource key resource)
+    P.return (WithUnrestricted c (UnsafeResource key resource))
   where
     (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
     (>>=) = (P.>>=)
@@ -227,7 +227,7 @@ unsafeFromSystemIOResource action (UnsafeResource key resource) = unsafeFromSyst
 -- XXX: long lines
 unsafeFromSystemIOResource_ :: (a -> System.IO ()) -> UnsafeResource a ->. RIO (UnsafeResource a)
 unsafeFromSystemIOResource_ action resource = do
-    (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
+    WithUnrestricted _ resource <- unsafeFromSystemIOResource action resource
     return resource
   where
     Builder {..} = builder -- used in the do-notation
