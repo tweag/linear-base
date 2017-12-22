@@ -2,19 +2,24 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
--- | This module introduces primitives to /safely/ store data off-heap. The
--- benefit of off-heap data is that it does not add to the GC pressure, and help
--- ensure predictable latency (/e.g./ in distributed applications). The cost is
--- that memory management is much more explicit: the programmer has to allocate
--- and free memory manually. Safety (in particular that every pointer is freed)
--- is enforced by linear types, which constrain usage, in particular
--- sharing. Off-heap data types also have less convenient syntax since they are
--- not directly supported by the compiler.
+-- | This module introduces primitives to /safely/ store manually managed data
+-- (that is not managed by the GC). The benefit of manually managed data is that
+-- it does not add to the GC pressure, and help ensure predictable latency
+-- (/e.g./ in distributed applications). The cost is that memory management is
+-- much more explicit: the programmer has to allocate and free memory
+-- manually. Safety (in particular that every pointer is freed) is enforced by
+-- linear types, which constrain usage, in particular sharing. Manually managed
+-- data types also have less convenient syntax since they are not directly
+-- supported by the compiler.
 --
--- This module focuses on /pure/ off-heap data. That is data types like standard
--- Haskell. The only difference is that their lifetime is not managed by the
--- GC. Despite calling @malloc@ and @free@ under the hood, the entire API is
--- pure, and does not make calls in IO.
+-- This module focuses on /pure/ manually managed data. That is data types like
+-- standard Haskell. The only difference is that their lifetime is not managed
+-- by the GC. Despite calling @malloc@ and @free@ under the hood, the entire API
+-- is pure, and does not make calls in IO.
+--
+-- You can find example data structure implementation in the modules
+-- @Foreign.List@ and @Foreign.Heap@ of the @example@ directory in the source
+-- repository.
 --
 -- The allocation API is organised around a notion of memory 'Pool'. From the API
 -- point of view, a pool serves as a source of linearity. That is: it ensures
@@ -28,6 +33,14 @@
 -- only in case of exception are the pool deallocated in a stack-like
 -- manner. Moreover, pool A can have data pointing to pool B, while at the same
 -- time, pool B having data pointing to pool A.
+--
+-- The current API (ab)uses the 'Storable' abstraction for expediency. However,
+-- this is not correct: even if we ignore the fact that the 'Storable' interface
+-- is allowed to perform arbitrary 'IO', and that it makes no promise to
+-- preserve linearity, 'Storable' is intended for C ABI-compatible
+-- interface. Our goal is not interfacing with C, and, in fact, the internal
+-- representation of manually managed data is not guaranteed to be sensible from
+-- the point of view of C.
 --
 -- Functions in this module are meant to be qualified.
 
@@ -75,6 +88,10 @@ instance Dupable Pool where
 
 -- XXX: this indirection is possibly not necessary. It's here because the inner
 -- Ptr must be unrestricted (in order to implement deconstruct at the moment).
+-- | 'Box a' is the abstract type of manually managed data. It can be used as
+-- part of data type definitions in order to store linked data structure off
+-- heap. See @Foreign.List@ and @Foreign.Pair@ in the @examples@ directory of
+-- the source repository.
 data Box a where
   Box :: Ptr a -> Box a
 
