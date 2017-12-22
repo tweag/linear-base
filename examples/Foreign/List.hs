@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -16,7 +17,7 @@ import Prelude.Linear hiding (map, foldl, foldr)
 -- always keep a Box instead.
 data List a
   = Nil
-  | Cons a (Box (List a))
+  | Cons !a !(Box (List a))
 
 -- TODO: generating appropriate instances using the Generic framework
 instance Storable a => Storable (List a) where
@@ -28,7 +29,7 @@ instance Storable a => Storable (List a) where
     case tag of
       0 -> return Nil
       1 -> return $ Cons a l
-      _ -> error "Storable (List a): peek: unknown tag"
+      t -> error ("Storable (List a): peek: unknown tag ( " ++ show t ++ " )")
 
   poke ptr Nil = poke (castPtr ptr :: Ptr Word8) 0
   poke ptr (Cons a l) = poke (castPtr ptr :: Ptr (Word8, a, Box (List a))) (1, a, l)
@@ -86,3 +87,18 @@ ofList l pool = unfold List.uncons l pool
 
 toList :: Storable a => List a ->. [a]
 toList l = foldr (:) [] l
+
+-- | Like unfold but builds the list in reverse, and tail recursive
+runfold :: forall a s. Storable a => (s -> Maybe (a,s)) -> s -> Pool ->. List a
+runfold step state pool = loop state Nil pool
+  where
+    loop :: s -> List a ->. Pool ->. List a
+    loop state' acc pool' = dispatch (step state') acc (dup pool')
+
+    dispatch :: Maybe (a, s) -> List a ->. (Pool, Pool) ->. List a
+    dispatch Nothing !acc pools = pools `lseq` acc
+    dispatch (Just (a, next)) !acc (pool1, pool2) =
+      loop next (Cons a (Manual.alloc acc pool1)) pool2
+
+ofRList :: Storable a => [a] -> Pool ->. List a
+ofRList l pool = runfold List.uncons l pool
