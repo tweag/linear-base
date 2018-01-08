@@ -31,13 +31,6 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
-    -- * Linear monad hierarchy
-    -- $ monad
-  , LFunctor(..)
-  , LApplicative(..)
-  , LMonad(..)
-  , lreturn
-  , ljoin
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
@@ -201,7 +194,6 @@ instance Dupable (Unrestricted a) where
 instance Movable (Unrestricted a) where
   move (Unrestricted a) = Unrestricted (Unrestricted a)
 
-<<<<<<< HEAD
 instance Data.Functor Unrestricted where
   fmap f (Unrestricted a) = Unrestricted (f a)
 
