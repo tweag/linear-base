@@ -97,6 +97,8 @@ instance Linear.Applicative IO where
   pure :: forall a. a ->. IO a
   pure a = IO $ \s -> (# s, a #)
 
+  -- TODO: define a combinator 'ap' to define (<*>) from a monadic instance
+  -- (alt: define a default implementation).
   (<*>) :: forall a b. IO (a ->. b) ->. IO a ->. IO b
   f <*> x = do
       f' <- f

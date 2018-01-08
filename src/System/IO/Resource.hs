@@ -3,6 +3,7 @@
 -- rebinded-do with different bind functions. Such as in the 'run'
 -- function. Which is a good argument for having support for F#-style builders.
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -20,9 +21,6 @@ module System.IO.Resource
   , run
     -- * Monadic primitives
     -- $monad
-  , return
-  , BuilderType(..)
-  , builder
     -- * Files
     -- $files
   , Handle
@@ -85,6 +83,9 @@ run (RIO action) = do
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
+    -- XXX: weird return again
+    return :: Bool
+    return = True
     -- Use regular IO binds
     (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
     (>>=) = (P.>>=)
@@ -107,35 +108,49 @@ unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
 
-return :: a ->. RIO a
-return a = RIO (\_releaseMap -> Linear.return a)
+instance Linear.Functor RIO where
+  fmap :: forall a b. (a ->. b) ->. RIO a ->. RIO b
+  fmap f (RIO action) = RIO $ \releaseMap ->
+    Linear.fmap f (action releaseMap)
 
--- | Type of 'Builder'
-data BuilderType = Builder
-  { (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
-  , (>>) :: forall b. RIO () ->. RIO b ->. RIO b
-  }
+instance Linear.Applicative RIO where
+  pure :: forall a. a ->. RIO a
+  pure a = RIO $ \_releaseMap -> Linear.pure a
 
--- | A builder to be used with @-XRebindableSyntax@ in conjunction with
--- @RecordWildCards@
-builder :: BuilderType
-builder =
-  let
-    (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
-    x >>= f = RIO (\releaseMap -> do
-        a <- unRIO x releaseMap
-        unRIO (f a) releaseMap)
-      where
-        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+  -- TODO: define a combinator 'ap' to define (<*>) from a monadic instance
+  -- (alt: define a default implementation).
+  (<*>) :: forall a b. RIO (a ->. b) ->. RIO a ->. RIO b
+  f <*> x = do
+      f' <- f
+      x' <- x
+      Linear.pure $ f' x'
+    where
+      -- XXX: why must I declare `return` here? Why does this type even work?
+      return :: Int
+      return = 0
+      Linear.Builder { .. } = Linear.monadBuilder
 
-    (>>) :: forall b. RIO () ->. RIO b ->. RIO b
-    x >> y = RIO (\releaseMap -> do
-        unRIO x releaseMap
-        unRIO y releaseMap)
-      where
-        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
-  in
-    Builder{..}
+
+instance Linear.Monad RIO where
+  (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
+  x >>= f = RIO $ \releaseMap -> do
+      a <- unRIO x releaseMap
+      unRIO (f a) releaseMap
+    where
+      return :: (Bool, Int)
+      return = (True, 0)
+
+      Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+
+  (>>) :: forall b. RIO () ->. RIO b ->. RIO b
+  x >> y = RIO $ \releaseMap -> do
+      unRIO x releaseMap
+      unRIO y releaseMap
+    where
+      return :: (Int, Bool)
+      return = (-1, False)
+
+      Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 -- $files
 
@@ -150,10 +165,13 @@ openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = do
     h <- unsafeAcquire
       (Linear.fromSystemIOU $ System.openFile path mode)
-      (\h -> Linear.fromSystemIO (System.hClose h))
-    return (Handle h)
+      (\h -> Linear.fromSystemIO $ System.hClose h)
+    Linear.return $ Handle h
   where
-    Builder {..} = builder -- used in the do-notation
+    -- XXX: weird return again
+    return :: Float
+    return = 1.2
+    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 hClose :: Handle ->. RIO ()
 hClose (Handle h) = unsafeRelease h
@@ -202,6 +220,9 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
       where
+        -- XXX: weird return again
+        return :: Int -> Int
+        return = succ
         Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 unsafeAcquire
@@ -218,6 +239,10 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
     Linear.return (UnsafeResource (releaseKey releaseMap) resource))
   where
+    -- XXX: weird return again
+    return :: [()]
+    return = [()]
+
     Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
     releaseKey releaseMap =
@@ -234,6 +259,9 @@ unsafeFromSystemIOResource action (UnsafeResource key resource) =
       c <- action resource
       P.return (Unrestricted c, UnsafeResource key resource))
   where
+    return :: ()
+    return = ()
+
     (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
     (>>=) = (P.>>=)
 
@@ -243,6 +271,9 @@ unsafeFromSystemIOResource_
   ->. RIO (UnsafeResource a)
 unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
-    return resource
+    Linear.return resource
   where
-    Builder {..} = builder -- used in the do-notation
+    return :: [a]
+    return = []
+
+    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
