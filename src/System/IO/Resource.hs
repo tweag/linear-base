@@ -141,7 +141,7 @@ openFile path mode = do
     h <- unsafeAcquire
       (Linear.fromSystemIOU P.$ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
-    return $ Handle h
+    Linear.return $ Handle h
   where
     Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
@@ -233,6 +233,6 @@ unsafeFromSystemIOResource_
   ->. RIO (UnsafeResource a)
 unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
-    return resource
+    Linear.return resource
   where
     Control.Builder {..} = Control.monadBuilder -- used in the do-notation
