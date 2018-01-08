@@ -8,11 +8,11 @@ module Prelude.Linear
     -- $linearized-prelude
     ($)
   , const
+  , id
   , swap
   , seq
   , curry
   , uncurry
-  , id
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -24,13 +24,6 @@ module Prelude.Linear
   , Movable(..)
   , lseq
   , dup3
-    -- * Linear monad hierarchy
-    -- $ monad
-  , LFunctor(..)
-  , LApplicative(..)
-  , LMonad(..)
-  , lreturn
-  , ljoin
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
@@ -251,61 +244,3 @@ instance Dupable (Unrestricted a) where
 
 instance Movable (Unrestricted a) where
   move (Unrestricted a) = Unrestricted (Unrestricted a)
-
--- $monad
-
--- XXX: even if the monad hierarchy is in the Prelude. This should probably be
--- moved somewhere else in order to use namespace rather than the rather
--- invasive `l` prefix in front of everything (plus, that would make infix
--- symbols possible again)
-
--- TODO: explain that the category of linear function is self-enriched, and that
--- this is a hierarchy of enriched monads. In order to have some common vocabulary.
-
--- There is also room for another type of functor where map has type `(a ->.b)
--- -> f a ->. f b`. `[]` and `Maybe` are such functors (they are regular
--- (endo)functors of the category of linear functions whereas `LFunctor` are
--- enriched functors). A Traversable hierarchy would start with non-enriched
--- functors.
-
--- TODO: make the laws explicit
-
--- | Enriched linear functors.
-class LFunctor f where
-  lfmap :: (a ->. b) ->. f a ->. f b
-
--- | Enriched linear applicative functors
-class LFunctor f => LApplicative f where
-  lpure :: a ->. f a
-  lap :: f (a ->. b) ->. f a ->. f b
-
--- | Enriched linear monads
-class LApplicative m => LMonad m where
-  lbind :: m a ->. (a ->. m b) ->. m b
-  lsc :: m () ->. m a ->. m a
-
--- | Handles pattern-matching failure in do-notation. See 'Control.Monad.Fail'.
-class LMonad m => LMonadFail m where
-  lfail :: String -> m a
-
-{-# INLINE lreturn #-}
-lreturn :: LMonad m => a ->. m a
-lreturn x = lpure x
-
-ljoin :: LMonad m => m (m a) ->. m a
-ljoin action = action `lbind` id
-
--- | Type of 'monadBuilder'. Note how the constraint on @m@ varies depending on
--- the field. The constraints are solved lazily when a field is used by the do
--- notation (in particular, if you don't do a pattern-matching, then you don't
--- need a 'LMonadFail').
-data BuilderType = Builder
-  { (>>=) :: forall m a b. LMonad m => m a ->. (a ->. m b) ->. m b
-  , (>>) :: forall m b. LMonad m => m () ->. m b ->. m b
-  , fail :: forall m a. LMonadFail m => String -> m a
-  }
-
--- | A builder to be used with @-XRebindableSyntax@ in conjunction with
--- @RecordWildCards@
-monadBuilder :: BuilderType
-monadBuilder = Builder { (>>=) = lbind, (>>) = lsc, fail = lfail }

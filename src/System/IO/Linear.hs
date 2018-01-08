@@ -1,5 +1,7 @@
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -17,11 +19,6 @@ module System.IO.Linear
   , fromSystemIO
   , fromSystemIOU
   , withLinearIO
-  -- * Monadic primitives
-  -- $monad
-  , BuilderType(..)
-  , builder
-  , return
   -- * Ref
   -- $ioref
   , newIORef
@@ -38,6 +35,8 @@ import Data.IORef (IORef)
 import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
+import qualified Control.Monad.Linear as Linear
+import qualified Control.Monad.Linear.Builder as Linear
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO, return, (>>=), (>>))
 import qualified Unsafe.Linear as Unsafe
@@ -83,41 +82,47 @@ toSystemIO = Unsafe.coerce -- basically just subtyping
 withLinearIO :: IO (Unrestricted a) -> System.IO a
 withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
 
--- $monad
+-- * Monadic interface
 
-return :: a ->. IO a
-return a = IO $ \s -> (# s, a #)
+instance Linear.Functor IO where
+  fmap :: forall a b. (a ->. b) ->. IO a ->. IO b
+  fmap f x = IO $ \s ->
+      cont (unIO x s) f
+    where
+      -- XXX: long line
+      cont :: (# State# RealWorld, a #) ->. (a ->. b) ->. (# State# RealWorld, b #)
+      cont (# s', a #) f' = (# s', f' a #)
 
--- TODO: example of builder
+instance Linear.Applicative IO where
+  pure :: forall a. a ->. IO a
+  pure a = IO $ \s -> (# s, a #)
 
--- | Type of 'Builder'
-data BuilderType = Builder
-  { (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
-  , (>>) :: forall b. IO () ->. IO b ->. IO b
-  }
+  (<*>) :: forall a b. IO (a ->. b) ->. IO a ->. IO b
+  f <*> x = do
+      f' <- f
+      x' <- x
+      Linear.pure $ f' x'
+    where
+      -- XXX: why must I declare `return` here? Why does this type even work?
+      return :: Int
+      return = 0
+      Linear.Builder { .. } = Linear.monadBuilder
 
--- | A builder to be used with @-XRebindableSyntax@ in conjunction with
--- @RecordWildCards@
-builder :: BuilderType
-builder =
-  let
-    (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
-    x >>= f = IO $ \s ->
-        cont (unIO x s) f
-      where
-        -- XXX: long line
-        cont :: (# State# RealWorld, a #) ->. (a ->. IO b) ->. (# State# RealWorld, b #)
-        cont (# s', a #) f' = unIO (f' a) s'
+instance Linear.Monad IO where
+  (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
+  x >>= f = IO $ \s ->
+      cont (unIO x s) f
+    where
+      -- XXX: long line
+      cont :: (# State# RealWorld, a #) ->. (a ->. IO b) ->. (# State# RealWorld, b #)
+      cont (# s', a #) f' = unIO (f' a) s'
 
-    (>>) :: forall b. IO () ->. IO b ->. IO b
-    x >> y = IO $ \s ->
-        cont (unIO x s) y
-      where
-        cont :: (# State# RealWorld, () #) ->. IO b ->. (# State# RealWorld, b #)
-        cont (# s', () #) y' = unIO y' s'
-
-  in
-    Builder{..}
+  (>>) :: forall b. IO () ->. IO b ->. IO b
+  x >> y = IO $ \s ->
+      cont (unIO x s) y
+    where
+      cont :: (# State# RealWorld, () #) ->. IO b ->. (# State# RealWorld, b #)
+      cont (# s', () #) y' = unIO y' s'
 
 -- $ioref
 --

@@ -17,6 +17,8 @@ cabal-version: >=1.10
 library
   hs-source-dirs: src
   exposed-modules:
+    Control.Monad.Linear
+    Control.Monad.Linear.Builder
     Foreign.Marshal.Pure
     Prelude.Linear
     System.IO.Linear

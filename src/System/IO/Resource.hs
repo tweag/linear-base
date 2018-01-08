@@ -46,6 +46,8 @@ import Control.Exception (onException, mask, finally)
 import Control.Monad (fmap, fail)
   -- XXX: ^ should be imported qualified. Fail should be made available in a
   -- builder.
+import qualified Control.Monad.Linear as Linear
+import qualified Control.Monad.Linear.Builder as Linear
 import Data.Coerce
 import qualified Data.IORef as System
 import Data.IORef (IORef)
@@ -97,7 +99,7 @@ run (RIO action) = do
         result <- action'
         Linear.return (move result)
       where
-        Linear.Builder{..} = Linear.builder -- used in the do-notation
+        Linear.Builder{..} = Linear.monadBuilder -- used in the do-notation
 
 -- | Should not be applied to a function that acquires or releases resources.
 unsafeFromSystemIO :: System.IO a ->. RIO a
@@ -124,14 +126,14 @@ builder =
         a <- unRIO x releaseMap
         unRIO (f a) releaseMap)
       where
-        Linear.Builder {..} = Linear.builder -- used in the do-notation
+        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
     (>>) :: forall b. RIO () ->. RIO b ->. RIO b
     x >> y = RIO (\releaseMap -> do
         unRIO x releaseMap
         unRIO y releaseMap)
       where
-        Linear.Builder {..} = Linear.builder -- used in the do-notation
+        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
   in
     Builder{..}
 
@@ -200,7 +202,7 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
       where
-        Linear.Builder {..} = Linear.builder -- used in the do-notation
+        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 unsafeAcquire
   :: Linear.IO (Unrestricted a)
@@ -216,7 +218,7 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
     Linear.return (UnsafeResource (releaseKey releaseMap) resource))
   where
-    Linear.Builder {..} = Linear.builder -- used in the do-notation
+    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
     releaseKey releaseMap =
       case IntMap.null releaseMap of
