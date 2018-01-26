@@ -98,7 +98,6 @@ unsafeFromSystemIO action = RIO $ \ _ -> Linear.fromSystemIO action
 
 -- $monad
 
-
 return :: a ->. RIO a
 return a = RIO $ \_releaseMap -> Linear.return a
 
@@ -128,7 +127,6 @@ builder =
         Linear.Builder {..} = Linear.builder -- used in the do-notation
   in
     Builder{..}
-
 
 -- $files
 
@@ -197,7 +195,6 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
       where
         Linear.Builder {..} = Linear.builder -- used in the do-notation
 
--- XXX: long lines
 unsafeAcquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
@@ -205,7 +202,11 @@ unsafeAcquire
 unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
     Unrestricted resource <- acquire
     Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
-    () <- Linear.writeIORef rrm (ReleaseMap (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
+    () <-
+      Linear.writeIORef
+        rrm
+        (ReleaseMap
+          (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
     Linear.return $ UnsafeResource (releaseKey releaseMap) resource)
   where
     Linear.Builder {..} = Linear.builder -- used in the do-notation
@@ -215,17 +216,22 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         True -> 0
         False -> fst (IntMap.findMax releaseMap) + 1
 
--- XXX: long lines
-unsafeFromSystemIOResource :: (a -> System.IO b) -> UnsafeResource a ->. RIO (Unrestricted b, UnsafeResource a)
-unsafeFromSystemIOResource action (UnsafeResource key resource) = unsafeFromSystemIO $ do
-    c <- action resource
-    P.return (Unrestricted c, UnsafeResource key resource)
+unsafeFromSystemIOResource
+  :: (a -> System.IO b)
+  -> UnsafeResource a
+  ->. RIO (Unrestricted b, UnsafeResource a)
+unsafeFromSystemIOResource action (UnsafeResource key resource) =
+    unsafeFromSystemIO $ do
+      c <- action resource
+      P.return (Unrestricted c, UnsafeResource key resource)
   where
     (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
     (>>=) = (P.>>=)
 
--- XXX: long lines
-unsafeFromSystemIOResource_ :: (a -> System.IO ()) -> UnsafeResource a ->. RIO (UnsafeResource a)
+unsafeFromSystemIOResource_
+  :: (a -> System.IO ())
+  -> UnsafeResource a
+  ->. RIO (UnsafeResource a)
 unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
     return resource
