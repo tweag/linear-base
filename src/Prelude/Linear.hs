@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Prelude.Linear
@@ -8,6 +9,8 @@ module Prelude.Linear
   , const
   , swap
   , seq
+  , curry
+  , uncurry
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -18,16 +21,19 @@ module Prelude.Linear
   , Dupable(..)
   , Movable(..)
   , lseq
-
+  , dup3
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
 
 import qualified Unsafe.Linear as Unsafe
+import GHC.Types
 import Prelude hiding
   ( ($)
   , const
   , seq
+  , curry
+  , uncurry
   )
 import qualified Prelude
 
@@ -59,6 +65,17 @@ swap (x,y) = (y,x)
 -- cannot be linear in it's first argument.
 seq :: a -> b ->. b
 seq x = Unsafe.toLinear (Prelude.seq x)
+
+
+-- | Beware, 'curry' is not compatible with the standard one because it is
+-- higher-order and we don't have multiplicity polymorphism yet.
+curry :: ((a, b) ->. c) ->. a ->. b ->. c
+curry f x y = f (x, y)
+
+-- | Beware, 'uncurry' is not compatible with the standard one because it is
+-- higher-order and we don't have multiplicity polymorphism yet.
+uncurry :: (a ->. b ->. c) ->. (a, b) ->. c
+uncurry f (x,y) = f x y
 
 -- $ unrestricted
 
@@ -104,6 +121,15 @@ class Consumable a => Dupable a where
 class Dupable a => Movable a where
   move :: a ->. Unrestricted a
 
+dup3 :: Dupable a => a ->. (a, a, a)
+dup3 x = oneMore $ dup x
+  where
+    oneMore :: Dupable a => (a, a) ->. (a, a, a)
+    oneMore (y, z) = flatten (y, dup z)
+
+    flatten :: (a, (a, a)) ->. (a, a, a)
+    flatten (y, (z, w)) = (y, z, w)
+
 instance Consumable () where
   consume () = ()
 
@@ -125,7 +151,61 @@ instance Movable Bool where
   move True = Unrestricted True
   move False = Unrestricted False
 
--- TODO: instances for Int, primitive tuples
+instance Consumable Int where
+  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int#' and using it several times. /!\
+  consume (I# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Int where
+  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int#' and using it several times. /!\
+  dup (I# i) = Unsafe.toLinear (\j -> (I# j, I# j)) i
+
+instance Movable Int where
+  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int#' and using it several times. /!\
+  move (I# i) = Unsafe.toLinear (\j -> Unrestricted (I# j)) i
+
+-- TODO: instances for longer primitive tuples
+-- TODO: default instances based on the Generic framework
+
+instance (Consumable a, Consumable b) => Consumable (a, b) where
+  consume (a, b) = consume a `lseq` consume b
+
+instance (Dupable a, Dupable b) => Dupable (a, b) where
+  dup (a, b) = shuffle (dup a) (dup b)
+    where
+      shuffle :: (a, a) ->. (b, b) ->. ((a, b), (a, b))
+      shuffle (a', a'') (b', b'') = ((a', b'), (a'', b''))
+
+instance (Movable a, Movable b) => Movable (a, b) where
+  move (a, b) = liftu (move a) (move b)
+    where
+       -- XXX: this is merely an application of 'Unrestricted' being a linear
+       -- applicative functor of some sort.
+      liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted (a, b)
+      liftu (Unrestricted a') (Unrestricted b') = Unrestricted (a', b')
+
+instance (Consumable a, Consumable b, Consumable c) => Consumable (a, b, c) where
+  consume (a, b, c) = consume a `lseq` consume b `lseq` consume c
+
+instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
+  dup (a, b, c) = shuffle (dup a) (dup b) (dup c)
+    where
+      shuffle :: (a, a) ->. (b, b) ->. (c, c) ->. ((a, b, c), (a, b, c))
+      shuffle (a', a'') (b', b'') (c', c'') = ((a', b', c'), (a'', b'', c''))
+
+instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
+  move (a, b, c) = liftu (move a) (move b) (move c)
+    where
+      liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted c ->. Unrestricted (a, b, c)
+      liftu (Unrestricted a') (Unrestricted b') (Unrestricted c') = Unrestricted (a', b', c')
 
 instance Consumable a => Consumable [a] where
   consume [] = ()
