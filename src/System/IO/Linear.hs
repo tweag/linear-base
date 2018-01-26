@@ -105,9 +105,6 @@ instance Linear.Applicative IO where
       x' <- x
       Linear.pure $ f' x'
     where
-      -- XXX: why must I declare `return` here? Why does this type even work?
-      return :: Int
-      return = 0
       Linear.Builder { .. } = Linear.monadBuilder
 
 instance Linear.Monad IO where

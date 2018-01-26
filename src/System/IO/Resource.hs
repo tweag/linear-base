@@ -98,7 +98,7 @@ run (RIO action) = do
     moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
     moveLinearIO action' = do
         result <- action'
-        Linear.return (move result)
+        return $ move result
       where
         Linear.Builder{..} = Linear.monadBuilder -- used in the do-notation
 
@@ -125,9 +125,6 @@ instance Linear.Applicative RIO where
       x' <- x
       Linear.pure $ f' x'
     where
-      -- XXX: why must I declare `return` here? Why does this type even work?
-      return :: Int
-      return = 0
       Linear.Builder { .. } = Linear.monadBuilder
 
 
@@ -137,9 +134,6 @@ instance Linear.Monad RIO where
       a <- unRIO x releaseMap
       unRIO (f a) releaseMap
     where
-      return :: (Bool, Int)
-      return = (True, 0)
-
       Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
   (>>) :: forall b. RIO () ->. RIO b ->. RIO b
@@ -147,9 +141,6 @@ instance Linear.Monad RIO where
       unRIO x releaseMap
       unRIO y releaseMap
     where
-      return :: (Int, Bool)
-      return = (-1, False)
-
       Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 -- $files
@@ -166,11 +157,8 @@ openFile path mode = do
     h <- unsafeAcquire
       (Linear.fromSystemIOU $ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
-    Linear.return $ Handle h
+    return $ Handle h
   where
-    -- XXX: weird return again
-    return :: Float
-    return = 1.2
     Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 hClose :: Handle ->. RIO ()
@@ -220,9 +208,6 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
       where
-        -- XXX: weird return again
-        return :: Int -> Int
-        return = succ
         Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 unsafeAcquire
@@ -237,12 +222,8 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         rrm
         (ReleaseMap
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
-    Linear.return (UnsafeResource (releaseKey releaseMap) resource))
+    return $ UnsafeResource (releaseKey releaseMap) resource)
   where
-    -- XXX: weird return again
-    return :: [()]
-    return = [()]
-
     Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
     releaseKey releaseMap =
@@ -271,9 +252,6 @@ unsafeFromSystemIOResource_
   ->. RIO (UnsafeResource a)
 unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
-    Linear.return resource
+    return resource
   where
-    return :: [a]
-    return = []
-
     Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
