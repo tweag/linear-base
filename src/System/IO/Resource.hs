@@ -41,9 +41,8 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (onException, mask, finally)
-import Control.Monad (fmap, fail)
-  -- XXX: ^ should be imported qualified. Fail should be made available in a
-  -- builder.
+import qualified Control.Monad as Unrestricted (fmap)
+import qualified Control.Monad.Builder as Unrestricted
 import qualified Control.Monad.Linear as Linear
 import qualified Control.Monad.Linear.Builder as Linear
 import Data.Coerce
@@ -55,10 +54,6 @@ import Data.Text (Text)
 import qualified Data.Text.IO as Text
 import Prelude.Linear hiding (IO, ($))
 import Prelude (($))
-import qualified Prelude as P
-  -- XXX: ^ is only imported for a few monadic primitives. Should be replaced by
-  -- importing Control.Monad qualified (for return) and a generic builder for
-  -- monads.
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
@@ -78,20 +73,16 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease (fmap snd (IntMap.toList releaseMap))))
+           safeRelease $ Unrestricted.fmap snd $ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
-    -- XXX: weird return again
-    return :: Bool
-    return = True
-    -- Use regular IO binds
-    (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
-    (>>=) = (P.>>=)
+    Unrestricted.Builder{..} = Unrestricted.monadBuilder
+      -- used in the do-notation
 
     safeRelease :: [Linear.IO ()] -> System.IO ()
-    safeRelease [] = P.return ()
+    safeRelease [] = return ()
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
@@ -238,13 +229,10 @@ unsafeFromSystemIOResource
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
-      P.return (Unrestricted c, UnsafeResource key resource))
+      return (Unrestricted c, UnsafeResource key resource))
   where
-    return :: ()
-    return = ()
-
-    (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
-    (>>=) = (P.>>=)
+    Unrestricted.Builder{..} = Unrestricted.monadBuilder
+      -- used in the do-notation
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
