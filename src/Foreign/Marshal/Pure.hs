@@ -2,50 +2,29 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
--- | This module introduces primitives to /safely/ store manually managed data
--- (that is not managed by the GC). The benefit of manually managed data is that
--- it does not add to the GC pressure, and help ensure predictable latency
--- (/e.g./ in distributed applications). The cost is that memory management is
--- much more explicit: the programmer has to allocate and free memory
--- manually. Safety (in particular that every pointer is freed) is enforced by
--- linear types, which constrain usage, in particular sharing. Manually managed
--- data types also have less convenient syntax since they are not directly
--- supported by the compiler.
+-- | This module introduces primitives to /safely/ allocate and discard
+-- in-memory storage for values /explicitly/. Values discarded explicitly don't
+-- need to be managed by the garbage collector (GC), which therefore has less
+-- work to do. Less work for the GC can sometimes mean more predictable request
+-- latencies in multi-threaded and distributed applications.
 --
--- This module focuses on /pure/ manually managed data. That is data types like
--- standard Haskell. The only difference is that their lifetime is not managed
--- by the GC. Despite calling @malloc@ and @free@ under the hood, the entire API
--- is pure, and does not make calls in IO.
+-- This module is meant to be imported qualified.
 --
--- You can find example data structure implementation in the modules
--- @Foreign.List@ and @Foreign.Heap@ of the @example@ directory in the source
--- repository.
+-- == Examples
 --
--- The allocation API is organised around a notion of memory 'Pool'. From the API
--- point of view, a pool serves as a source of linearity. That is: it ensures
--- that the allocation primitive need not take a continuation to delimit its
--- lifetime. Besides convenience, it avoids needlessly preventing functions from
--- being tail-recursive.
+-- You can find example data structure implementations in @Foreign.List@ and
+-- @Foreign.Heap@ of the @example@ directory in the source repository.
+--
+-- == Pools
+--
+-- The module interface is structured around a notion of memory 'Pool'. Passing
+-- linear pool arguments is an alternative to passing continuations to
+-- functions. Passing continuations can break tail-recursion in certain cases.
 --
 -- Pools play another role: resilience to exceptions. If an exception is raised,
--- all the data in the pool is deallocated. It does not, however, impose a stack
--- discipline: data in pools is normally freed by the destruction primitives of ,
--- only in case of exception are the pool deallocated in a stack-like
--- manner. Moreover, pool A can have data pointing to pool B, while at the same
--- time, pool B having data pointing to pool A.
+-- all the data in the pool is deallocated.
 --
--- The current API (ab)uses the 'Storable' abstraction for expediency. However,
--- this is not correct: even if we ignore the fact that the 'Storable' interface
--- is allowed to perform arbitrary 'IO', and that it makes no promise to
--- preserve linearity, 'Storable' is intended for C ABI-compatible
--- interface. Our goal is not interfacing with C, and, in fact, the internal
--- representation of manually managed data is not guaranteed to be sensible from
--- the point of view of C.
---
--- Functions in this module are meant to be qualified.
-
--- TODO: add link to an example in module header
--- TODO: change some words into link to the relevant API entry in the above description.
+-- Data from one pool can refer to data in another pool and vice versa.
 
 module Foreign.Marshal.Pure
   ( Pool
@@ -68,11 +47,10 @@ import qualified Unsafe.Linear as Unsafe
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
 -- details.
 
--- | A 'Pool' can be 'consume'-ed. This is a no-op: it does not deallocate the
--- data in that pool. It cannot as there may still be accessible data in the
--- pool. It simply makes it impossible to add new data to the pool. It is
--- actually necessary to so consume a pool allocated with 'withPool' in order to
--- write a well-typed scope @Pool ->. Unrestricted b@.
+-- | Pools represent collections of values. A 'Pool' can be 'consume'-ed. This
+-- is a no-op: it does not deallocate the data in that pool. It cannot do so,
+-- because accessible values might still exist. Consuming a pool simply makes it
+-- impossible to add new data to the pool.
 data Pool = Pool
 
 -- TODO: document individual functions
@@ -86,13 +64,13 @@ instance Consumable Pool where
 instance Dupable Pool where
   dup Pool = (Pool, Pool)
 
--- XXX: this indirection is possibly not necessary. It's here because the inner
--- Ptr must be unrestricted (in order to implement deconstruct at the moment).
 -- | 'Box a' is the abstract type of manually managed data. It can be used as
 -- part of data type definitions in order to store linked data structure off
 -- heap. See @Foreign.List@ and @Foreign.Pair@ in the @examples@ directory of
 -- the source repository.
 data Box a where
+-- XXX: this indirection is possibly not necessary. It's here because the inner
+-- Ptr must be unrestricted (in order to implement deconstruct at the moment).
   Box :: Ptr a -> Box a
 
 -- XXX: if Box is a newtype, can be derived
