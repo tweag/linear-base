@@ -92,7 +92,7 @@ run (RIO action) = do
       where
         Linear.Builder{..} = Linear.builder -- used in the do-notation
 
--- | Should not be applied to a function which acquires or releases resources.
+-- | Should not be applied to a function that acquires or releases resources.
 unsafeFromSystemIO :: System.IO a ->. RIO a
 unsafeFromSystemIO action = RIO $ \ _ -> Linear.fromSystemIO action
 

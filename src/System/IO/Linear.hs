@@ -10,7 +10,7 @@
 -- if the definition for 'IO' found here is upstreamed in "System.IO".
 --
 -- It will be much more pleasant when multiplicity-polymorphism has been
--- implemented, in this case it will really superseed IO.
+-- implemented, in this case it will really supersede IO.
 
 module System.IO.Linear
   ( IO(..)
