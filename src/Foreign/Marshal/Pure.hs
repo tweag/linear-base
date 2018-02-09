@@ -47,6 +47,7 @@ module Foreign.Marshal.Pure
 
 import Control.Exception
 import Data.Kind (Constraint)
+import Data.Word (Word8)
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
 import Foreign.Ptr
@@ -88,6 +89,7 @@ class KnownRepresentable a where
 instance KnownRepresentable Word -- TODO: more word types
 instance KnownRepresentable Int
 instance KnownRepresentable (Ptr a)
+instance KnownRepresentable ()
 instance
   (KnownRepresentable a, KnownRepresentable b)
   => KnownRepresentable (a, b) where
@@ -109,6 +111,42 @@ instance Storable a => Storable (Unrestricted a) where
   poke ptr (Unrestricted a) = poke (castPtr ptr :: Ptr a) a
 
 instance KnownRepresentable a => KnownRepresentable (Unrestricted a) where
+  storable | Dict <- storable @a = Dict
+
+-- Below is a KnownRepresentable instance for Maybe. The Storable instance is
+-- taken from
+-- https://www.schoolofhaskell.com/user/snoyberg/random-code-snippets/storable-instance-of-maybe
+--
+-- aspiwack: This does not yield very good data representation for the general
+-- case. But I believe that to improve on it we need to rethink the abstraction
+-- in more depths.
+
+instance Storable a => Storable (Maybe a) where
+  sizeOf x = sizeOf (stripMaybe x) + 1
+  alignment x = alignment (stripMaybe x)
+  peek ptr = do
+      filled <- peekByteOff ptr $ sizeOf $ stripMaybe $ stripPtr ptr
+      case filled == (1 :: Word8) of
+        True -> do
+          x <- peek (stripMaybePtr ptr)
+          return (Just x)
+        False ->
+          return Nothing
+  poke ptr Nothing = pokeByteOff ptr (sizeOf $ stripMaybe $ stripPtr ptr) (0 :: Word8)
+  poke ptr (Just a) = do
+      poke (stripMaybePtr ptr) a
+      pokeByteOff ptr (sizeOf a) (1 :: Word8)
+
+stripMaybe :: Maybe a -> a
+stripMaybe _ = error "stripMaybe"
+
+stripMaybePtr :: Ptr (Maybe a) -> Ptr a
+stripMaybePtr = castPtr
+
+stripPtr :: Ptr a -> a
+stripPtr _ = error "stripPtr"
+
+instance KnownRepresentable a => KnownRepresentable (Maybe a) where
   storable | Dict <- storable @a = Dict
 
 -- | Laws of 'Representable':
@@ -159,6 +197,10 @@ instance
   toKnown (a, b, c) = (toKnown a, toKnown b, toKnown c)
   ofKnown (x, y, z) = (ofKnown x, ofKnown y, ofKnown z)
 
+instance Representable a => Representable (Maybe a) where
+  type AsKnown (Maybe a) = Maybe (AsKnown a)
+  toKnown = fmap toKnown
+  ofKnown = fmap ofKnown
 
 -- | This is an easier way to create an instance of 'Representable'. It is a bit
 -- abusive to use a type class for this (after all, it almost never makes sense
