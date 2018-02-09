@@ -1,8 +1,10 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -34,6 +36,8 @@
 
 module Foreign.Marshal.Pure
   ( KnownRepresentable
+  , Representable(..)
+  , MkRepresentable(..)
   , Pool
   , withPool
   , Box
@@ -107,7 +111,7 @@ instance Storable a => Storable (Unrestricted a) where
 instance KnownRepresentable a => KnownRepresentable (Unrestricted a) where
   storable | Dict <- storable @a = Dict
 
--- | Laws for the 'Representable':
+-- | Laws of 'Representable':
 --
 -- * 'toKnown' must be total
 -- * 'ofKnown' may be partial, but must be total on the image of 'toKnown'
@@ -117,8 +121,65 @@ class (KnownRepresentable (AsKnown a)) => Representable a where
 
   toKnown :: a ->. AsKnown a
   ofKnown :: AsKnown a ->. a
--- TODO: such retraction have an algebra (mostly: they form a category), we
--- ought to provide a way to compose them.
+
+  default toKnown
+    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => a ->. AsKnown a
+  default ofKnown
+    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a ->. a
+
+  toKnown a = toKnown $ toRepr a
+  ofKnown b = ofRepr $ ofKnown b
+
+-- Some boilerplate: all the KnownRepresentable are Representable, by virtue of
+-- the identity being a retraction. We generalise a bit for the types of tuples:
+-- tuples of Representable (not only KnownRepresentable) are Representable.
+instance Representable Word where
+  type AsKnown Word = Word
+  toKnown = id
+  ofKnown = id
+instance Representable Int where
+  type AsKnown Int = Int
+  toKnown = id
+  ofKnown = id
+instance Representable (Ptr a) where
+  type AsKnown (Ptr a) = Ptr a
+  toKnown = id
+  ofKnown = id
+instance
+  (Representable a, Representable b)
+  => Representable (a, b) where
+  type AsKnown (a, b) = (AsKnown a, AsKnown b)
+  toKnown (a, b) = (toKnown a, toKnown b)
+  ofKnown (x, y) = (ofKnown x, ofKnown y)
+
+instance
+  (Representable a, Representable b, Representable c)
+  => Representable (a, b, c) where
+  type AsKnown (a, b, c) = (AsKnown a, AsKnown b, AsKnown c)
+  toKnown (a, b, c) = (toKnown a, toKnown b, toKnown c)
+  ofKnown (x, y, z) = (ofKnown x, ofKnown y, ofKnown z)
+
+
+-- | This is an easier way to create an instance of 'Representable'. It is a bit
+-- abusive to use a type class for this (after all, it almost never makes sense
+-- to use this as a constraint). But it works in practice.
+--
+-- To use, define an instance of @MkRepresentable <myType> <intermediateType>@
+-- then declare the following instance:
+--
+-- @instance Representable <myType> where {type AsKnown = AsKnown <intermediateType>}@
+--
+-- And the default instance mechanism will create the appropriate
+-- 'Representable' instance.
+--
+-- Laws of 'MkRepresentable':
+--
+-- * 'toRepr' must be total
+-- * 'ofRepr' may be partial, but must be total on the image of 'toRepr'
+-- * @ofRepr . toRepr = id@
+class Representable b => MkRepresentable a b | a -> b where
+  toRepr :: a ->. b
+  ofRepr :: b ->. a
 
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
@@ -229,6 +290,10 @@ instance Storable (Box a) where
     poke (castPtr ptr :: Ptr (Ptr (DLL (Ptr ())), Ptr a)) (pool, ptr')
 
 instance KnownRepresentable (Box a) where
+instance Representable (Box a) where
+  type AsKnown (Box a) = Box a
+  ofKnown = id
+  toKnown = id
 
 -- TODO: a way to store GC'd data using a StablePtr
 
