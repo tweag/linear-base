@@ -1,6 +1,10 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- | This module introduces primitives to /safely/ allocate and discard
 -- in-memory storage for values /explicitly/. Values discarded explicitly don't
@@ -35,6 +39,7 @@ module Foreign.Marshal.Pure
   ) where
 
 import Control.Exception
+import Data.Kind (Constraint)
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
 import Foreign.Ptr
@@ -43,6 +48,39 @@ import Foreign.Storable.Tuple ()
 import Prelude.Linear
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
+
+-- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
+-- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
+-- the one that was released with 8.2, and that `mtl` fails to compile against
+-- it), therefore, I'm redefining `Dict` here, as it's cheap.
+data Dict :: Constraint -> * where
+  Dict :: c => Dict c
+
+-- TODO: organise into sections
+
+-- | This abstract type class represents values natively known to have a GC-less
+-- implementation.
+class KnownRepresentable a where
+  storable :: Dict (Storable a)
+
+  default storable :: Storable a => Dict (Storable a)
+  storable = Dict
+  -- This ought to be read a `newtype` around `Storable`.
+
+instance KnownRepresentable Word -- TODO: more word types
+instance KnownRepresentable Int
+instance
+  (KnownRepresentable a, KnownRepresentable b)
+  => KnownRepresentable (a, b) where
+  storable =
+    case (storable @a, storable @b) of
+      (Dict, Dict) -> Dict
+instance
+  (KnownRepresentable a, KnownRepresentable b, KnownRepresentable c)
+  => KnownRepresentable (a, b, c) where
+  storable =
+    case (storable @a, storable @b, storable @c) of
+      (Dict, Dict, Dict) -> Dict
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
 -- details.
