@@ -1,10 +1,12 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -- | This module introduces primitives to /safely/ allocate and discard
 -- in-memory storage for values /explicitly/. Values discarded explicitly don't
@@ -31,7 +33,8 @@
 -- Data from one pool can refer to data in another pool and vice versa.
 
 module Foreign.Marshal.Pure
-  ( Pool
+  ( KnownRepresentable
+  , Pool
   , withPool
   , Box
   , alloc
@@ -59,16 +62,28 @@ data Dict :: Constraint -> * where
 -- TODO: organise into sections
 
 -- | This abstract type class represents values natively known to have a GC-less
--- implementation.
+-- implementation. Basically, these are sequences (represented as tuples) of
+-- base types.
 class KnownRepresentable a where
   storable :: Dict (Storable a)
 
   default storable :: Storable a => Dict (Storable a)
   storable = Dict
-  -- This ought to be read a `newtype` around `Storable`.
+  -- This ought to be read a `newtype` around `Storable`. This type is abstract,
+  -- because using Storable this way is highly unsafe: Storable uses IO so we
+  -- will call unsafePerformIO, and Storable doesn't guarantee linearity. But
+  -- Storable comes with a lot of machinery, in particular for
+  -- architecture-independent alignment. So we can depend on it.
+  --
+  -- So, we restrict ourselves to known instances that we trust. For base types
+  -- there is no reason to expect problems. Tuples are a bit more subtle in that
+  -- they use non-linear operations. But the way they are used should be ok. At
+  -- any rate: in case a bug is found, the tuple instances are a good place to
+  -- look.
 
 instance KnownRepresentable Word -- TODO: more word types
 instance KnownRepresentable Int
+instance KnownRepresentable (Ptr a)
 instance
   (KnownRepresentable a, KnownRepresentable b)
   => KnownRepresentable (a, b) where
@@ -81,6 +96,30 @@ instance
   storable =
     case (storable @a, storable @b, storable @c) of
       (Dict, Dict, Dict) -> Dict
+
+-- TODO: move to the definition of Unrestricted
+instance Storable a => Storable (Unrestricted a) where
+  sizeOf _ = sizeOf (undefined :: a)
+  alignment _ = alignment (undefined :: a)
+  peek ptr = Unrestricted <$> peek (castPtr ptr :: Ptr a)
+  poke ptr (Unrestricted a) = poke (castPtr ptr :: Ptr a) a
+
+instance KnownRepresentable a => KnownRepresentable (Unrestricted a) where
+  storable | Dict <- storable @a = Dict
+
+-- | Laws for the 'Representable':
+--
+-- * 'toKnown' must be total
+-- * 'ofKnown' may be partial, but must be total on the image of 'toKnown'
+-- * @ofKnown . toKnown == id@
+class (KnownRepresentable (AsKnown a)) => Representable a where
+  type AsKnown a :: *
+
+  toKnown :: a ->. AsKnown a
+  ofKnown :: AsKnown a ->. a
+-- TODO: such retraction have an algebra (mostly: they form a category), we
+-- ought to provide a way to compose them.
+
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
 -- details.
@@ -189,34 +228,57 @@ instance Storable (Box a) where
   poke ptr (Box pool ptr') =
     poke (castPtr ptr :: Ptr (Ptr (DLL (Ptr ())), Ptr a)) (pool, ptr')
 
+instance KnownRepresentable (Box a) where
+
 -- TODO: a way to store GC'd data using a StablePtr
 
 -- TODO: reference counted pointer. Remarks: rc pointers are Dupable but not
 -- Movable. In order to be useful, need some kind of borrowing on the values, I
 -- guess. 'Box' can be realloced, but not RC pointers.
 
--- XXX: We brazenly suppose that the `Storable` API can be seen as exposing
--- linear functions. It's not very robust. This also ties in the next point.
+reprPoke :: forall a. Representable a => Ptr a -> a ->. IO ()
+reprPoke ptr a | Dict <- storable @(AsKnown a) =
+  Unsafe.toLinear (poke (castPtr ptr :: Ptr (AsKnown a))) (toKnown a)
+
+reprNew :: forall a. Representable a => a ->. IO (Ptr a)
+reprNew a =
+    Unsafe.toLinear mkPtr a
+  where
+    -- XXX: should be improved by using linear IO
+    mkPtr :: a -> IO (Ptr a)
+    mkPtr a' | Dict <- storable @(AsKnown a) =
+      do
+        ptr0 <- malloc @(AsKnown a)
+        let ptr = castPtr ptr0 :: Ptr a
+        reprPoke ptr a'
+        return ptr
 
 -- TODO: Ideally, we would like to avoid having a boxed representation of the
 -- data before a pointer is created. A better solution is to have a destination
 -- passing-style API (but there is still some design to be done there). This
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
-alloc :: forall a. Storable a => a ->. Pool ->. Box a
+alloc :: forall a. Representable a => a ->. Pool ->. Box a
 alloc a (Pool pool) =
     Unsafe.toLinear mkPtr a
   where
+    -- XXX: should be improved by using linear IO
     mkPtr :: a -> Box a
     mkPtr a' = unsafeDupablePerformIO $ do
-      ptr <- new a'
+      ptr <- reprNew a'
       poolPtr <- insertAfter pool (castPtr ptr :: Ptr ())
       return (Box poolPtr ptr)
 
+-- TODO: would be better in linear IO, for we pretend that we are making an
+-- unrestricted 'a', where really we are not.
+reprPeek :: forall a. Representable a => Ptr a -> IO a
+reprPeek ptr | Dict <- storable @(AsKnown a) = do
+  knownRepr <- peek (castPtr ptr :: Ptr (AsKnown a))
+  return (ofKnown knownRepr)
 
-deconstruct :: Storable a => Box a ->. a
+deconstruct :: Representable a => Box a ->. a
 deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $ mask_ $ do
-  res <- peek ptr
+  res <- reprPeek ptr
   delete =<< peek poolPtr
   free ptr
   free poolPtr
