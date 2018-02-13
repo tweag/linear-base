@@ -188,6 +188,10 @@ instance Representable (Ptr a) where
   type AsKnown (Ptr a) = Ptr a
   toKnown = id
   ofKnown = id
+instance Representable () where
+  type AsKnown () = ()
+  toKnown = id
+  ofKnown = id
 instance
   (Representable a, Representable b)
   => Representable (a, b) where
