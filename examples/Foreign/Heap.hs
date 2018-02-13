@@ -1,5 +1,9 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | Implementation of pairing heaps stored off-heap
 
@@ -10,9 +14,6 @@ import qualified Foreign.List as List
 import Foreign.List (List)
 import qualified Foreign.Marshal.Pure as Manual
 import Foreign.Marshal.Pure (Pool, Box)
-import Foreign.Ptr
-import Foreign.Storable
-import Foreign.Storable.Tuple ()
 import Prelude.Linear hiding (foldl)
 
 data Heap k a
@@ -21,25 +22,33 @@ data Heap k a
 data NEHeap k a
   = Heap k a (Box (List (NEHeap k a)))
 
--- TODO: generate with Generic
-instance (Storable k, Storable a) => Storable (NEHeap k a) where
-  sizeOf _ = sizeOf (undefined :: (k, a, (Box (List.List (NEHeap k a)))))
-  alignment _ = alignment (undefined :: (k, a, (Box (List.List (NEHeap k a)))))
+instance (Manual.Representable k, Manual.Representable a)
+  => Manual.MkRepresentable (NEHeap k a) (k, a, Box (List (NEHeap k a))) where
 
-  peek ptr = do
-    (k, a, h) <- peek (castPtr ptr :: Ptr (k, a, (Box (List.List (NEHeap k a)))))
-    return $ Heap k a h
+  toRepr (Heap k a l) = (k, a, l)
+  ofRepr (k, a, l) = Heap k a l
 
-  poke ptr (Heap k a h) = poke (castPtr ptr :: Ptr (k, a, (Box (List.List (NEHeap k a))))) (k, a, h)
+instance (Manual.Representable k, Manual.Representable a) => Manual.Representable (NEHeap k a) where
+  type AsKnown (NEHeap k a) = Manual.AsKnown (k, a, (Box (List (NEHeap k a))))
+-- -- TODO: generate with Generic
+-- instance (Storable k, Storable a) => Storable (NEHeap k a) where
+--   sizeOf _ = sizeOf (undefined :: (k, a, (Box (List.List (NEHeap k a)))))
+--   alignment _ = alignment (undefined :: (k, a, (Box (List.List (NEHeap k a)))))
+
+--   peek ptr = do
+--     (k, a, h) <- peek (castPtr ptr :: Ptr (k, a, (Box (List.List (NEHeap k a)))))
+--     return $ Heap k a h
+
+--   poke ptr (Heap k a h) = poke (castPtr ptr :: Ptr (k, a, (Box (List.List (NEHeap k a))))) (k, a, h)
 
 -- * Non-empty heap primitives
 
-singletonN :: (Storable k, Storable a) => k ->. a ->. Pool ->. NEHeap k a
+singletonN :: (Manual.Representable k, Manual.Representable a) => k ->. a ->. Pool ->. NEHeap k a
 singletonN k a pool = Heap k a (Manual.alloc List.Nil pool)
 
 -- XXX: (Movable k, Ord k) is a bit stronger than strictly required. We could
 -- give a linear version of `Ord` instead.
-mergeN :: forall k a. (Storable k, Storable a, Movable k, Ord k) => NEHeap k a ->. NEHeap k a ->. Pool ->. NEHeap k a
+mergeN :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => NEHeap k a ->. NEHeap k a ->. Pool ->. NEHeap k a
 mergeN (Heap k1 a1 h1) (Heap k2 a2 h2) pool =
     testAndRebuild (move k1) a1 h1 (move k2) a2 h2 pool
   where
@@ -52,14 +61,14 @@ mergeN (Heap k1 a1 h1) (Heap k2 a2 h2) pool =
       else
         Heap k2' a2' (Manual.alloc (List.Cons (Heap k1' a1' h1') h2') pool')
 
-mergeN' :: forall k a. (Storable k, Storable a, Movable k, Ord k) => NEHeap k a ->. Heap k a ->. Pool ->. NEHeap k a
+mergeN' :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => NEHeap k a ->. Heap k a ->. Pool ->. NEHeap k a
 mergeN' h Empty pool = pool `lseq` h
 mergeN' h (NonEmpty h') pool = mergeN h (Manual.deconstruct h') pool
 
-extractMinN :: (Storable k, Storable a, Movable k, Ord k) => NEHeap k a ->. Pool ->. (k, a, Heap k a)
+extractMinN :: (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => NEHeap k a ->. Pool ->. (k, a, Heap k a)
 extractMinN (Heap k a h) pool = (k, a, pairUp (Manual.deconstruct h) pool)
 
-pairUp :: forall k a. (Storable k, Storable a, Movable k, Ord k) => List (NEHeap k a) ->. Pool ->. Heap k a
+pairUp :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => List (NEHeap k a) ->. Pool ->. Heap k a
 pairUp List.Nil pool = pool `lseq` Empty
 pairUp (List.Cons h r) pool = pairOne h (Manual.deconstruct r) (dup pool)
   where
@@ -78,18 +87,18 @@ pairUp (List.Cons h r) pool = pairOne h (Manual.deconstruct r) (dup pool)
 empty :: Heap k a
 empty = Empty
 
-singleton :: forall k a. (Storable k, Storable a) => k ->. a ->. Pool ->. Heap k a
+singleton :: forall k a. (Manual.Representable k, Manual.Representable a) => k ->. a ->. Pool ->. Heap k a
 singleton k a pool = NonEmpty $ singletonAlloc k a (dup pool)
   where
     singletonAlloc :: k ->. a ->. (Pool, Pool) ->. Box (NEHeap k a)
     singletonAlloc k' a' (pool1, pool2) =
       Manual.alloc (singletonN k' a' pool1) pool2
 
-extractMin :: (Storable k, Storable a, Movable k, Ord k) => Heap k a ->. Pool ->. Maybe (k, a, Heap k a)
+extractMin :: (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => Heap k a ->. Pool ->. Maybe (k, a, Heap k a)
 extractMin Empty pool = pool `lseq` Nothing
 extractMin (NonEmpty h) pool = Just $ extractMinN (Manual.deconstruct h) pool
 
-merge :: forall k a. (Storable k, Storable a, Movable k, Ord k) => Heap k a ->. Heap k a ->. Pool ->. Heap k a
+merge :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => Heap k a ->. Heap k a ->. Pool ->. Heap k a
 merge Empty h' pool = pool `lseq` h'
 merge (NonEmpty h) h' pool = NonEmpty $ neMerge (Manual.deconstruct h) h' (dup pool)
   where
@@ -100,7 +109,7 @@ merge (NonEmpty h) h' pool = NonEmpty $ neMerge (Manual.deconstruct h) h' (dup p
 -- * Heap sort
 
 -- | Guaranteed to yield pairs in ascending key order
-foldl :: forall k a b. (Storable k, Storable a, Movable k, Ord k) => (b ->. k ->. a ->. b) -> b ->. Heap k a ->. Pool ->. b
+foldl :: forall k a b. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => (b ->. k ->. a ->. b) -> b ->. Heap k a ->. Pool ->. b
 foldl f acc h pool = go acc h (dup pool)
   where
     go :: b ->. Heap k a ->. (Pool, Pool) ->. b
@@ -112,7 +121,7 @@ foldl f acc h pool = go acc h (dup pool)
       foldl f (f acc' k a) h' pool'
 
 -- | Strict: stream must terminate.
-unfold :: forall k a s. (Storable k, Storable a, Movable k, Ord k) => (s -> Maybe ((k, a), s)) -> s -> Pool ->. Heap k a
+unfold :: forall k a s. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => (s -> Maybe ((k, a), s)) -> s -> Pool ->. Heap k a
 unfold step seed pool = dispatch (step seed) pool
   where
     dispatch :: (Maybe ((k, a), s)) -> Pool ->. Heap k a
@@ -125,14 +134,14 @@ unfold step seed pool = dispatch (step seed) pool
 
 -- TODO: linear unfold: could apply to off-heap lists!
 
-ofList :: (Storable k, Storable a, Movable k, Ord k) => [(k, a)] -> Pool ->. Heap k a
+ofList :: (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => [(k, a)] -> Pool ->. Heap k a
 ofList l pool = unfold List.uncons l pool
 
 -- XXX: sorts in reverse
-toList :: (Storable k, Storable a, Movable k, Ord k) => Heap k a ->. Pool ->. [(k, a)]
+toList :: (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => Heap k a ->. Pool ->. [(k, a)]
 toList h pool = foldl (\l k a -> (k,a):l) [] h pool
 
-sort :: forall k a. (Storable k, Storable a, Movable k, Ord k, Movable a) => [(k, a)] -> [(k,a)]
+sort :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k, Movable a) => [(k, a)] -> [(k,a)]
 sort l = unUnrestricted $ Manual.withPool (\pool -> move $ sort' l (dup pool))
     -- XXX: can we avoid this call to `move`?
   where

@@ -11,12 +11,11 @@ import qualified Foreign.List as List
 import Foreign.List (List)
 import qualified Foreign.Marshal.Pure as Manual
 import Foreign.Marshal.Pure (Pool)
-import Foreign.Storable (Storable)
 import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Storable a, Movable a, Eq a) => List a ->. List a ->. Unrestricted Bool
+eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a ->. List a ->. Unrestricted Bool
 eqList l1 l2 =
     eqUL (move (List.toList l1)) (move (List.toList l2))
   where
