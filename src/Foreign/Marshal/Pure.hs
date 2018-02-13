@@ -1,3 +1,8 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+-- XXX: deactivate orphan instance warning as we're defining a few Storable
+-- instances here. It's not worth fixing as I [aspiwack] intend to change the
+-- interface for something more appropriate, which won't require these Storable
+-- instances.
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}

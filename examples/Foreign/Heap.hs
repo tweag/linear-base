@@ -14,9 +14,6 @@ import qualified Foreign.List as List
 import Foreign.List (List)
 import qualified Foreign.Marshal.Pure as Manual
 import Foreign.Marshal.Pure (Pool, Box)
-import Foreign.Ptr
-import Foreign.Storable
-import Foreign.Storable.Tuple ()
 import Prelude.Linear hiding (foldl)
 
 data Heap k a
