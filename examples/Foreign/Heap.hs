@@ -30,16 +30,6 @@ instance (Manual.Representable k, Manual.Representable a)
 
 instance (Manual.Representable k, Manual.Representable a) => Manual.Representable (NEHeap k a) where
   type AsKnown (NEHeap k a) = Manual.AsKnown (k, a, (Box (List (NEHeap k a))))
--- -- TODO: generate with Generic
--- instance (Storable k, Storable a) => Storable (NEHeap k a) where
---   sizeOf _ = sizeOf (undefined :: (k, a, (Box (List.List (NEHeap k a)))))
---   alignment _ = alignment (undefined :: (k, a, (Box (List.List (NEHeap k a)))))
-
---   peek ptr = do
---     (k, a, h) <- peek (castPtr ptr :: Ptr (k, a, (Box (List.List (NEHeap k a)))))
---     return $ Heap k a h
-
---   poke ptr (Heap k a h) = poke (castPtr ptr :: Ptr (k, a, (Box (List.List (NEHeap k a))))) (k, a, h)
 
 -- * Non-empty heap primitives
 
