@@ -34,15 +34,15 @@ module Foreign.Marshal.Pure
   , deconstruct
   ) where
 
+import Control.Exception
 import Foreign.Marshal.Alloc
+import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
+import Foreign.Storable.Tuple ()
 import Prelude.Linear
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
-
--- TODO: ignoring exceptions for the moment. So that I can get some tests to
--- work first.
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
 -- details.
@@ -51,34 +51,105 @@ import qualified Unsafe.Linear as Unsafe
 -- is a no-op: it does not deallocate the data in that pool. It cannot do so,
 -- because accessible values might still exist. Consuming a pool simply makes it
 -- impossible to add new data to the pool.
-data Pool = Pool
+data Pool where
+  Pool :: DLL (Ptr ()) -> Pool
+  -- /!\ Black magic: the pointers in the pool are only used to deallocate
+  -- dangling pointers. Therefore their 'sizeOf' does not matter. It is simpler
+  -- to cast all the pointers to some canonical type (here `Ptr ()`) so that we
+  -- don't have to deal with heterogeneous types. /!\
+
+-- Implementing a doubly-linked list with `Ptr`
+
+data DLL a = DLL { prev :: Ptr (DLL a), elt :: Ptr a, next :: Ptr (DLL a) }
+  deriving Eq
+
+-- XXX: probably replaceable by storable-generic
+instance Storable (DLL a) where
+  sizeOf _ = sizeOf (undefined :: (Ptr (DLL a), Ptr a, Ptr (DLL a)))
+  alignment _ = alignment (undefined :: (Ptr (DLL a), Ptr a, Ptr (DLL a)))
+
+  peek ptr = do
+    (p, e, n) <- peek (castPtr ptr :: Ptr (Ptr (DLL a), Ptr a, Ptr (DLL a)))
+    return $ DLL p e n
+
+  poke ptr (DLL p e n) =
+    poke (castPtr ptr :: Ptr (Ptr (DLL a), Ptr a, Ptr (DLL a))) (p, e, n)
+
+-- Precondition: in `insertAfter start ptr`, `next start` must be initalised,
+-- and so must be `prev =<< peek (next start)`
+insertAfter :: Storable a => DLL a -> a -> IO (Ptr (DLL a))
+insertAfter start ptr = do
+  secondLink <- peek $ next start
+  newLink <- DLL <$> new start <*> new ptr <*> new secondLink
+  poke (next start) newLink
+  poke (prev secondLink) newLink
+  new newLink
+
+delete :: DLL a -> IO ()
+delete link = do
+  prevLink <- peek $ prev link
+  nextLink <- peek $ next link
+  poke (next prevLink) nextLink
+  poke (prev nextLink) prevLink
+
+-- /Doubly-linked list
+
+-- @freeAll start end@ frees all pointer in the linked list. Assumes that @end@
+-- doesn't have a pointer, and indeed terminates the list.
+--
+freeAll :: DLL (Ptr ()) -> DLL (Ptr ()) -> IO ()
+freeAll start end = do
+  nextLink <- peek (next start)
+  if nextLink == end then do
+    free (next start)
+    free (prev end)
+  else do
+    delete nextLink
+    free (prev nextLink)
+    free (elt nextLink)
+    free (next nextLink)
+    freeAll start end
 
 -- TODO: document individual functions
 
 withPool :: (Pool ->. Unrestricted b) ->. Unrestricted b
-withPool scope = scope Pool
+withPool scope = Unsafe.toLinear performScope scope
+    -- XXX: do ^ without `toLinear` by using linear IO
+  where
+    performScope :: (Pool ->. Unrestricted b) -> Unrestricted b
+    performScope scope' = unsafeDupablePerformIO $ do
+      -- Initialise the pool
+      backPtr <- malloc
+      let end = DLL backPtr nullPtr nullPtr -- always at the end of the list
+      start <- DLL nullPtr nullPtr <$> new end -- always at the start of the list
+      poke backPtr start
+      -- Run the computation
+      evaluate (scope' (Pool start)) `finally`
+      -- Clean up remaining variables.
+        (freeAll start end)
 
 instance Consumable Pool where
-  consume Pool = ()
+  consume (Pool _) = ()
 
 instance Dupable Pool where
-  dup Pool = (Pool, Pool)
+  dup (Pool l) = (Pool l, Pool l)
 
 -- | 'Box a' is the abstract type of manually managed data. It can be used as
 -- part of data type definitions in order to store linked data structure off
 -- heap. See @Foreign.List@ and @Foreign.Pair@ in the @examples@ directory of
 -- the source repository.
 data Box a where
--- XXX: this indirection is possibly not necessary. It's here because the inner
--- Ptr must be unrestricted (in order to implement deconstruct at the moment).
-  Box :: Ptr a -> Box a
+  Box :: Ptr (DLL (Ptr ())) -> Ptr a -> Box a
 
 -- XXX: if Box is a newtype, can be derived
 instance Storable (Box a) where
-  sizeOf _ = sizeOf (undefined :: Ptr a)
-  alignment _ = alignment (undefined :: Ptr a)
-  peek ptr = Box <$> (peek (castPtr ptr :: Ptr (Ptr a)))
-  poke ptr (Box ptr') = poke (castPtr ptr :: Ptr (Ptr a)) ptr'
+  sizeOf _ = sizeOf (undefined :: (Ptr (DLL (Ptr ())), Ptr a))
+  alignment _ = alignment (undefined :: (Ptr (DLL (Ptr ())), Ptr a))
+  peek ptr = do
+    (pool, ptr') <- peek (castPtr ptr :: Ptr (Ptr (DLL (Ptr ())), Ptr a))
+    return (Box pool ptr')
+  poke ptr (Box pool ptr') =
+    poke (castPtr ptr :: Ptr (Ptr (DLL (Ptr ())), Ptr a)) (pool, ptr')
 
 -- TODO: a way to store GC'd data using a StablePtr
 
@@ -95,17 +166,20 @@ instance Storable (Box a) where
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
 alloc :: forall a. Storable a => a ->. Pool ->. Box a
-alloc a Pool =
+alloc a (Pool pool) =
     Unsafe.toLinear mkPtr a
   where
     mkPtr :: a -> Box a
     mkPtr a' = unsafeDupablePerformIO $ do
-      ptr <- malloc
-      poke ptr a'
-      return (Box ptr)
+      ptr <- new a'
+      poolPtr <- insertAfter pool (castPtr ptr :: Ptr ())
+      return (Box poolPtr ptr)
+
 
 deconstruct :: Storable a => Box a ->. a
-deconstruct (Box ptr) = unsafeDupablePerformIO $ do
+deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $ mask_ $ do
   res <- peek ptr
+  delete =<< peek poolPtr
   free ptr
+  free poolPtr
   return res

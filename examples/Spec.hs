@@ -1,7 +1,11 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
+import Control.Exception
+import Control.Monad (void)
 import qualified Data.List as L
+import Data.Typeable
 import qualified Foreign.Heap as Heap
 import qualified Foreign.List as List
 import Foreign.List (List)
@@ -18,6 +22,11 @@ eqList l1 l2 =
   where
     eqUL :: Unrestricted [a] ->. Unrestricted [a] ->. Unrestricted Bool
     eqUL (Unrestricted as1) (Unrestricted as2) = Unrestricted (as1 == as2)
+
+data InjectedError = InjectedError
+  deriving (Typeable, Show)
+
+instance Exception InjectedError
 
 main :: IO ()
 main = hspec $ do
@@ -42,6 +51,19 @@ main = hspec $ do
                 (List.ofList l pool3)
           in
             check (dup3 pool)))
+
+    -- XXX: improve the memory corruption test by adding a 'take n' for a random
+    -- 'n' before producing an error.
+    describe "exceptions" $ do
+      it "doesn't corrupt memory" $ do
+        property (\(l :: [Int]) -> do
+          let l' = l ++ (throw InjectedError)
+          catch @InjectedError
+            (void $ evaluate
+               (Manual.withPool $ \pool ->
+                   move (List.toList $ List.ofRList l' pool)))
+            (\ _ -> return ())
+           )
 
 
   describe "Off-heap heaps" $ do
