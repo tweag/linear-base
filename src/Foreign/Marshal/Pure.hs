@@ -58,9 +58,10 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude.Linear
+import Prelude.Linear hiding (($))
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
+import Prelude (($))
 
 -- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
