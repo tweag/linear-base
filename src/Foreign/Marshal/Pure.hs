@@ -209,8 +209,10 @@ instance
 
 instance Representable a => Representable (Maybe a) where
   type AsKnown (Maybe a) = Maybe (AsKnown a)
-  toKnown = fmap toKnown
-  ofKnown = fmap ofKnown
+  toKnown (Just x) = Just (toKnown x)
+  toKnown Nothing  = Nothing
+  ofKnown (Just x) = Just (ofKnown x)
+  ofKnown Nothing  = Nothing
 
 -- | This is an easier way to create an instance of 'Representable'. It is a bit
 -- abusive to use a type class for this (after all, it almost never makes sense
