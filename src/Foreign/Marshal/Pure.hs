@@ -272,7 +272,7 @@ instance Storable (DLL a) where
 insertAfter :: Storable a => DLL a -> a -> IO (Ptr (DLL a))
 insertAfter start ptr = do
   secondLink <- peek $ next start
-  newLink <- DLL <$> new start <*> new ptr <*> new secondLink
+  newLink <- (\a b c -> DLL a b c) <$> new start <*> new ptr <*> new secondLink
   poke (next start) newLink
   poke (prev secondLink) newLink
   new newLink
