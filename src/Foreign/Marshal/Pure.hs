@@ -179,20 +179,20 @@ class (KnownRepresentable (AsKnown a)) => Representable a where
 -- tuples of Representable (not only KnownRepresentable) are Representable.
 instance Representable Word where
   type AsKnown Word = Word
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance Representable Int where
   type AsKnown Int = Int
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance Representable (Ptr a) where
   type AsKnown (Ptr a) = Ptr a
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance Representable () where
   type AsKnown () = ()
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance
   (Representable a, Representable b)
   => Representable (a, b) where
@@ -344,8 +344,8 @@ instance Storable (Box a) where
 instance KnownRepresentable (Box a) where
 instance Representable (Box a) where
   type AsKnown (Box a) = Box a
-  ofKnown = id
-  toKnown = id
+  ofKnown = lid
+  toKnown = lid
 
 -- TODO: a way to store GC'd data using a StablePtr
 
