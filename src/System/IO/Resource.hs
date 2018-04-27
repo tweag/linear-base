@@ -50,7 +50,8 @@ import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import Prelude.Linear hiding (IO, (>>=), (>>), return)
+import Prelude.Linear hiding (IO, (>>=), (>>), return, ($))
+import Prelude (($))
 import qualified Prelude as P
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System

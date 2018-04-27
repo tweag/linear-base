@@ -11,6 +11,7 @@ module Prelude.Linear
   , seq
   , curry
   , uncurry
+  , lid
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -51,6 +52,9 @@ import qualified Prelude
 ($) f x = f x
 
 infixr 0 $
+
+lid :: a ->. a
+lid a = a
 
 const :: a ->. b -> a
 const x _ = x

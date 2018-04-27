@@ -58,9 +58,10 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude.Linear
+import Prelude.Linear hiding (($))
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
+import Prelude (($))
 
 -- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
@@ -178,20 +179,20 @@ class (KnownRepresentable (AsKnown a)) => Representable a where
 -- tuples of Representable (not only KnownRepresentable) are Representable.
 instance Representable Word where
   type AsKnown Word = Word
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance Representable Int where
   type AsKnown Int = Int
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance Representable (Ptr a) where
   type AsKnown (Ptr a) = Ptr a
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance Representable () where
   type AsKnown () = ()
-  toKnown = id
-  ofKnown = id
+  toKnown = lid
+  ofKnown = lid
 instance
   (Representable a, Representable b)
   => Representable (a, b) where
@@ -208,8 +209,10 @@ instance
 
 instance Representable a => Representable (Maybe a) where
   type AsKnown (Maybe a) = Maybe (AsKnown a)
-  toKnown = fmap toKnown
-  ofKnown = fmap ofKnown
+  toKnown (Just x) = Just (toKnown x)
+  toKnown Nothing  = Nothing
+  ofKnown (Just x) = Just (ofKnown x)
+  ofKnown Nothing  = Nothing
 
 -- | This is an easier way to create an instance of 'Representable'. It is a bit
 -- abusive to use a type class for this (after all, it almost never makes sense
@@ -269,7 +272,7 @@ instance Storable (DLL a) where
 insertAfter :: Storable a => DLL a -> a -> IO (Ptr (DLL a))
 insertAfter start ptr = do
   secondLink <- peek $ next start
-  newLink <- DLL <$> new start <*> new ptr <*> new secondLink
+  newLink <- (\a b c -> DLL a b c) <$> new start <*> new ptr <*> new secondLink
   poke (next start) newLink
   poke (prev secondLink) newLink
   new newLink
@@ -343,8 +346,8 @@ instance Storable (Box a) where
 instance KnownRepresentable (Box a) where
 instance Representable (Box a) where
   type AsKnown (Box a) = Box a
-  ofKnown = id
-  toKnown = id
+  ofKnown = lid
+  toKnown = lid
 
 -- TODO: a way to store GC'd data using a StablePtr
 
