@@ -10,8 +10,8 @@
 module Data.Profunctor.Linear
   ( Profunctor(..)
   , SymmetricMonoidal(..)
-  , MonoidalProfunctor(..)
-  , StrongProfunctor(..)
+  , Monoidal(..)
+  , Strong(..)
   ) where
 
 import Data.Void
@@ -52,11 +52,11 @@ instance SymmetricMonoidal Either Void where
   swap (Left x) = Right x
   swap (Right x) = Left x
 
-class (SymmetricMonoidal m u, Profunctor arr) => MonoidalProfunctor m u arr where
+class (SymmetricMonoidal m u, Profunctor arr) => Monoidal m u arr where
   (***) :: a `arr` b -> u `arr` v -> (a `m` u) `arr` (b `m` v)
   unit :: u `arr` u
 
-class (SymmetricMonoidal m u, Profunctor arr) => StrongProfunctor m u arr where
+class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   {-# MINIMAL first | second #-}
 
   first :: a `arr` b -> (a `m` c) `arr` (b `m` c)
