@@ -37,5 +37,17 @@ type Traversal' a s = Traversal a a s s
 swap :: SymmetricMonoidal m u => Iso' (a `m` b) (b `m` a)
 swap = dimap Monoidal.swap Monoidal.swap
 
-_1 :: Lens' (a, b) a
-_1 p = _
+_1 :: Lens' a (a, b)
+_1 = first
+
+_2 :: Lens' b (a, b)
+_2 = second
+
+_Left :: Prism' a (Either a b)
+_Left = first
+
+_Right :: Prism' b (Either a b)
+_Right = second
+
+-- traversed :: Traversable t => Traversal a b (t a) (t b)
+-- traversed p = _
