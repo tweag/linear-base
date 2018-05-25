@@ -20,6 +20,7 @@ library
     Control.Monad.Builder
     Control.Monad.Linear
     Control.Monad.Linear.Builder
+    Control.Optics.Linear.Internal
     Data.Bifunctor.Linear
     Data.Functor.Linear
     Data.Vector.Linear
