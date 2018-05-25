@@ -53,7 +53,7 @@ instance SymmetricMonoidal Either Void where
   swap (Right x) = Left x
 
 class (SymmetricMonoidal m u, Profunctor arr) => Monoidal m u arr where
-  (***) :: a `arr` b -> u `arr` v -> (a `m` u) `arr` (b `m` v)
+  (***) :: a `arr` b -> x `arr` y -> (a `m` x) `arr` (b `m` y)
   unit :: u `arr` u
 
 class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
