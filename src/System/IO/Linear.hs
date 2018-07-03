@@ -81,7 +81,7 @@ toSystemIO = Unsafe.coerce -- basically just subtyping
 --     ...
 -- @
 withLinearIO :: IO (Unrestricted a) -> System.IO a
-withLinearIO action = unUnrestricted <$> (toSystemIO action)
+withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
 
 -- $monad
 
