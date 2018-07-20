@@ -72,7 +72,7 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease $ fmap snd $ IntMap.toList releaseMap))
+           safeRelease (fmap snd (IntMap.toList releaseMap))))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
@@ -89,18 +89,18 @@ run (RIO action) = do
     moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
     moveLinearIO action' = do
         result <- action'
-        Linear.return $ move result
+        Linear.return (move result)
       where
         Linear.Builder{..} = Linear.builder -- used in the do-notation
 
 -- | Should not be applied to a function that acquires or releases resources.
 unsafeFromSystemIO :: System.IO a ->. RIO a
-unsafeFromSystemIO action = RIO $ \ _ -> Linear.fromSystemIO action
+unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
 
 return :: a ->. RIO a
-return a = RIO $ \_releaseMap -> Linear.return a
+return a = RIO (\_releaseMap -> Linear.return a)
 
 -- | Type of 'Builder'
 data BuilderType = Builder
@@ -114,16 +114,16 @@ builder :: BuilderType
 builder =
   let
     (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
-    x >>= f = RIO $ \releaseMap -> do
+    x >>= f = RIO (\releaseMap -> do
         a <- unRIO x releaseMap
-        unRIO (f a) releaseMap
+        unRIO (f a) releaseMap)
       where
         Linear.Builder {..} = Linear.builder -- used in the do-notation
 
     (>>) :: forall b. RIO () ->. RIO b ->. RIO b
-    x >> y = RIO $ \releaseMap -> do
+    x >> y = RIO (\releaseMap -> do
         unRIO x releaseMap
-        unRIO y releaseMap
+        unRIO y releaseMap)
       where
         Linear.Builder {..} = Linear.builder -- used in the do-notation
   in
@@ -142,8 +142,8 @@ openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = do
     h <- unsafeAcquire
       (Linear.fromSystemIOU $ System.openFile path mode)
-      (\h -> Linear.fromSystemIO $ System.hClose h)
-    return $ Handle h
+      (\h -> Linear.fromSystemIO (System.hClose h))
+    return (Handle h)
   where
     Builder {..} = builder -- used in the do-notation
 
@@ -208,7 +208,7 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         rrm
         (ReleaseMap
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
-    Linear.return $ UnsafeResource (releaseKey releaseMap) resource)
+    Linear.return (UnsafeResource (releaseKey releaseMap) resource))
   where
     Linear.Builder {..} = Linear.builder -- used in the do-notation
 
@@ -222,9 +222,9 @@ unsafeFromSystemIOResource
   -> UnsafeResource a
   ->. RIO (Unrestricted b, UnsafeResource a)
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
-    unsafeFromSystemIO $ do
+    unsafeFromSystemIO (do
       c <- action resource
-      P.return (Unrestricted c, UnsafeResource key resource)
+      P.return (Unrestricted c, UnsafeResource key resource))
   where
     (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
     (>>=) = (P.>>=)
