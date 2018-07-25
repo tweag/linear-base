@@ -16,7 +16,7 @@ import GHC.Exts (TYPE, RuntimeRep)
 
 -- | Linearly typed @unsafeCoerce@
 coerce :: a ->. b
-coerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
+coerce = NonLinear.unsafeCoerce undefined
 
 -- | Converts an unrestricted function into a linear function
 toLinear
