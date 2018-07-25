@@ -2,6 +2,7 @@
 # See https://hub.docker.com/r/tweag/linear-types/
 resolver: lts-12.2
 compiler: ghc-8.5
+allow-newer: true
 system-ghc: true
 docker:
   enable: true
