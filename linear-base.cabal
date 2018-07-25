@@ -46,7 +46,8 @@ test-suite examples
   main-is: Spec.hs
   other-modules:
     Foreign.List
-    Foreign.Heap
+    -- TODO: restore (see #18)
+    -- Foreign.Heap
   build-depends:
     base,
     hspec,
