@@ -4,7 +4,8 @@
 
 import Control.Exception
 import Control.Monad (void)
-import qualified Data.List as L
+-- TODO: restore (see #18)
+-- import qualified Data.List as L
 import Data.Typeable
 -- TODO: restore (see #18)
 -- import qualified Foreign.Heap as Heap
