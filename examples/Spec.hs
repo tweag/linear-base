@@ -4,7 +4,8 @@
 
 import Control.Exception
 import Control.Monad (void)
-import qualified Data.List as L
+-- TODO: restore (see #18)
+-- import qualified Data.List as L
 import Data.Typeable
 -- TODO: restore (see #18)
 -- import qualified Foreign.Heap as Heap
@@ -12,6 +13,7 @@ import qualified Foreign.List as List
 import Foreign.List (List)
 import qualified Foreign.Marshal.Pure as Manual
 import Foreign.Marshal.Pure (Pool)
+import qualified Prelude as P
 import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
@@ -29,19 +31,19 @@ data InjectedError = InjectedError
 instance Exception InjectedError
 
 main :: IO ()
-main = hspec $ do
-  describe "Off-heap lists" $ do
-    describe "ofList" $ do
-      it "is invertible" $
+main = hspec P.$ do
+  describe "Off-heap lists" P.$ do
+    describe "ofList" P.$ do
+      it "is invertible" P.$
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
             check :: Unrestricted [Int] ->. Unrestricted Bool
-            check (Unrestricted l') = Unrestricted $ l' == l
+            check (Unrestricted l') = Unrestricted P.$ l' == l
           in
             check $ move (List.toList $ List.ofList l pool)))
 
-    describe "map" $ do
-      it "of identity if the identity" $
+    describe "map" P.$ do
+      it "of identity if the identity" P.$
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
             check :: (Pool, Pool, Pool) ->. Unrestricted Bool
@@ -54,12 +56,12 @@ main = hspec $ do
 
     -- XXX: improve the memory corruption test by adding a 'take n' for a random
     -- 'n' before producing an error.
-    describe "exceptions" $ do
-      it "doesn't corrupt memory" $ do
+    describe "exceptions" P.$ do
+      it "doesn't corrupt memory" P.$ do
         property (\(l :: [Int]) -> do
           let l' = l ++ (throw InjectedError)
           catch @InjectedError
-            (void $ evaluate
+            (void P.$ evaluate
                (Manual.withPool $ \pool ->
                    move (List.toList $ List.ofRList l' pool)))
             (\ _ -> return ())
