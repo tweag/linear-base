@@ -8,6 +8,14 @@ docker:
   enable: true
   image: tweag/linear-types:0.1.9
   stack-exe: download
+  mount:
+          ## For dante syntax checker
+          # mounting /tmp in the docker containers allows
+          # dante on the host system to copy its file in /tmp
+          # and stack on the docker system to read it in /tmp
+          #
+          # setup your emacs variable `dante-repl-command-line` as `("stack" "ghci" "--ghci-options" "-fdiagnostics-color=never")`
+          - /tmp:/tmp
 
 packages:
 - '.'
