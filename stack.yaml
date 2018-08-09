@@ -7,6 +7,7 @@ system-ghc: true
 docker:
   enable: true
   image: tweag/linear-types:0.1.9
+  stack-exe: download
 
 packages:
 - '.'
