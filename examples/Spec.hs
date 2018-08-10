@@ -9,10 +9,11 @@ import Control.Monad (void)
 import Data.Typeable
 -- TODO: restore (see #18)
 -- import qualified Foreign.Heap as Heap
-import qualified Foreign.List as List
 import Foreign.List (List)
-import qualified Foreign.Marshal.Pure as Manual
+import qualified Foreign.List as List
 import Foreign.Marshal.Pure (Pool)
+import qualified Foreign.Marshal.Pure as Manual
+import Prelude (return)
 import qualified Prelude as P
 import Prelude.Linear
 import Test.Hspec

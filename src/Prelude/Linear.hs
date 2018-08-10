@@ -1,17 +1,18 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Prelude.Linear
   ( -- * Standard 'Prelude' function with linear types
     -- $linearized-prelude
     ($)
   , const
+  , id
   , swap
   , seq
   , curry
   , uncurry
-  , lid
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -31,10 +32,14 @@ import qualified Unsafe.Linear as Unsafe
 import GHC.Types
 import Prelude hiding
   ( ($)
+  , id
   , const
   , seq
   , curry
   , uncurry
+  , Functor(..)
+  , Applicative(..)
+  , Monad(..)
   )
 import qualified Prelude
 
@@ -53,8 +58,8 @@ import qualified Prelude
 
 infixr 0 $
 
-lid :: a ->. a
-lid a = a
+id :: a ->. a
+id x = x
 
 const :: a ->. b -> a
 const x _ = x

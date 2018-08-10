@@ -3,6 +3,7 @@
 -- rebinded-do with different bind functions. Such as in the 'run'
 -- function. Which is a good argument for having support for F#-style builders.
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -20,9 +21,6 @@ module System.IO.Resource
   , run
     -- * Monadic primitives
     -- $monad
-  , return
-  , BuilderType(..)
-  , builder
     -- * Files
     -- $files
   , Handle
@@ -43,6 +41,10 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (onException, mask, finally)
+import qualified Control.Monad as Unrestricted (fmap)
+import qualified Control.Monad.Builder as Unrestricted
+import qualified Control.Monad.Linear as Linear
+import qualified Control.Monad.Linear.Builder as Linear
 import Data.Coerce
 import qualified Data.IORef as System
 import Data.IORef (IORef)
@@ -50,9 +52,8 @@ import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import Prelude.Linear hiding (IO, (>>=), (>>), return, ($))
+import Prelude.Linear hiding (IO, ($))
 import Prelude (($))
-import qualified Prelude as P
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
@@ -72,26 +73,25 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease (fmap snd (IntMap.toList releaseMap))))
+           safeRelease $ Unrestricted.fmap snd $ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
-    -- Use regular IO binds
-    (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
-    (>>=) = (P.>>=)
+    Unrestricted.Builder{..} = Unrestricted.monadBuilder
+      -- used in the do-notation
 
     safeRelease :: [Linear.IO ()] -> System.IO ()
-    safeRelease [] = P.return ()
+    safeRelease [] = return ()
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
     moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
     moveLinearIO action' = do
         result <- action'
-        Linear.return (move result)
+        return $ move result
       where
-        Linear.Builder{..} = Linear.builder -- used in the do-notation
+        Linear.Builder{..} = Linear.monadBuilder -- used in the do-notation
 
 -- | Should not be applied to a function that acquires or releases resources.
 unsafeFromSystemIO :: System.IO a ->. RIO a
@@ -99,35 +99,40 @@ unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
 
-return :: a ->. RIO a
-return a = RIO (\_releaseMap -> Linear.return a)
+instance Linear.Functor RIO where
+  fmap :: forall a b. (a ->. b) ->. RIO a ->. RIO b
+  fmap f (RIO action) = RIO $ \releaseMap ->
+    Linear.fmap f (action releaseMap)
 
--- | Type of 'Builder'
-data BuilderType = Builder
-  { (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
-  , (>>) :: forall b. RIO () ->. RIO b ->. RIO b
-  }
+instance Linear.Applicative RIO where
+  pure :: forall a. a ->. RIO a
+  pure a = RIO $ \_releaseMap -> Linear.pure a
 
--- | A builder to be used with @-XRebindableSyntax@ in conjunction with
--- @RecordWildCards@
-builder :: BuilderType
-builder =
-  let
-    (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
-    x >>= f = RIO (\releaseMap -> do
-        a <- unRIO x releaseMap
-        unRIO (f a) releaseMap)
-      where
-        Linear.Builder {..} = Linear.builder -- used in the do-notation
+  -- TODO: define a combinator 'ap' to define (<*>) from a monadic instance
+  -- (alt: define a default implementation).
+  (<*>) :: forall a b. RIO (a ->. b) ->. RIO a ->. RIO b
+  f <*> x = do
+      f' <- f
+      x' <- x
+      Linear.pure $ f' x'
+    where
+      Linear.Builder { .. } = Linear.monadBuilder
 
-    (>>) :: forall b. RIO () ->. RIO b ->. RIO b
-    x >> y = RIO (\releaseMap -> do
-        unRIO x releaseMap
-        unRIO y releaseMap)
-      where
-        Linear.Builder {..} = Linear.builder -- used in the do-notation
-  in
-    Builder{..}
+
+instance Linear.Monad RIO where
+  (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
+  x >>= f = RIO $ \releaseMap -> do
+      a <- unRIO x releaseMap
+      unRIO (f a) releaseMap
+    where
+      Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+
+  (>>) :: forall b. RIO () ->. RIO b ->. RIO b
+  x >> y = RIO $ \releaseMap -> do
+      unRIO x releaseMap
+      unRIO y releaseMap
+    where
+      Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 -- $files
 
@@ -142,10 +147,10 @@ openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = do
     h <- unsafeAcquire
       (Linear.fromSystemIOU $ System.openFile path mode)
-      (\h -> Linear.fromSystemIO (System.hClose h))
-    return (Handle h)
+      (\h -> Linear.fromSystemIO $ System.hClose h)
+    return $ Handle h
   where
-    Builder {..} = builder -- used in the do-notation
+    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 hClose :: Handle ->. RIO ()
 hClose (Handle h) = unsafeRelease h
@@ -194,7 +199,7 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
       where
-        Linear.Builder {..} = Linear.builder -- used in the do-notation
+        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
 unsafeAcquire
   :: Linear.IO (Unrestricted a)
@@ -208,9 +213,9 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         rrm
         (ReleaseMap
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
-    Linear.return (UnsafeResource (releaseKey releaseMap) resource))
+    return $ UnsafeResource (releaseKey releaseMap) resource)
   where
-    Linear.Builder {..} = Linear.builder -- used in the do-notation
+    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
     releaseKey releaseMap =
       case IntMap.null releaseMap of
@@ -224,10 +229,10 @@ unsafeFromSystemIOResource
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
-      P.return (Unrestricted c, UnsafeResource key resource))
+      return (Unrestricted c, UnsafeResource key resource))
   where
-    (>>=) :: System.IO a -> (a -> System.IO b) -> (System.IO b)
-    (>>=) = (P.>>=)
+    Unrestricted.Builder{..} = Unrestricted.monadBuilder
+      -- used in the do-notation
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
@@ -237,4 +242,4 @@ unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
     return resource
   where
-    Builder {..} = builder -- used in the do-notation
+    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
