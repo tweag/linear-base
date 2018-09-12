@@ -52,8 +52,8 @@ import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import Prelude.Linear hiding (IO, ($))
-import Prelude (($))
+import Prelude.Linear hiding (IO)
+import qualified Prelude as P
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
@@ -73,7 +73,7 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease $ Unrestricted.fmap snd $ IntMap.toList releaseMap))
+           safeRelease P.$ Unrestricted.fmap snd P.$ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
@@ -146,7 +146,7 @@ newtype Handle = Handle (UnsafeResource System.Handle)
 openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = do
     h <- unsafeAcquire
-      (Linear.fromSystemIOU $ System.openFile path mode)
+      (Linear.fromSystemIOU P.$ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
     return $ Handle h
   where
