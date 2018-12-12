@@ -1,12 +1,11 @@
-# Configures GHC to be the 8.2 variant from the Docker image
 # See https://hub.docker.com/r/tweag/linear-types/
-resolver: lts-12.2
-compiler: ghc-8.5
+resolver: nightly-2018-12-12
+compiler: ghc-8.7
 allow-newer: true
 system-ghc: true
 docker:
   enable: true
-  image: tweag/linear-types:0.1.9
+  image: tweag/linear-types:1.0.0
   stack-exe: download
   mount:
           ## For dante syntax checker
@@ -19,3 +18,8 @@ docker:
 
 packages:
 - '.'
+
+# No release is compatible with Ghc 8.7 as of [2018-12-12]
+extra-deps:
+- github: haskell/primitive
+  commit: 4e4c2871fdb6db938b6ac4dcd4a56b318b0dba76
