@@ -18,3 +18,8 @@ docker:
 
 packages:
 - '.'
+
+# No release is compatible with Ghc 8.7 as of [2018-12-12]
+extra-deps:
+- github: haskell/primitive
+  commit: 4e4c2871fdb6db938b6ac4dcd4a56b318b0dba76
