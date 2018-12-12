@@ -14,6 +14,7 @@ module Prelude.Linear
   , seq
   , curry
   , uncurry
+  , (.)
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -38,6 +39,7 @@ import Prelude hiding
   , seq
   , curry
   , uncurry
+  , (.)
   , Functor(..)
   , Applicative(..)
   , Monad(..)
@@ -86,6 +88,11 @@ curry f x y = f (x, y)
 -- higher-order and we don't have multiplicity polymorphism yet.
 uncurry :: (a ->. b ->. c) ->. (a, b) ->. c
 uncurry f (x,y) = f x y
+
+-- | Beware: @(.)@ is not compatible with the standard one because it is
+-- higher-order and we don't have multiplicity polymorphism yet.
+(.) :: (b ->. c) -> (a ->. b) ->. a ->. c
+f . g = \x -> f (g x)
 
 -- $ unrestricted
 

@@ -19,6 +19,9 @@ import qualified Control.Monad.Linear as Control
 class Functor f where
   fmap :: (a ->. b) -> f a ->. f b
 
+(<$>) :: Functor f => (a ->. b) -> f a ->. f b
+(<$>) = fmap
+
 -- | Data 'Applicative'-s can be seen as containers which can be zipped
 -- together. A prime example of data 'Applicative' are vectors of known lengths
 -- ('ZipLists' would be, if it were not for the fact that zipping them together
@@ -44,3 +47,15 @@ class Functor f => Applicative f where
 
 class Functor t => Traversable t where
   traverse :: Control.Applicative e => (a ->. e b) -> t a ->. e (t b)
+
+---------------
+-- Instances --
+---------------
+
+instance Functor [] where
+  fmap f [] = []
+  fmap f (a:as) = f a : fmap f as
+
+instance Traversable [] where
+  traverse f [] = Control.pure []
+  traverse f (a : as) = (:) Control.<$> (f a) Control.<*> (traverse f as)

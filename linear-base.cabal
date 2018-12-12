@@ -21,6 +21,7 @@ library
     Control.Monad.Linear
     Control.Monad.Linear.Builder
     Data.Functor.Linear
+    Data.Vector.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
     System.IO.Linear
@@ -31,7 +32,8 @@ library
     containers,
     ghc-prim,
     storable-tuple,
-    text
+    text,
+    vector
   default-language:    Haskell2010
 
 test-suite test
