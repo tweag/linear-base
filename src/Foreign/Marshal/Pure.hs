@@ -9,6 +9,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -171,8 +172,8 @@ class (KnownRepresentable (AsKnown a)) => Representable a where
   default ofKnown
     :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a ->. a
 
-  toKnown a = toKnown $ toRepr a
-  ofKnown b = ofRepr $ ofKnown b
+  toKnown a = toKnown (toRepr a)
+  ofKnown b = ofRepr (ofKnown b)
 
 -- Some boilerplate: all the KnownRepresentable are Representable, by virtue of
 -- the identity being a retraction. We generalise a bit for the types of tuples:

@@ -1,6 +1,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE LinearTypes #-}
 
 -- | Unsafe coercions for linearly typed code.
 --

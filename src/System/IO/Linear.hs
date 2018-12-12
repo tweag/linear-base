@@ -1,10 +1,11 @@
-{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE UnboxedTuples #-}
 
 -- | This module redefines 'IO' with linear types. It defines a drop-in
