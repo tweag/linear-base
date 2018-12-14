@@ -53,9 +53,9 @@ class Functor t => Traversable t where
 ---------------
 
 instance Functor [] where
-  fmap f [] = []
+  fmap _f [] = []
   fmap f (a:as) = f a : fmap f as
 
 instance Traversable [] where
-  traverse f [] = Control.pure []
+  traverse _f [] = Control.pure []
   traverse f (a : as) = (:) Control.<$> (f a) Control.<*> (traverse f as)

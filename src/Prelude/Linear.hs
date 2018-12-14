@@ -39,7 +39,6 @@ import Data.Vector.Linear (V)
 import qualified Data.Vector.Linear as V
 import GHC.TypeLits
 import GHC.Types
-import qualified Prelude
 import Prelude hiding
   ( ($)
   , id

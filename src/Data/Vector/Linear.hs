@@ -38,7 +38,7 @@ import Data.Proxy
 import Data.Type.Equality
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
-import GHC.Exts (Constraint, Proxy#, proxy#)
+import GHC.Exts (Constraint, proxy#)
 import GHC.TypeLits
 import Prelude
   ( Eq
@@ -54,7 +54,7 @@ import qualified Prelude as Prelude
 import Prelude.Linear.Internal.Simple
 import qualified Unsafe.Linear as Unsafe
 
-newtype V (n :: Nat) (a :: *) = V { unV :: Vector a }
+newtype V (n :: Nat) (a :: *) = V (Vector a)
   deriving (Eq, Ord, Prelude.Functor)
   -- Using vector rather than, say, 'Array' (or directly 'Array#') because it
   -- offers many convenience function. Since all these unsafeCoerces probably
@@ -107,7 +107,7 @@ predNat = case someNatVal (natVal' (proxy# @_ @n) - 1) of
   Just (SomeNat (_ :: Proxy p)) -> Unsafe.coerce (Dict @(KnownNat p))
   Nothing -> error "Vector.pred: n-1 is necessarily a Nat, if 1<=n"
 
-caseNat :: forall n. KnownNat n => Either (n :~: 0) ((1 <=? n) :~: True)
+caseNat :: forall n. KnownNat n => Either (n :~: 0) ((1 <=? n) :~: 'True)
 caseNat =
   case theLength @n of
     0 -> Left $ unsafeZero @n
@@ -124,5 +124,5 @@ elim xs f =
     Right Refl -> elimS (split xs) f
   where
     elimS :: 1 <= n => (# a, V (n-1) a #) ->. Elim n a b ->. b
-    elimS (# x, xs' #) f = case predNat @n of
-      Dict -> elim  xs' ((Unsafe.coerce f :: a ->. Elim (n-1) a b) x)
+    elimS (# x, xs' #) g = case predNat @n of
+      Dict -> elim  xs' ((Unsafe.coerce g :: a ->. Elim (n-1) a b) x)
