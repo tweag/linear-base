@@ -15,7 +15,8 @@ module Control.Monad.Linear
   , join
   ) where
 
-import Prelude.Linear (String, id)
+import Prelude.Linear.Internal.Simple (id)
+import Prelude (String)
 
 -- $monad
 

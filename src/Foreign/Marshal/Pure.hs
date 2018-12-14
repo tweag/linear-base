@@ -52,6 +52,7 @@ module Foreign.Marshal.Pure
   ) where
 
 import Control.Exception
+import qualified Data.Functor.Linear as Data
 import Data.Kind (Constraint)
 import Data.Word (Word8)
 import Foreign.Marshal.Alloc
@@ -59,10 +60,10 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
+import Prelude (($), return, (<*>))
 import Prelude.Linear hiding (($))
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
-import Prelude (($), return, (<*>))
 
 -- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
@@ -325,7 +326,7 @@ instance Consumable Pool where
   consume (Pool _) = ()
 
 instance Dupable Pool where
-  dup (Pool l) = (Pool l, Pool l)
+  dupV (Pool l) = Data.pure (Pool l)
 
 -- | 'Box a' is the abstract type of manually managed data. It can be used as
 -- part of data type definitions in order to store linked data structure off
