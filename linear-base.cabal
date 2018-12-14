@@ -21,6 +21,10 @@ library
     Control.Monad.Linear
     Control.Monad.Linear.Builder
     Control.Optics.Linear.Internal
+    Data.Array.Destination
+    Data.Array.Polarized
+    Data.Array.Polarized.Pull
+    Data.Array.Polarized.Push
     Data.Bifunctor.Linear
     Data.Functor.Linear
     Data.Monoid.Linear
@@ -45,6 +49,7 @@ library
   other-modules:
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
+    Data.Array.Polarized.Pull.Internal
 
 test-suite test
   type: exitcode-stdio-1.0
