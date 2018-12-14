@@ -40,8 +40,18 @@ import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import GHC.Exts (Constraint, Proxy#, proxy#)
 import GHC.TypeLits
+import Prelude
+  ( Eq
+  , Ord
+  , Int
+  , Bool(..)
+  , Either(..)
+  , Maybe(..)
+  , fromIntegral
+  , error
+  , (-))
 import qualified Prelude as Prelude
-import Prelude.Linear
+import Prelude.Linear.Internal.Simple
 import qualified Unsafe.Linear as Unsafe
 
 newtype V (n :: Nat) (a :: *) = V { unV :: Vector a }

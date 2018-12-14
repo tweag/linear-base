@@ -24,6 +24,7 @@ library
     Data.Vector.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
+    Prelude.Linear.Internal.Simple
     System.IO.Linear
     System.IO.Resource
     Unsafe.Linear
