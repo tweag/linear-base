@@ -22,6 +22,7 @@ library
     Control.Monad.Linear.Builder
     Data.Functor.Linear
     Data.Vector.Linear
+    Data.With
     Foreign.Marshal.Pure
     Prelude.Linear
     Prelude.Linear.Internal.Simple
