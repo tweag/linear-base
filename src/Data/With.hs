@@ -6,8 +6,9 @@
 
 module Data.With where
 
-import Prelude.Linear hiding (fst, snd)
+import Prelude.Linear hiding (fst, snd, Either(..))
 import qualified Data.Functor.Linear as Data
+import Data.Either.Linear
 
 -- | The @(,)@ constructor represents multiplicative conjunction, typically
 -- represented in linear logic using ⊗. Given a value of type @(a, b)@, to
@@ -34,14 +35,12 @@ import qualified Data.Functor.Linear as Data
 
 data a & b where
   With :: (x ->. a) -> (x ->. b) -> x ->. With a b
--- Somewhat surprisingly, the constructor With can be safely exported.
 
 type With a b = a & b
 
 -- These three are essentially the defining property of (&). (It is the
 -- product in the category of linear types.)
--- In particular, (,) would not work in place of any of these.
-
+-- In particular, these show why (,) would not work in place of (&).
 fst :: a & b ->. a
 fst (With f _ t) = f t
 
@@ -79,7 +78,7 @@ assoc (With f g x) = with (with f (fst . g)) (snd . g) x
 -- One of `a` and `b` is not consumed, so this is non-linear.
 -- In particular, in the presence of weakening, tensor is
 -- stronger than &.
--- (See 1.2.1.Weakening Linear logic: syntax and semantics (Girard))
+-- (See Linear logic: syntax and semantics (Girard) 1.2.1.Weakening)
 fromTensor :: (a, b) -> a & b
 fromTensor (a, b) = With (\() -> a) (\() -> b) ()
 
@@ -88,19 +87,17 @@ fromTensor (a, b) = With (\() -> a) (\() -> b) ()
 -- pair @(a, b)@.
 -- In particular, in the presence of contraction, & is
 -- stronger than tensor.
--- (See 1.2.1.Contraction Linear logic: syntax and semantics (Girard))
+-- (See Linear logic: syntax and semantics (Girard) 1.2.1.Contraction)
 toTensor :: a & b -> (a, b)
 toTensor (With f g x) = (f x, g x)
 
 -- Recall that !(!A ⊗ !B) == !(A ⊗ B).
 
 -- These witness the isomorphism !(A & B) == (!A ⊗ !B).
--- (BM: `fromPair . toPair` isn't strictly `id`, but I'm pretty sure they don't
--- differ in any observable way...)
-toPair :: Unrestricted (a & b) -> (Unrestricted a, Unrestricted b)
+toPair :: Unrestricted (a & b) ->. (Unrestricted a, Unrestricted b)
 toPair (Unrestricted (With f g x)) = (Unrestricted (f x), Unrestricted (g x))
 
-fromPair :: (Unrestricted a, Unrestricted b) -> Unrestricted (a & b)
+fromPair :: (Unrestricted a, Unrestricted b) ->. Unrestricted (a & b)
 fromPair (Unrestricted x, Unrestricted y) =
   Unrestricted (With (\() -> x) (\() -> y) ())
 
@@ -113,24 +110,26 @@ instance (Eq a, Eq b) => Eq (a & b) where
 instance Data.Functor ((&) a) where
   fmap h (With f g x) = with f (h . g) x
 
--- Miscellaneous comments:
+-- The unit of (&). Also the terminal object in the category of linear types.
+-- Notably () is not the terminal object, though it is the identity of (,).
+-- Some type isomorphisms/exercises:
 --
--- It's tempting to normalise With in such a way that fromPair . toPair always
--- holds, i.e. insist that the stored value is just () in every case. But
--- this may not be possible if the `With` was constructed using a non-Dupable
--- `x`.
+-- () ->. a == a.
+-- a ->. Sink == Sink
+-- Void ->. a == Sink
+-- (a ->. c) & (b ->. c) == Either a b ->. c
+-- (a ->. b) & (a ->. c) == a ->. b & c
+-- !Sink == ()
 --
 --
--- It's nice to have this type, and know that it's possible with linear
--- Haskell, but I'm struggling to think of a usecase.
--- In particular, if one would like to export a function of type a ->. b & c,
--- you might as well export both a ->. b and a ->. c. Similarly, if you'd
--- like to export a & b ->. c, your function can only use one of `a` or `b`,
--- so you might as well export either a ->. c or b ->. c.
---
--- Perhaps one would like to have IO (a & b) to represent access to one
--- of the resources a, b which cannot occur simultaneously.
+-- cf http://iml.univ-mrs.fr/~lafont/pub/llpages.pdf, end of page 6
 
-uselessnessIso :: (a ->. With b c) -> (a ->. b, a ->. c)
-uselessnessIso f = (fst . f, snd . f)
--- inverse of `with`
+data Sink where
+  Sink :: t ->. Sink
+
+sink :: t ->. Sink
+sink = Sink
+
+-- unital :: a ->. a & Sink
+-- unital x = With id sink x
+-- -- inverse of fst :: a & Sink ->. a, witnesses that Sink is the unit of (&)
