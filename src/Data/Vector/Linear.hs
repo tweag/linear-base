@@ -30,6 +30,7 @@ module Data.Vector.Linear
   ( V
   , Elim
   , elim
+  , make
   ) where
 
 import qualified Control.Monad.Linear as Control
@@ -126,3 +127,23 @@ elim xs f =
     elimS :: 1 <= n => (# a, V (n-1) a #) ->. Elim n a b ->. b
     elimS (# x, xs' #) g = case predNat @n of
       Dict -> elim  xs' ((Unsafe.coerce g :: a ->. Elim (n-1) a b) x)
+
+-- XXX: This can probably be improved a lot.
+make :: forall n a. KnownNat n => Elim n a (V n a)
+make = case caseNat @n of
+          Left Refl -> V Vector.empty
+          Right Refl -> Unsafe.coerce prepend :: Elim n a (V n a)
+            where prepend :: a -> Elim (n-1) a (V n a)
+                  prepend t = case predNat @n of
+                                Dict -> continue @(n-1) @a @(V (n-1) a) (cons t) (make @(n-1) @a)
+
+cons :: forall n a. a ->. V (n-1) a ->. V n a
+cons = Unsafe.toLinear $ \x -> Unsafe.coerce (Vector.cons x)
+
+continue :: forall n a b c. KnownNat n => (b ->. c) ->. Elim n a b ->. Elim n a c
+continue = case caseNat @n of
+             Left Refl -> id
+             Right Refl -> Unsafe.coerce continueS
+               where continueS :: (KnownNat n, 1 <= n) => (b ->. c) ->. (a ->. Elim (n-1) a b) ->. (a ->. Elim (n-1) a c)
+                     continueS f' x a = case predNat @n of
+                                          Dict -> continue @(n-1) @a @b f' (x a)
