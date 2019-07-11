@@ -63,7 +63,7 @@ newtype V (n :: Nat) (a :: *) = V (Vector a)
   -- Arrays at the moment.
 
 theLength :: forall n. KnownNat n => Int
-theLength = fromIntegral (natVal' (proxy# @_ @n))
+theLength = fromIntegral (natVal' @n (proxy# @_))
 
 instance Data.Functor (V n) where
   fmap f (V xs) = V $ Unsafe.toLinear ((Unsafe.coerce Vector.map) f) xs
@@ -74,7 +74,7 @@ instance KnownNat n => Data.Applicative (V n) where
     Unsafe.toLinear2 (Vector.zipWith @(_ ->. _) (\f x -> f x)) fs xs
 
 instance KnownNat n => Data.Traversable (V n) where
-  traverse f (V xs) = 
+  traverse f (V xs) =
     (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Control.<$>
     Data.traverse f (Unsafe.toLinear Vector.toList xs)
 
@@ -103,7 +103,7 @@ data Dict (c :: Constraint) where
   Dict :: c => Dict c
 
 predNat :: forall n. (1 <= n, KnownNat n) => Dict (KnownNat (n-1))
-predNat = case someNatVal (natVal' (proxy# @_ @n) - 1) of
+predNat = case someNatVal (natVal' @n (proxy# @_) - 1) of
   Just (SomeNat (_ :: Proxy p)) -> Unsafe.coerce (Dict @(KnownNat p))
   Nothing -> error "Vector.pred: n-1 is necessarily a Nat, if 1<=n"
 
