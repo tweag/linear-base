@@ -51,5 +51,5 @@ uncurry f (x,y) = f x y
 
 -- | Beware: @(.)@ is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
-(.) :: (b ->. c) -> (a ->. b) ->. a ->. c
+(.) :: (b ->. c) ->. (a ->. b) ->. a ->. c
 f . g = \x -> f (g x)
