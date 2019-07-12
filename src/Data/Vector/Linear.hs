@@ -28,7 +28,7 @@
 
 module Data.Vector.Linear
   ( V
-  , Elim
+  , FunN
   , elim
   , make
   ) where
@@ -61,7 +61,7 @@ newtype V (n :: Nat) (a :: *) = V (Vector a)
   -- offers many convenience function. Since all these unsafeCoerces probably
   -- kill the fusion rules, it may be worth it going lower level since I
   -- probably have to write my own fusion anyway. Therefore, starting from
-  -- Arrays at the moment.
+  -- Vectors at the moment.
 
 theLength :: forall n. KnownNat n => Int
 theLength = fromIntegral (natVal' @n (proxy# @_))
@@ -79,9 +79,9 @@ instance KnownNat n => Data.Traversable (V n) where
     (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Control.<$>
     Data.traverse f (Unsafe.toLinear Vector.toList xs)
 
-type family Elim (n :: Nat) (a :: *) (b :: *) :: * where
-  Elim 0 a b = b
-  Elim n a b = a ->. Elim (n-1) a b
+type family FunN (n :: Nat) (a :: *) (b :: *) :: * where
+  FunN 0 a b = b
+  FunN n a b = a ->. FunN (n-1) a b
 
 split :: 1 <= n => V n a ->. (# a, V (n-1) a #)
 split = Unsafe.toLinear split'
@@ -118,32 +118,32 @@ caseNat =
 -- TODO: consider using template haskell to make this expression more efficient.
 -- | This is like pattern-matching on a n-tuple. It will eventually be
 -- polymorphic the same way as a case expression.
-elim :: forall n a b. KnownNat n => V n a ->. Elim n a b ->. b
+elim :: forall n a b. KnownNat n => V n a ->. FunN n a b ->. b
 elim xs f =
   case caseNat @n of
     Left Refl -> consumeV xs $ Unsafe.coerce f
     Right Refl -> elimS (split xs) f
   where
-    elimS :: 1 <= n => (# a, V (n-1) a #) ->. Elim n a b ->. b
+    elimS :: 1 <= n => (# a, V (n-1) a #) ->. FunN n a b ->. b
     elimS (# x, xs' #) g = case predNat @n of
-      Dict -> elim  xs' ((Unsafe.coerce g :: a ->. Elim (n-1) a b) x)
+      Dict -> elim  xs' ((Unsafe.coerce g :: a ->. FunN (n-1) a b) x)
 
 -- XXX: This can probably be improved a lot.
-make :: forall n a. KnownNat n => Elim n a (V n a)
+make :: forall n a. KnownNat n => FunN n a (V n a)
 make = case caseNat @n of
           Left Refl -> V Vector.empty
-          Right Refl -> Unsafe.coerce prepend :: Elim n a (V n a)
-            where prepend :: a -> Elim (n-1) a (V n a)
+          Right Refl -> Unsafe.coerce prepend :: FunN n a (V n a)
+            where prepend :: a -> FunN (n-1) a (V n a)
                   prepend t = case predNat @n of
                                 Dict -> continue @(n-1) @a @(V (n-1) a) (cons t) (make @(n-1) @a)
 
 cons :: forall n a. a ->. V (n-1) a ->. V n a
 cons = Unsafe.toLinear $ \x -> Unsafe.coerce (Vector.cons x)
 
-continue :: forall n a b c. KnownNat n => (b ->. c) ->. Elim n a b ->. Elim n a c
+continue :: forall n a b c. KnownNat n => (b ->. c) ->. FunN n a b ->. FunN n a c
 continue = case caseNat @n of
              Left Refl -> id
              Right Refl -> Unsafe.coerce continueS
-               where continueS :: (KnownNat n, 1 <= n) => (b ->. c) ->. (a ->. Elim (n-1) a b) ->. (a ->. Elim (n-1) a c)
+               where continueS :: (KnownNat n, 1 <= n) => (b ->. c) ->. (a ->. FunN (n-1) a b) ->. (a ->. FunN (n-1) a c)
                      continueS f' x a = case predNat @n of
                                           Dict -> continue @(n-1) @a @b f' (x a)
