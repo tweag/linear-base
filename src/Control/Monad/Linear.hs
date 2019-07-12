@@ -7,6 +7,7 @@ module Control.Monad.Linear
   ( -- * Linear monad hierarchy
     -- $ monad
     Functor(..)
+  , (<$>)
   , Applicative(..)
   , Monad(..)
   , MonadFail(..)
@@ -14,7 +15,8 @@ module Control.Monad.Linear
   , join
   ) where
 
-import Prelude.Linear (String, id)
+import Prelude.Linear.Internal.Simple (id)
+import Prelude (String)
 
 -- $monad
 
@@ -33,6 +35,9 @@ import Prelude.Linear (String, id)
 -- | Enriched linear functors.
 class Functor f where
   fmap :: (a ->. b) ->. f a ->. f b
+
+(<$>) :: Functor f => (a ->. b) ->. f a ->. f b
+(<$>) = fmap
 
 -- | Enriched linear applicative functors
 class Functor f => Applicative f where
