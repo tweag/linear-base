@@ -159,12 +159,7 @@ instance (Dupable a, Dupable b) => Dupable (a, b) where
   dupV (a, b) = (,) Data.<$> dupV a Data.<*> dupV b
 
 instance (Movable a, Movable b) => Movable (a, b) where
-  move (a, b) = liftu (move a) (move b)
-    where
-       -- XXX: this is merely an application of 'Unrestricted' being a linear
-       -- applicative functor of some sort.
-      liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted (a, b)
-      liftu (Unrestricted a') (Unrestricted b') = Unrestricted (a', b')
+  move (a, b) = (,) Data.<$> move a Data.<*> move b
 
 instance (Consumable a, Consumable b, Consumable c) => Consumable (a, b, c) where
   consume (a, b, c) = consume a `lseq` consume b `lseq` consume c
@@ -173,27 +168,21 @@ instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
   dupV (a, b, c) = (,,) Data.<$> dupV a Data.<*> dupV b Data.<*> dupV c
 
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
-  move (a, b, c) = liftu (move a) (move b) (move c)
-    where
-      liftu :: Unrestricted a ->. Unrestricted b ->. Unrestricted c ->. Unrestricted (a, b, c)
-      liftu (Unrestricted a') (Unrestricted b') (Unrestricted c') = Unrestricted (a', b', c')
+  move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
 
 instance Consumable a => Consumable [a] where
   consume [] = ()
   consume (a:l) = consume a `lseq` consume l
 
+-- TODO: write this using `traverse`
 instance Dupable a => Dupable [a] where
   dupV [] = Data.pure []
   dupV (a:l) = (:) Data.<$> dupV a Data.<*> dupV l
 
+-- TODO: write this using `traverse`
 instance Movable a => Movable [a] where
-  move [] = Unrestricted []
-  move (a:l) = liftu (move a) (move l)
-    where
-       -- XXX: this is merely an application of 'Unrestricted' being a linear
-       -- applicative functor of some sort.
-      liftu :: Unrestricted a ->. Unrestricted [a] ->. Unrestricted [a]
-      liftu (Unrestricted a') (Unrestricted l') = Unrestricted (a':l')
+  move [] = Data.pure []
+  move (a:l) = (:) Data.<$> move a Data.<*> move l
 
 instance Consumable (Unrestricted a) where
   consume (Unrestricted _) = ()
@@ -203,3 +192,10 @@ instance Dupable (Unrestricted a) where
 
 instance Movable (Unrestricted a) where
   move (Unrestricted a) = Unrestricted (Unrestricted a)
+
+instance Data.Functor Unrestricted where
+  fmap f (Unrestricted a) = Unrestricted (f a)
+
+instance Data.Applicative Unrestricted where
+  pure = Unrestricted
+  Unrestricted f <*> Unrestricted x = Unrestricted (f x)
