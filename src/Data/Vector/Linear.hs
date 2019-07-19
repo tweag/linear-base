@@ -33,7 +33,6 @@ module Data.Vector.Linear
   , make
   ) where
 
-import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import Data.Proxy
 import Data.Type.Equality
@@ -76,7 +75,7 @@ instance KnownNat n => Data.Applicative (V n) where
 
 instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
-    (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Control.<$>
+    (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Data.<$>
     Data.traverse f (Unsafe.toLinear Vector.toList xs)
 
 type family FunN (n :: Nat) (a :: *) (b :: *) :: * where

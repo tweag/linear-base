@@ -15,7 +15,6 @@
 module Data.Functor.Linear where
 
 import Prelude.Linear.Internal.Simple
-import qualified Control.Monad.Linear as Control
 
 class Functor f where
   fmap :: (a ->. b) -> f a ->. f b
@@ -50,9 +49,17 @@ class Functor f => Applicative f where
   f <*> x = liftA2 ($) f x
   liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c
   liftA2 f x y = f <$> x <*> y
+-- TODO: Add monad and monad fail
+-- (>>=) :: m a ->. (a ->. m b) -> m b
+-- TODO: Add Foldable as a superclass of Traversable
+-- (and probably move them both elsewhere)
 
 class Functor t => Traversable t where
-  traverse :: Control.Applicative e => (a ->. e b) -> t a ->. e (t b)
+  {-# MINIMAL sequence | traverse #-}
+  traverse :: Applicative e => (a ->. e b) -> t a ->. e (t b)
+  traverse f = sequence . fmap f
+  sequence :: Applicative e => t (e a) ->. e (t a)
+  sequence = traverse id
 
 ---------------
 -- Instances --
@@ -63,5 +70,5 @@ instance Functor [] where
   fmap f (a:as) = f a : fmap f as
 
 instance Traversable [] where
-  traverse _f [] = Control.pure []
-  traverse f (a : as) = (:) Control.<$> (f a) Control.<*> (traverse f as)
+  traverse _f [] = pure []
+  traverse f (a : as) = (:) <$> f a <*> traverse f as
