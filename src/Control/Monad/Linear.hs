@@ -41,13 +41,19 @@ class Functor f where
 
 -- | Enriched linear applicative functors
 class Functor f => Applicative f where
+  {-# MINIMAL pure, ((<*>) | liftA2) #-}
   pure :: a ->. f a
   (<*>) :: f (a ->. b) ->. f a ->. f b
+  (<*>) = liftA2 id
+  liftA2 :: (a ->. b ->. c) ->. f a ->. f b ->. f c
+  liftA2 f x y = f <$> x <*> y
 
 -- | Enriched linear monads
 class Applicative m => Monad m where
+  {-# MINIMAL (>>=) #-}
   (>>=) :: m a ->. (a ->. m b) ->. m b
   (>>) :: m () ->. m a ->. m a
+  m >> k = m >>= (\() -> k)
 
 -- | Handles pattern-matching failure in do-notation. See 'Control.Monad.Fail'.
 class Monad m => MonadFail m where
