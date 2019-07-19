@@ -49,8 +49,6 @@ class Functor f => Applicative f where
   f <*> x = liftA2 ($) f x
   liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c
   liftA2 f x y = f <$> x <*> y
--- TODO: Add monad and monad fail
--- (>>=) :: m a ->. (a ->. m b) -> m b
 -- TODO: Add Foldable as a superclass of Traversable
 -- (and probably move them both elsewhere)
 
