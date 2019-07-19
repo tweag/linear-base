@@ -174,15 +174,11 @@ instance Consumable a => Consumable [a] where
   consume [] = ()
   consume (a:l) = consume a `lseq` consume l
 
--- TODO: write this using `traverse`
 instance Dupable a => Dupable [a] where
-  dupV [] = Data.pure []
-  dupV (a:l) = (:) Data.<$> dupV a Data.<*> dupV l
+  dupV = Data.traverse dupV
 
--- TODO: write this using `traverse`
 instance Movable a => Movable [a] where
-  move [] = Data.pure []
-  move (a:l) = (:) Data.<$> move a Data.<*> move l
+  move = Data.traverse move
 
 instance Consumable (Unrestricted a) where
   consume (Unrestricted _) = ()
