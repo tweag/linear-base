@@ -29,7 +29,8 @@ class Functor f where
 -- drops values, which we are not allowed to do in a linear container).
 --
 -- In fact, an applicative functor is precisely a functor equipped with (pure
--- and) @liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c@
+-- and) @liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c@. In the case where
+-- @f = []@, the signature of 'liftA2' specialises to that of 'zipWith'.
 --
 -- == Remarks for the mathematically inclined
 --
