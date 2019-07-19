@@ -14,6 +14,7 @@
 
 module Data.Functor.Linear where
 
+import Prelude.Linear.Internal.Simple
 import qualified Control.Monad.Linear as Control
 
 class Functor f where
@@ -28,7 +29,7 @@ class Functor f where
 -- drops values, which we are not allowed to do in a linear container).
 --
 -- In fact, an applicative functor is precisely a functor equipped with (pure
--- and) @zipWith :: (a ->. b ->. c) -> f a ->. f b ->. f c@
+-- and) @liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c@
 --
 -- == Remarks for the mathematically inclined
 --
@@ -42,8 +43,12 @@ class Functor f where
 -- of 'Applicative'. Hence that the choice of linearity of the various arrow is
 -- indeed natural.
 class Functor f => Applicative f where
+  {-# MINIMAL pure, (liftA2 | (<*>)) #-}
   pure :: a -> f a
   (<*>) :: f (a ->. b) ->. f a ->. f b
+  f <*> x = liftA2 ($) f x
+  liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c
+  liftA2 f x y = f <$> x <*> y
 
 class Functor t => Traversable t where
   traverse :: Control.Applicative e => (a ->. e b) -> t a ->. e (t b)
