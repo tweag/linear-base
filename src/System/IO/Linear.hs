@@ -36,8 +36,8 @@ import Data.IORef (IORef)
 import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
-import qualified Control.Monad.Linear as Linear
-import qualified Control.Monad.Linear.Builder as Linear
+import qualified Control.Monad.Linear as Control
+import qualified Control.Monad.Linear.Builder as Control
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)
 import qualified Unsafe.Linear as Unsafe
@@ -85,7 +85,7 @@ withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
 
 -- * Monadic interface
 
-instance Linear.Functor IO where
+instance Control.Functor IO where
   fmap :: forall a b. (a ->. b) ->. IO a ->. IO b
   fmap f x = IO $ \s ->
       cont (unIO x s) f
@@ -94,21 +94,14 @@ instance Linear.Functor IO where
       cont :: (# State# RealWorld, a #) ->. (a ->. b) ->. (# State# RealWorld, b #)
       cont (# s', a #) f' = (# s', f' a #)
 
-instance Linear.Applicative IO where
+instance Control.Applicative IO where
   pure :: forall a. a ->. IO a
   pure a = IO $ \s -> (# s, a #)
 
-  -- TODO: define a combinator 'ap' to define (<*>) from a monadic instance
-  -- (alt: define a default implementation).
   (<*>) :: forall a b. IO (a ->. b) ->. IO a ->. IO b
-  f <*> x = do
-      f' <- f
-      x' <- x
-      Linear.pure $ f' x'
-    where
-      Linear.Builder { .. } = Linear.monadBuilder
+  (<*>) = Control.ap
 
-instance Linear.Monad IO where
+instance Control.Monad IO where
   (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
   x >>= f = IO $ \s ->
       cont (unIO x s) f
