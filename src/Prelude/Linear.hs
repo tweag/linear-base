@@ -39,6 +39,7 @@ import Data.Vector.Linear (V)
 import qualified Data.Vector.Linear as V
 import GHC.TypeLits
 import GHC.Types
+import qualified Prelude
 import Prelude hiding
   ( ($)
   , id
@@ -189,9 +190,15 @@ instance Dupable (Unrestricted a) where
 instance Movable (Unrestricted a) where
   move (Unrestricted a) = Unrestricted (Unrestricted a)
 
+instance Prelude.Functor Unrestricted where
+  fmap f (Unrestricted a) = Unrestricted (f a)
+
 instance Data.Functor Unrestricted where
   fmap f (Unrestricted a) = Unrestricted (f a)
 
 instance Data.Applicative Unrestricted where
   pure = Unrestricted
   Unrestricted f <*> Unrestricted x = Unrestricted (f x)
+
+instance Data.Traversable Unrestricted where
+  sequence (Unrestricted t) = Prelude.fmap Unrestricted t

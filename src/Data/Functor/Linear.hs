@@ -15,8 +15,9 @@
 module Data.Functor.Linear where
 
 import Prelude.Linear.Internal.Simple
+import qualified Prelude
 
-class Functor f where
+class Prelude.Functor f => Functor f where
   fmap :: (a ->. b) -> f a ->. f b
 
 (<$>) :: Functor f => (a ->. b) -> f a ->. f b
