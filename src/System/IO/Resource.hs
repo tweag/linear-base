@@ -101,34 +101,20 @@ unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 -- $monad
 
 instance Linear.Functor RIO where
-  fmap :: forall a b. (a ->. b) ->. RIO a ->. RIO b
   fmap f (RIO action) = RIO $ \releaseMap ->
     Linear.fmap f (action releaseMap)
 
 instance Linear.Applicative RIO where
-  pure :: forall a. a ->. RIO a
   pure a = RIO $ \_releaseMap -> Linear.pure a
-
-  -- TODO: define a combinator 'ap' to define (<*>) from a monadic instance
-  -- (alt: define a default implementation).
-  (<*>) :: forall a b. RIO (a ->. b) ->. RIO a ->. RIO b
-  f <*> x = do
-      f' <- f
-      x' <- x
-      Linear.pure $ f' x'
-    where
-      Linear.Builder { .. } = Linear.monadBuilder
-
+  (<*>) = Linear.ap
 
 instance Linear.Monad RIO where
-  (>>=) :: forall a b. RIO a ->. (a ->. RIO b) ->. RIO b
   x >>= f = RIO $ \releaseMap -> do
       a <- unRIO x releaseMap
       unRIO (f a) releaseMap
     where
       Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
 
-  (>>) :: forall b. RIO () ->. RIO b ->. RIO b
   x >> y = RIO $ \releaseMap -> do
       unRIO x releaseMap
       unRIO y releaseMap
