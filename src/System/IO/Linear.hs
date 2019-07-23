@@ -37,7 +37,6 @@ import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
 import qualified Control.Monad.Linear as Control
-import qualified Control.Monad.Linear.Builder as Control
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)
 import qualified Unsafe.Linear as Unsafe
