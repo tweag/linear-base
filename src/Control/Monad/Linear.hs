@@ -13,6 +13,7 @@ module Control.Monad.Linear
   , MonadFail(..)
   , return
   , join
+  , ap
   ) where
 
 import Prelude.Linear.Internal.Simple (id)
@@ -65,3 +66,7 @@ return x = pure x
 
 join :: Monad m => m (m a) ->. m a
 join action = action >>= id
+
+-- | Convenience operator to define Applicative instances in terms of Monad
+ap :: Monad m => m (a ->. b) ->. m a ->. m b
+ap f x = f >>= (\f' -> fmap f' x)
