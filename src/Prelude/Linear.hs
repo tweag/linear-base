@@ -26,6 +26,7 @@ module Prelude.Linear
   , Consumable(..)
   , Dupable(..)
   , Movable(..)
+  , void
   , lseq
   , dup
   , dup2
@@ -69,6 +70,10 @@ unUnrestricted (Unrestricted a) = a
 
 class Consumable a where
   consume :: a ->. ()
+
+-- | Discard a consumable value stored in a data functor.
+void :: (Data.Functor f, Consumable a) => f a ->. f ()
+void = Data.fmap consume
 
 -- | Like 'seq' but since the first argument is restricted to be of type @()@ it
 -- is consumed, hence @seqUnit@ is linear in its first argument.
