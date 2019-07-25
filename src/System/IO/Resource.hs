@@ -2,6 +2,7 @@
 -- Deactivate warning because it is painful to refactor functions with two
 -- rebinded-do with different bind functions. Such as in the 'run'
 -- function. Which is a good argument for having support for F#-style builders.
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
@@ -64,6 +65,7 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- | The resource-aware I/O monad. This monad guarantees that acquired resources
 -- are always released.
 newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
+  deriving (Data.Functor, Data.Applicative) via (Control.DataFromControl RIO)
 unRIO :: RIO a ->. IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
 
@@ -101,16 +103,9 @@ unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
 
-instance Data.Functor RIO where
-  fmap = Control.dataFmapDefault
-
 instance Control.Functor RIO where
   fmap f (RIO action) = RIO $ \releaseMap ->
     Control.fmap f (action releaseMap)
-
-instance Data.Applicative RIO where
-  pure = Control.dataPureDefault
-  (<*>) = (Control.<*>)
 
 instance Control.Applicative RIO where
   pure a = RIO $ \_releaseMap -> Control.pure a

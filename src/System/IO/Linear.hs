@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
@@ -46,6 +47,7 @@ import qualified System.IO as System
 -- | Like the standard IO monad, but as a linear state monad. Thanks to the
 -- linear arrow, we can safely expose the internal representation.
 newtype IO a = IO (State# RealWorld ->. (# State# RealWorld, a #))
+  deriving (Data.Functor, Data.Applicative) via (Control.DataFromControl IO)
 type role IO representational
 
 unIO :: IO a ->. State# RealWorld ->. (# State# RealWorld, a #)
@@ -85,10 +87,6 @@ withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
 
 -- * Monadic interface
 
-instance Data.Functor IO where
-  fmap :: forall a b. (a ->. b) -> IO a ->. IO b
-  fmap = Control.dataFmapDefault
-
 instance Control.Functor IO where
   fmap :: forall a b. (a ->. b) ->. IO a ->. IO b
   fmap f x = IO $ \s ->
@@ -97,10 +95,6 @@ instance Control.Functor IO where
       -- XXX: long line
       cont :: (# State# RealWorld, a #) ->. (a ->. b) ->. (# State# RealWorld, b #)
       cont (# s', a #) f' = (# s', f' a #)
-
-instance Data.Applicative IO where
-  pure = Control.dataPureDefault
-  (<*>) = (Control.<*>)
 
 instance Control.Applicative IO where
   pure :: forall a. a ->. IO a
