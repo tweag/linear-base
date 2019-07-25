@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 import Control.Exception
-import Control.Monad (void)
+import Control.Monad as P (void)
 -- TODO: restore (see #18)
 -- import qualified Data.List as L
 import Data.Typeable
@@ -45,7 +45,7 @@ main = hspec P.$ do
             check $ move (List.toList $ List.ofList l pool)))
 
     describe "map" P.$ do
-      it "of identity if the identity" P.$
+      it "of identity is the identity" P.$
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
             check :: (Pool, Pool, Pool) ->. Unrestricted Bool
@@ -63,7 +63,7 @@ main = hspec P.$ do
         property (\(l :: [Int]) -> do
           let l' = l ++ (throw InjectedError)
           catch @InjectedError
-            (void P.$ evaluate
+            (P.void P.$ evaluate
                (Manual.withPool $ \pool ->
                    move (List.toList $ List.ofRList l' pool)))
             (\ _ -> return ())
