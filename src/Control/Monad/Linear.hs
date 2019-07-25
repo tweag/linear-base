@@ -16,6 +16,7 @@ module Control.Monad.Linear
   , return
   , join
   , ap
+  , DataFromControl(..)
   ) where
 
 import Prelude.Linear.Internal.Simple (id)
@@ -79,3 +80,13 @@ join action = action >>= id
 -- | Convenience operator to define Applicative instances in terms of Monad
 ap :: Monad m => m (a ->. b) ->. m a ->. m b
 ap f x = f >>= (\f' -> fmap f' x)
+
+-- | DerivingVia combinators for Data.XXX in terms of Control.XXX
+newtype DataFromControl f a = DataFromControl (f a)
+
+instance Functor f => Data.Functor (DataFromControl f) where
+  fmap f (DataFromControl x) = DataFromControl (fmap f x)
+
+instance Applicative f => Data.Applicative (DataFromControl f) where
+  pure x = DataFromControl (pure x)
+  DataFromControl f <*> DataFromControl x = DataFromControl (f <*> x)
