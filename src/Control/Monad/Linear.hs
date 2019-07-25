@@ -18,6 +18,7 @@ module Control.Monad.Linear
 
 import Prelude.Linear.Internal.Simple (id)
 import Prelude (String)
+import qualified Data.Functor.Linear as Data
 
 -- $monad
 
@@ -34,14 +35,14 @@ import Prelude (String)
 -- TODO: make the laws explicit
 
 -- | Enriched linear functors.
-class Functor f where
+class Data.Functor f => Functor f where
   fmap :: (a ->. b) ->. f a ->. f b
 
 (<$>) :: Functor f => (a ->. b) ->. f a ->. f b
 (<$>) = fmap
 
 -- | Enriched linear applicative functors
-class Functor f => Applicative f where
+class (Data.Applicative f, Functor f) => Applicative f where
   {-# MINIMAL pure, ((<*>) | liftA2) #-}
   pure :: a ->. f a
   (<*>) :: f (a ->. b) ->. f a ->. f b
