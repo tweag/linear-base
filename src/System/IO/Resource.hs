@@ -65,7 +65,7 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- | The resource-aware I/O monad. This monad guarantees that acquired resources
 -- are always released.
 newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
-  deriving (Data.Functor, Data.Applicative) via (Control.DataFromControl RIO)
+  deriving (Data.Functor, Data.Applicative) via (Control.Data RIO)
 unRIO :: RIO a ->. IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
 

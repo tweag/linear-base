@@ -47,7 +47,7 @@ import qualified System.IO as System
 -- | Like the standard IO monad, but as a linear state monad. Thanks to the
 -- linear arrow, we can safely expose the internal representation.
 newtype IO a = IO (State# RealWorld ->. (# State# RealWorld, a #))
-  deriving (Data.Functor, Data.Applicative) via (Control.DataFromControl IO)
+  deriving (Data.Functor, Data.Applicative) via (Control.Data IO)
 type role IO representational
 
 unIO :: IO a ->. State# RealWorld ->. (# State# RealWorld, a #)
