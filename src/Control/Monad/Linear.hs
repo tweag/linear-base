@@ -8,16 +8,20 @@ module Control.Monad.Linear
     -- $ monad
     Functor(..)
   , (<$>)
+  , dataFmapDefault
   , Applicative(..)
+  , dataPureDefault
   , Monad(..)
   , MonadFail(..)
   , return
   , join
   , ap
+  , Data(..)
   ) where
 
 import Prelude.Linear.Internal.Simple (id)
 import Prelude (String)
+import qualified Data.Functor.Linear as Data
 
 -- $monad
 
@@ -34,20 +38,26 @@ import Prelude (String)
 -- TODO: make the laws explicit
 
 -- | Enriched linear functors.
-class Functor f where
+class Data.Functor f => Functor f where
   fmap :: (a ->. b) ->. f a ->. f b
 
 (<$>) :: Functor f => (a ->. b) ->. f a ->. f b
 (<$>) = fmap
 
+dataFmapDefault :: Functor f => (a ->. b) -> f a ->. f b
+dataFmapDefault f = fmap f
+
 -- | Enriched linear applicative functors
-class Functor f => Applicative f where
+class (Data.Applicative f, Functor f) => Applicative f where
   {-# MINIMAL pure, ((<*>) | liftA2) #-}
   pure :: a ->. f a
   (<*>) :: f (a ->. b) ->. f a ->. f b
   (<*>) = liftA2 id
   liftA2 :: (a ->. b ->. c) ->. f a ->. f b ->. f c
   liftA2 f x y = f <$> x <*> y
+
+dataPureDefault :: Applicative f => a -> f a
+dataPureDefault x = pure x
 
 -- | Enriched linear monads
 class Applicative m => Monad m where
@@ -70,3 +80,13 @@ join action = action >>= id
 -- | Convenience operator to define Applicative instances in terms of Monad
 ap :: Monad m => m (a ->. b) ->. m a ->. m b
 ap f x = f >>= (\f' -> fmap f' x)
+
+-- | DerivingVia combinators for Data.XXX in terms of Control.XXX
+newtype Data f a = Data (f a)
+
+instance Functor f => Data.Functor (Data f) where
+  fmap f (Data x) = Data (fmap f x)
+
+instance Applicative f => Data.Applicative (Data f) where
+  pure x = Data (pure x)
+  Data f <*> Data x = Data (f <*> x)

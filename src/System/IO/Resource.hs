@@ -2,6 +2,7 @@
 -- Deactivate warning because it is painful to refactor functions with two
 -- rebinded-do with different bind functions. Such as in the 'run'
 -- function. Which is a good argument for having support for F#-style builders.
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
@@ -44,8 +45,9 @@ module System.IO.Resource
 import Control.Exception (onException, mask, finally)
 import qualified Control.Monad as Unrestricted (fmap)
 import qualified Control.Monad.Builder as Unrestricted
-import qualified Control.Monad.Linear as Linear
-import qualified Control.Monad.Linear.Builder as Linear
+import qualified Data.Functor.Linear as Data
+import qualified Control.Monad.Linear as Control
+import qualified Control.Monad.Linear.Builder as Control
 import Data.Coerce
 import qualified Data.IORef as System
 import Data.IORef (IORef)
@@ -63,6 +65,7 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- | The resource-aware I/O monad. This monad guarantees that acquired resources
 -- are always released.
 newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
+  deriving (Data.Functor, Data.Applicative) via (Control.Data RIO)
 unRIO :: RIO a ->. IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
 
@@ -92,7 +95,7 @@ run (RIO action) = do
         result <- action'
         return $ move result
       where
-        Linear.Builder{..} = Linear.monadBuilder -- used in the do-notation
+        Control.Builder{..} = Control.monadBuilder -- used in the do-notation
 
 -- | Should not be applied to a function that acquires or releases resources.
 unsafeFromSystemIO :: System.IO a ->. RIO a
@@ -100,26 +103,26 @@ unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
 
-instance Linear.Functor RIO where
+instance Control.Functor RIO where
   fmap f (RIO action) = RIO $ \releaseMap ->
-    Linear.fmap f (action releaseMap)
+    Control.fmap f (action releaseMap)
 
-instance Linear.Applicative RIO where
-  pure a = RIO $ \_releaseMap -> Linear.pure a
-  (<*>) = Linear.ap
+instance Control.Applicative RIO where
+  pure a = RIO $ \_releaseMap -> Control.pure a
+  (<*>) = Control.ap
 
-instance Linear.Monad RIO where
+instance Control.Monad RIO where
   x >>= f = RIO $ \releaseMap -> do
       a <- unRIO x releaseMap
       unRIO (f a) releaseMap
     where
-      Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+      Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
   x >> y = RIO $ \releaseMap -> do
       unRIO x releaseMap
       unRIO y releaseMap
     where
-      Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+      Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
 -- $files
 
@@ -137,7 +140,7 @@ openFile path mode = do
       (\h -> Linear.fromSystemIO $ System.hClose h)
     return $ Handle h
   where
-    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+    Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
 hClose :: Handle ->. RIO ()
 hClose (Handle h) = unsafeRelease h
@@ -186,7 +189,7 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
       where
-        Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+        Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
 unsafeAcquire
   :: Linear.IO (Unrestricted a)
@@ -202,7 +205,7 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
     return $ UnsafeResource (releaseKey releaseMap) resource)
   where
-    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+    Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
     releaseKey releaseMap =
       case IntMap.null releaseMap of
@@ -229,4 +232,4 @@ unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
     return resource
   where
-    Linear.Builder {..} = Linear.monadBuilder -- used in the do-notation
+    Control.Builder {..} = Control.monadBuilder -- used in the do-notation
