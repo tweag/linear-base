@@ -8,7 +8,9 @@ module Control.Monad.Linear
     -- $ monad
     Functor(..)
   , (<$>)
+  , dataFmapDefault
   , Applicative(..)
+  , dataPureDefault
   , Monad(..)
   , MonadFail(..)
   , return
@@ -41,6 +43,9 @@ class Data.Functor f => Functor f where
 (<$>) :: Functor f => (a ->. b) ->. f a ->. f b
 (<$>) = fmap
 
+dataFmapDefault :: Functor f => (a ->. b) -> f a ->. f b
+dataFmapDefault f = fmap f
+
 -- | Enriched linear applicative functors
 class (Data.Applicative f, Functor f) => Applicative f where
   {-# MINIMAL pure, ((<*>) | liftA2) #-}
@@ -49,6 +54,9 @@ class (Data.Applicative f, Functor f) => Applicative f where
   (<*>) = liftA2 id
   liftA2 :: (a ->. b ->. c) ->. f a ->. f b ->. f c
   liftA2 f x y = f <$> x <*> y
+
+dataPureDefault :: Applicative f => a -> f a
+dataPureDefault x = pure x
 
 -- | Enriched linear monads
 class Applicative m => Monad m where

@@ -44,6 +44,7 @@ module System.IO.Resource
 import Control.Exception (onException, mask, finally)
 import qualified Control.Monad as Unrestricted (fmap)
 import qualified Control.Monad.Builder as Unrestricted
+import qualified Data.Functor.Linear as Data
 import qualified Control.Monad.Linear as Control
 import qualified Control.Monad.Linear.Builder as Control
 import Data.Coerce
@@ -100,9 +101,16 @@ unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
 
+instance Data.Functor RIO where
+  fmap = Control.dataFmapDefault
+
 instance Control.Functor RIO where
   fmap f (RIO action) = RIO $ \releaseMap ->
     Control.fmap f (action releaseMap)
+
+instance Data.Applicative RIO where
+  pure = Control.dataPureDefault
+  (<*>) = (Control.<*>)
 
 instance Control.Applicative RIO where
   pure a = RIO $ \_releaseMap -> Control.pure a

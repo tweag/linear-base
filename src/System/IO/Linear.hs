@@ -37,6 +37,7 @@ import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
 import qualified Control.Monad.Linear as Control
+import qualified Data.Functor.Linear as Data
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)
 import qualified Unsafe.Linear as Unsafe
@@ -84,6 +85,10 @@ withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
 
 -- * Monadic interface
 
+instance Data.Functor IO where
+  fmap :: forall a b. (a ->. b) -> IO a ->. IO b
+  fmap = Control.dataFmapDefault
+
 instance Control.Functor IO where
   fmap :: forall a b. (a ->. b) ->. IO a ->. IO b
   fmap f x = IO $ \s ->
@@ -92,6 +97,10 @@ instance Control.Functor IO where
       -- XXX: long line
       cont :: (# State# RealWorld, a #) ->. (a ->. b) ->. (# State# RealWorld, b #)
       cont (# s', a #) f' = (# s', f' a #)
+
+instance Data.Applicative IO where
+  pure = Control.dataPureDefault
+  (<*>) = (Control.<*>)
 
 instance Control.Applicative IO where
   pure :: forall a. a ->. IO a
