@@ -9,7 +9,6 @@ module Control.Optics.Linear.Internal where
 
 import qualified Data.Profunctor.Linear as Monoidal
 import Data.Profunctor.Linear hiding (swap)
-import Data.Traversable.Linear
 import Data.Void
 import Prelude.Linear
 
