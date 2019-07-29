@@ -17,6 +17,8 @@ module Prelude.Linear
   , curry
   , uncurry
   , (.)
+  , either
+  , maybe
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -47,6 +49,8 @@ import Prelude hiding
   , seq
   , curry
   , uncurry
+  , either
+  , maybe
   , (.)
   , Functor(..)
   , Applicative(..)
@@ -54,6 +58,18 @@ import Prelude hiding
   )
 import Prelude.Linear.Internal.Simple
 import qualified Unsafe.Linear as Unsafe
+
+-- | Linearly typed replacement for the standard `either` function, to allow
+-- linear consumption of an @Either@.
+either :: (a ->. c) -> (b ->. c) -> Either a b ->. c
+either f _ (Left x) = f x
+either _ g (Right y) = g y
+
+-- | Linearly typed replacement for the standard `maybe` function, to allow
+-- linear consumption of a @Maybe@.
+maybe :: b -> (a ->. b) -> Maybe a ->. b
+maybe x _ Nothing = x
+maybe _ f (Just y) = f y
 
 -- $ unrestricted
 
