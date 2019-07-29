@@ -2,7 +2,6 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
