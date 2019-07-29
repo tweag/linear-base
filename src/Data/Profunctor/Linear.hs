@@ -23,7 +23,7 @@ class Profunctor (arr :: * -> * -> *) where
   {-# MINIMAL dimap | lmap, rmap #-}
 
   dimap :: (s ->. a) -> (b ->. t) -> a `arr` b -> s `arr` t
-  dimap f g = lmap f . rmap g
+  dimap f g x = lmap f (rmap g x)
   {-# INLINE dimap #-}
 
   lmap :: (s ->. a) -> a `arr` t -> s `arr` t
@@ -60,9 +60,9 @@ class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   {-# MINIMAL first | second #-}
 
   first :: a `arr` b -> (a `m` c) `arr` (b `m` c)
-  first arr = dimap swap swap $ second arr
+  first arr = dimap swap swap (second arr)
   {-# INLINE first #-}
 
   second :: b `arr` c -> (a `m` b) `arr` (a `m` c)
-  second arr = dimap swap swap $ first arr
+  second arr = dimap swap swap (first arr)
   {-# INLINE second #-}
