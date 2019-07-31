@@ -5,7 +5,7 @@
 
 module Control.Monad.Linear
   ( -- * Linear monad hierarchy
-    -- $ monad
+    -- $monad
     Functor(..)
   , (<$>)
   , dataFmapDefault
@@ -43,6 +43,7 @@ class Data.Functor f => Functor f where
 
 (<$>) :: Functor f => (a ->. b) ->. f a ->. f b
 (<$>) = fmap
+{-# INLINE (<$>) #-}
 
 dataFmapDefault :: Functor f => (a ->. b) -> f a ->. f b
 dataFmapDefault f = fmap f
