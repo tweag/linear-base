@@ -6,7 +6,6 @@
 
 module Data.Profunctor.Linear
   ( Profunctor(..)
-  , SymmetricMonoidal(..)
   , Monoidal(..)
   , Strong(..)
   ) where

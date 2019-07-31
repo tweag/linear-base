@@ -7,8 +7,9 @@
 
 module Control.Optics.Linear.Internal where
 
-import qualified Data.Profunctor.Linear as Monoidal
-import Data.Profunctor.Linear hiding (swap)
+import qualified Data.Bifunctor.Linear as Bifunctor
+import Data.Bifunctor.Linear (SymmetricMonoidal)
+import Data.Profunctor.Linear
 import Data.Void
 import Prelude.Linear
 
@@ -35,10 +36,10 @@ type Prism' a s = Prism a a s s
 -- TODO: I'm sure most of these type can be monomorphic optics into polymorphic
 -- ones.
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
-swap = Optical (dimap Monoidal.swap Monoidal.swap)
+swap = Optical (dimap Bifunctor.swap Bifunctor.swap)
 
 assoc :: SymmetricMonoidal m u => Iso ((a `m` b) `m` c) ((d `m` e) `m` f) (a `m` (b `m` c)) (d `m` (e `m` f))
-assoc = Optical (dimap lassoc rassoc)
+assoc = Optical (dimap Bifunctor.lassoc Bifunctor.rassoc)
 
 _1 :: Lens a b (a,c) (b,c)
 _1 = Optical first
