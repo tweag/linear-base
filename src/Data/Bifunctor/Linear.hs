@@ -25,12 +25,15 @@ class Bifunctor p where
   {-# MINIMAL bimap | (first , second) #-}
   bimap :: (a ->. b) -> (c ->. d) -> a `p` c ->. b `p` d
   bimap f g = first f . second g
+  {-# INLINE bimap #-}
 
   first :: (a ->. b) -> a `p` c ->. b `p` c
   first f = bimap f id
+  {-# INLINE first #-}
 
   second :: (b ->. c) -> a `p` b ->. a `p` c
   second = bimap id
+  {-# INLINE second #-}
 
 instance Bifunctor (,) where
   bimap f g (x,y) = (f x, g y)
