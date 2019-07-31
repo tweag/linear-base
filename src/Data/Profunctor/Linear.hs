@@ -14,7 +14,7 @@ module Data.Profunctor.Linear
   , Strong(..)
   ) where
 
-import Data.Void
+import Data.Bifunctor.Linear
 import Prelude.Linear hiding (swap)
 
 -- TODO: write laws
@@ -33,24 +33,6 @@ class Profunctor (arr :: * -> * -> *) where
   rmap :: (b ->. t) -> s `arr` b -> s `arr` t
   rmap = dimap id
   {-# INLINE rmap #-}
-
--- TODO: Move to a dedicated module
--- TODO: Is a bifunctor
--- TODO: associators
--- TODO: remove `swap` from Prelude
--- | Symmetric monoidal products on the category of linear types
---
--- Laws
--- * @swap . swap = id@
-class SymmetricMonoidal (m :: * -> * -> *) (u :: *) | m -> u, u -> m where
-  swap :: a `m` b ->. b `m` a
-
-instance SymmetricMonoidal (,) () where
-  swap (x, y) = (y, x)
-
-instance SymmetricMonoidal Either Void where
-  swap (Left x) = Right x
-  swap (Right x) = Left x
 
 class (SymmetricMonoidal m u, Profunctor arr) => Monoidal m u arr where
   (***) :: a `arr` b -> x `arr` y -> (a `m` x) `arr` (b `m` y)
