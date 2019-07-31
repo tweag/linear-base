@@ -41,8 +41,7 @@ instance Bifunctor (,) where
   second g (x,y) = (x, g y)
 
 instance Bifunctor Either where
-  bimap f _ (Left x) = Left (f x)
-  bimap _ g (Right y) = Right (g y)
+  bimap f g = either (Left . f) (Right . g)
 
 -- TODO: assoc laws
 -- | Symmetric monoidal products on the category of linear types
@@ -63,8 +62,7 @@ instance SymmetricMonoidal (,) () where
   rassoc ((x,y),z) = (x,(y,z))
 
 instance SymmetricMonoidal Either Void where
-  swap (Left x) = Right x
-  swap (Right x) = Left x
+  swap = either Right Left
   rassoc (Left (Left x)) = Left x
   rassoc (Left (Right x)) = Right (Left x)
   rassoc (Right x) = Right (Right x)
