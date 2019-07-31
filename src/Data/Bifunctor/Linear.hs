@@ -50,21 +50,21 @@ instance Bifunctor Either where
 -- Laws
 -- * @'swap' . 'swap' = 'id'@
 class Bifunctor m => SymmetricMonoidal (m :: * -> * -> *) (u :: *) | m -> u, u -> m where
-  {-# MINIMAL swap, (assoc | unassoc) #-}
-  assoc :: (a `m` b) `m` c ->. a `m` (b `m` c)
-  assoc = swap . unassoc . swap . unassoc . swap
-  unassoc :: a `m` (b `m` c) ->. (a `m` b) `m` c
-  unassoc = swap . assoc . swap . assoc . swap
+  {-# MINIMAL swap, (rassoc | lassoc) #-}
+  rassoc :: (a `m` b) `m` c ->. a `m` (b `m` c)
+  rassoc = swap . lassoc . swap . lassoc . swap
+  lassoc :: a `m` (b `m` c) ->. (a `m` b) `m` c
+  lassoc = swap . rassoc . swap . rassoc . swap
   swap :: a `m` b ->. b `m` a
 -- XXX: should unitors be added?
 
 instance SymmetricMonoidal (,) () where
   swap (x, y) = (y, x)
-  assoc ((x,y),z) = (x,(y,z))
+  rassoc ((x,y),z) = (x,(y,z))
 
 instance SymmetricMonoidal Either Void where
   swap (Left x) = Right x
   swap (Right x) = Left x
-  assoc (Left (Left x)) = Left x
-  assoc (Left (Right x)) = Right (Left x)
-  assoc (Right x) = Right (Right x)
+  rassoc (Left (Left x)) = Left x
+  rassoc (Left (Right x)) = Right (Left x)
+  rassoc (Right x) = Right (Right x)
