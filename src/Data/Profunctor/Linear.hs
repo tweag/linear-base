@@ -14,7 +14,7 @@ module Data.Profunctor.Linear
   , Strong(..)
   ) where
 
-import Data.Bifunctor.Linear
+import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear hiding (swap)
 
 -- TODO: write laws
