@@ -1,10 +1,7 @@
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Data.Profunctor.Linear
@@ -15,7 +12,7 @@ module Data.Profunctor.Linear
   ) where
 
 import Data.Bifunctor.Linear hiding (first, second)
-import Prelude.Linear hiding (swap)
+import Prelude.Linear
 
 -- TODO: write laws
 

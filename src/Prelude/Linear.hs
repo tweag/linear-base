@@ -12,7 +12,6 @@ module Prelude.Linear
     ($)
   , const
   , id
-  , swap
   , seq
   , curry
   , uncurry

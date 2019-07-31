@@ -28,11 +28,6 @@ id x = x
 const :: a ->. b -> a
 const x _ = x
 
--- XXX: To be decided: In `base`, this is not a prelude function (it's in
--- `Data.Tuple`), maybe we don't want it to be in `Prelude.Linear`.
-swap :: (a,b) ->. (b,a)
-swap (x,y) = (y,x)
-
 -- | @seq x y@ only forces @x@ to head normal form, therefore is not guaranteed
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
