@@ -24,17 +24,9 @@ type Lens a b s t = Optic (Strong (,) ()) a b s t
 type Lens' a s = Lens a a s s
 type Prism a b s t = Optic (Strong Either Void) a b s t
 type Prism' a s = Prism a a s s
+type Traversal a b s t = Optic Wandering a b s t
+type Traversal' a s = Traversal a a s s
 
--- | Because it is inconvenient to pair up parametric constraints, 'Traversal'
--- is defined in terms of 'Optic_' rather than 'Optic'.
--- type Traversal a b s t =
---   forall arr.
---   ( Strong (,) () arr , Strong Either Void arr , Monoidal (,) () arr)
---   => Optic_ arr a b s t
--- type Traversal' a s = Traversal a a s s
-
--- TODO: I'm sure most of these type can be monomorphic optics into polymorphic
--- ones.
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = Optical (dimap Bifunctor.swap Bifunctor.swap)
 
@@ -53,5 +45,5 @@ _Left = Optical first
 _Right :: Prism a b (Either c a) (Either c b)
 _Right = Optical second
 
--- traversed :: Traversable t => Traversal a b (t a) (t b)
--- traversed p = _
+traversed :: Traversable t => Traversal a b (t a) (t b)
+traversed = Optical wander
