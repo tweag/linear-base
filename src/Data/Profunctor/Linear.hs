@@ -19,15 +19,15 @@ import Prelude.Linear
 class Profunctor (arr :: * -> * -> *) where
   {-# MINIMAL dimap | lmap, rmap #-}
 
-  dimap :: (s ->. a) -> (b ->. t) -> a `arr` b ->. s `arr` t
-  dimap f g = lmap f . rmap g
+  dimap :: (s ->. a) -> (b ->. t) -> a `arr` b -> s `arr` t
+  dimap f g x = lmap f (rmap g x)
   {-# INLINE dimap #-}
 
-  lmap :: (s ->. a) -> a `arr` t ->. s `arr` t
+  lmap :: (s ->. a) -> a `arr` t -> s `arr` t
   lmap f = dimap f id
   {-# INLINE lmap #-}
 
-  rmap :: (b ->. t) -> s `arr` b ->. s `arr` t
+  rmap :: (b ->. t) -> s `arr` b -> s `arr` t
   rmap = dimap id
   {-# INLINE rmap #-}
 

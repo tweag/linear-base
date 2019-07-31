@@ -24,7 +24,7 @@ import Data.Void
 class Bifunctor p where
   {-# MINIMAL bimap | (first , second) #-}
   bimap :: (a ->. b) -> (c ->. d) -> a `p` c ->. b `p` d
-  bimap f g = first f . second g
+  bimap f g x = first f (second g x)
   {-# INLINE bimap #-}
 
   first :: (a ->. b) -> a `p` c ->. b `p` c
