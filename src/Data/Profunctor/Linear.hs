@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -6,13 +7,14 @@
 
 module Data.Profunctor.Linear
   ( Profunctor(..)
-  , SymmetricMonoidal(..)
   , Monoidal(..)
   , Strong(..)
+  , Wandering(..)
   ) where
 
 import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear
+import Data.Void
 
 -- TODO: write laws
 
@@ -45,3 +47,6 @@ class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   second :: b `arr` c -> (a `m` b) `arr` (a `m` c)
   second arr = dimap swap swap (first arr)
   {-# INLINE second #-}
+
+class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
+  wander :: Traversable f => a `arr` b -> f a `arr` f b
