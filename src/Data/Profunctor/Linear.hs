@@ -12,6 +12,7 @@ module Data.Profunctor.Linear
   , Wandering(..)
   ) where
 
+import qualified Data.Functor.Linear as Data
 import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear
 import Data.Void
@@ -49,4 +50,4 @@ class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   {-# INLINE second #-}
 
 class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
-  wander :: Traversable f => a `arr` b -> f a `arr` f b
+  wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
