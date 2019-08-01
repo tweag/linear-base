@@ -108,3 +108,11 @@ instance Control.Applicative f => Strong Either Void (LKleisli f) where
 
 instance Control.Applicative f => Wandering (LKleisli f) where
   wander (LKleisli f) = LKleisli (Data.traverse f)
+
+instance Profunctor (->) where
+  dimap f g h x = g (h (f x))
+instance Strong (,) () (->) where
+  first f (x, y) = (f x, y)
+instance Strong Either Void (->) where
+  first f (Left x) = Left (f x)
+  first _ (Right y) = Right y
