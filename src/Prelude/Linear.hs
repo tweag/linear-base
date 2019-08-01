@@ -54,6 +54,7 @@ import Prelude hiding
   , Functor(..)
   , Applicative(..)
   , Monad(..)
+  , Traversable(..)
   )
 import Prelude.Linear.Internal.Simple
 import qualified Unsafe.Linear as Unsafe
