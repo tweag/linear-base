@@ -71,5 +71,10 @@ set (Optical l) x = l (const x)
 lengthOf :: Num r => Optic_ (Kleisli (Const (Sum r))) a b s t -> s -> r
 lengthOf l s = getSum (gets l (const (Sum 1)) s)
 
+-- XXX: the below two functions will be made redundant with multiplicity
+-- polymorphism on over and traverseOf'
+over' :: Optic_ (->) a b s t -> (a -> b) -> s -> t
+over' (Optical l) f = l f
+
 traverseOf' :: Optic_ (Kleisli f) a b s t -> (a -> f b) -> s -> f t
 traverseOf' (Optical l) f = runKleisli (l (Kleisli f))
