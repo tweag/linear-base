@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -45,11 +46,13 @@ mergeN (Heap k1 a1 h1) (Heap k2 a2 h2) pool =
     --- XXX: this is a good example of why we need a working `case` and/or
     --- `let`.
     testAndRebuild :: Unrestricted k ->. a ->. Box (List (NEHeap k a)) ->. Unrestricted k ->. a ->. Box (List (NEHeap k a)) ->. Pool ->. NEHeap k a
-    testAndRebuild (Unrestricted k1') a1' h1' (Unrestricted k2') a2' h2' pool' =
-      if k1' <= k2' then
-        Heap k1' a1' (Manual.alloc (List.Cons (Heap k2' a2' h2') h1') pool')
-      else
-        Heap k2' a2' (Manual.alloc (List.Cons (Heap k1' a1' h1') h2') pool')
+    testAndRebuild (Unrestricted k1') a1' h1' (Unrestricted k2') a2' h2' =
+      if k1' <= k2'
+        then helper k1' a1' k2' a2' h1' h2'
+        else helper k2' a2' k1' a1' h2' h1'
+
+    helper :: k -> a ->. k -> a ->. Box (List (NEHeap k a)) ->. Box (List (NEHeap k a)) ->. Pool ->. NEHeap k a
+    helper k1'' a1'' k2'' a2'' h1'' h2'' pool'' = Heap k1'' a1'' (Manual.alloc (List.Cons (Heap k2'' a2'' h2'') h1'') pool'')
 
 mergeN' :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => NEHeap k a ->. Heap k a ->. Pool ->. NEHeap k a
 mergeN' h Empty pool = pool `lseq` h
