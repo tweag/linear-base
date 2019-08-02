@@ -38,6 +38,9 @@ swap = Optical (dimap Bifunctor.swap Bifunctor.swap)
 assoc :: SymmetricMonoidal m u => Iso ((a `m` b) `m` c) ((d `m` e) `m` f) (a `m` (b `m` c)) (d `m` (e `m` f))
 assoc = Optical (dimap Bifunctor.lassoc Bifunctor.rassoc)
 
+(.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
+Optical f .> Optical g = Optical (f P.. g)
+
 _1 :: Lens a b (a,c) (b,c)
 _1 = Optical first
 
