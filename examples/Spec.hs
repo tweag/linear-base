@@ -5,11 +5,9 @@
 
 import Control.Exception
 import Control.Monad as P (void)
--- TODO: restore (see #18)
--- import qualified Data.List as L
+import qualified Data.List as L
 import Data.Typeable
--- TODO: restore (see #18)
--- import qualified Foreign.Heap as Heap
+import qualified Foreign.Heap as Heap
 import Foreign.List (List)
 import qualified Foreign.List as List
 import Foreign.Marshal.Pure (Pool)
@@ -70,8 +68,7 @@ main = hspec P.$ do
            )
 
 
-  -- TODO: restore (see #18)
-  -- describe "Off-heap heaps" $ do
-  --   describe "sort" $ do
-  --     it "sorts" $
-  --       property (\(l :: [(Int, ())]) -> Heap.sort l == (L.reverse $ L.sort l))
+  describe "Off-heap heaps" P.$ do
+    describe "sort" P.$ do
+      it "sorts" P.$
+        property (\(l :: [(Int, ())]) -> Heap.sort l == (L.reverse P.$ L.sort l))
