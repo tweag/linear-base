@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
@@ -12,14 +13,17 @@ module Data.Profunctor.Linear
   , Monoidal(..)
   , Strong(..)
   , Wandering(..)
-  , LinearArrow(..)
+  , LinearArrow(..), getLA
   , Kleisli(..)
   , LKleisli(..)
+  , CoLKleisli(..)
+  , Exchange(..)
   ) where
 
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import Data.Bifunctor.Linear hiding (first, second)
+import Data.Functor.Const
 import Prelude.Linear
 import Data.Void
 import qualified Prelude
@@ -63,7 +67,11 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
 -- Instances --
 ---------------
 
-newtype LinearArrow a b = LA { getLA :: a ->. b }
+newtype LinearArrow a b = LA (a ->. b)
+-- | Temporary deconstructor since inference doesn't get it right
+-- TODO: maybe use TH to automatically write things like this?
+getLA :: LinearArrow a b ->. a ->. b
+getLA (LA f) = f
 
 instance Profunctor LinearArrow where
   dimap f g (LA h) = LA $ g . h . f
@@ -90,8 +98,6 @@ instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
                                    Left  x -> Prelude.fmap Left (f x)
                                    Right y -> Prelude.pure (Right y)
 
-forget :: (a ->. b) -> a -> b
-forget f x = f x
 
 newtype LKleisli m a b = LKleisli { runLKleisli :: a ->. m b }
 
@@ -116,3 +122,20 @@ instance Strong (,) () (->) where
 instance Strong Either Void (->) where
   first f (Left x) = Left (f x)
   first _ (Right y) = Right y
+
+-- XXX: Since CoLKleisli has uses, it might be better to replace all this
+-- with a Bif-like structure...
+--
+newtype CoLKleisli w a b = CoLKleisli { runCoLKleisli :: w a ->. b }
+
+instance Data.Functor f => Profunctor (CoLKleisli f) where
+  dimap f g (CoLKleisli h) = CoLKleisli (g . h . Data.fmap f)
+
+-- instance of a more general idea, but this will do for now
+instance Strong Either Void (CoLKleisli (Const x)) where
+  first (CoLKleisli f) = CoLKleisli (\(Const x) -> Left (f (Const x)))
+
+data Exchange a b s t = Exchange (s ->. a) (b ->. t)
+instance Profunctor (Exchange a b) where
+  dimap f g (Exchange p q) = Exchange (p . f) (g . q)
+
