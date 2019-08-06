@@ -6,7 +6,33 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Control.Optics.Linear.Internal where
+module Control.Optics.Linear.Internal
+  ( -- * Types
+    Optic_(..)
+  , Optic
+  , Iso, Iso'
+  , Lens, Lens'
+  , Prism, Prism'
+  , Traversal, Traversal'
+    -- * Composing optics
+  , (.>)
+    -- * Common optics
+  , swap, assoc
+  , _1, _2
+  , _Left, _Right
+  , _Just, _Nothing
+  , traversed
+    -- * Using optics
+  , get, set, gets
+  , match, match', build
+  , over, over'
+  , traverseOf, traverseOf'
+  , lengthOf
+  , withIso
+    -- * Constructing optics
+  , iso, prism
+  )
+  where
 
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
