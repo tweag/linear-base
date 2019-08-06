@@ -14,6 +14,8 @@ import Data.Functor.Const
 import Data.Functor.Linear
 import Data.Monoid
 import Data.Profunctor.Linear
+import qualified Data.Profunctor.Kleisli.Linear as L
+import qualified Data.Profunctor.Kleisli.NonLinear as NL
 import Data.Void
 import Prelude.Linear
 import qualified Prelude as P
@@ -68,29 +70,27 @@ traversed = Optical wander
 over :: Optic_ LinearArrow a b s t -> (a ->. b) -> s ->. t
 over (Optical l) f = getLA (l (LA f))
 
-traverseOf :: Optic_ (LKleisli f) a b s t -> (a ->. f b) -> s ->. f t
-traverseOf (Optical l) f = runLKleisli (l (LKleisli f))
+traverseOf :: Optic_ (L.Kleisli f) a b s t -> (a ->. f b) -> s ->. f t
+traverseOf (Optical l) f = L.runKleisli (l (L.Kleisli f))
 
-get :: Optic_ (Kleisli (Const a)) a b s t -> s -> a
+get :: Optic_ (NL.Kleisli (Const a)) a b s t -> s -> a
 get l = gets l P.id
 
-gets :: Optic_ (Kleisli (Const r)) a b s t -> (a -> r) -> s -> r
-gets (Optical l) f s = getConst' (runKleisli (l (Kleisli (Const P.. f))) s)
+gets :: Optic_ (NL.Kleisli (Const r)) a b s t -> (a -> r) -> s -> r
+gets (Optical l) f s = getConst' (NL.runKleisli (l (NL.Kleisli (Const P.. f))) s)
 
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)
 
--- get can't return a linear arrow, so `withIso swap const` needs to be used
--- instead of `get swap`
-match :: Optic_ (LKleisli (Either a)) a b s t -> s ->. Either t a
-match (Optical l) = withIso swap (\x _ -> x) . runLKleisli (l (LKleisli Left))
+match :: Optic_ (L.Kleisli (Either a)) a b s t -> s ->. Either t a
+match (Optical l) = withIso swap (\x _ -> x) . L.runKleisli (l (L.Kleisli Left))
 
 -- will be redundant with multiplicity polymorphism
-match' :: Optic_ (Kleisli (Either a)) a b s t -> s -> Either t a
-match' (Optical l) = get swap P.. runKleisli (l (Kleisli Left))
+match' :: Optic_ (NL.Kleisli (Either a)) a b s t -> s -> Either t a
+match' (Optical l) = withIso swap (\x _ -> forget x) P.. NL.runKleisli (l (NL.Kleisli Left))
 
-build :: Optic_ (CoLKleisli (Const b)) a b s t -> b ->. t
-build (Optical l) x = runCoLKleisli (l (CoLKleisli getConst')) (Const x)
+build :: Optic_ (L.CoKleisli (Const b)) a b s t -> b ->. t
+build (Optical l) x = L.runCoKleisli (l (L.CoKleisli getConst')) (Const x)
 
 -- XXX: move this to Prelude
 -- | Linearly typed patch for the newtype deconstructor. (Temporary until
@@ -98,7 +98,7 @@ build (Optical l) x = runCoLKleisli (l (CoLKleisli getConst')) (Const x)
 getConst' :: Const a b ->. a
 getConst' (Const x) = x
 
-lengthOf :: Num r => Optic_ (Kleisli (Const (Sum r))) a b s t -> s -> r
+lengthOf :: Num r => Optic_ (NL.Kleisli (Const (Sum r))) a b s t -> s -> r
 lengthOf l s = getSum (gets l (const (Sum 1)) s)
 
 -- XXX: the below two functions will be made redundant with multiplicity
@@ -106,8 +106,8 @@ lengthOf l s = getSum (gets l (const (Sum 1)) s)
 over' :: Optic_ (->) a b s t -> (a -> b) -> s -> t
 over' (Optical l) f = l f
 
-traverseOf' :: Optic_ (Kleisli f) a b s t -> (a -> f b) -> s -> f t
-traverseOf' (Optical l) f = runKleisli (l (Kleisli f))
+traverseOf' :: Optic_ (NL.Kleisli f) a b s t -> (a -> f b) -> s -> f t
+traverseOf' (Optical l) f = NL.runKleisli (l (NL.Kleisli f))
 
 iso :: (s ->. a) -> (b ->. t) -> Iso a b s t
 iso f g = Optical (dimap f g)
@@ -115,4 +115,3 @@ iso f g = Optical (dimap f g)
 withIso :: Optic_ (Exchange a b) a b s t -> ((s ->. a) -> (b ->. t) -> r) -> r
 withIso (Optical l) f = f fro to
   where Exchange fro to = l (Exchange id id)
-
