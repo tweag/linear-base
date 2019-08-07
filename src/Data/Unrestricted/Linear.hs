@@ -1,16 +1,21 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Data.Unrestricted.Linear
   ( -- * Unrestricted
     -- $ unrestricted
     Unrestricted(..)
   , unUnrestricted
-    -- * Typeclasses for non-linear actions
+    -- * Duplicating and consuming value linearly
     -- $ comonoid
   , Consumable(..)
   , Dupable(..)
@@ -27,25 +32,9 @@ import qualified Data.Functor.Linear as Data
 import Data.Vector.Linear (V)
 import qualified Data.Vector.Linear as V
 import GHC.TypeLits
-import GHC.Types
-import Prelude hiding
-  ( ($)
-  , id
-  , const
-  , seq
-  , curry
-  , uncurry
-  , either
-  , maybe
-  , (.)
-  , Functor(..)
-  , Applicative(..)
-  , Monad(..)
-  , Traversable(..)
-  , Semigroup(..)
-  , Monoid(..)
-  )
-import Prelude.Linear.Internal.Simple () -- TODO: delete if necessary but i'll probably need this
+import GHC.Types hiding (Any)
+import Data.Monoid.Linear
+import qualified Prelude
 import qualified Unsafe.Linear as Unsafe
 
 -- $ unrestricted
@@ -195,3 +184,26 @@ instance Data.Applicative Unrestricted where
 -- | Discard a consumable value stored in a data functor.
 void :: (Data.Functor f, Consumable a) => f a ->. f ()
 void = Data.fmap consume
+
+-- Some stock instances
+deriving instance Consumable a => Consumable (Sum a)
+deriving instance Dupable a => Dupable (Sum a)
+deriving instance Movable a => Movable (Sum a)
+deriving instance Consumable a => Consumable (Product a)
+deriving instance Dupable a => Dupable (Product a)
+deriving instance Movable a => Movable (Product a)
+deriving instance Consumable All
+deriving instance Dupable All
+deriving instance Movable All
+deriving instance Consumable Any
+deriving instance Dupable Any
+deriving instance Movable Any
+
+newtype MovableMonoid a = MovableMonoid a
+  deriving (Prelude.Semigroup, Prelude.Monoid)
+
+instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
+  MovableMonoid a <> MovableMonoid b = MovableMonoid (combine (move a) (move b))
+    where combine :: Prelude.Semigroup a => Unrestricted a ->. Unrestricted a ->. a
+          combine (Unrestricted x) (Unrestricted y) = x Prelude.<> y
+instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)

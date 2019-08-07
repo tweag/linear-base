@@ -14,6 +14,8 @@ module Prelude.Linear
   , either
   , maybe
   , forget
+  , Semigroup(..)
+  , Monoid(..)
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -33,6 +35,7 @@ module Prelude.Linear
   ) where
 
 import Data.Unrestricted.Linear
+import Data.Monoid.Linear
 import Prelude hiding
   ( ($)
   , id
@@ -47,6 +50,8 @@ import Prelude hiding
   , Applicative(..)
   , Monad(..)
   , Traversable(..)
+  , Semigroup(..)
+  , Monoid(..)
   )
 import Prelude.Linear.Internal.Simple
 

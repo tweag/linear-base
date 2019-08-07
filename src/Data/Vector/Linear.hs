@@ -33,7 +33,8 @@ module Data.Vector.Linear
   , make
   ) where
 
-import qualified Data.Functor.Linear as Data
+import qualified Data.Functor.Linear.Internal as Data
+import qualified Data.Functor.Linear.Internal.Traversable as Data
 import Data.Proxy
 import Data.Type.Equality
 import Data.Vector (Vector)
