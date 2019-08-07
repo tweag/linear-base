@@ -40,8 +40,8 @@ import Data.Functor.Const
 import Data.Functor.Linear
 import Data.Monoid
 import Data.Profunctor.Linear
-import qualified Data.Profunctor.Kleisli.Linear as L
-import qualified Data.Profunctor.Kleisli.NonLinear as NL
+import qualified Data.Profunctor.Kleisli.Linear as Linear
+import qualified Data.Profunctor.Kleisli.NonLinear as NonLinear
 import Data.Void
 import Prelude.Linear
 import qualified Prelude as P
@@ -96,27 +96,27 @@ traversed = Optical wander
 over :: Optic_ LinearArrow a b s t -> (a ->. b) -> s ->. t
 over (Optical l) f = getLA (l (LA f))
 
-traverseOf :: Optic_ (L.Kleisli f) a b s t -> (a ->. f b) -> s ->. f t
-traverseOf (Optical l) f = L.runKleisli (l (L.Kleisli f))
+traverseOf :: Optic_ (Linear.Kleisli f) a b s t -> (a ->. f b) -> s ->. f t
+traverseOf (Optical l) f = Linear.runKleisli (l (Linear.Kleisli f))
 
-get :: Optic_ (NL.Kleisli (Const a)) a b s t -> s -> a
+get :: Optic_ (NonLinear.Kleisli (Const a)) a b s t -> s -> a
 get l = gets l P.id
 
-gets :: Optic_ (NL.Kleisli (Const r)) a b s t -> (a -> r) -> s -> r
-gets (Optical l) f s = getConst' (NL.runKleisli (l (NL.Kleisli (Const P.. f))) s)
+gets :: Optic_ (NonLinear.Kleisli (Const r)) a b s t -> (a -> r) -> s -> r
+gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Const P.. f))) s)
 
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)
 
-match :: Optic_ (L.Kleisli (Either a)) a b s t -> s ->. Either t a
-match (Optical l) = withIso swap (\x _ -> x) . L.runKleisli (l (L.Kleisli Left))
+match :: Optic_ (Linear.Kleisli (Either a)) a b s t -> s ->. Either t a
+match (Optical l) = withIso swap (\x _ -> x) . Linear.runKleisli (l (Linear.Kleisli Left))
 
 -- will be redundant with multiplicity polymorphism
-match' :: Optic_ (NL.Kleisli (Either a)) a b s t -> s -> Either t a
-match' (Optical l) = withIso swap (\x _ -> forget x) P.. NL.runKleisli (l (NL.Kleisli Left))
+match' :: Optic_ (NonLinear.Kleisli (Either a)) a b s t -> s -> Either t a
+match' (Optical l) = withIso swap (\x _ -> forget x) P.. NonLinear.runKleisli (l (NonLinear.Kleisli Left))
 
-build :: Optic_ (L.CoKleisli (Const b)) a b s t -> b ->. t
-build (Optical l) x = L.runCoKleisli (l (L.CoKleisli getConst')) (Const x)
+build :: Optic_ (Linear.CoKleisli (Const b)) a b s t -> b ->. t
+build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Const x)
 
 -- XXX: move this to Prelude
 -- | Linearly typed patch for the newtype deconstructor. (Temporary until
@@ -124,7 +124,7 @@ build (Optical l) x = L.runCoKleisli (l (L.CoKleisli getConst')) (Const x)
 getConst' :: Const a b ->. a
 getConst' (Const x) = x
 
-lengthOf :: Num r => Optic_ (NL.Kleisli (Const (Sum r))) a b s t -> s -> r
+lengthOf :: Num r => Optic_ (NonLinear.Kleisli (Const (Sum r))) a b s t -> s -> r
 lengthOf l s = getSum (gets l (const (Sum 1)) s)
 
 -- XXX: the below two functions will be made redundant with multiplicity
@@ -132,8 +132,8 @@ lengthOf l s = getSum (gets l (const (Sum 1)) s)
 over' :: Optic_ (->) a b s t -> (a -> b) -> s -> t
 over' (Optical l) f = l f
 
-traverseOf' :: Optic_ (NL.Kleisli f) a b s t -> (a -> f b) -> s -> f t
-traverseOf' (Optical l) f = NL.runKleisli (l (NL.Kleisli f))
+traverseOf' :: Optic_ (NonLinear.Kleisli f) a b s t -> (a -> f b) -> s -> f t
+traverseOf' (Optical l) f = NonLinear.runKleisli (l (NonLinear.Kleisli f))
 
 iso :: (s ->. a) -> (b ->. t) -> Iso a b s t
 iso f g = Optical (dimap f g)
