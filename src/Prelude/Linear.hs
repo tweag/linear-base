@@ -18,6 +18,7 @@ module Prelude.Linear
   , (.)
   , either
   , maybe
+  , forget
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -70,6 +71,14 @@ either _ g (Right y) = g y
 maybe :: b -> (a ->. b) -> Maybe a ->. b
 maybe x _ Nothing = x
 maybe _ f (Just y) = f y
+
+-- XXX: temporary: with multiplicity polymorphism functions expecting a
+-- non-linear arrow would allow a linear arrow passed, so this would be
+-- redundant
+-- | Convenience operator when a higher-order function expects a non-linear
+-- arrow but we have a linear arrow
+forget :: (a ->. b) ->. a -> b
+forget f x = f x
 
 -- $ unrestricted
 

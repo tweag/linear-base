@@ -15,6 +15,7 @@
 module Data.Functor.Linear where
 
 import Prelude.Linear.Internal.Simple
+import Data.Functor.Const
 
 class Functor f where
   fmap :: (a ->. b) -> f a ->. f b
@@ -70,3 +71,6 @@ instance Functor [] where
 instance Traversable [] where
   traverse _f [] = pure []
   traverse f (a : as) = (:) <$> f a <*> traverse f as
+
+instance Functor (Const x) where
+  fmap _ (Const x) = Const x
