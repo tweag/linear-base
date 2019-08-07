@@ -23,6 +23,7 @@ library
     Control.Optics.Linear.Internal
     Data.Bifunctor.Linear
     Data.Functor.Linear
+    Data.Semigroup.Linear
     Data.Vector.Linear
     Data.Profunctor.Linear
     Data.Profunctor.Kleisli.Linear

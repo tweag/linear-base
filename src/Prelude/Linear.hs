@@ -19,6 +19,8 @@ module Prelude.Linear
   , either
   , maybe
   , forget
+  , Semigroup(..)
+  , Monoid(..)
     -- * Unrestricted
     -- $ unrestricted
   , Unrestricted(..)
@@ -37,6 +39,7 @@ module Prelude.Linear
   , module Prelude
   ) where
 
+import Data.Semigroup.Linear
 import qualified Data.Functor.Linear as Data
 import Data.Vector.Linear (V)
 import qualified Data.Vector.Linear as V
@@ -56,6 +59,8 @@ import Prelude hiding
   , Applicative(..)
   , Monad(..)
   , Traversable(..)
+  , Semigroup(..)
+  , Monoid(..)
   )
 import Prelude.Linear.Internal.Simple
 import qualified Unsafe.Linear as Unsafe
