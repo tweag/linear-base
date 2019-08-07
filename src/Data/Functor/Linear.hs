@@ -15,6 +15,7 @@
 module Data.Functor.Linear where
 
 import Prelude.Linear.Internal.Simple
+import Prelude (Maybe(..), Either(..))
 import Data.Functor.Const
 
 class Functor f where
@@ -74,3 +75,15 @@ instance Traversable [] where
 
 instance Functor (Const x) where
   fmap _ (Const x) = Const x
+
+instance Functor Maybe where
+  fmap _ Nothing = Nothing
+  fmap f (Just x) = Just (f x)
+
+instance Traversable Maybe where
+  sequence Nothing = pure Nothing
+  sequence (Just x) = fmap Just x
+
+instance Functor (Either e) where
+  fmap _ (Left x) = Left x
+  fmap f (Right x) = Right (f x)

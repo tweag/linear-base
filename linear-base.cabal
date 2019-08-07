@@ -23,9 +23,11 @@ library
     Control.Optics.Linear.Internal
     Data.Bifunctor.Linear
     Data.Functor.Linear
+    Data.Monoid.Linear
     Data.Vector.Linear
     Data.Profunctor.Linear
     Data.Profunctor.Kleisli.Linear
+    Data.Unrestricted.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
     Prelude.Linear.Internal.Simple

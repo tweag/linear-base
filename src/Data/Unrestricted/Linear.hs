@@ -28,24 +28,6 @@ import Data.Vector.Linear (V)
 import qualified Data.Vector.Linear as V
 import GHC.TypeLits
 import GHC.Types
-import Prelude hiding
-  ( ($)
-  , id
-  , const
-  , seq
-  , curry
-  , uncurry
-  , either
-  , maybe
-  , (.)
-  , Functor(..)
-  , Applicative(..)
-  , Monad(..)
-  , Traversable(..)
-  , Semigroup(..)
-  , Monoid(..)
-  )
-import Prelude.Linear.Internal.Simple () -- TODO: delete if necessary but i'll probably need this
 import qualified Unsafe.Linear as Unsafe
 
 -- | @Unrestricted a@ represents unrestricted values of type @a@ in a linear context,
