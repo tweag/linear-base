@@ -13,7 +13,8 @@ module Control.Optics.Linear.Internal
   , Iso, Iso'
   , Lens, Lens'
   , Prism, Prism'
-  , Traversal, Traversal'
+  , PTraversal, PTraversal'
+  , DTraversal, DTraversal'
     -- * Composing optics
   , (.>)
     -- * Common optics
@@ -21,16 +22,20 @@ module Control.Optics.Linear.Internal
   , _1, _2
   , _Left, _Right
   , _Just, _Nothing
-  , traversed
+  , ptraversed, dtraversed
+  , both, both'
+  , get', gets', set'
     -- * Using optics
   , get, set, gets
   , match, match', build
+  , preview
   , over, over'
   , traverseOf, traverseOf'
   , lengthOf
   , withIso
+  , toListOf
     -- * Constructing optics
-  , iso, prism
+  , iso, prism, lens
   )
   where
 
@@ -38,13 +43,19 @@ import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Monoid
+import Data.Functor.Const
+import Data.Functor.Linear
 import Data.Profunctor.Linear
 import Data.Functor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
 import Data.Void
-import Prelude.Linear
+import Prelude.Linear hiding ((<$>))
+-- ^ XXX: not entirely sure why the hiding is necessary here...
 import qualified Prelude as P
 
+-- TODO: documentation in this module
+-- Put the functions in some sensible order: possibly split into separate
+-- Lens/Prism/Traversal/Iso modules
 newtype Optic_ arr a b s t = Optical (a `arr` b -> s `arr` t)
 
 type Optic c a b s t =
@@ -56,8 +67,12 @@ type Lens a b s t = Optic (Strong (,) ()) a b s t
 type Lens' a s = Lens a a s s
 type Prism a b s t = Optic (Strong Either Void) a b s t
 type Prism' a s = Prism a a s s
-type Traversal a b s t = Optic Wandering a b s t
-type Traversal' a s = Traversal a a s s
+type PTraversal a b s t = Optic PWandering a b s t
+type PTraversal' a s = PTraversal a a s s
+type DTraversal a b s t = Optic DWandering a b s t
+type DTraversal' a s = DTraversal a a s s
+-- XXX: these will unify into
+-- type Traversal (p :: Multiplicity) a b s t = Optic (Wandering p) a b s t
 
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = iso Bifunctor.swap Bifunctor.swap
@@ -68,6 +83,10 @@ assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 (.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
 Optical f .> Optical g = Optical (f P.. g)
 
+-- c is the complement (probably)
+lens :: (s ->. (c,a)) -> ((c,b) ->. t) -> Lens a b s t
+lens sca cbt = Optical $ \f -> dimap sca cbt (second f)
+
 prism :: (b ->. t) -> (s ->. Either t a) -> Prism a b s t
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
 
@@ -76,6 +95,37 @@ _1 = Optical first
 
 _2 :: Lens a b (c,a) (c,b)
 _2 = Optical second
+
+-- XXX: these will unify to
+-- > both :: forall (p :: Multiplicity). Traversal p a b (a,a) (b,b)
+both' :: PTraversal a b (a,a) (b,b)
+both' = _Pairing .> ptraversed
+
+both :: DTraversal a b (a,a) (b,b)
+both = _Pairing .> dtraversed
+
+-- XXX: these are a special case of Bitraversable, but just the simple case
+-- is included here for now
+_Pairing :: Iso (Pair a) (Pair b) (a,a) (b,b)
+_Pairing = iso Paired unpair
+
+newtype Pair a = Paired (a,a)
+unpair :: Pair a ->. (a,a)
+unpair (Paired x) = x
+
+instance P.Functor Pair where
+  fmap f (Paired (x,y)) = Paired (f x, f y)
+instance Functor Pair where
+  fmap f (Paired (x,y)) = Paired (f x, f y)
+instance Foldable Pair where
+  foldMap f (Paired (x,y)) = f x P.<> f y
+instance P.Traversable Pair where
+  traverse f (Paired (x,y)) = Paired P.<$> ((,) P.<$> f x P.<*> f y)
+instance Traversable Pair where
+  traverse f (Paired (x,y)) = Paired <$> ((,) <$> f x <*> f y)
+
+toListOf :: Optic_ (NonLinear.Kleisli (Const [a])) a b s t -> s -> [a]
+toListOf l = gets l (\a -> [a])
 
 _Left :: Prism a b (Either a c) (Either b c)
 _Left = Optical first
@@ -89,8 +139,11 @@ _Just = prism Just (maybe (Left Nothing) Right)
 _Nothing :: Prism' () (Maybe a)
 _Nothing = prism (\() -> Nothing) Left
 
-traversed :: Traversable t => Traversal a b (t a) (t b)
-traversed = Optical wander
+ptraversed :: P.Traversable t => PTraversal a b (t a) (t b)
+ptraversed = Optical pwander
+
+dtraversed :: Traversable t => DTraversal a b (t a) (t b)
+dtraversed = Optical dwander
 
 over :: Optic_ LinearArrow a b s t -> (a ->. b) -> s ->. t
 over (Optical l) f = getLA (l (LA f))
@@ -103,6 +156,18 @@ get l = gets l P.id
 
 gets :: Optic_ (NonLinear.Kleisli (Const r)) a b s t -> (a -> r) -> s -> r
 gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Const P.. f))) s)
+
+preview :: Optic_ (NonLinear.Kleisli (Const (Maybe (First a)))) a b s t -> s -> Maybe a
+preview (Optical l) s = getFirst P.<$> (getConst (NonLinear.runKleisli (l (NonLinear.Kleisli (\a -> Const (Just (First a))))) s))
+
+get' :: Optic_ (Linear.Kleisli (Const (Top, a))) a b s t -> s ->. (Top, a)
+get' l = gets' l id
+
+gets' :: Optic_ (Linear.Kleisli (Const (Top, r))) a b s t -> (a ->. r) -> s ->. (Top, r)
+gets' (Optical l) f s = getConst' (Linear.runKleisli (l (Linear.Kleisli (\a -> Const (mempty, f a)))) s)
+
+set' :: Optic_ (Linear.Kleisli (MyFunctor a b)) a b s t -> s ->. b ->. (a, t)
+set' (Optical l) = runMyFunctor . Linear.runKleisli (l (Linear.Kleisli (\a -> MyFunctor (\b -> (a,b)))))
 
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)
