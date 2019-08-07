@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -12,6 +13,7 @@ module Data.Semigroup.Linear
   ( Semigroup(..)
   , Monoid(..)
   , LEndo(..), appLEndo
+  , Top, throw
   , module Data.Semigroup
   )
   where
@@ -29,7 +31,8 @@ class (Semigroup a, Prelude.Monoid a) => Monoid a where
   {-# MINIMAL #-}
   mempty :: a
   mempty = mempty
-  -- convenience redefine
+  -- convenience redefine, so that nonlinear Data.Semigroup doesn't have
+  -- to be imported to use mempty
 
 ---------------
 -- Instances --
@@ -38,6 +41,7 @@ class (Semigroup a, Prelude.Monoid a) => Monoid a where
 instance Semigroup () where
   () <> () = ()
 
+-- | The type of linear endomorphisms.
 newtype LEndo a = LEndo (a ->. a)
 
 -- TODO: have this as a newtype deconstructor once the right type can be
@@ -80,3 +84,23 @@ deriving via LWrap All instance Semigroup All
 deriving via LWrap All instance Monoid All
 deriving via LWrap Any instance Semigroup Any
 deriving via LWrap Any instance Monoid Any
+
+-- | `Top` can be thought of as a 'wastebasket' of resources, which any
+-- value can be thrown into. On the other hand, it cannot be linearly
+-- destroyed, unless into another `Top`.
+-- In particular, it has the property that forall x. x ->. Top is inhabited
+-- (uniquely), as witnessed by `throw`.
+data Top = forall x. Top x
+
+instance Prelude.Semigroup Top where
+  Top x <> Top y = Top (x,y)
+instance Semigroup Top where
+  Top x <> Top y = Top (x,y)
+instance Prelude.Monoid Top where
+  mempty = Top ()
+instance Monoid Top where
+
+-- Export this instead of the constructor so we have the freedom to change
+-- the implementation (to the universal encoding, for instance)
+throw :: a ->. Top
+throw = Top
