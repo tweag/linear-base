@@ -37,10 +37,9 @@ module Control.Optics.Linear.Internal
 import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
-import Data.Functor.Const
 import Data.Monoid
 import Data.Profunctor.Linear
-import Data.Traversable.Linear
+import Data.Functor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
 import Data.Void
 import Prelude.Linear

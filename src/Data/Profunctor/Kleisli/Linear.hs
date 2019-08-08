@@ -11,14 +11,12 @@ module Data.Profunctor.Kleisli.Linear
 
 -- | This module is intended to be imported qualified
 
-import Data.Functor.Const
 import Data.Profunctor.Linear
 import Data.Void
 import Prelude.Linear (Either(..), either)
 import Prelude.Linear.Internal.Simple
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
-import qualified Data.Traversable.Linear as Data
 
 -- Ideally, there would only be one Kleisli arrow, parametrised by
 -- a multiplicity parameter:
@@ -65,5 +63,5 @@ instance Data.Functor f => Profunctor (CoKleisli f) where
   dimap f g (CoKleisli h) = CoKleisli (g . h . Data.fmap f)
 
 -- instance of a more general idea, but this will do for now
-instance Strong Either Void (CoKleisli (Const x)) where
-  first (CoKleisli f) = CoKleisli (\(Const x) -> Left (f (Const x)))
+instance Strong Either Void (CoKleisli (Data.Const x)) where
+  first (CoKleisli f) = CoKleisli (\(Data.Const x) -> Left (f (Data.Const x)))

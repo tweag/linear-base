@@ -21,7 +21,7 @@ module Control.Monad.Linear
 
 import Prelude.Linear.Internal.Simple (id)
 import Prelude (String)
-import qualified Data.Functor.Linear as Data
+import qualified Data.Functor.Linear.Internal as Data
 
 -- $monad
 
