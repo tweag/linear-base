@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
@@ -10,7 +11,8 @@
 module Data.Traversable.Linear
   ( -- * Linear traversable hierarchy
     -- $ traversable
-  Traversable(..)
+    Traversable(..)
+  , mapM, sequenceA, for, forM
   ) where
 
 import qualified Control.Monad.Linear as Control
@@ -35,20 +37,21 @@ class Data.Functor t => Traversable t where
   {-# INLINE sequence #-}
   sequence = traverse id
 
--- TODO: when polymorphic flip is available, implement in terms of flip
--- forM :: (Linear.Monad m, Traversable t) => t a ->. (a ->. m b) -> m (t b)
--- forM cont act = mapM act cont
+mapM :: (Traversable t, Control.Monad m) => (a ->. m b) -> t a ->. m (t b)
+mapM = traverse
+{-# INLINE mapM #-}
 
--- TODO: We can drop the @Consumable (t ())@ constraint if we make
--- @traverse_@ a member of the 'Traverse' type class. This is probably desirable
--- | Note that the linear 'forM_' has a @'Consumable' (t ())@ constraint: @const
--- ()@ is not linear, therefore to be able to deduce 'forM_' from the
--- 'Traversable' instance, we need to consume the resulting container (which is
--- not free).
--- forM_
---   :: (Linear.Monad m, Traversable t, Consumable (t ()))
---   => t a ->. (a ->. m ()) -> m ()
--- forM_ cont act = Linear.void $ forM cont act
+sequenceA :: (Traversable t, Control.Applicative f) => t (f a) ->. f (t a)
+sequenceA = sequence
+{-# INLINE sequenceA #-}
+
+for :: (Traversable t, Control.Applicative f) => t a ->. (a ->. f b) -> f (t b)
+for t f = traverse f t
+{-# INLINE for #-}
+
+forM :: (Traversable t, Control.Monad m) => t a ->. (a ->. m b) -> m (t b)
+forM = for
+{-# INLINE forM #-}
 
 ------------------------
 -- Standard instances --
