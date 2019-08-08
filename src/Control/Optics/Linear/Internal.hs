@@ -32,7 +32,7 @@ module Control.Optics.Linear.Internal
   , over, over'
   , traverseOf, traverseOf'
   , lengthOf
-  , withIso
+  , withIso, withLens
   , toListOf
     -- * Constructing optics
   , iso, prism, lens
@@ -83,9 +83,11 @@ assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 (.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
 Optical f .> Optical g = Optical (f P.. g)
 
--- c is the complement (probably)
-lens :: (s ->. (c,a)) -> ((c,b) ->. t) -> Lens a b s t
-lens sca cbt = Optical $ \f -> dimap sca cbt (second f)
+lens :: (s ->. (a, b ->. t)) -> Lens a b s t
+lens k = Optical $ \f -> dimap k (\(x,g) -> g $ x) (first f)
+
+withLens :: Optic_ (Linear.Kleisli (OtherFunctor a b)) a b s t -> s ->. (a, b ->. t)
+withLens (Optical l) s = runOtherFunctor (Linear.runKleisli (l (Linear.Kleisli (\a -> OtherFunctor (a, id)))) s)
 
 prism :: (b ->. t) -> (s ->. Either t a) -> Prism a b s t
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
@@ -167,7 +169,10 @@ gets' :: Optic_ (Linear.Kleisli (Const (Top, r))) a b s t -> (a ->. r) -> s ->. 
 gets' (Optical l) f s = getConst' (Linear.runKleisli (l (Linear.Kleisli (\a -> Const (mempty, f a)))) s)
 
 set' :: Optic_ (Linear.Kleisli (MyFunctor a b)) a b s t -> s ->. b ->. (a, t)
-set' (Optical l) = runMyFunctor . Linear.runKleisli (l (Linear.Kleisli (\a -> MyFunctor (\b -> (a,b)))))
+set' (Optical l) s = runMyFunctor (Linear.runKleisli (l (Linear.Kleisli (\a -> MyFunctor (\b -> (a,b))))) s)
+
+set'' :: Optic_ (NonLinear.Kleisli (Reader b)) a b s t -> b ->. s -> t
+set'' (Optical l) b s = runReader (NonLinear.runKleisli (l (NonLinear.Kleisli (const (Reader id)))) s) b
 
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)

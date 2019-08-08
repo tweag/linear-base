@@ -22,6 +22,7 @@ module Data.Profunctor.Linear
   , Exchange(..)
   , Top
   , MyFunctor(..), runMyFunctor
+  , OtherFunctor(..), runOtherFunctor
   ) where
 
 import qualified Data.Functor.Linear as Data
@@ -141,3 +142,11 @@ instance Control.Functor (MyFunctor a b) where
   fmap f (MyFunctor g) = MyFunctor (thing f . g)
     where thing :: (c ->. d) ->. (e, c) ->. (e, d)
           thing k (x,y) = (x, k y)
+
+newtype OtherFunctor a b t = OtherFunctor (a, b ->. t)
+runOtherFunctor :: OtherFunctor a b t ->. (a, b ->. t)
+runOtherFunctor (OtherFunctor f) = f
+instance Data.Functor (OtherFunctor a b) where
+  fmap f (OtherFunctor (a,g)) = OtherFunctor (a,f . g)
+instance Control.Functor (OtherFunctor a b) where
+  fmap f (OtherFunctor (a,g)) = OtherFunctor (a,f . g)
