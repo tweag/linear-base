@@ -34,6 +34,7 @@ module Data.Vector.Linear
   ) where
 
 import qualified Data.Functor.Linear as Data
+import qualified Data.Traversable.Linear as Data
 import Data.Proxy
 import Data.Type.Equality
 import Data.Vector (Vector)

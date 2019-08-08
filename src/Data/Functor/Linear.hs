@@ -1,4 +1,5 @@
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- | = The data functor hierarchy
@@ -15,6 +16,7 @@
 module Data.Functor.Linear where
 
 import Prelude.Linear.Internal.Simple
+import Prelude (Maybe(..), Either(..))
 import Data.Functor.Const
 
 class Functor f where
@@ -50,15 +52,6 @@ class Functor f => Applicative f where
   f <*> x = liftA2 ($) f x
   liftA2 :: (a ->. b ->. c) -> f a ->. f b ->. f c
   liftA2 f x y = f <$> x <*> y
--- TODO: Add Foldable as a superclass of Traversable
--- (and probably move them both elsewhere)
-
-class Functor t => Traversable t where
-  {-# MINIMAL sequence | traverse #-}
-  traverse :: Applicative e => (a ->. e b) -> t a ->. e (t b)
-  traverse f = sequence . fmap f
-  sequence :: Applicative e => t (e a) ->. e (t a)
-  sequence = traverse id
 
 ---------------
 -- Instances --
@@ -68,9 +61,25 @@ instance Functor [] where
   fmap _f [] = []
   fmap f (a:as) = f a : fmap f as
 
-instance Traversable [] where
-  traverse _f [] = pure []
-  traverse f (a : as) = (:) <$> f a <*> traverse f as
-
 instance Functor (Const x) where
   fmap _ (Const x) = Const x
+
+instance Functor Maybe where
+  fmap _ Nothing = Nothing
+  fmap f (Just x) = Just (f x)
+
+instance Functor (Either e) where
+  fmap _ (Left x) = Left x
+  fmap f (Right x) = Right (f x)
+
+newtype Reader r x = Reader (r ->. x)
+-- TODO: replace below with a newtype deconstructor once record projections
+-- are inferred properly
+runReader :: Reader r x ->. r ->. x
+runReader (Reader f) = f
+
+instance Functor (Reader r) where
+  fmap f (Reader g) = Reader (f . g)
+
+instance Functor ((,) a) where
+  fmap f (x,y) = (x, f y)

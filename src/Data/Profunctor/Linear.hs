@@ -16,7 +16,7 @@ module Data.Profunctor.Linear
   , Exchange(..)
   ) where
 
-import qualified Data.Functor.Linear as Data
+import qualified Data.Traversable.Linear as Data
 import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear
 import Data.Void

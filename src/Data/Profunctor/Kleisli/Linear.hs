@@ -18,6 +18,7 @@ import Prelude.Linear (Either(..), either)
 import Prelude.Linear.Internal.Simple
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
+import qualified Data.Traversable.Linear as Data
 
 -- Ideally, there would only be one Kleisli arrow, parametrised by
 -- a multiplicity parameter:
