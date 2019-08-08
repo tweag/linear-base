@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -19,6 +20,8 @@ import qualified Data.Functor.Linear as Data
 import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear
 import Data.Void
+import qualified Prelude
+import Control.Arrow (Kleisli(..))
 
 -- TODO: write laws
 
@@ -86,3 +89,15 @@ instance Strong Either Void (->) where
 data Exchange a b s t = Exchange (s ->. a) (b ->. t)
 instance Profunctor (Exchange a b) where
   dimap f g (Exchange p q) = Exchange (p . f) (g . q)
+
+instance Prelude.Functor f => Profunctor (Kleisli f) where
+  dimap f g (Kleisli h) = Kleisli (\x -> forget g Prelude.<$> h (f x))
+
+instance Prelude.Functor f => Strong (,) () (Kleisli f) where
+  first  (Kleisli f) = Kleisli (\(a,b) -> (,b) Prelude.<$> f a)
+  second (Kleisli g) = Kleisli (\(a,b) -> (a,) Prelude.<$> g b)
+
+instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
+  first  (Kleisli f) = Kleisli $ \case
+                                   Left  x -> Prelude.fmap Left (f x)
+                                   Right y -> Prelude.pure (Right y)

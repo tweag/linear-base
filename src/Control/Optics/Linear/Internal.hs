@@ -34,6 +34,7 @@ module Control.Optics.Linear.Internal
   )
   where
 
+import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Functor.Const
@@ -41,7 +42,6 @@ import Data.Functor.Linear
 import Data.Monoid
 import Data.Profunctor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
-import qualified Data.Profunctor.Kleisli.NonLinear as NonLinear
 import Data.Void
 import Prelude.Linear
 import qualified Prelude as P

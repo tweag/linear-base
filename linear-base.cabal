@@ -26,7 +26,6 @@ library
     Data.Vector.Linear
     Data.Profunctor.Linear
     Data.Profunctor.Kleisli.Linear
-    Data.Profunctor.Kleisli.NonLinear
     Foreign.Marshal.Pure
     Prelude.Linear
     Prelude.Linear.Internal.Simple
