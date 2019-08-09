@@ -25,13 +25,15 @@ module Data.Profunctor.Linear
   , OtherFunctor(..), runOtherFunctor
   ) where
 
-import qualified Data.Functor.Linear as Data
+import Control.Arrow (Kleisli(..))
 import qualified Control.Monad.Linear as Control
 import Data.Bifunctor.Linear hiding (first, second)
-import Prelude.Linear
+import Data.Functor.Const
+import qualified Data.Functor.Linear as Data
+import Data.Monoid.Linear
 import Data.Void
+import Prelude.Linear
 import qualified Prelude
-import Control.Arrow (Kleisli(..))
 
 -- TODO: write laws
 
@@ -138,6 +140,12 @@ instance Strong Either Void (Market a b) where
 
 instance Prelude.Applicative f => PWandering (Kleisli f) where
   pwander (Kleisli f) = Kleisli (Prelude.traverse f)
+
+instance Control.Functor (Const (Top, a)) where
+  fmap f (Const (t, x)) = Const (throw f <> t, x)
+instance Monoid a => Control.Applicative (Const (Top, a)) where
+  pure x = Const (throw x, mempty)
+  Const x <*> Const y = Const (x <> y)
 
 -- TODO: pick a more sensible name for this
 newtype MyFunctor a b t = MyFunctor (b ->. (a, t))

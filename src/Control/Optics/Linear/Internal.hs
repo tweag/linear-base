@@ -26,6 +26,7 @@ module Control.Optics.Linear.Internal
   , both, both'
     -- * Using optics
   , get, set, gets
+  , get', gets'
   , set', set''
   , match, build
   , preview
@@ -40,14 +41,14 @@ module Control.Optics.Linear.Internal
   where
 
 import qualified Control.Arrow as NonLinear
-import qualified Data.Bifunctor.Linear as Bifunctor
 import qualified Control.Monad.Linear as Control
+import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
-import Data.Monoid.Linear
 import Data.Functor.Const
 import Data.Functor.Linear
-import Data.Profunctor.Linear
+import Data.Monoid.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
+import Data.Profunctor.Linear
 import Data.Void
 import Prelude.Linear
 import qualified Prelude as P
@@ -160,6 +161,12 @@ gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Co
 
 preview :: Optic_ (NonLinear.Kleisli (Const (Maybe (First a)))) a b s t -> s -> Maybe a
 preview l s = P.fmap getFirst (gets l (\a -> Just (First a)) s)
+
+get' :: Optic_ (Linear.Kleisli (Const (Top, a))) a b s t -> s ->. (Top, a)
+get' l = gets' l id
+
+gets' :: Optic_ (Linear.Kleisli (Const (Top, r))) a b s t -> (a ->. r) -> s ->. (Top, r)
+gets' (Optical l) f s = getConst' (Linear.runKleisli (l (Linear.Kleisli (\a -> Const (mempty, f a)))) s)
 
 set' :: Optic_ (Linear.Kleisli (MyFunctor a b)) a b s t -> s ->. b ->. (a, t)
 set' (Optical l) s = runMyFunctor (Linear.runKleisli (l (Linear.Kleisli (\a -> MyFunctor (\b -> (a,b))))) s)
