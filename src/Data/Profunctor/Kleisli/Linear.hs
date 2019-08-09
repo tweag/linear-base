@@ -49,14 +49,6 @@ instance Control.Applicative f => DWandering (Kleisli f) where
 -- profunctorial properties still hold in this weaker setting.
 -- However stronger requirements on `f` are needed for profunctorial
 -- strength, so we have fewer instances.
---
--- Category theoretic remark: duality doesn't work in the obvious way, since
--- (,) isn't the categorical product. Instead, we have a product (&), called
--- "With", defined by
--- > type With a b = forall r. Either (a ->. r) (b ->. r) ->. r
--- which satisfies the universal property of the product of `a` and `b`.
--- CoKleisli arrows are strong with respect to this monoidal structure,
--- although this might not be useful...
 newtype CoKleisli w a b = CoKleisli { runCoKleisli :: w a ->. b }
 
 instance Data.Functor f => Profunctor (CoKleisli f) where

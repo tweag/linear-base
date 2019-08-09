@@ -99,6 +99,9 @@ instance Strong Either Void LinearArrow where
   first  (LA f) = LA $ either (Left . f) Right
   second (LA g) = LA $ either Left (Right . g)
 
+instance DWandering LinearArrow where
+  dwander (LA f) = LA (Data.fmap f)
+
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))
 instance Strong (,) () (->) where

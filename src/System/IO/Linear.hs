@@ -41,6 +41,7 @@ import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)
+import Prelude ((<$>))
 import qualified Unsafe.Linear as Unsafe
 import qualified System.IO as System
 

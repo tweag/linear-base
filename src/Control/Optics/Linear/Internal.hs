@@ -24,9 +24,9 @@ module Control.Optics.Linear.Internal
   , _Just, _Nothing
   , ptraversed, dtraversed
   , both, both'
-  , get', gets', set'
     -- * Using optics
   , get, set, gets
+  , get', gets', set', set''
   , match, match', build
   , preview
   , over, over'
@@ -42,15 +42,13 @@ module Control.Optics.Linear.Internal
 import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
-import Data.Monoid
+import Data.Monoid (First(..), Sum(..))
 import Data.Functor.Const
 import Data.Functor.Linear
 import Data.Profunctor.Linear
-import Data.Functor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
 import Data.Void
-import Prelude.Linear hiding ((<$>))
--- ^ XXX: not entirely sure why the hiding is necessary here...
+import Prelude.Linear
 import qualified Prelude as P
 
 -- TODO: documentation in this module
@@ -159,8 +157,8 @@ get l = gets l P.id
 gets :: Optic_ (NonLinear.Kleisli (Const r)) a b s t -> (a -> r) -> s -> r
 gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Const P.. f))) s)
 
-preview :: Optic_ (NonLinear.Kleisli (Const (Maybe (First a)))) a b s t -> s -> Maybe a
-preview (Optical l) s = getFirst P.<$> (getConst (NonLinear.runKleisli (l (NonLinear.Kleisli (\a -> Const (Just (First a))))) s))
+preview :: Optic_ (NonLinear.Kleisli (Const (First a))) a b s t -> s -> Maybe a
+preview (Optical l) s = getFirst (getConst (NonLinear.runKleisli (l (NonLinear.Kleisli (\a -> Const (First (Just a))))) s))
 
 get' :: Optic_ (Linear.Kleisli (Const (Top, a))) a b s t -> s ->. (Top, a)
 get' l = gets' l id
