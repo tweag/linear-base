@@ -40,6 +40,9 @@ library
     text,
     vector
   default-language:    Haskell2010
+  other-modules:
+    Data.Functor.Linear.Internal
+    Data.Functor.Linear.Internal.Traversable
 
 test-suite test
   type: exitcode-stdio-1.0
