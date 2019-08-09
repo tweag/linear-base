@@ -10,7 +10,7 @@ module Data.Unrestricted.Linear
     -- $ unrestricted
     Unrestricted(..)
   , unUnrestricted
-    -- * Typeclasses for non-linear actions
+    -- * Duplicating and consuming value linearly
     -- $ comonoid
   , Consumable(..)
   , Dupable(..)

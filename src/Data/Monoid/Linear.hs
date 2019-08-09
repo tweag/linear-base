@@ -7,7 +7,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
--- | = The linear semigroup hierarchy
+-- | = The linear monoid hierarchy
 --
 -- TODO: documentation
 
@@ -43,7 +43,7 @@ class (Semigroup a, Prelude.Monoid a) => Monoid a where
 instance Semigroup () where
   () <> () = ()
 
-newtype LEndo a = LEndo (a ->. a)
+newtype Endo a = Endo (a ->. a)
 
 -- TODO: have this as a newtype deconstructor once the right type can be
 -- correctly inferred
