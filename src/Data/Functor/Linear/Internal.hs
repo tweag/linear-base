@@ -18,6 +18,7 @@ module Data.Functor.Linear.Internal where
 import Prelude.Linear.Internal.Simple
 import Prelude (Maybe(..), Either(..))
 import Data.Functor.Const
+import Data.Monoid.Linear
 
 class Functor f where
   fmap :: (a ->. b) -> f a ->. f b
@@ -63,6 +64,10 @@ instance Functor [] where
 
 instance Functor (Const x) where
   fmap _ (Const x) = Const x
+
+instance Monoid x => Applicative (Const x) where
+  pure _ = Const mempty
+  Const x <*> Const y = Const (x <> y)
 
 instance Functor Maybe where
   fmap _ Nothing = Nothing
