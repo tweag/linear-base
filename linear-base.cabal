@@ -24,6 +24,7 @@ library
     Data.Bifunctor.Linear
     Data.Functor.Linear
     Data.Monoid.Linear
+    Data.Num.Linear
     Data.Vector.Linear
     Data.Profunctor.Linear
     Data.Profunctor.Kleisli.Linear

@@ -132,6 +132,27 @@ instance Movable Int where
   -- copying an 'Int#' and using it several times. /!\
   move (I# i) = Unsafe.toLinear (\j -> Unrestricted (I# j)) i
 
+instance Consumable Double where
+  -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Double#' and using it several times. /!\
+  consume (D# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Double where
+  -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Double#' and using it several times. /!\
+  dupV (D# i) = Unsafe.toLinear (\j -> Data.pure (D# j)) i
+
+instance Movable Double where
+  -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Double#' and using it several times. /!\
+  move (D# i) = Unsafe.toLinear (\j -> Unrestricted (D# j)) i
+
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
 

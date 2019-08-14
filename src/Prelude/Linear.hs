@@ -30,12 +30,14 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
+  , Num(..)
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
 
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear
+import Data.Num.Linear
 import Prelude hiding
   ( ($)
   , id
@@ -52,6 +54,7 @@ import Prelude hiding
   , Traversable(..)
   , Semigroup(..)
   , Monoid(..)
+  , Num(..)
   )
 import Prelude.Linear.Internal.Simple
 
