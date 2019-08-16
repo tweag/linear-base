@@ -73,8 +73,11 @@ fromFunction f n = Array f' n
 -- is unnecessary if the input function can be assumed to already have bounded
 -- domain
 
+-- | This is a shortcut function, which does the same thing as
+-- `alloc` . `transfer`
 toVector :: Array a ->. Vector a
 toVector (Array f n) = Vector.generate n f
+-- TODO: A test to make sure alloc . transfer == toVector
 
 -- | @'split' n v = (vl, vr)@ such as @vl@ has length @n@.
 --

@@ -19,6 +19,8 @@ module Data.Array.Polarized.Pull
   , fromFunction
   , fromVector
   , toVector
+  , split
+  , reverse
   )
   where
 
@@ -33,7 +35,7 @@ import Data.Array.Polarized.Pull.Internal
 -- In particular, PullArrays are incredibly unfriendly in returned-value
 -- position at the moment, moreso than they should be
 import qualified Data.Functor.Linear as Data
-import Prelude.Linear hiding (zip, zipWith, foldr, foldMap)
+import Prelude.Linear hiding (zip, zipWith, foldr, foldMap, reverse)
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import qualified Unsafe.Linear as Unsafe
