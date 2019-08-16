@@ -1,6 +1,7 @@
 -- | This is a very very simple prelude, which doesn't depend on anything else
 -- in the linear-base library (except possibly "Unsafe.Linear").
 
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LinearTypes #-}
 
@@ -48,3 +49,10 @@ uncurry f (x,y) = f x y
 -- higher-order and we don't have multiplicity polymorphism yet.
 (.) :: (b ->. c) ->. (a ->. b) ->. a ->. c
 f . g = \x -> f (g x)
+
+-- | Linearly typed replacement for the standard 'foldr' function, to allow
+-- linear consumption of a list.
+foldr :: (a ->. b ->. b) -> b ->. [a] ->. b
+foldr f z = \case
+  [] -> z
+  x:xs -> f x (foldr f z xs)
