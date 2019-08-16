@@ -15,7 +15,6 @@ import Data.Array.Destination (DArray)
 import qualified Data.Array.Destination as DArray
 import qualified Data.Functor.Linear as Data
 import Data.Vector (Vector)
-import qualified Data.Vector as Vector
 import Prelude.Linear hiding (zip, zipWith, foldr)
 import qualified Prelude
 
@@ -44,16 +43,9 @@ instance Semigroup (Array a) where
 alloc :: Array a ->. Vector a
 alloc (Array k n) = DArray.alloc n (k id)
 
-walk :: Vector a -> Array a
-walk as =
-  Array
-    (\g dest -> DArray.mirror as g dest)
-    (Vector.length as)
-
 make :: a -> Int -> Array a
 make x n = Array (\k -> DArray.replicate (k x)) n
 
--- TODO: linear semigroup/monoid type classes
 append :: Array a ->. Array a ->. Array a
 append (Array kl nl) (Array kr nr) =
     Array

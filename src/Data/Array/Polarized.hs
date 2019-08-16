@@ -4,6 +4,7 @@
 
 module Data.Array.Polarized
   ( transfer
+  , walk
   )
   where
 
@@ -11,7 +12,12 @@ module Data.Array.Polarized
 
 import qualified Data.Array.Destination as DArray
 import qualified Data.Array.Polarized.Pull.Internal as Pull
+import qualified Data.Array.Polarized.Pull as Pull
 import qualified Data.Array.Polarized.Push as Push
+import Prelude.Linear
+
+import Data.Vector (Vector)
+
 
 -- See:
 --
@@ -26,3 +32,8 @@ import qualified Data.Array.Polarized.Push as Push
 
 transfer :: Pull.Array a ->. Push.Array a
 transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i)) n) n
+
+-- | This is a shortcut convenience function, which does the same thing as
+-- `transfer` . `Pull.fromVector`
+walk :: Vector a ->. Push.Array a
+walk = transfer . Pull.fromVector
