@@ -2,6 +2,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Control.Monad.Linear
   ( -- * Linear monad hierarchy
@@ -17,9 +18,10 @@ module Control.Monad.Linear
   , join
   , ap
   , Data(..)
+  , foldM
   ) where
 
-import Prelude.Linear.Internal.Simple (id)
+import Prelude.Linear.Internal.Simple (foldr, id)
 import Prelude (String)
 import qualified Data.Functor.Linear.Internal as Data
 
@@ -91,3 +93,10 @@ instance Functor f => Data.Functor (Data f) where
 instance Applicative f => Data.Applicative (Data f) where
   pure x = Data (pure x)
   Data f <*> Data x = Data (f <*> x)
+
+-- | Linearly typed replacement for the standard 'foldM' function.
+foldM :: forall m a b. Monad m => (b ->. a ->. m b) -> b ->. [a] ->. m b
+foldM f z0 xs = foldr f' return xs z0
+  where
+    f' :: a ->. (b ->. m b) ->. b ->. m b
+    f' x k z = f z x >>= k

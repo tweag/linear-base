@@ -5,6 +5,9 @@ module Prelude.Linear
   ( -- * Standard 'Prelude' function with linear types
     -- $linearized-prelude
     ($)
+  , (<$)
+  , (<*)
+  , foldr
   , const
   , id
   , seq
@@ -34,6 +37,8 @@ module Prelude.Linear
   , module Prelude
   ) where
 
+import qualified Control.Monad.Linear as Control
+import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear
 import Prelude hiding
@@ -44,6 +49,8 @@ import Prelude hiding
   , curry
   , uncurry
   , either
+  , flip
+  , foldr
   , maybe
   , (.)
   , Functor(..)
@@ -74,3 +81,15 @@ maybe _ f (Just y) = f y
 -- arrow but we have a linear arrow
 forget :: (a ->. b) ->. a -> b
 forget f x = f x
+
+-- | Replacement for the flip function with generalized multiplicities.
+flip :: (a -->.(p) b -->.(q) c) -->.(r) b -->.(q) a -->.(p) c
+flip f b a = f a b
+
+-- | Linearly typed replacement for the standard '(Prelude.<$)' function.
+(<$) :: (Control.Functor f, Consumable b) => a ->. f b ->. f a
+a <$ fb = Control.fmap (`lseq` a) fb
+
+-- | Linearly typed replacement for the standard '(Prelude.<*)' function.
+(<*) :: (Data.Applicative f, Consumable b) => f a ->. f b ->. f a
+fa <* fb = Data.fmap (flip lseq) fa Data.<*> fb
