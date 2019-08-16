@@ -64,5 +64,7 @@ instance SymmetricMonoidal (,) () where
 instance SymmetricMonoidal Either Void where
   swap = either Right Left
   rassoc (Left (Left x)) = Left x
-  rassoc (Left (Right x)) = Right (Left x)
-  rassoc (Right x) = Right (Right x)
+  rassoc (Left (Right x)) = (Right :: a ->. Either b a) (Left x)
+  rassoc (Right x) = (Right :: a ->. Either b a) (Right x)
+-- XXX: the above type signatures are necessary for certain older versions of
+-- the compiler, and as such are temporary
