@@ -100,8 +100,8 @@ mirror as f ds
     mirrorHeadAndTail x xs (dl, dr) =
       fill (f x) dl `lseq` mirror xs f dr
 
--- XXX: would it be better to implement this directly, instead of in terms of
--- mirror?
+-- TODO: It would be better to implement this directly, instead of in terms of
+-- mirror, to avoid allocation.
 fromFunction :: (Int -> b) -> Int -> DArray b ->. ()
 fromFunction f n = mirror (Vector.enumFromN 0 n) (upgrade f)
 

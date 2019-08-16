@@ -5,6 +5,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 
+-- | This module is intended to be imported qualified, e.g.
+-- > import qualified Data.Array.Polarized.Push as Push
 module Data.Array.Polarized.Push where
 
 -- XXX: there is lots of scope for testing array functions
