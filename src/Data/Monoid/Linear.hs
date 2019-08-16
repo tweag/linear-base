@@ -13,6 +13,7 @@ module Data.Monoid.Linear
   ( Semigroup(..)
   , Monoid(..)
   , Endo(..), appEndo
+  , NonLinear(..)
   , module Data.Semigroup
   )
   where
@@ -40,19 +41,18 @@ instance Semigroup () where
   () <> () = ()
 
 newtype Endo a = Endo (a ->. a)
+  deriving (Prelude.Semigroup) via NonLinear (Endo a)
 
 -- TODO: have this as a newtype deconstructor once the right type can be
 -- correctly inferred
 appEndo :: Endo a ->. a ->. a
 appEndo (Endo f) = f
 
-instance Prelude.Semigroup (Endo a) where
+instance Semigroup (Endo a) where
   Endo f <> Endo g = Endo (f . g)
 instance Prelude.Monoid (Endo a) where
   mempty = Endo id
-instance Semigroup (Endo a) where
-  Endo f <> Endo g = Endo (f . g)
-instance Monoid (Endo a) where
+instance Monoid (Endo a)
 
 instance (Semigroup a, Semigroup b) => Semigroup (a,b) where
   (a,x) <> (b,y) = (a <> b, x <> y)
@@ -72,3 +72,11 @@ instance Semigroup Any where
   Any False <> Any True = Any True
   Any True  <> Any False = Any True
   Any True  <> Any True = Any True
+
+-- | DerivingVia combinator for Prelude.Semigroup given (linear) Semigroup.
+-- For linear monoids, you should supply a Prelude.Monoid instance and either
+-- declare an empty Monoid instance, or use DeriveAnyClass.
+newtype NonLinear a = NonLinear a
+
+instance Semigroup a => Prelude.Semigroup (NonLinear a) where
+  NonLinear a <> NonLinear b = NonLinear (a <> b)
