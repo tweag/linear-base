@@ -15,6 +15,8 @@ module Data.Unrestricted.Linear
     -- $ unrestricted
     Unrestricted(..)
   , unUnrestricted
+  , lift
+  , lift2
     -- * Duplicating and consuming value linearly
     -- $ comonoid
   , Consumable(..)
@@ -47,6 +49,12 @@ data Unrestricted a where
 -- linear, then we get only a linear value out.
 unUnrestricted :: Unrestricted a ->. a
 unUnrestricted (Unrestricted a) = a
+
+lift :: (a -> b) -> Unrestricted a ->. Unrestricted b
+lift f (Unrestricted a) = Unrestricted (f a)
+
+lift2 :: (a -> b -> c) -> Unrestricted a ->. Unrestricted b ->. Unrestricted c
+lift2 f (Unrestricted a) (Unrestricted b) = Unrestricted (f a b)
 
 -- $ comonoid
 
