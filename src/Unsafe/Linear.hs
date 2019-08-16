@@ -32,3 +32,7 @@ toLinear2
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3).
      (a -> b -> c) ->. (a ->. b ->. c)
 toLinear2 = coerce
+
+-- | Like 'toLinear' but for three-argument functions
+toLinear3 :: (a -> b -> c -> d) ->. (a ->. b ->. c ->. d)
+toLinear3 = coerce
