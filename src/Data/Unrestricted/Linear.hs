@@ -50,9 +50,11 @@ data Unrestricted a where
 unUnrestricted :: Unrestricted a ->. a
 unUnrestricted (Unrestricted a) = a
 
+-- | Lifts a function on a linear @Unrestricted a@.
 lift :: (a -> b) -> Unrestricted a ->. Unrestricted b
 lift f (Unrestricted a) = Unrestricted (f a)
 
+-- | Lifts a function to work on two linear @Unrestricted a@.
 lift2 :: (a -> b -> c) -> Unrestricted a ->. Unrestricted b ->. Unrestricted c
 lift2 f (Unrestricted a) (Unrestricted b) = Unrestricted (f a b)
 

@@ -50,8 +50,8 @@ uncurry f (x,y) = f x y
 (.) :: (b ->. c) ->. (a ->. b) ->. a ->. c
 f . g = \x -> f (g x)
 
--- | Linearly typed replacement for the standard 'foldr' function, to allow
--- linear consumption of a list.
+-- | Linearly typed replacement for the standard 'Prelude.foldr' function,
+-- to allow linear consumption of a list.
 foldr :: (a ->. b ->. b) -> b ->. [a] ->. b
 foldr f z = \case
   [] -> z
