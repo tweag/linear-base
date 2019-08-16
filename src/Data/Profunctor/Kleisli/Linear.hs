@@ -64,4 +64,6 @@ instance Data.Functor f => Profunctor (CoKleisli f) where
 
 -- instance of a more general idea, but this will do for now
 instance Strong Either Void (CoKleisli (Data.Const x)) where
-  first (CoKleisli f) = CoKleisli (\(Data.Const x) -> Left (f (Data.Const x)))
+  first (CoKleisli f) = CoKleisli (\(Data.Const x) -> (Left :: a ->. Either a b) (f (Data.Const x)))
+-- XXX: the above type signature is necessary for certain older versions of
+-- the compiler, and as such is temporary
