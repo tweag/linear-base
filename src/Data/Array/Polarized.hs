@@ -25,7 +25,7 @@ import Data.Vector (Vector)
 -- - http://jyp.github.io/posts/controlled-fusion.html
 --
 -- The general spirit is: `Array` are those arrays which are friendly in
--- returned-value possition. And `PullArray` are those arrays which are friendly
+-- returned-value position. And `PullArray` are those arrays which are friendly
 -- in argument position. If you have more than one array in an unfriendly
 -- position, you need to allocate (allocated arrays are friendly in all
 -- positions).
