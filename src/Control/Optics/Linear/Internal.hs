@@ -123,7 +123,8 @@ build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Cons
 getConst' :: Const a b ->. a
 getConst' (Const x) = x
 
-lengthOf :: Num r => Optic_ (NonLinear.Kleisli (Const (Sum r))) a b s t -> s -> r
+-- TODO: think about if this is the right constraint
+lengthOf :: P.Num r => Optic_ (NonLinear.Kleisli (Const (Sum r))) a b s t -> s -> r
 lengthOf l s = getSum (gets l (const (Sum 1)) s)
 
 -- XXX: the below two functions will be made redundant with multiplicity

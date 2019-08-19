@@ -33,6 +33,7 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
+  , module Data.Num.Linear
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
@@ -41,6 +42,7 @@ import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear
+import Data.Num.Linear
 import Prelude hiding
   ( ($)
   , id
@@ -59,6 +61,7 @@ import Prelude hiding
   , Traversable(..)
   , Semigroup(..)
   , Monoid(..)
+  , Num(..)
   )
 import Prelude.Linear.Internal.Simple
 
