@@ -2,6 +2,10 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 -- | = The data functor hierarchy
 --
 -- This module defines the data functor library. These are linear functors which
@@ -17,11 +21,26 @@ module Data.Functor.Linear.Internal where
 
 import Prelude.Linear.Internal.Simple
 import Prelude (Maybe(..), Either(..))
+import qualified Prelude
 import Data.Functor.Const
 import Data.Monoid.Linear
+import GHC.Generics
+
+import qualified Unsafe.Linear as Unsafe
 
 class Functor f where
   fmap :: (a ->. b) -> f a ->. f b
+  default fmap :: (Generic1 f, GFunctor (Rep1 f)) => (a ->. b) -> f a ->. f b
+  fmap = fmapDefault
+
+fmapDefault :: (Generic1 f, GFunctor (Rep1 f)) => (a ->. b) -> f a ->. f b
+fmapDefault f = to1' . gmap f . from1'
+
+to1' :: Generic1 f => Rep1 f a ->. f a
+to1' = Unsafe.toLinear to1
+
+from1' :: Generic1 f => f a ->. Rep1 f a
+from1' = Unsafe.toLinear from1
 
 (<$>) :: Functor f => (a ->. b) -> f a ->. f b
 (<$>) = fmap
@@ -88,3 +107,48 @@ instance Functor (Reader r) where
 
 instance Functor ((,) a) where
   fmap f (x,y) = (x, f y)
+
+class GFunctor f where
+  gmap :: (a ->. b) -> f a ->. f b
+
+instance GFunctor V1 where
+  gmap _ = Prelude.error "Void gmap"
+
+instance GFunctor U1 where
+  gmap _ U1 = U1
+
+instance GFunctor (K1 i c) where
+  gmap _ (K1 a) = K1 a
+
+instance GFunctor x => GFunctor (M1 i c x) where
+  gmap f (M1 x) = M1 (gmap f x)
+
+instance (GFunctor f, GFunctor g) => GFunctor (f :+: g) where
+  gmap f (L1 r) = L1 (gmap f r)
+  gmap f (R1 r) = R1 (gmap f r)
+
+instance (GFunctor f, GFunctor g) => GFunctor (f :*: g) where
+  gmap f (r :*: s) = gmap f r :*: gmap f s
+
+instance (GFunctor f, GFunctor g) => GFunctor (f :.: g) where
+  gmap f (Comp1 x) = Comp1 (gmap (gmap f) x)
+
+class GFunctor f => GApplicative f where
+  gpure :: a -> f a
+  gap :: f (a ->. b) ->. f a ->. f b
+
+instance GApplicative U1 where
+  gpure _ = U1
+  gap U1 U1 = U1
+
+instance Monoid c => GApplicative (K1 i c) where
+  gpure _ = K1 mempty
+  gap (K1 f) (K1 x) = K1 (f <> x)
+
+instance (GApplicative f, GApplicative g) => GApplicative (f :*: g) where
+  gpure x = gpure x :*: gpure x
+  gap (f :*: g) (x :*: y) = gap f x :*: gap g y
+
+instance (GApplicative f, GApplicative g) => GApplicative (f :.: g) where
+  gpure x = Comp1 (gpure (gpure x))
+  gap (Comp1 f) (Comp1 x) = Comp1 (gap (gmap gap f) x)
