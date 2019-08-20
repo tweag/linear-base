@@ -91,10 +91,12 @@ split n = Unsafe.toLinear unsafeSplit
 
 -- | Assumes both arrays have the same size
 mirror :: forall a b. Vector a -> (a ->. b) -> DArray b ->. ()
-mirror as f ds
-  | Vector.length as == 0 = fill (f $ as Vector.! 0) ds
+mirror as f
+  | Vector.length as == 0 = Unsafe.toLinear (\_ -> ())
+      -- assuming as and the destination are the same size, the destination
+      -- has no holes to fill so we can safely linearly consume it
   | otherwise =
-      mirrorHeadAndTail (Vector.head as) (Vector.tail as) (split 1 ds)
+      mirrorHeadAndTail (Vector.head as) (Vector.tail as) . split 1
   where
     -- /!\ The first DArray has length 1.
     mirrorHeadAndTail :: a -> Vector a -> (DArray b, DArray b) ->. ()
