@@ -15,11 +15,13 @@ import Data.Array.Destination (DArray)
 import qualified Data.Array.Destination as DArray
 import qualified Data.Functor.Linear as Data
 import Data.Vector (Vector)
-import Prelude.Linear hiding (zip, zipWith, foldr)
+import Prelude.Linear
 import qualified Prelude
+import Data.Monoid.Linear
 
 data Array a where
   Array :: (forall b. (a ->. b) -> DArray b ->. ()) ->. Int -> Array a
+  deriving Prelude.Semigroup via NonLinear (Array a)
   -- A note on implementation: `exists b. ((a -> b), DArray b)` adjoins freely
   -- the structure of contravariant functor to `DArray`. Because it appears to
   -- the left of an arrow, we can curry the existential quantification (and,
@@ -34,8 +36,6 @@ data Array a where
 instance Data.Functor Array where
   fmap f (Array k n) = Array (\g dest -> k (g . f) dest) n
 
-instance Prelude.Semigroup (Array a) where
-  a <> b = append a b
 instance Semigroup (Array a) where
   (<>) = append
 
