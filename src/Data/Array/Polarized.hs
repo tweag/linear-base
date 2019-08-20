@@ -18,7 +18,6 @@ import Prelude.Linear
 
 import Data.Vector (Vector)
 
-
 -- See:
 --
 -- - http://lopezjuan.com/limestone/vectorcomp.pdf

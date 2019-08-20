@@ -44,6 +44,7 @@ newtype DArray a = DArray (MVector RealWorld a)
 -- vectors and implement most stuff in terms of Array# and MutableArray#
 -- eventually, anyway. This would allow to move the MutableArray logic to linear
 -- IO, possibly, and segregate the unsafe casts to the Linear IO module.
+-- @`alloc` n k@ must be called with a non-negative value of @n@.
 alloc :: Int -> (DArray a ->. ()) ->. Vector a
 alloc n = Unsafe.toLinear unsafeAlloc
   where

@@ -16,13 +16,14 @@ import Data.Monoid.Linear
 
 import qualified Unsafe.Linear as Unsafe
 
--- | A pull array represents arrays which are easy to extract elements from.
--- They provide an indexing function, and a length. If the indexing function
--- is called at a point out of range, the result is an error.
+-- | A pull array is an array from which it is easy to extract elements.
 data Array a where
   Array :: (Int -> a) -> Int -> Array a
   deriving Prelude.Semigroup via NonLinear (Array a)
--- Int is movable, so this is the same as Array :: (Int ->. a) -> ...
+  -- In the linear consumption of a PullArray f n, (f i) should be consumed
+  -- linearly for every 0 <= i < n. The exported functions (from non-internal
+  -- modules) should enforce this invariant, but the current type of PullArray
+  -- does not.
 
 instance Data.Functor Array where
   fmap f (Array g n) = fromFunction (\x -> f (g x)) n
