@@ -18,6 +18,8 @@ library
   hs-source-dirs: src
   exposed-modules:
     Control.Monad.Builder
+    Control.Monad.IO.Class.Linear
+    Control.Monad.Lift.Linear
     Control.Monad.Linear
     Control.Monad.Linear.Builder
     Control.Optics.Linear.Internal
