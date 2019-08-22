@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -11,6 +12,7 @@ import Prelude.Linear
 import qualified Prelude
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
+import Data.Monoid.Linear
 
 import qualified Unsafe.Linear as Unsafe
 
@@ -19,6 +21,7 @@ import qualified Unsafe.Linear as Unsafe
 -- is called at a point out of range, the result is an error.
 data Array a where
   Array :: (Int -> a) -> Int -> Array a
+  deriving Prelude.Semigroup via NonLinear (Array a)
 -- Int is movable, so this is the same as Array :: (Int ->. a) -> ...
 
 instance Data.Functor Array where
@@ -45,9 +48,6 @@ append (Array f m) (Array g n) = Array (\k -> if k < m then f k else g (k-m)) (m
 make :: a -> Int -> Array a
 make x n = fromFunction (const x) n
 
--- TODO: Use a derivingvia combinator to omit this
-instance Prelude.Semigroup (Array a) where
-  a <> b = append a b
 instance Semigroup (Array a) where
   (<>) = append
 
