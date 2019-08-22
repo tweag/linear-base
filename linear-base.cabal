@@ -16,6 +16,7 @@ description: Please see README.md.
 library
   hs-source-dirs: src
   exposed-modules:
+    Control.Monad.IO.Class.Linear
     Control.Monad.Linear
     Control.Optics.Linear.Internal
     Data.Array.Destination
