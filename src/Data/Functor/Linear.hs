@@ -29,3 +29,7 @@ module Data.Functor.Linear
 import Data.Functor.Linear.Internal
 import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
+import Data.Unrestricted.Linear
+
+(<$) :: (Functor f, Consumable b) => a -> f b ->. f a
+a <$ fb = fmap (`lseq` a) fb

@@ -30,7 +30,7 @@ module Data.Unrestricted.Linear
   ) where
 -- $ unrestricted
 
-import qualified Data.Functor.Linear as Data
+import qualified Data.Functor.Linear.Internal as Data
 import Data.Vector.Linear (V)
 import qualified Data.Vector.Linear as V
 import GHC.TypeLits

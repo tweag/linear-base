@@ -48,6 +48,7 @@ library
     vector
   default-language:    Haskell2010
   other-modules:
+    Control.Monad.Linear.Internal
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
