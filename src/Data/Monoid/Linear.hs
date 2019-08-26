@@ -30,7 +30,7 @@ class Prelude.Semigroup a => Semigroup a where
 class (Semigroup a, Prelude.Monoid a) => Monoid a where
   {-# MINIMAL #-}
   mempty :: a
-  mempty = mempty
+  mempty = Prelude.mempty
   -- convenience redefine
 
 ---------------
