@@ -1,11 +1,11 @@
 # See https://hub.docker.com/r/tweag/linear-types/
-resolver: nightly-2018-12-12
-compiler: ghc-8.7
+resolver: lts-14.1
+compiler: ghc-8.9
 allow-newer: true
 system-ghc: true
 docker:
   enable: true
-  image: tweag/linear-types:1.0.0
+  image: tweag/linear-types:1.0.5
   stack-exe: download
   mount:
           ## For dante syntax checker
@@ -19,7 +19,6 @@ docker:
 packages:
 - '.'
 
-# No release is compatible with Ghc 8.7 as of [2018-12-12]
+# We must use a more recent version of primitive due to MonadFail
 extra-deps:
-- github: haskell/primitive
-  commit: 4e4c2871fdb6db938b6ac4dcd4a56b318b0dba76
+  - primitive-0.7.0.0

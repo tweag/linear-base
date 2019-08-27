@@ -3,10 +3,10 @@ version: 2
 jobs:
   build:
     docker:
-      - image: tweag/linear-types:1.0.0
+      - image: tweag/linear-types:1.0.5
     environment:
         # Changing this value will invalidate existing caches
-        CACHE_VERSION: "2018-12-12"
+        CACHE_VERSION: "2019-08-25"
     steps:
       - checkout
       - run:
