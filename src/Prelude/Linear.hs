@@ -5,7 +5,6 @@ module Prelude.Linear
   ( -- * Standard 'Prelude' function with linear types
     -- $linearized-prelude
     ($)
-  , (<$)
   , (<*)
   , foldr
   , const
@@ -38,7 +37,6 @@ module Prelude.Linear
   , module Prelude
   ) where
 
-import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear

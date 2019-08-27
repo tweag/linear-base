@@ -9,6 +9,8 @@ import Prelude.Linear.Internal.Simple
 import Prelude (String)
 import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal as Data
+import qualified Control.Monad.Trans.Reader as NonLinear
+import qualified Control.Monad.Trans.State.Strict as Strict
 
 -- $monad
 
@@ -96,3 +98,36 @@ instance Functor f => Data.Functor (Data f) where
 instance Applicative f => Data.Applicative (Data f) where
   pure x = Data (pure x)
   Data f <*> Data x = Data (f <*> x)
+
+------------------------------------------------
+-- Instances for nonlinear monad transformers --
+------------------------------------------------
+
+instance Functor Identity where
+  fmap f (Identity x) = Identity (f x)
+
+instance Applicative Identity where
+  pure = Identity
+  Identity f <*> Identity x = Identity (f x)
+
+instance Monad Identity where
+  Identity x >>= f = f x
+
+-- | Temporary, until newtype record projections are linear.
+runIdentity' :: Identity a ->. a
+runIdentity' (Identity x) = x
+
+instance Functor m => Functor (NonLinear.ReaderT r m) where
+  fmap f (NonLinear.ReaderT g) = NonLinear.ReaderT $ \r -> fmap f (g r)
+instance Applicative m => Applicative (NonLinear.ReaderT r m) where
+  pure x = NonLinear.ReaderT $ \_ -> pure x
+  NonLinear.ReaderT f <*> NonLinear.ReaderT x = NonLinear.ReaderT $ \r -> f r <*> x r
+instance Monad m => Monad (NonLinear.ReaderT r m) where
+  NonLinear.ReaderT x >>= f = NonLinear.ReaderT $ \r -> x r >>= (\a -> runReaderT' (f a) r)
+
+-- | Temporary, until newtype record projections are linear.
+runReaderT' :: NonLinear.ReaderT r m a ->. r -> m a
+runReaderT' (NonLinear.ReaderT f) = f
+
+instance Functor m => Functor (Strict.StateT s m) where
+  fmap f (Strict.StateT x) = Strict.StateT $ \s -> fmap (\(a, s') -> (f a, s')) $ x s

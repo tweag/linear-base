@@ -1,5 +1,4 @@
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- | = The data functor hierarchy
@@ -17,7 +16,7 @@ module Data.Functor.Linear
   ( Functor(..)
   , Applicative(..)
   , (<$>)
-  , Reader(..), runReader
+  , (<$)
   , Const(..)
     -- * Linear traversable hierarchy
     -- $ traversable

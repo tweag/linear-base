@@ -45,6 +45,7 @@ library
     ghc-prim,
     storable-tuple,
     text,
+    transformers,
     vector
   default-language:    Haskell2010
   other-modules:
