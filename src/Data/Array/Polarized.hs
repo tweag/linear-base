@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -7,8 +6,6 @@ module Data.Array.Polarized
   , walk
   )
   where
-
--- XXX: there is lots of scope for testing array functions
 
 import qualified Data.Array.Destination as DArray
 import qualified Data.Array.Polarized.Pull.Internal as Pull
@@ -24,12 +21,24 @@ import Data.Vector (Vector)
 --   machine)
 -- - http://jyp.github.io/posts/controlled-fusion.html
 --
--- The general spirit is: `Array` are those arrays which are friendly in
--- returned-value position. And `PullArray` are those arrays which are friendly
+-- | The general spirit is: `Push.Array` are those arrays which are friendly in
+-- returned-value position. And `Pull.Array` are those arrays which are friendly
 -- in argument position. If you have more than one array in an unfriendly
 -- position, you need to allocate (allocated arrays are friendly in all
 -- positions).
+--
+-- There are three types of array which are involved, with conversion
+-- functions available between them, the third being an allocated Vector.
+-- The primary conversion functions are:
+-- > Polarized.transfer :: Pull.Array a ->. Push.Array a
+-- > Push.alloc :: Push.Array a ->. Vector a
+-- > Pull.fromVector :: Vector a ->. Pull.Array a
+-- In this way, we gain further control over exactly when allocation may occur
+-- in a fusion pipeline.
+-- In such a pipeline converting one allocated array to another, it would be
+-- common to begin with Pull.fromVector, and end with Push.alloc.
 
+-- | Convert a PullArray into a PushArray.
 transfer :: Pull.Array a ->. Push.Array a
 transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i))) n
 

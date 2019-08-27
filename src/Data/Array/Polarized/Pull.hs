@@ -1,8 +1,5 @@
-{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PartialTypeSignatures #-}
 
 -- | This module is intended to be imported qualified, e.g.
 -- > import qualified Data.Array.Polarized.Pull as Pull
@@ -28,7 +25,8 @@ import Data.Array.Polarized.Pull.Internal
 -- XXX: the data constructor Pull.Array could be used unsafely, so we don't
 -- export it, instead exporting a collection of functions to manipulate
 -- PullArrays
--- (eg one could use an element multiple times)
+-- (eg one could use an element multiple times, if the constructor was
+-- available)
 -- TODO: the current collection is almost certainly not complete: it would be
 -- nice if there was one (or a small number) of functions which characterise
 -- PullArrays, but I'm not sure what they are
@@ -40,7 +38,7 @@ import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import qualified Unsafe.Linear as Unsafe
 
--- probably just for debugging purposes
+-- | Convert a pull array into a list.
 asList :: Array a ->. [a]
 asList = foldr (\x xs -> x:xs) []
 
@@ -48,9 +46,11 @@ asList = foldr (\x xs -> x:xs) []
 zipWith :: (a ->. b ->. c) -> Array a ->. Array b ->. Array c
 zipWith f x y = Data.fmap (uncurry f) (zip x y)
 
+-- | Fold a pull array into a monoid.
 foldMap :: Monoid m => (a ->. m) -> Array a ->. m
 foldMap f = foldr ((<>) . f) mempty
 
 -- I'm fairly sure this can be used safely
+-- | Convert a Vector to a pull array.
 fromVector :: Vector a ->. Array a
 fromVector = Unsafe.toLinear $ \v -> fromFunction (v Vector.!) (Vector.length v)
