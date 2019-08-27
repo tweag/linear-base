@@ -52,7 +52,10 @@ mergeN (Heap k1 a1 h1) (Heap k2 a2 h2) pool =
         else helper k2' a2' k1' a1' h2' h1'
 
     helper :: k -> a ->. k -> a ->. Box (List (NEHeap k a)) ->. Box (List (NEHeap k a)) ->. Pool ->. NEHeap k a
-    helper k1'' a1'' k2'' a2'' h1'' h2'' pool'' = Heap k1'' a1'' (Manual.alloc (List.Cons (Heap k2'' a2'' h2'') h1'') pool'')
+    helper k1'' a1'' k2'' a2'' h1'' h2'' pool'' = Heap k1'' a1'' (Manual.alloc ((List.Cons :: b ->. Box (List b) ->. List b) ((Heap :: c ->. b ->. Box (List (NEHeap c b)) ->. NEHeap c b) k2'' a2'' h2'') h1'') pool'')
+  -- XXX: the type signatures for List.Cons and Heap are necessary for certain
+  -- older versions of the compiler, and as such are temporary. See PR #38
+  -- and PR #380 in tweag/ghc/linear-types.
 
 mergeN' :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => NEHeap k a ->. Heap k a ->. Pool ->. NEHeap k a
 mergeN' h Empty pool = pool `lseq` h

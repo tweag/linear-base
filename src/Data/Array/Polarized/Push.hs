@@ -53,4 +53,4 @@ append (Array kl nl) (Array kr nr) =
       (nl+nr)
   where
     parallelApply :: (a ->. b) -> ((a ->. b) -> DArray b ->. ()) ->. ((a ->. b) -> DArray b ->. ()) ->. (DArray b, DArray b) ->. ()
-    parallelApply f' kl' kr' (dl, dr) = kl' f' dl `lseq` kr' f' dr
+    parallelApply f' kl' kr' (dl, dr) = kl' f' dl <> kr' f' dr
