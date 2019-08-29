@@ -55,16 +55,7 @@ alloc n = Unsafe.toLinear unsafeAlloc
       Vector.unsafeFreeze dest
 
 replicate :: a -> DArray a ->. ()
-replicate a = Unsafe.toLinear unsafeReplicate
-  where
-    unsafeReplicate (DArray ds) = unsafeDupablePerformIO Prelude.$ do
-      temp <- MVector.replicate (MVector.length ds) a
-      -- Note that it is indeed linear to compute the length of a MVector and
-      -- keep it unchanged. Therefore, syntax apart, it is true that this
-      -- function is linear.
-      MVector.unsafeCopy ds temp
-    -- XXX: this allocation is unnecessary, it's just a good short-cut for an
-    -- initial implementation.
+replicate a = fromFunction (const a)
 
 -- | Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
 fill :: a ->. DArray a ->. ()
@@ -103,13 +94,11 @@ mirror as f
     mirrorHeadAndTail x xs (dl, dr) =
       fill (f x) dl `lseq` mirror xs f dr
 
--- TODO: It would be better to implement this directly, instead of in terms of
--- mirror, to avoid allocation.
-fromFunction :: (Int -> b) -> Int -> DArray b ->. ()
-fromFunction f n = mirror (Vector.enumFromN 0 n) (upgrade f)
-
--- XXX: This might be useful elsewhere: consider putting it in Data.Unrestricted
-upgrade :: Movable b => (b -> a) -> (b ->. a)
-upgrade f n = withMoved f (move n)
-  where withMoved :: (b -> a) -> Unrestricted b ->. a
-        withMoved g (Unrestricted x) = g x
+fromFunction :: (Int -> b) -> DArray b ->. ()
+fromFunction f = Unsafe.toLinear unsafeFromFunction
+  where unsafeFromFunction (DArray ds) = unsafeDupablePerformIO Prelude.$ do
+          let n = MVector.length ds
+          Prelude.sequence_ [MVector.unsafeWrite ds m (f m) | m <- [0..n-1]]
+-- The unsafe cast here is actually safe, since getting the length does not
+-- touch any elements, and each write fills in exactly one slot, so
+-- each slot of the destination array is filled.

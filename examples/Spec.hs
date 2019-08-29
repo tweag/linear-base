@@ -100,10 +100,10 @@ main = hspec P.$ do
       describe "fromFunction" P.$ do
         it "mimics Vector.enumFromN" P.$
           property (\(start :: Int) (NonNegative n) ->
-            DArray.alloc n (DArray.fromFunction (+start) n) == Vector.enumFromN start n)
+            DArray.alloc n (DArray.fromFunction (+start)) == Vector.enumFromN start n)
         it "matches Vector.generate" P.$
           property (\(f :: Fun Int Int) (NonNegative n) ->
-            DArray.alloc n (DArray.fromFunction (applyFun f) n) == Vector.generate n (applyFun f))
+            DArray.alloc n (DArray.fromFunction (applyFun f)) == Vector.generate n (applyFun f))
 
     describe "polarized arrays" P.$ do
       describe "conversions" P.$ do

@@ -20,7 +20,8 @@ import Data.Vector (Vector)
 
 -- See:
 --
--- - http://lopezjuan.com/limestone/vectorcomp.pdf
+-- - http://lopezjuan.com/limestone/vectorcomp.pdf (available on the wayback
+--   machine)
 -- - http://jyp.github.io/posts/controlled-fusion.html
 --
 -- The general spirit is: `Array` are those arrays which are friendly in
@@ -30,7 +31,7 @@ import Data.Vector (Vector)
 -- positions).
 
 transfer :: Pull.Array a ->. Push.Array a
-transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i)) n) n
+transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i))) n
 
 -- | This is a shortcut convenience function, which does the same thing as
 -- `transfer` . `Pull.fromVector`
