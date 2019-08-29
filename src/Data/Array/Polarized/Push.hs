@@ -9,7 +9,8 @@
 -- > import qualified Data.Array.Polarized.Push as Push
 module Data.Array.Polarized.Push where
 
--- XXX: there is lots of scope for testing array functions
+-- XXX: it might be better to hide the data constructor, in case we wish to
+-- change the implementation.
 
 import Data.Array.Destination (DArray)
 import qualified Data.Array.Destination as DArray
@@ -19,6 +20,16 @@ import Prelude.Linear
 import qualified Prelude
 import Data.Monoid.Linear
 
+-- TODO: the below isn't really true yet since no friendly way of constructing
+-- a PushArray directly is given yet (see issue #62), but the spirit holds.
+-- TODO: There's also a slight lie in that one might one to consume a PushArray
+-- into a commutative monoid, for instance summing all the elements, and this
+-- is not yet possible, although it should be.
+
+-- | PushArrays are those arrays which are friendly in returned value position.
+-- They are easy to create and can be constructed by supplying elements in any
+-- order. Dually, they are harder to consume as they will supply their elements
+-- in an unknown order, and allocation is generally required for consumption.
 data Array a where
   Array :: (forall b. (a ->. b) -> DArray b ->. ()) ->. Int -> Array a
   deriving Prelude.Semigroup via NonLinear (Array a)
@@ -40,12 +51,17 @@ instance Semigroup (Array a) where
   (<>) = append
 
 -- XXX: the use of Vector in the type of alloc is temporary (see also "Data.Array.Destination")
+-- | Convert a PushArray into a Vector by allocating. This would be a common
+-- end to a fusion pipeline.
 alloc :: Array a ->. Vector a
 alloc (Array k n) = DArray.alloc n (k id)
 
+-- | @`make` x n@ creates a PushArray of length @n@ in which every element is
+-- @x@.
 make :: a -> Int -> Array a
 make x n = Array (\k -> DArray.replicate (k x)) n
 
+-- | Concatenate two PushArrays.
 append :: Array a ->. Array a ->. Array a
 append (Array kl nl) (Array kr nr) =
     Array

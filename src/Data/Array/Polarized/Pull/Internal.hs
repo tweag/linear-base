@@ -16,7 +16,10 @@ import Data.Monoid.Linear
 
 import qualified Unsafe.Linear as Unsafe
 
--- | A pull array is an array from which it is easy to extract elements.
+-- | A pull array is an array from which it is easy to extract elements,
+-- and this can be done in any order.
+-- The linear consumption of a pull array means each element is consumed
+-- exactly once, but the length can be accessed freely.
 data Array a where
   Array :: (Int -> a) -> Int -> Array a
   deriving Prelude.Semigroup via NonLinear (Array a)
@@ -33,25 +36,32 @@ instance Data.Functor Array where
 -- (making Array linear in (Int -> a) would mean only one value could be
 -- taken out of the Array (which is interesting in and of itself: I think this
 -- is like an n-ary With), and changing the other arrows makes no difference)
+-- | Produce a pull array consisting of solely the given element.
 singleton :: a ->. Array a
 singleton = Unsafe.toLinear (\x -> fromFunction (\_ -> x) 1)
 
 -- | /!\ Partial! Only works if both arrays have the same length.
+-- Zip both pull arrays together.
 zip :: Array a ->. Array b ->. Array (a,b)
 zip (Array g n) (Array h m)
   | n /= m    = error "Polarized.zip: size mismatch"
   | otherwise = fromFunction (\k -> (g k, h k)) n
 
+-- | Concatenate two pull arrays.
 append :: Array a ->. Array a ->. Array a
-append (Array f m) (Array g n) = Array (\k -> if k < m then f k else g (k-m)) (m + n)
+append (Array f m) (Array g n) = Array h (m + n)
+  where h k = if k < m
+                 then f k
+                 else g (k-m)
 
--- | Creates a pull array of given size, filled with the given element
+-- | Creates a pull array of given size, filled with the given element.
 make :: a -> Int -> Array a
 make x n = fromFunction (const x) n
 
 instance Semigroup (Array a) where
   (<>) = append
 
+-- A right-fold of a pull array.
 foldr :: (a ->. b ->. b) -> b ->. Array a ->. b
 foldr f z (Array g n) = go f z g n
   where go :: (_ ->. _ ->. _) -> _ ->. _ -> _ -> _
@@ -59,11 +69,13 @@ foldr f z (Array g n) = go f z g n
         go f' z' g' k = go f' (f' (g' (k-1)) z') g' (k-1)
         -- go is strict in its last argument
 
--- | Extracting the length of an array doesn't count as consuming it.
+-- | Extract the length of an array, and give back the original array. This
+-- is possible since getting the length of an array doesn't count as consuming
+-- it.
 findLength :: Array a ->. (Int, Array a)
 findLength (Array f n) = (n, Array f n)
 
--- | A smart constructor for PullArrays
+-- | A constructor for pull arrays from a function and specified length.
 fromFunction :: (Int -> a) -> Int -> Array a
 fromFunction f n = Array f' n
   where f' k
@@ -72,7 +84,7 @@ fromFunction f n = Array f' n
           | otherwise = f k
 -- XXX: this is used internally to ensure out of bounds errors occur, but
 -- is unnecessary if the input function can be assumed to already have bounded
--- domain
+-- domain, for instance in `append`.
 
 -- | This is a shortcut function, which does the same thing as
 -- `alloc` . `transfer`
@@ -87,5 +99,6 @@ toVector (Array f n) = Vector.generate n f
 split :: Int -> Array a ->. (Array a, Array a)
 split k (Array f n) = (fromFunction f (min k n), fromFunction (\x -> f (x+k)) (max (n-k) 0))
 
+-- | Reverse a pull array.
 reverse :: Array a ->. Array a
 reverse (Array f n) = Array (\x -> f (n+1-x)) n

@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -80,7 +79,9 @@ split n = Unsafe.toLinear unsafeSplit
       let (dsl, dsr) = MVector.splitAt n ds in
         (DArray dsl, DArray dsr)
 
--- | Assumes both arrays have the same size
+-- | Convert a Vector into a destination array to be filled, possibly with
+-- a conversion function.
+-- Assumes both arrays have the same size.
 mirror :: forall a b. Vector a -> (a ->. b) -> DArray b ->. ()
 mirror as f
   | Vector.length as == 0 = Unsafe.toLinear (\_ -> ())
@@ -94,6 +95,7 @@ mirror as f
     mirrorHeadAndTail x xs (dl, dr) =
       fill (f x) dl `lseq` mirror xs f dr
 
+-- | Fill a destination array using the given function.
 fromFunction :: (Int -> b) -> DArray b ->. ()
 fromFunction f = Unsafe.toLinear unsafeFromFunction
   where unsafeFromFunction (DArray ds) = unsafeDupablePerformIO Prelude.$ do
