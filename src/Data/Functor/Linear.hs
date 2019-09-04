@@ -1,5 +1,4 @@
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- | = The data functor hierarchy
@@ -17,7 +16,7 @@ module Data.Functor.Linear
   ( Functor(..)
   , Applicative(..)
   , (<$>)
-  , Reader(..), runReader
+  , (<$)
   , Const(..)
     -- * Linear traversable hierarchy
     -- $ traversable
@@ -29,3 +28,7 @@ module Data.Functor.Linear
 import Data.Functor.Linear.Internal
 import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
+import Data.Unrestricted.Linear
+
+(<$) :: (Functor f, Consumable b) => a -> f b ->. f a
+a <$ fb = fmap (`lseq` a) fb

@@ -15,7 +15,7 @@ module Data.Functor.Linear.Internal.Traversable
   , mapM, sequenceA, for, forM
   ) where
 
-import qualified Control.Monad.Linear as Control
+import qualified Control.Monad.Linear.Internal as Control
 import qualified Data.Functor.Linear.Internal as Data
 import Data.Functor.Const
 import Prelude.Linear.Internal.Simple
