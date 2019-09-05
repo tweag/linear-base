@@ -15,14 +15,16 @@ module Data.Num.Linear
   , Ring
   , FromInteger(..)
   , Num(..)
+  , Adding(..), getAdded
+  , Multiplying(..), getMultiplied
   )
   where
 
--- TODO: underlying semigroups/monoids
 -- TODO: flesh out laws
 import qualified Prelude
 import Data.Unrestricted.Linear
 import qualified Unsafe.Linear as Unsafe
+import Data.Monoid.Linear
 
 -- laws: associative, commutative
 class Additive a where
@@ -105,6 +107,32 @@ liftU2 :: (Movable a, Movable b) => (a -> b -> c) ->. (a ->. b ->. c)
 liftU2 f x y = lifted f (move x) (move y)
   where lifted :: (a -> b -> c) ->. (Unrestricted a ->. Unrestricted b ->. c)
         lifted g (Unrestricted a) (Unrestricted b) = g a b
+
+-- A newtype wrapper to give the underlying monoid for an additive structure.
+newtype Adding a = Adding a
+  deriving Prelude.Semigroup via NonLinear (Adding a)
+
+getAdded :: Adding a ->. a
+getAdded (Adding x) = x
+
+instance Additive a => Semigroup (Adding a) where
+  Adding a <> Adding b = Adding (a + b)
+instance AddIdentity a => Prelude.Monoid (Adding a) where
+  mempty = Adding zero
+instance AddIdentity a => Monoid (Adding a)
+
+-- A newtype wrapper to give the underlying monoid for a multiplicative structure.
+newtype Multiplying a = Multiplying a
+  deriving Prelude.Semigroup via NonLinear (Multiplying a)
+
+getMultiplied :: Multiplying a ->. a
+getMultiplied (Multiplying x) = x
+
+instance Multiplicative a => Semigroup (Multiplying a) where
+  Multiplying a <> Multiplying b = Multiplying (a * b)
+instance MultIdentity a => Prelude.Monoid (Multiplying a) where
+  mempty = Multiplying one
+instance MultIdentity a => Monoid (Multiplying a)
 
 deriving via MovableNum Prelude.Int instance Additive Prelude.Int
 deriving via MovableNum Prelude.Double instance Additive Prelude.Double
