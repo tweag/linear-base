@@ -3,6 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- | = The linear monoid hierarchy
@@ -14,6 +15,7 @@ module Data.Monoid.Linear
   , Monoid(..)
   , Endo(..), appEndo
   , NonLinear(..)
+  , Top, throw
   , module Data.Semigroup
   )
   where
@@ -80,3 +82,15 @@ newtype NonLinear a = NonLinear a
 
 instance Semigroup a => Prelude.Semigroup (NonLinear a) where
   NonLinear a <> NonLinear b = NonLinear (a <> b)
+
+data Top = forall x. Top x
+throw :: x ->. Top
+throw = Top
+
+instance Prelude.Semigroup Top where
+  Top x <> Top y = Top (x,y)
+instance Semigroup Top where
+  Top x <> Top y = Top (x,y)
+instance Prelude.Monoid Top where
+  mempty = Top ()
+instance Monoid Top where

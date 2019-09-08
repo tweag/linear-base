@@ -53,7 +53,7 @@ import Prelude hiding
   , foldr
   , maybe
   , (.)
-  , Functor(..)
+  , Functor(..), (<$>)
   , Applicative(..)
   , Monad(..)
   , Traversable(..)
