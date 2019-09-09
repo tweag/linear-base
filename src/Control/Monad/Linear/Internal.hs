@@ -1,7 +1,10 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 
 module Control.Monad.Linear.Internal where
 
@@ -10,7 +13,7 @@ import Prelude (String)
 import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal as Data
 import qualified Control.Monad.Trans.Reader as NonLinear
-import qualified Control.Monad.Trans.State.Strict as Strict
+import qualified Control.Monad.Trans.State.Strict as NonLinear
 
 -- $monad
 
@@ -129,5 +132,85 @@ instance Monad m => Monad (NonLinear.ReaderT r m) where
 runReaderT' :: NonLinear.ReaderT r m a ->. r -> m a
 runReaderT' (NonLinear.ReaderT f) = f
 
-instance Functor m => Functor (Strict.StateT s m) where
-  fmap f (Strict.StateT x) = Strict.StateT $ \s -> fmap (\(a, s') -> (f a, s')) $ x s
+instance Functor m => Functor (NonLinear.StateT s m) where
+  fmap f (NonLinear.StateT x) = NonLinear.StateT $ \s -> fmap (\(a, s') -> (f a, s')) $ x s
+
+----------------------------
+-- New monad transformers --
+----------------------------
+
+-- A (strict) linear state monad.
+newtype StateT s m a = StateT (s ->. m (a, s))
+  deriving Data.Applicative via Data (StateT s m)
+  -- We derive Data.Applicative and not Data.Functor since Data.Functor can use
+  -- weaker constraints on m than Control.Functor, while
+  -- Data.Applicative needs a Monad instance just like Control.Applicative.
+
+type State s = StateT s Identity
+
+runStateT :: StateT s m a ->. s ->. m (a, s)
+runStateT (StateT f) = f
+
+instance Data.Functor m => Data.Functor (StateT s m) where
+  fmap f (StateT x) = StateT (\s -> Data.fmap (\(a, s') -> (f a, s')) (x s))
+
+instance Functor m => Functor (StateT s m) where
+  fmap f (StateT x) = StateT (\s -> fmap (\(a, s') -> (f a, s')) (x s))
+
+instance Monad m => Applicative (StateT s m) where
+  pure x = StateT (\s -> return (x,s))
+  StateT mf <*> StateT mx = StateT $ \s -> do
+    (f, s') <- mf s
+    (x, s'') <- mx s'
+    return (f x, s'')
+
+instance Monad m => Monad (StateT s m) where
+  StateT mx >>= f = StateT $ \s -> do
+    (x, s') <- mx s
+    runStateT (f x) s'
+
+state :: Applicative m => (s ->. (a,s)) ->. StateT s m a
+state f = StateT (pure . f)
+
+runState :: State s a ->. s ->. (a, s)
+runState f = runIdentity' . runStateT f
+
+mapStateT :: (m (a, s) ->. n (b, s)) ->. StateT s m a ->. StateT s n b
+mapStateT r (StateT f) = StateT (r . f)
+
+withStateT :: (s ->. s) ->. StateT s m a ->. StateT s m a
+withStateT r (StateT f) = StateT (f . r)
+
+execStateT :: Functor m => StateT s m () ->. s ->. m s
+execStateT f = fmap (\((), s) -> s) . (runStateT f)
+
+mapState :: ((a,s) ->. (b,s)) ->. State s a ->. State s b
+mapState f = mapStateT (Identity . f . runIdentity')
+
+withState :: (s ->. s) ->. State s a ->. State s a
+withState = withStateT
+
+execState :: State s () ->. s ->. s
+execState f = runIdentity' . execStateT f
+
+modify :: Applicative m => (s ->. s) ->. StateT s m ()
+modify f = state $ \s -> ((), f s)
+-- TODO: add strict version of `modify`
+
+-- | @replace s@ will replace the current state with the new given state, and
+-- return the old state.
+replace :: Applicative m => s ->. StateT s m s
+replace s = state $ (\s' -> (s', s))
+
+-----------------------------
+-- Monad transformer class --
+-----------------------------
+
+class (forall m. Monad m => Monad (t m)) => MonadTrans t where
+  lift :: Monad m => m a ->. t m a
+
+instance MonadTrans (NonLinear.ReaderT r) where
+  lift x = NonLinear.ReaderT (\_ -> x)
+
+instance MonadTrans (StateT s) where
+  lift x = StateT (\s -> fmap (,s) x)
