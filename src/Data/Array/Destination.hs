@@ -14,7 +14,7 @@ module Data.Array.Destination
   where
 
 import Control.Exception (evaluate)
-import Data.Vector (Vector)
+import Data.Vector (Vector, (!))
 import qualified Data.Vector as Vector
 import Data.Vector.Mutable (MVector)
 import qualified Data.Vector.Mutable as MVector
@@ -82,18 +82,8 @@ split n = Unsafe.toLinear unsafeSplit
 -- | Convert a Vector into a destination array to be filled, possibly with
 -- a conversion function.
 -- Assumes both arrays have the same size.
-mirror :: forall a b. Vector a -> (a ->. b) -> DArray b ->. ()
-mirror as f
-  | Vector.length as == 0 = Unsafe.toLinear (\_ -> ())
-      -- assuming as and the destination are the same size, the destination
-      -- has no holes to fill so we can safely linearly consume it
-  | otherwise =
-      mirrorHeadAndTail (Vector.head as) (Vector.tail as) . split 1
-  where
-    -- /!\ The first DArray has length 1.
-    mirrorHeadAndTail :: a -> Vector a -> (DArray b, DArray b) ->. ()
-    mirrorHeadAndTail x xs (dl, dr) =
-      fill (f x) dl `lseq` mirror xs f dr
+mirror :: Vector a -> (a ->. b) -> DArray b ->. ()
+mirror v f = fromFunction (\t -> f (v ! t))
 
 -- | Fill a destination array using the given function.
 fromFunction :: (Int -> b) -> DArray b ->. ()
