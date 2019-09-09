@@ -22,9 +22,9 @@ import Data.Monoid.Linear
 
 -- TODO: the below isn't really true yet since no friendly way of constructing
 -- a PushArray directly is given yet (see issue #62), but the spirit holds.
--- TODO: There's also a slight lie in that one might one to consume a PushArray
--- into a commutative monoid, for instance summing all the elements, and this
--- is not yet possible, although it should be.
+-- TODO: There's also a slight lie in that one might want to consume a
+-- PushArray into a commutative monoid, for instance summing all the elements,
+-- and this is not yet possible, although it should be.
 
 -- | PushArrays are those arrays which are friendly in returned value position.
 -- They are easy to create and can be constructed by supplying elements in any
