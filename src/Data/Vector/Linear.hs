@@ -67,12 +67,12 @@ theLength :: forall n. KnownNat n => Int
 theLength = fromIntegral (natVal' @n (proxy# @_))
 
 instance Data.Functor (V n) where
-  fmap f (V xs) = V $ Unsafe.toLinear ((Unsafe.coerce Vector.map) f) xs
+  fmap f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
 
 instance KnownNat n => Data.Applicative (V n) where
   pure a = V $ Vector.replicate (theLength @n) a
   (V fs) <*> (V xs) = V $
-    Unsafe.toLinear2 (Vector.zipWith @(_ ->. _) (\f x -> f x)) fs xs
+    Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
 
 instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
@@ -87,7 +87,7 @@ split :: 1 <= n => V n a ->. (# a, V (n-1) a #)
 split = Unsafe.toLinear split'
   where
     split' :: 1 <= n => V n a -> (# a, V (n-1) a #)
-    split' (V xs) = (# Vector.head xs, V (Vector.tail xs)#)
+    split' (V xs) = (# Vector.head xs, V (Vector.tail xs) #)
 
 consumeV :: V 0 a ->. b ->. b
 consumeV = Unsafe.toLinear (\_ -> id)
@@ -115,35 +115,42 @@ caseNat =
     _ -> Right $ unsafeNonZero @n
 {-# INLINE caseNat #-}
 
+-- By definition.
+expandFunN :: forall n a b. (1 <= n) => FunN n a b ->. a ->. FunN (n-1) a b
+expandFunN k = Unsafe.coerce k
+
+-- By definition.
+contractFunN :: (1 <= n) => (a ->. FunN (n-1) a b) ->. FunN n a b
+contractFunN k = Unsafe.coerce k
+
 -- TODO: consider using template haskell to make this expression more efficient.
 -- | This is like pattern-matching on a n-tuple. It will eventually be
 -- polymorphic the same way as a case expression.
 elim :: forall n a b. KnownNat n => V n a ->. FunN n a b ->. b
 elim xs f =
   case caseNat @n of
-    Left Refl -> consumeV xs $ Unsafe.coerce f
+    Left Refl -> consumeV xs f
     Right Refl -> elimS (split xs) f
   where
     elimS :: 1 <= n => (# a, V (n-1) a #) ->. FunN n a b ->. b
     elimS (# x, xs' #) g = case predNat @n of
-      Dict -> elim  xs' ((Unsafe.coerce g :: a ->. FunN (n-1) a b) x)
+      Dict -> elim xs' (expandFunN @n @a @b g x)
 
 -- XXX: This can probably be improved a lot.
 make :: forall n a. KnownNat n => FunN n a (V n a)
 make = case caseNat @n of
           Left Refl -> V Vector.empty
-          Right Refl -> Unsafe.coerce prepend :: FunN n a (V n a)
-            where prepend :: a -> FunN (n-1) a (V n a)
+          Right Refl -> contractFunN @n @a @(V n a) prepend
+            where prepend :: a ->. FunN (n-1) a (V n a)
                   prepend t = case predNat @n of
                                 Dict -> continue @(n-1) @a @(V (n-1) a) (cons t) (make @(n-1) @a)
 
 cons :: forall n a. a ->. V (n-1) a ->. V n a
-cons = Unsafe.toLinear $ \x -> Unsafe.coerce (Vector.cons x)
+cons = Unsafe.toLinear2 $ \x (V v) -> V (Vector.cons x v)
 
 continue :: forall n a b c. KnownNat n => (b ->. c) ->. FunN n a b ->. FunN n a c
 continue = case caseNat @n of
              Left Refl -> id
-             Right Refl -> Unsafe.coerce continueS
+             Right Refl -> \f t -> contractFunN @n @a @c (continueS f (expandFunN @n @a @b t))
                where continueS :: (KnownNat n, 1 <= n) => (b ->. c) ->. (a ->. FunN (n-1) a b) ->. (a ->. FunN (n-1) a c)
-                     continueS f' x a = case predNat @n of
-                                          Dict -> continue @(n-1) @a @b f' (x a)
+                     continueS f' x a = case predNat @n of Dict -> continue @(n-1) @a @b f' (x a)
