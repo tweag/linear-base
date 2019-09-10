@@ -11,6 +11,7 @@ module Control.Monad.Linear.Internal where
 import Prelude.Linear.Internal.Simple
 import Prelude (String)
 import Data.Functor.Identity
+import Data.Monoid.Linear
 import qualified Data.Functor.Linear.Internal as Data
 import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as NonLinear
@@ -102,9 +103,21 @@ instance Applicative f => Data.Applicative (Data f) where
   pure x = Data (pure x)
   Data f <*> Data x = Data (f <*> x)
 
-------------------------------------------------
--- Instances for nonlinear monad transformers --
-------------------------------------------------
+---------------------
+-- Basic instances --
+---------------------
+
+instance Functor ((,) a) where
+  fmap f (a, x) = (a, f x)
+
+instance Monoid a => Applicative ((,) a) where
+  pure x = (mempty, x)
+  (a, f) <*> (b, x) = (a <> b, f x)
+
+instance Monoid a => Monad ((,) a) where
+  (a, x) >>= f = go a (f x)
+    where go :: a ->. (a,b) ->. (a,b)
+          go b1 (b2, y) = (b1 <> b2, y)
 
 instance Functor Identity where
   fmap f (Identity x) = Identity (f x)
@@ -119,6 +132,10 @@ instance Monad Identity where
 -- | Temporary, until newtype record projections are linear.
 runIdentity' :: Identity a ->. a
 runIdentity' (Identity x) = x
+
+------------------------------------------------
+-- Instances for nonlinear monad transformers --
+------------------------------------------------
 
 instance Functor m => Functor (NonLinear.ReaderT r m) where
   fmap f (NonLinear.ReaderT g) = NonLinear.ReaderT $ \r -> fmap f (g r)

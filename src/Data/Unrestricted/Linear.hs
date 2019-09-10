@@ -205,12 +205,25 @@ instance Dupable (Unrestricted a) where
 instance Movable (Unrestricted a) where
   move (Unrestricted a) = Unrestricted (Unrestricted a)
 
+instance Prelude.Functor Unrestricted where
+  fmap f (Unrestricted a) = Unrestricted (f a)
+
+instance Prelude.Applicative Unrestricted where
+  pure = Unrestricted
+  Unrestricted f <*> Unrestricted x = Unrestricted (f x)
+
 instance Data.Functor Unrestricted where
   fmap f (Unrestricted a) = Unrestricted (f a)
 
 instance Data.Applicative Unrestricted where
   pure = Unrestricted
   Unrestricted f <*> Unrestricted x = Unrestricted (f x)
+
+instance Prelude.Foldable Unrestricted where
+  foldMap f (Unrestricted x) = f x
+
+instance Prelude.Traversable Unrestricted where
+  sequenceA (Unrestricted x) = Prelude.fmap Unrestricted x
 
 -- | Discard a consumable value stored in a data functor.
 void :: (Data.Functor f, Consumable a) => f a ->. f ()
