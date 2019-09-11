@@ -37,7 +37,6 @@ module Control.Optics.Linear.Internal
 import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
-import Data.Monoid
 import Data.Profunctor.Linear
 import Data.Functor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
@@ -123,9 +122,8 @@ build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Cons
 getConst' :: Const a b ->. a
 getConst' (Const x) = x
 
--- TODO: think about if this is the right constraint
-lengthOf :: P.Num r => Optic_ (NonLinear.Kleisli (Const (Sum r))) a b s t -> s -> r
-lengthOf l s = getSum (gets l (const (Sum 1)) s)
+lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Adding r))) a b s t -> s -> r
+lengthOf l s = getAdded (gets l (const (Adding one)) s)
 
 -- XXX: the below two functions will be made redundant with multiplicity
 -- polymorphism on over and traverseOf'
