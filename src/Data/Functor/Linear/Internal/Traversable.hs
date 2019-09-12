@@ -13,6 +13,7 @@ module Data.Functor.Linear.Internal.Traversable
     -- $ traversable
     Traversable(..)
   , mapM, sequenceA, for, forM
+  , mapAccumL, mapAccumR
   ) where
 
 import qualified Control.Monad.Linear.Internal as Control
@@ -52,6 +53,31 @@ for t f = traverse f t
 forM :: (Traversable t, Control.Monad m) => t a ->. (a ->. m b) -> m (t b)
 forM = for
 {-# INLINE forM #-}
+
+mapAccumL :: Traversable t => (a ->. b ->. (a,c)) -> a ->. t b ->. (a, t c)
+mapAccumL f s t = swap $ Control.runState (traverse (\b -> Control.state $ \i -> swap $ f i b) t) s
+
+mapAccumR :: Traversable t => (a ->. b ->. (a,c)) -> a ->. t b ->. (a, t c)
+mapAccumR f s t = swap $ runStateR (traverse (\b -> StateR $ \i -> swap $ f i b) t) s
+
+swap :: (a,b) ->. (b,a)
+swap (x,y) = (y,x)
+
+-- right-to-left state transformer
+newtype StateR s a = StateR (s ->. (a, s))
+  deriving (Data.Functor, Data.Applicative) via Control.Data (StateR s)
+
+runStateR :: StateR s a ->. s ->. (a, s)
+runStateR (StateR f) = f
+
+instance Control.Functor (StateR s) where
+  fmap f (StateR x) = StateR $ (\(a, s') -> (f a, s')) . x
+
+instance Control.Applicative (StateR s) where
+  pure x = StateR $ \s -> (x,s)
+  StateR f <*> StateR x = StateR (go . Control.fmap f . x)
+    where go :: (a, (a ->. b, s)) ->. (b, s)
+          go (a, (h, s'')) = (h a, s'')
 
 ------------------------
 -- Standard instances --
