@@ -41,8 +41,11 @@ instance Control.Applicative f => Strong Either Void (Kleisli f) where
   first  (Kleisli f) = Kleisli (either (Data.fmap Left . f) (Control.pure . Right))
   second (Kleisli g) = Kleisli (either (Control.pure . Left) (Data.fmap Right . g))
 
-instance Control.Applicative f => DWandering (Kleisli f) where
-  dwander (Kleisli f) = Kleisli (Data.traverse f)
+instance Control.Applicative f => Monoidal (,) () (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli $ \(x,y) -> (,) Control.<$> f x Control.<*> g y
+  unit = Kleisli Control.pure
+
+instance Control.Applicative f => Traversing (Kleisli f)
 
 -- | Linear co-Kleisli arrows for the comonad `w`. These arrows are still
 -- useful in the case where `w` is not a comonad however, and some

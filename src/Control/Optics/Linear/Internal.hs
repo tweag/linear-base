@@ -13,8 +13,7 @@ module Control.Optics.Linear.Internal
   , Iso, Iso'
   , Lens, Lens'
   , Prism, Prism'
-  , PTraversal, PTraversal'
-  , DTraversal, DTraversal'
+  , Traversal, Traversal'
     -- * Composing optics
   , (.>)
     -- * Common optics
@@ -22,8 +21,8 @@ module Control.Optics.Linear.Internal
   , _1, _2
   , _Left, _Right
   , _Just, _Nothing
-  , ptraversed, dtraversed
-  , both, both'
+  , traversed
+  , both
     -- * Using optics
   , get, set, gets
   , set', set''
@@ -32,16 +31,17 @@ module Control.Optics.Linear.Internal
   , over, over'
   , traverseOf, traverseOf'
   , lengthOf
-  , withIso, withLens, withPrism
   , toListOf
+  , withIso, withLens, withPrism, withTraversal
     -- * Constructing optics
-  , iso, prism, lens
+  , iso, prism, lens, traversal
   )
   where
 
 import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import qualified Control.Monad.Linear as Control
+import Data.Functor.Linear.Internal.Traversable
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Monoid.Linear
 import Data.Functor.Const
@@ -66,12 +66,8 @@ type Lens a b s t = Optic (Strong (,) ()) a b s t
 type Lens' a s = Lens a a s s
 type Prism a b s t = Optic (Strong Either Void) a b s t
 type Prism' a s = Prism a a s s
-type PTraversal a b s t = Optic PWandering a b s t
-type PTraversal' a s = PTraversal a a s s
-type DTraversal a b s t = Optic DWandering a b s t
-type DTraversal' a s = DTraversal a a s s
--- XXX: these will unify into
--- type Traversal (p :: Multiplicity) a b s t = Optic (Wandering p) a b s t
+type Traversal a b s t = Optic Traversing a b s t
+type Traversal' a s = Traversal a a s s
 
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = iso Bifunctor.swap Bifunctor.swap
@@ -97,13 +93,8 @@ _1 = Optical first
 _2 :: Lens a b (c,a) (c,b)
 _2 = Optical second
 
--- XXX: these will unify to
--- > both :: forall (p :: Multiplicity). Traversal p a b (a,a) (b,b)
-both' :: PTraversal a b (a,a) (b,b)
-both' = _Pairing .> ptraversed
-
-both :: DTraversal a b (a,a) (b,b)
-both = _Pairing .> dtraversed
+both :: Traversal a b (a,a) (b,b)
+both = _Pairing .> traversed
 
 -- XXX: these are a special case of Bitraversable, but just the simple case
 -- is included here for now
@@ -118,10 +109,6 @@ instance P.Functor Pair where
   fmap f (Paired (x,y)) = Paired (f x, f y)
 instance Functor Pair where
   fmap f (Paired (x,y)) = Paired (f x, f y)
-instance Foldable Pair where
-  foldMap f (Paired (x,y)) = f x P.<> f y
-instance P.Traversable Pair where
-  traverse f (Paired (x,y)) = Paired P.<$> ((,) P.<$> f x P.<*> f y)
 instance Traversable Pair where
   traverse f (Paired (x,y)) = Paired <$> ((,) <$> f x <*> f y)
 
@@ -139,12 +126,6 @@ _Just = prism Just (maybe (Left Nothing) Right)
 
 _Nothing :: Prism' () (Maybe a)
 _Nothing = prism (\() -> Nothing) Left
-
-ptraversed :: P.Traversable t => PTraversal a b (t a) (t b)
-ptraversed = Optical pwander
-
-dtraversed :: Traversable t => DTraversal a b (t a) (t b)
-dtraversed = Optical dwander
 
 over :: Optic_ LinearArrow a b s t -> (a ->. b) -> s ->. t
 over (Optical l) f = getLA (l (LA f))
@@ -168,7 +149,7 @@ set'' :: Optic_ (NonLinear.Kleisli (Control.Reader b)) a b s t -> b ->. s -> t
 set'' (Optical l) b s = Control.runReader (NonLinear.runKleisli (l (NonLinear.Kleisli (const (Control.reader id)))) s) b
 
 set :: Optic_ (->) a b s t -> b -> s -> t
-set (Optical l) x = l (const x)
+set l b = over' l (const b)
 
 match :: Optic_ (Market a b) a b s t -> s ->. Either t a
 match (Optical l) = snd (runMarket (l (Market id Right)))
@@ -203,3 +184,23 @@ withIso (Optical l) f = f fro to
 withPrism :: Optic_ (Market a b) a b s t -> ((b ->. t) -> (s ->. Either t a) -> r) -> r
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)
+
+traversal :: (s ->. Batch a b t) -> Traversal a b s t
+traversal h = Optical (\k -> dimap h fuse (traverse' k))
+
+traverse' :: (Strong Either Void arr, Monoidal (,) () arr) => a `arr` b -> Batch a c t `arr` Batch b c t
+traverse' k = dimap out inn (second (traverse' k *** k))
+
+out :: Batch a b t ->. Either t (Batch a b (b ->. t), a)
+out (P t) = Left t
+out (l :*: x) = Right (l,x)
+
+inn :: Either t (Batch a b (b ->. t), a) ->. Batch a b t
+inn (Left t) = P t
+inn (Right (l,x)) = l :*: x
+
+traversed :: Traversable t => Traversal a b (t a) (t b)
+traversed = traversal (traverse batch)
+
+withTraversal :: Optic_ (Linear.Kleisli (Batch a b)) a b s t -> s ->. Batch a b t
+withTraversal (Optical l) = Linear.runKleisli (l (Linear.Kleisli batch))
