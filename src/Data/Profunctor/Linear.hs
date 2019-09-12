@@ -14,6 +14,7 @@ module Data.Profunctor.Linear
   , Wandering(..)
   , LinearArrow(..), getLA
   , Exchange(..)
+  , Market(..), runMarket
   ) where
 
 import qualified Data.Functor.Linear as Data
@@ -101,3 +102,13 @@ instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
   first  (Kleisli f) = Kleisli $ \case
                                    Left  x -> Prelude.fmap Left (f x)
                                    Right y -> Prelude.pure (Right y)
+
+data Market a b s t = Market (b ->. t) (s ->. Either t a)
+runMarket :: Market a b s t ->. (b ->. t, s ->. Either t a)
+runMarket (Market f g) = (f, g)
+
+instance Profunctor (Market a b) where
+  dimap f g (Market h k) = Market (g . h) (either (Left . g) Right . k . f)
+
+instance Strong Either Void (Market a b) where
+  first (Market f g) = Market (Left . f) (either (either (Left . Left) Right . g) (Left . Right))

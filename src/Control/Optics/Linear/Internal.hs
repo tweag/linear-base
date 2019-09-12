@@ -24,11 +24,11 @@ module Control.Optics.Linear.Internal
   , traversed
     -- * Using optics
   , get, set, gets
-  , match, match', build
+  , match, build
   , over, over'
   , traverseOf, traverseOf'
   , lengthOf
-  , withIso
+  , withIso, withPrism
     -- * Constructing optics
   , iso, prism
   )
@@ -106,12 +106,8 @@ gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Co
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)
 
-match :: Optic_ (Linear.Kleisli (Either a)) a b s t -> s ->. Either t a
-match (Optical l) = withIso swap (\x _ -> x) . Linear.runKleisli (l (Linear.Kleisli Left))
-
--- will be redundant with multiplicity polymorphism
-match' :: Optic_ (NonLinear.Kleisli (Either a)) a b s t -> s -> Either t a
-match' (Optical l) = withIso swap (\x _ -> forget x) P.. NonLinear.runKleisli (l (NonLinear.Kleisli Left))
+match :: Optic_ (Market a b) a b s t -> s ->. Either t a
+match (Optical l) = snd (runMarket (l (Market id Right)))
 
 build :: Optic_ (Linear.CoKleisli (Const b)) a b s t -> b ->. t
 build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Const x)
@@ -139,3 +135,7 @@ iso f g = Optical (dimap f g)
 withIso :: Optic_ (Exchange a b) a b s t -> ((s ->. a) -> (b ->. t) -> r) -> r
 withIso (Optical l) f = f fro to
   where Exchange fro to = l (Exchange id id)
+
+withPrism :: Optic_ (Market a b) a b s t -> ((b ->. t) -> (s ->. Either t a) -> r) -> r
+withPrism (Optical l) f = f b m
+  where Market b m = l (Market id Right)
