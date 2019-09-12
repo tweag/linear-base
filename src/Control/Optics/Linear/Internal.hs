@@ -22,8 +22,8 @@ module Control.Optics.Linear.Internal
   , _1, _2
   , _Left, _Right
   , _Just, _Nothing
-  , ptraversed, dtraversed
-  , both, both'
+  , ptraversed, dtraversed, btraversed
+  , both, both', both''
     -- * Using optics
   , get, set, gets
   , get', gets'
@@ -43,6 +43,7 @@ module Control.Optics.Linear.Internal
 import qualified Control.Arrow as NonLinear
 import qualified Control.Monad.Linear as Control
 import qualified Data.Bifunctor.Linear as Bifunctor
+import Data.Functor.Linear.Internal.Traversable
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Functor.Const
 import Data.Functor.Linear
@@ -73,6 +74,8 @@ type DTraversal a b s t = Optic DWandering a b s t
 type DTraversal' a s = DTraversal a a s s
 -- XXX: these will unify into
 -- type Traversal (p :: Multiplicity) a b s t = Optic (Wandering p) a b s t
+
+type BTraversal a b s t = Optic Traversing a b s t
 
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = iso Bifunctor.swap Bifunctor.swap
@@ -105,6 +108,9 @@ both' = _Pairing .> ptraversed
 
 both :: DTraversal a b (a,a) (b,b)
 both = _Pairing .> dtraversed
+
+both'' :: BTraversal a b (a,a) (b,b)
+both'' = _Pairing .> btraversed
 
 -- XXX: these are a special case of Bitraversable, but just the simple case
 -- is included here for now
@@ -210,3 +216,23 @@ withIso (Optical l) f = f fro to
 withPrism :: Optic_ (Market a b) a b s t -> ((b ->. t) -> (s ->. Either t a) -> r) -> r
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)
+
+traversal :: (s ->. Batch a b t) -> BTraversal a b s t
+traversal h = Optical (\k -> dimap h fuse (traverse' k))
+
+traverse' :: (Strong Either Void arr, Monoidal (,) () arr) => a `arr` b -> Batch a c t `arr` Batch b c t
+traverse' k = dimap out inn (second (k *** (traverse' k)))
+
+out :: Batch a b t ->. Either t (a, Batch a b (b ->. t))
+out (P t) = Left t
+out (x :*: l) = Right (l,x)
+
+inn :: Either t (a, Batch a b (b ->. t)) ->. Batch a b t
+inn (Left t) = P t
+inn (Right (l,x)) = x :*: l
+
+thing :: Traversable t => t a ->. Batch a b (t b)
+thing = traverse batch
+
+btraversed :: Traversable t => BTraversal a b (t a) (t b)
+btraversed = traversal thing
