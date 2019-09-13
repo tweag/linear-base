@@ -56,3 +56,7 @@ foldr :: (a ->. b ->. b) -> b ->. [a] ->. b
 foldr f z = \case
   [] -> z
   x:xs -> f x (foldr f z xs)
+
+-- | Replacement for the flip function with generalized multiplicities.
+flip :: (a -->.(p) b -->.(q) c) -->.(r) b -->.(q) a -->.(p) c
+flip f b a = f a b

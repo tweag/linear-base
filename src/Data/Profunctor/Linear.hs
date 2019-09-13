@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -7,17 +7,22 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeOperators #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Data.Profunctor.Linear
   ( Profunctor(..)
   , Monoidal(..)
   , Strong(..)
-  , Wandering(..)
+  , Traversing
   , LinearArrow(..), getLA
   , Exchange(..)
   , Market(..), runMarket
+  , MyFunctor(..), runMyFunctor
+  , OtherFunctor(..), runOtherFunctor
   ) where
 
 import qualified Data.Functor.Linear as Data
+import qualified Control.Monad.Linear as Control
 import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear
 import Data.Void
@@ -26,7 +31,7 @@ import Control.Arrow (Kleisli(..))
 
 -- TODO: write laws
 
-class Profunctor (arr :: * -> * -> *) where
+class Profunctor arr where
   {-# MINIMAL dimap | lmap, rmap #-}
 
   dimap :: (s ->. a) -> (b ->. t) -> a `arr` b -> s `arr` t
@@ -56,8 +61,7 @@ class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   second arr = dimap swap swap (first arr)
   {-# INLINE second #-}
 
-class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
-  wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
+class (Strong (,) () arr, Strong Either Void arr, Monoidal (,) () arr) => Traversing arr where
 
 ---------------
 -- Instances --
@@ -79,6 +83,12 @@ instance Strong Either Void LinearArrow where
   first  (LA f) = LA $ either (Left . f) Right
   second (LA g) = LA $ either Left (Right . g)
 
+instance Monoidal (,) () LinearArrow where
+  LA f *** LA g = LA $ \(a,x) -> (f a, g x)
+  unit = LA id
+
+instance Traversing LinearArrow
+
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))
 instance Strong (,) () (->) where
@@ -86,6 +96,10 @@ instance Strong (,) () (->) where
 instance Strong Either Void (->) where
   first f (Left x) = Left (f x)
   first _ (Right y) = Right y
+instance Monoidal (,) () (->) where
+  (f *** g) (a,x) = (f a, g x)
+  unit () = ()
+instance Traversing (->)
 
 data Exchange a b s t = Exchange (s ->. a) (b ->. t)
 instance Profunctor (Exchange a b) where
@@ -103,6 +117,12 @@ instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
                                    Left  x -> Prelude.fmap Left (f x)
                                    Right y -> Prelude.pure (Right y)
 
+instance Prelude.Applicative f => Monoidal (,) () (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli (\(x,y) -> (,) Prelude.<$> f x Prelude.<*> g y)
+  unit = Kleisli Prelude.pure
+
+instance Prelude.Applicative f => Traversing (Kleisli f) where
+
 data Market a b s t = Market (b ->. t) (s ->. Either t a)
 runMarket :: Market a b s t ->. (b ->. t, s ->. Either t a)
 runMarket (Market f g) = (f, g)
@@ -112,3 +132,21 @@ instance Profunctor (Market a b) where
 
 instance Strong Either Void (Market a b) where
   first (Market f g) = Market (Left . f) (either (either (Left . Left) Right . g) (Left . Right))
+
+-- TODO: pick a more sensible name for this
+newtype MyFunctor a b t = MyFunctor (b ->. (a, t))
+runMyFunctor :: MyFunctor a b t ->. b ->. (a, t)
+runMyFunctor (MyFunctor f) = f
+
+instance Data.Functor (MyFunctor a b) where
+  fmap f (MyFunctor g) = MyFunctor (getLA (second (LA f)) . g)
+instance Control.Functor (MyFunctor a b) where
+  fmap f (MyFunctor g) = MyFunctor (Control.fmap f . g)
+
+newtype OtherFunctor a b t = OtherFunctor (a, b ->. t)
+runOtherFunctor :: OtherFunctor a b t ->. (a, b ->. t)
+runOtherFunctor (OtherFunctor f) = f
+instance Data.Functor (OtherFunctor a b) where
+  fmap f (OtherFunctor (a,g)) = OtherFunctor (a,f . g)
+instance Control.Functor (OtherFunctor a b) where
+  fmap f (OtherFunctor (a,g)) = OtherFunctor (a,f . g)

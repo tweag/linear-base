@@ -14,6 +14,7 @@ module Data.Functor.Linear.Internal.Traversable
     Traversable(..)
   , mapM, sequenceA, for, forM
   , mapAccumL, mapAccumR
+  , batch, runWith, Batch(..), fuse
   ) where
 
 import qualified Control.Monad.Linear.Internal as Control
@@ -78,6 +79,29 @@ instance Control.Applicative (StateR s) where
   StateR f <*> StateR x = StateR (go . Control.fmap f . x)
     where go :: (a, (a ->. b, s)) ->. (b, s)
           go (a, (h, s'')) = (h a, s'')
+
+data Batch a b c = Done c | More a (Batch a b (b ->. c))
+  deriving (Data.Functor, Data.Applicative) via Control.Data (Batch a b)
+
+instance Control.Functor (Batch a b) where
+  fmap f (Done c)   = Done (f c)
+  fmap f (More x l) = More x ((f.) Control.<$> l)
+
+instance Control.Applicative (Batch a b) where
+  pure = Done
+  Done f <*> l' = Control.fmap f l'
+  More x l <*> l' = More x (flip Control.<$> l Control.<*> l')
+
+batch :: a ->. Batch a b b
+batch x = More x (Done id)
+
+runWith :: Control.Applicative f => (a ->. f b) -> Batch a b c ->. f c
+runWith _ (Done c) = Control.pure c
+runWith f (More x l) = runWith f l Control.<*> f x
+
+fuse :: Batch b b t ->. t
+fuse (Done i) = i
+fuse (More x l) = fuse l x
 
 ------------------------
 -- Standard instances --

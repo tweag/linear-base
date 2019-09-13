@@ -41,22 +41,17 @@ instance Control.Applicative f => Strong Either Void (Kleisli f) where
   first  (Kleisli f) = Kleisli (either (Data.fmap Left . f) (Control.pure . Right))
   second (Kleisli g) = Kleisli (either (Control.pure . Left) (Data.fmap Right . g))
 
-instance Control.Applicative f => Wandering (Kleisli f) where
-  wander (Kleisli f) = Kleisli (Data.traverse f)
+instance Control.Applicative f => Monoidal (,) () (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli $ \(x,y) -> (,) Control.<$> f x Control.<*> g y
+  unit = Kleisli Control.pure
+
+instance Control.Applicative f => Traversing (Kleisli f)
 
 -- | Linear co-Kleisli arrows for the comonad `w`. These arrows are still
 -- useful in the case where `w` is not a comonad however, and some
 -- profunctorial properties still hold in this weaker setting.
 -- However stronger requirements on `f` are needed for profunctorial
 -- strength, so we have fewer instances.
---
--- Category theoretic remark: duality doesn't work in the obvious way, since
--- (,) isn't the categorical product. Instead, we have a product (&), called
--- "With", defined by
--- > type With a b = forall r. Either (a ->. r) (b ->. r) ->. r
--- which satisfies the universal property of the product of `a` and `b`.
--- CoKleisli arrows are strong with respect to this monoidal structure,
--- although this might not be useful...
 newtype CoKleisli w a b = CoKleisli { runCoKleisli :: w a ->. b }
 
 instance Data.Functor f => Profunctor (CoKleisli f) where
