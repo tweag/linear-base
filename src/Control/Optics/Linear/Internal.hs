@@ -189,15 +189,15 @@ traversal :: (s ->. Batch a b t) -> Traversal a b s t
 traversal h = Optical (\k -> dimap h fuse (traverse' k))
 
 traverse' :: (Strong Either Void arr, Monoidal (,) () arr) => a `arr` b -> Batch a c t `arr` Batch b c t
-traverse' k = dimap out inn (second (traverse' k *** k))
+traverse' k = dimap fromBatch toBatch (second (k *** traverse' k))
 
-out :: Batch a b t ->. Either t (Batch a b (b ->. t), a)
-out (P t) = Left t
-out (l :*: x) = Right (l,x)
+fromBatch :: Batch a b t ->. Either t (a, Batch a b (b ->. t))
+fromBatch (Done t) = Left t
+fromBatch (More l x) = Right (l, x)
 
-inn :: Either t (Batch a b (b ->. t), a) ->. Batch a b t
-inn (Left t) = P t
-inn (Right (l,x)) = l :*: x
+toBatch :: Either t (a, Batch a b (b ->. t)) ->. Batch a b t
+toBatch (Left t) = Done t
+toBatch (Right (l, x)) = More l x
 
 traversed :: Traversable t => Traversal a b (t a) (t b)
 traversed = traversal (traverse batch)

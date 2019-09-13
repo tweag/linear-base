@@ -80,31 +80,28 @@ instance Control.Applicative (StateR s) where
     where go :: (a, (a ->. b, s)) ->. (b, s)
           go (a, (h, s'')) = (h a, s'')
 
-data Batch a b c = P c | Batch a b (b ->. c) :*: a
+data Batch a b c = Done c | More a (Batch a b (b ->. c))
   deriving (Data.Functor, Data.Applicative) via Control.Data (Batch a b)
+
 instance Control.Functor (Batch a b) where
-  fmap f (P c) = P (f c)
-  fmap f (u :*: a) = Control.fmap (f.) u :*: a
+  fmap f (Done c)   = Done (f c)
+  fmap f (More x l) = More x ((f.) Control.<$> l)
 
 instance Control.Applicative (Batch a b) where
-  pure = P
-  P f <*> P x = P (f x)
-  (u :*: a) <*> P x = ((P $ help x) Control.<*> u) :*: a
-  u <*> (v :*: a) = (P (.) Control.<*> u Control.<*> v) :*: a
-
-help :: d ->. ((b ->. d ->. e) ->. b ->. e)
-help d bde b = bde b d
+  pure = Done
+  Done f <*> l' = Control.fmap f l'
+  More x l <*> l' = More x (flip Control.<$> l Control.<*> l')
 
 batch :: a ->. Batch a b b
-batch x = P id :*: x
+batch x = More x (Done id)
 
 runWith :: Control.Applicative f => (a ->. f b) -> Batch a b c ->. f c
-runWith _ (P x) = Control.pure x
-runWith f (u :*: x) = runWith f u Control.<*> f x
+runWith _ (Done c) = Control.pure c
+runWith f (More x l) = runWith f l Control.<*> f x
 
 fuse :: Batch b b t ->. t
-fuse (P i) = i
-fuse (u :*: x) = fuse u x
+fuse (Done i) = i
+fuse (More x l) = fuse l x
 
 ------------------------
 -- Standard instances --
