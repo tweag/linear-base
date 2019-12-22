@@ -47,30 +47,30 @@ data Unrestricted a where
 
 -- | Project an @a@ out of an @Unrestricted a@. If the @Unrestricted a@ is
 -- linear, then we get only a linear value out.
-unUnrestricted :: Unrestricted a ->. a
+unUnrestricted :: Unrestricted a #-> a
 unUnrestricted (Unrestricted a) = a
 
 -- | Lifts a function on a linear @Unrestricted a@.
-lift :: (a -> b) -> Unrestricted a ->. Unrestricted b
+lift :: (a -> b) -> Unrestricted a #-> Unrestricted b
 lift f (Unrestricted a) = Unrestricted (f a)
 
 -- | Lifts a function to work on two linear @Unrestricted a@.
-lift2 :: (a -> b -> c) -> Unrestricted a ->. Unrestricted b ->. Unrestricted c
+lift2 :: (a -> b -> c) -> Unrestricted a #-> Unrestricted b #-> Unrestricted c
 lift2 f (Unrestricted a) (Unrestricted b) = Unrestricted (f a b)
 
 -- $ comonoid
 
 class Consumable a where
-  consume :: a ->. ()
+  consume :: a #-> ()
 
 -- | Like 'seq' but since the first argument is restricted to be of type @()@ it
 -- is consumed, hence @seqUnit@ is linear in its first argument.
-seqUnit :: () ->. b ->. b
+seqUnit :: () #-> b #-> b
 seqUnit () b = b
 
 -- | Like 'seq' but the first argument is restricted to be 'Consumable'. Hence the
 -- first argument is 'consume'-ed and the result consumed.
-lseq :: Consumable a => a ->. b ->. b
+lseq :: Consumable a => a #-> b #-> b
 lseq a b = seqUnit (consume a) b
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
@@ -80,7 +80,7 @@ lseq a b = seqUnit (consume a) b
 --
 -- Where the @(≃)@ sign represent equality up to type isomorphism
 class Consumable a => Dupable a where
-  dupV :: KnownNat n => a ->. V n a
+  dupV :: KnownNat n => a #-> V n a
 
 -- | The laws of the @Movable@ class mean that @move@ is compatible with @consume@
 -- and @dup@.
@@ -89,15 +89,15 @@ class Consumable a => Dupable a where
 -- * @case move x of {Unrestricted x -> x} = x@
 -- * @case move x of {Unrestricted x -> (x, x)} = dup x@
 class Dupable a => Movable a where
-  move :: a ->. Unrestricted a
+  move :: a #-> Unrestricted a
 
-dup2 :: Dupable a => a ->. (a, a)
+dup2 :: Dupable a => a #-> (a, a)
 dup2 x = V.elim (dupV @_ @2 x) (,)
 
-dup3 :: Dupable a => a ->. (a, a, a)
+dup3 :: Dupable a => a #-> (a, a, a)
 dup3 x = V.elim (dupV @_ @3 x) (,,)
 
-dup :: Dupable a => a ->. (a, a)
+dup :: Dupable a => a #-> (a, a)
 dup = dup2
 
 instance Consumable () where
@@ -226,7 +226,7 @@ instance Prelude.Traversable Unrestricted where
   sequenceA (Unrestricted x) = Prelude.fmap Unrestricted x
 
 -- | Discard a consumable value stored in a data functor.
-void :: (Data.Functor f, Consumable a) => f a ->. f ()
+void :: (Data.Functor f, Consumable a) => f a #-> f ()
 void = Data.fmap consume
 
 -- Some stock instances
@@ -248,6 +248,6 @@ newtype MovableMonoid a = MovableMonoid a
 
 instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
   MovableMonoid a <> MovableMonoid b = MovableMonoid (combine (move a) (move b))
-    where combine :: Prelude.Semigroup a => Unrestricted a ->. Unrestricted a ->. a
+    where combine :: Prelude.Semigroup a => Unrestricted a #-> Unrestricted a #-> a
           combine (Unrestricted x) (Unrestricted y) = x Prelude.<> y
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)

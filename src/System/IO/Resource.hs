@@ -66,7 +66,7 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- are always released.
 newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
   deriving (Data.Functor, Data.Applicative) via (Control.Data RIO)
-unRIO :: RIO a ->. IORef ReleaseMap -> Linear.IO a
+unRIO :: RIO a #-> IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
 
 run :: RIO (Unrestricted a) -> System.IO a
@@ -90,7 +90,7 @@ run (RIO action) = do
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
-    moveLinearIO :: Movable a => Linear.IO a ->. Linear.IO (Unrestricted a)
+    moveLinearIO :: Movable a => Linear.IO a #-> Linear.IO (Unrestricted a)
     moveLinearIO action' = do
         result <- action'
         return $ move result
@@ -98,7 +98,7 @@ run (RIO action) = do
         Control.Builder{..} = Control.monadBuilder -- used in the do-notation
 
 -- | Should not be applied to a function that acquires or releases resources.
-unsafeFromSystemIO :: System.IO a ->. RIO a
+unsafeFromSystemIO :: System.IO a #-> RIO a
 unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
@@ -142,33 +142,33 @@ openFile path mode = do
   where
     Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
-hClose :: Handle ->. RIO ()
+hClose :: Handle #-> RIO ()
 hClose (Handle h) = unsafeRelease h
 
-hGetChar :: Handle ->. RIO (Unrestricted Char, Handle)
+hGetChar :: Handle #-> RIO (Unrestricted Char, Handle)
 hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)
 
-hPutChar :: Handle ->. Char -> RIO Handle
+hPutChar :: Handle #-> Char -> RIO Handle
 hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
   where
-    flipHPutChar :: Char -> Handle ->. RIO Handle
+    flipHPutChar :: Char -> Handle #-> RIO Handle
     flipHPutChar c =
       coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
 
-hGetLine :: Handle ->. RIO (Unrestricted Text, Handle)
+hGetLine :: Handle #-> RIO (Unrestricted Text, Handle)
 hGetLine = coerce (unsafeFromSystemIOResource Text.hGetLine)
 
-hPutStr :: Handle ->. Text -> RIO Handle
+hPutStr :: Handle #-> Text -> RIO Handle
 hPutStr h s = flipHPutStr s h -- needs a multiplicity polymorphic flip
   where
-    flipHPutStr :: Text -> Handle ->. RIO Handle
+    flipHPutStr :: Text -> Handle #-> RIO Handle
     flipHPutStr s =
       coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStr h' s))
 
-hPutStrLn :: Handle ->. Text -> RIO Handle
+hPutStrLn :: Handle #-> Text -> RIO Handle
 hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
   where
-    flipHPutStrLn :: Text -> Handle ->. RIO Handle
+    flipHPutStrLn :: Text -> Handle #-> RIO Handle
     flipHPutStrLn s =
       coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s))
 
@@ -181,7 +181,7 @@ data UnsafeResource a where
   UnsafeResource :: Int -> a -> UnsafeResource a
   -- Note that both components are unrestricted.
 
-unsafeRelease :: UnsafeResource a ->. RIO ()
+unsafeRelease :: UnsafeResource a #-> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
     releaseWith key rrm = do
@@ -215,7 +215,7 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
 unsafeFromSystemIOResource
   :: (a -> System.IO b)
   -> UnsafeResource a
-  ->. RIO (Unrestricted b, UnsafeResource a)
+  #-> RIO (Unrestricted b, UnsafeResource a)
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
@@ -227,7 +227,7 @@ unsafeFromSystemIOResource action (UnsafeResource key resource) =
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
   -> UnsafeResource a
-  ->. RIO (UnsafeResource a)
+  #-> RIO (UnsafeResource a)
 unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
     return resource

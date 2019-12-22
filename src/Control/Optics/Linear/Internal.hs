@@ -67,7 +67,7 @@ assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 (.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
 Optical f .> Optical g = Optical (f P.. g)
 
-prism :: (b ->. t) -> (s ->. Either t a) -> Prism a b s t
+prism :: (b #-> t) -> (s #-> Either t a) -> Prism a b s t
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
 
 _1 :: Lens a b (a,c) (b,c)
@@ -91,10 +91,10 @@ _Nothing = prism (\() -> Nothing) Left
 traversed :: Traversable t => Traversal a b (t a) (t b)
 traversed = Optical wander
 
-over :: Optic_ LinearArrow a b s t -> (a ->. b) -> s ->. t
+over :: Optic_ LinearArrow a b s t -> (a #-> b) -> s #-> t
 over (Optical l) f = getLA (l (LA f))
 
-traverseOf :: Optic_ (Linear.Kleisli f) a b s t -> (a ->. f b) -> s ->. f t
+traverseOf :: Optic_ (Linear.Kleisli f) a b s t -> (a #-> f b) -> s #-> f t
 traverseOf (Optical l) f = Linear.runKleisli (l (Linear.Kleisli f))
 
 get :: Optic_ (NonLinear.Kleisli (Const a)) a b s t -> s -> a
@@ -106,16 +106,16 @@ gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Co
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)
 
-match :: Optic_ (Market a b) a b s t -> s ->. Either t a
+match :: Optic_ (Market a b) a b s t -> s #-> Either t a
 match (Optical l) = snd (runMarket (l (Market id Right)))
 
-build :: Optic_ (Linear.CoKleisli (Const b)) a b s t -> b ->. t
+build :: Optic_ (Linear.CoKleisli (Const b)) a b s t -> b #-> t
 build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Const x)
 
 -- XXX: move this to Prelude
 -- | Linearly typed patch for the newtype deconstructor. (Temporary until
 -- inference will get this from the newtype declaration.)
-getConst' :: Const a b ->. a
+getConst' :: Const a b #-> a
 getConst' (Const x) = x
 
 lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Adding r))) a b s t -> s -> r
@@ -129,13 +129,13 @@ over' (Optical l) f = l f
 traverseOf' :: Optic_ (NonLinear.Kleisli f) a b s t -> (a -> f b) -> s -> f t
 traverseOf' (Optical l) f = NonLinear.runKleisli (l (NonLinear.Kleisli f))
 
-iso :: (s ->. a) -> (b ->. t) -> Iso a b s t
+iso :: (s #-> a) -> (b #-> t) -> Iso a b s t
 iso f g = Optical (dimap f g)
 
-withIso :: Optic_ (Exchange a b) a b s t -> ((s ->. a) -> (b ->. t) -> r) -> r
+withIso :: Optic_ (Exchange a b) a b s t -> ((s #-> a) -> (b #-> t) -> r) -> r
 withIso (Optical l) f = f fro to
   where Exchange fro to = l (Exchange id id)
 
-withPrism :: Optic_ (Market a b) a b s t -> ((b ->. t) -> (s ->. Either t a) -> r) -> r
+withPrism :: Optic_ (Market a b) a b s t -> ((b #-> t) -> (s #-> Either t a) -> r) -> r
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)

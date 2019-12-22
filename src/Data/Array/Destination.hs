@@ -44,20 +44,20 @@ newtype DArray a = DArray (MVector RealWorld a)
 -- eventually, anyway. This would allow to move the MutableArray logic to linear
 -- IO, possibly, and segregate the unsafe casts to the Linear IO module.
 -- @`alloc` n k@ must be called with a non-negative value of @n@.
-alloc :: Int -> (DArray a ->. ()) ->. Vector a
+alloc :: Int -> (DArray a #-> ()) #-> Vector a
 alloc n = Unsafe.toLinear unsafeAlloc
   where
-    unsafeAlloc :: (DArray a ->. ()) -> Vector a
+    unsafeAlloc :: (DArray a #-> ()) -> Vector a
     unsafeAlloc build = unsafeDupablePerformIO Prelude.$ do
       dest <- MVector.unsafeNew n
       evaluate (build (DArray dest))
       Vector.unsafeFreeze dest
 
-replicate :: a -> DArray a ->. ()
+replicate :: a -> DArray a #-> ()
 replicate a = fromFunction (const a)
 
 -- | Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
-fill :: a ->. DArray a ->. ()
+fill :: a #-> DArray a #-> ()
 fill = Unsafe.toLinear2 unsafeFill
     -- XXX: we will probably be able to spare this unsafe cast given a (linear)
     -- length function on destination.
@@ -72,7 +72,7 @@ fill = Unsafe.toLinear2 unsafeFill
 --
 -- 'split' is total: if @n@ is larger than the length of @dest@, then @destr@ is
 -- empty.
-split :: Int -> DArray a ->. (DArray a, DArray a)
+split :: Int -> DArray a #-> (DArray a, DArray a)
 split n = Unsafe.toLinear unsafeSplit
   where
     unsafeSplit (DArray ds) =
@@ -82,11 +82,11 @@ split n = Unsafe.toLinear unsafeSplit
 -- | Convert a Vector into a destination array to be filled, possibly with
 -- a conversion function.
 -- Assumes both arrays have the same size.
-mirror :: Vector a -> (a ->. b) -> DArray b ->. ()
+mirror :: Vector a -> (a #-> b) -> DArray b #-> ()
 mirror v f = fromFunction (\t -> f (v ! t))
 
 -- | Fill a destination array using the given function.
-fromFunction :: (Int -> b) -> DArray b ->. ()
+fromFunction :: (Int -> b) -> DArray b #-> ()
 fromFunction f = Unsafe.toLinear unsafeFromFunction
   where unsafeFromFunction (DArray ds) = unsafeDupablePerformIO Prelude.$ do
           let n = MVector.length ds

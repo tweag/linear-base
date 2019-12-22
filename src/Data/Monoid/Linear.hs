@@ -25,7 +25,7 @@ import GHC.Types hiding (Any)
 import qualified Prelude
 
 class Prelude.Semigroup a => Semigroup a where
-  (<>) :: a ->. a ->. a
+  (<>) :: a #-> a #-> a
 
 class (Semigroup a, Prelude.Monoid a) => Monoid a where
   {-# MINIMAL #-}
@@ -40,12 +40,12 @@ class (Semigroup a, Prelude.Monoid a) => Monoid a where
 instance Semigroup () where
   () <> () = ()
 
-newtype Endo a = Endo (a ->. a)
+newtype Endo a = Endo (a #-> a)
   deriving (Prelude.Semigroup) via NonLinear (Endo a)
 
 -- TODO: have this as a newtype deconstructor once the right type can be
 -- correctly inferred
-appEndo :: Endo a ->. a ->. a
+appEndo :: Endo a #-> a #-> a
 appEndo (Endo f) = f
 
 instance Semigroup (Endo a) where

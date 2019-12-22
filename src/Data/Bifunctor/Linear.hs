@@ -23,15 +23,15 @@ import Data.Void
 -- * @'bimap' f g = 'first' f '.' 'second' g
 class Bifunctor p where
   {-# MINIMAL bimap | (first , second) #-}
-  bimap :: (a ->. b) -> (c ->. d) -> a `p` c ->. b `p` d
+  bimap :: (a #-> b) -> (c #-> d) -> a `p` c #-> b `p` d
   bimap f g x = first f (second g x)
   {-# INLINE bimap #-}
 
-  first :: (a ->. b) -> a `p` c ->. b `p` c
+  first :: (a #-> b) -> a `p` c #-> b `p` c
   first f = bimap f id
   {-# INLINE first #-}
 
-  second :: (b ->. c) -> a `p` b ->. a `p` c
+  second :: (b #-> c) -> a `p` b #-> a `p` c
   second = bimap id
   {-# INLINE second #-}
 
@@ -50,11 +50,11 @@ instance Bifunctor Either where
 -- * @'swap' . 'swap' = 'id'@
 class Bifunctor m => SymmetricMonoidal (m :: * -> * -> *) (u :: *) | m -> u, u -> m where
   {-# MINIMAL swap, (rassoc | lassoc) #-}
-  rassoc :: (a `m` b) `m` c ->. a `m` (b `m` c)
+  rassoc :: (a `m` b) `m` c #-> a `m` (b `m` c)
   rassoc = swap . lassoc . swap . lassoc . swap
-  lassoc :: a `m` (b `m` c) ->. (a `m` b) `m` c
+  lassoc :: a `m` (b `m` c) #-> (a `m` b) `m` c
   lassoc = swap . rassoc . swap . rassoc . swap
-  swap :: a `m` b ->. b `m` a
+  swap :: a `m` b #-> b `m` a
 -- XXX: should unitors be added?
 
 instance SymmetricMonoidal (,) () where
@@ -64,7 +64,7 @@ instance SymmetricMonoidal (,) () where
 instance SymmetricMonoidal Either Void where
   swap = either Right Left
   rassoc (Left (Left x)) = Left x
-  rassoc (Left (Right x)) = (Right :: a ->. Either b a) (Left x)
-  rassoc (Right x) = (Right :: a ->. Either b a) (Right x)
+  rassoc (Left (Right x)) = (Right :: a #-> Either b a) (Left x)
+  rassoc (Right x) = (Right :: a #-> Either b a) (Right x)
 -- XXX: the above type signatures are necessary for certain older versions of
 -- the compiler, and as such are temporary

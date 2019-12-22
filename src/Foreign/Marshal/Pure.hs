@@ -165,13 +165,13 @@ instance KnownRepresentable a => KnownRepresentable (Maybe a) where
 class (KnownRepresentable (AsKnown a)) => Representable a where
   type AsKnown a :: *
 
-  toKnown :: a ->. AsKnown a
-  ofKnown :: AsKnown a ->. a
+  toKnown :: a #-> AsKnown a
+  ofKnown :: AsKnown a #-> a
 
   default toKnown
-    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => a ->. AsKnown a
+    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => a #-> AsKnown a
   default ofKnown
-    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a ->. a
+    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a #-> a
 
   toKnown a = toKnown (toRepr a)
   ofKnown b = ofRepr (ofKnown b)
@@ -234,8 +234,8 @@ instance Representable a => Representable (Maybe a) where
 -- * 'ofRepr' may be partial, but must be total on the image of 'toRepr'
 -- * @ofRepr . toRepr = id@
 class Representable b => MkRepresentable a b | a -> b where
-  toRepr :: a ->. b
-  ofRepr :: b ->. a
+  toRepr :: a #-> b
+  ofRepr :: b #-> a
 
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
@@ -306,11 +306,11 @@ freeAll start end = do
 
 -- TODO: document individual functions
 
-withPool :: (Pool ->. Unrestricted b) ->. Unrestricted b
+withPool :: (Pool #-> Unrestricted b) #-> Unrestricted b
 withPool scope = Unsafe.toLinear performScope scope
     -- XXX: do ^ without `toLinear` by using linear IO
   where
-    performScope :: (Pool ->. Unrestricted b) -> Unrestricted b
+    performScope :: (Pool #-> Unrestricted b) -> Unrestricted b
     performScope scope' = unsafeDupablePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc
@@ -357,11 +357,11 @@ instance Representable (Box a) where
 -- Movable. In order to be useful, need some kind of borrowing on the values, I
 -- guess. 'Box' can be realloced, but not RC pointers.
 
-reprPoke :: forall a. Representable a => Ptr a -> a ->. IO ()
+reprPoke :: forall a. Representable a => Ptr a -> a #-> IO ()
 reprPoke ptr a | Dict <- storable @(AsKnown a) =
   Unsafe.toLinear (poke (castPtr ptr :: Ptr (AsKnown a))) (toKnown a)
 
-reprNew :: forall a. Representable a => a ->. IO (Ptr a)
+reprNew :: forall a. Representable a => a #-> IO (Ptr a)
 reprNew a =
     Unsafe.toLinear mkPtr a
   where
@@ -379,7 +379,7 @@ reprNew a =
 -- passing-style API (but there is still some design to be done there). This
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
-alloc :: forall a. Representable a => a ->. Pool ->. Box a
+alloc :: forall a. Representable a => a #-> Pool #-> Box a
 alloc a (Pool pool) =
     Unsafe.toLinear mkPtr a
   where
@@ -397,7 +397,7 @@ reprPeek ptr | Dict <- storable @(AsKnown a) = do
   knownRepr <- peek (castPtr ptr :: Ptr (AsKnown a))
   return (ofKnown knownRepr)
 
-deconstruct :: Representable a => Box a ->. a
+deconstruct :: Representable a => Box a #-> a
 deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $ mask_ $ do
   res <- reprPeek ptr
   delete =<< peek poolPtr
