@@ -2,7 +2,7 @@ steps:
   - label: "Install linear-types enabled GHC"
     command: |
       . /var/lib/buildkite-agent/.nix-profile/etc/profile.d/nix.sh
-      nix-shell shell-linear-types.nix --command ''
+      nix-shell --command ''
     timeout: 120
     key: "install-linear-ghc"
   - label: "Run tests (Stack)"
