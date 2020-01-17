@@ -8,6 +8,7 @@ mkShell {
     haskell.compiler.ghcLinearTypes20191220
     nix
     stack
+    cacert
   ];
 }
 
