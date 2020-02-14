@@ -46,17 +46,17 @@ import qualified System.IO as System
 
 -- | Like the standard IO monad, but as a linear state monad. Thanks to the
 -- linear arrow, we can safely expose the internal representation.
-newtype IO a = IO (State# RealWorld ->. (# State# RealWorld, a #))
+newtype IO a = IO (State# RealWorld #-> (# State# RealWorld, a #))
   deriving (Data.Functor, Data.Applicative) via (Control.Data IO)
 type role IO representational
 
-unIO :: IO a ->. State# RealWorld ->. (# State# RealWorld, a #)
+unIO :: IO a #-> State# RealWorld #-> (# State# RealWorld, a #)
 -- Defined separately because projections from newtypes are considered like
 -- general projections of data types, which take an unrestricted argument.
 unIO (IO action) = action
 
 -- | Coerces a standard IO action into a linear IO action
-fromSystemIO :: System.IO a ->. IO a
+fromSystemIO :: System.IO a #-> IO a
 -- The implementation relies on the fact that the monad abstraction for IO
 -- actually enforces linear use of the @RealWorld@ token.
 --
@@ -71,7 +71,7 @@ fromSystemIOU :: System.IO a -> IO (Unrestricted a)
 fromSystemIOU action =
   fromSystemIO (Unrestricted <$> action)
 
-toSystemIO :: IO a ->. System.IO a
+toSystemIO :: IO a #-> System.IO a
 toSystemIO = Unsafe.coerce -- basically just subtyping
 
 -- | Use at the top of @main@ function in your program to switch to the linearly
@@ -88,35 +88,35 @@ withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
 -- * Monadic interface
 
 instance Control.Functor IO where
-  fmap :: forall a b. (a ->. b) ->. IO a ->. IO b
+  fmap :: forall a b. (a #-> b) #-> IO a #-> IO b
   fmap f x = IO $ \s ->
       cont (unIO x s) f
     where
       -- XXX: long line
-      cont :: (# State# RealWorld, a #) ->. (a ->. b) ->. (# State# RealWorld, b #)
+      cont :: (# State# RealWorld, a #) #-> (a #-> b) #-> (# State# RealWorld, b #)
       cont (# s', a #) f' = (# s', f' a #)
 
 instance Control.Applicative IO where
-  pure :: forall a. a ->. IO a
+  pure :: forall a. a #-> IO a
   pure a = IO $ \s -> (# s, a #)
 
-  (<*>) :: forall a b. IO (a ->. b) ->. IO a ->. IO b
+  (<*>) :: forall a b. IO (a #-> b) #-> IO a #-> IO b
   (<*>) = Control.ap
 
 instance Control.Monad IO where
-  (>>=) :: forall a b. IO a ->. (a ->. IO b) ->. IO b
+  (>>=) :: forall a b. IO a #-> (a #-> IO b) #-> IO b
   x >>= f = IO $ \s ->
       cont (unIO x s) f
     where
       -- XXX: long line
-      cont :: (# State# RealWorld, a #) ->. (a ->. IO b) ->. (# State# RealWorld, b #)
+      cont :: (# State# RealWorld, a #) #-> (a #-> IO b) #-> (# State# RealWorld, b #)
       cont (# s', a #) f' = unIO (f' a) s'
 
-  (>>) :: forall b. IO () ->. IO b ->. IO b
+  (>>) :: forall b. IO () #-> IO b #-> IO b
   x >> y = IO $ \s ->
       cont (unIO x s) y
     where
-      cont :: (# State# RealWorld, () #) ->. IO b ->. (# State# RealWorld, b #)
+      cont :: (# State# RealWorld, () #) #-> IO b #-> (# State# RealWorld, b #)
       cont (# s', () #) y' = unIO y' s'
 
 -- $ioref

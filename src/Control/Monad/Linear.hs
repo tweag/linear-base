@@ -35,10 +35,10 @@ import Data.Unrestricted.Linear
 import Prelude.Linear.Internal.Simple ((.), ($))
 import qualified Data.Functor.Linear.Internal as Data
 
-newtype ReaderT r m a = ReaderT (r ->. m a)
+newtype ReaderT r m a = ReaderT (r #-> m a)
 
 -- XXX: Replace with a newtype deconstructor once it can be inferred as linear.
-runReaderT :: ReaderT r m a ->. r ->. m a
+runReaderT :: ReaderT r m a #-> r #-> m a
 runReaderT (ReaderT f) = f
 
 instance Data.Functor m => Data.Functor (ReaderT r m) where
@@ -63,28 +63,28 @@ type Reader r = ReaderT r Identity
 ask :: Applicative m => ReaderT r m r
 ask = ReaderT pure
 
-withReaderT :: (r' ->. r) ->. ReaderT r m a ->. ReaderT r' m a
+withReaderT :: (r' #-> r) #-> ReaderT r m a #-> ReaderT r' m a
 withReaderT f m = ReaderT $ runReaderT m . f
 
-local :: (r ->. r) ->. ReaderT r m a ->. ReaderT r m a
+local :: (r #-> r) #-> ReaderT r m a #-> ReaderT r m a
 local = withReaderT
 
-reader :: Monad m => (r ->. a) ->. ReaderT r m a
+reader :: Monad m => (r #-> a) #-> ReaderT r m a
 reader f = ReaderT (return . f)
 
-runReader :: Reader r a ->. r ->. a
+runReader :: Reader r a #-> r #-> a
 runReader m = runIdentity' . runReaderT m
 
-mapReader :: (a ->. b) ->. Reader r a ->. Reader r b
+mapReader :: (a #-> b) #-> Reader r a #-> Reader r b
 mapReader f = mapReaderT (Identity . f . runIdentity')
 
-mapReaderT :: (m a ->. n b) ->. ReaderT r m a ->. ReaderT r n b
+mapReaderT :: (m a #-> n b) #-> ReaderT r m a #-> ReaderT r n b
 mapReaderT f m = ReaderT (f . runReaderT m)
 
-withReader :: (r' ->. r) ->. Reader r a ->. Reader r' a
+withReader :: (r' #-> r) #-> Reader r a #-> Reader r' a
 withReader = withReaderT
 
-asks :: Monad m => (r ->. a) ->. ReaderT r m a
+asks :: Monad m => (r #-> a) #-> ReaderT r m a
 asks f = ReaderT (return . f)
 
 instance Dupable r => MonadTrans (ReaderT r) where
@@ -94,12 +94,12 @@ instance Dupable r => MonadTrans (ReaderT r) where
 get :: (Applicative m, Dupable s) => StateT s m s
 get = state dup
 
-put :: (Applicative m, Consumable s) => s ->. StateT s m ()
+put :: (Applicative m, Consumable s) => s #-> StateT s m ()
 put = void . replace
 
-gets :: (Applicative m, Dupable s) => (s ->. a) ->. StateT s m a
+gets :: (Applicative m, Dupable s) => (s #-> a) #-> StateT s m a
 gets f = state ((\(s1,s2) -> (f s1, s2)) . dup)
 
 -- | Linearly typed replacement for the standard '(Prelude.<$)' function.
-(<$) :: (Functor f, Consumable b) => a ->. f b ->. f a
+(<$) :: (Functor f, Consumable b) => a #-> f b #-> f a
 a <$ fb = fmap (`lseq` a) fb

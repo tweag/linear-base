@@ -16,23 +16,23 @@ import GHC.Exts (TYPE, RuntimeRep)
 -- * Linearly typed @unsafeCoerce@, and useful variant to deal with linear types
 
 -- | Linearly typed @unsafeCoerce@
-coerce :: a ->. b
+coerce :: a #-> b
 coerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
 
 -- | Converts an unrestricted function into a linear function
 toLinear
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2).
-     (a -> b) ->. (a ->. b)
+     (a -> b) #-> (a #-> b)
 toLinear = coerce
 
 -- | Like 'toLinear' but for two-argument functions
 toLinear2
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep) (r3 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3).
-     (a -> b -> c) ->. (a ->. b ->. c)
+     (a -> b -> c) #-> (a #-> b #-> c)
 toLinear2 = coerce
 
 -- | Like 'toLinear' but for three-argument functions
-toLinear3 :: (a -> b -> c -> d) ->. (a ->. b ->. c ->. d)
+toLinear3 :: (a -> b -> c -> d) #-> (a #-> b #-> c #-> d)
 toLinear3 = coerce

@@ -23,11 +23,11 @@ import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a ->. List a ->. Unrestricted Bool
+eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a #-> List a #-> Unrestricted Bool
 eqList l1 l2 =
     eqUL (move (List.toList l1)) (move (List.toList l2))
   where
-    eqUL :: Unrestricted [a] ->. Unrestricted [a] ->. Unrestricted Bool
+    eqUL :: Unrestricted [a] #-> Unrestricted [a] #-> Unrestricted Bool
     eqUL (Unrestricted as1) (Unrestricted as2) = Unrestricted (as1 == as2)
 
 data InjectedError = InjectedError
@@ -42,7 +42,7 @@ main = hspec P.$ do
       it "is invertible" P.$
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
-            check :: Unrestricted [Int] ->. Unrestricted Bool
+            check :: Unrestricted [Int] #-> Unrestricted Bool
             check (Unrestricted l') = Unrestricted P.$ l' == l
           in
             check $ move (List.toList $ List.ofList l pool)))
@@ -51,7 +51,7 @@ main = hspec P.$ do
       it "of identity is the identity" P.$
         property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
           let
-            check :: (Pool, Pool, Pool) ->. Unrestricted Bool
+            check :: (Pool, Pool, Pool) #-> Unrestricted Bool
             check (pool1, pool2, pool3) =
               eqList
                 (List.map (\x -> x) (List.ofList l pool1) pool2)

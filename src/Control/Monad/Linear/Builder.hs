@@ -19,10 +19,10 @@ import Prelude.Linear (String)
 -- notation (in particular, if you don't do a pattern-matching, then you don't
 -- need a 'LMonadFail').
 data BuilderType = Builder
-  { (>>=) :: forall m a b. Linear.Monad m => m a ->. (a ->. m b) ->. m b
-  , (>>) :: forall m b. Linear.Monad m => m () ->. m b ->. m b
+  { (>>=) :: forall m a b. Linear.Monad m => m a #-> (a #-> m b) #-> m b
+  , (>>) :: forall m b. Linear.Monad m => m () #-> m b #-> m b
   , fail :: forall m a. Linear.MonadFail m => String -> m a
-  , return :: forall m a. Linear.Monad m => a ->. m a
+  , return :: forall m a. Linear.Monad m => a #-> m a
     -- I [aspiwack] need `return` in my builder due to
     -- https://ghc.haskell.org/trac/ghc/ticket/14670
     --

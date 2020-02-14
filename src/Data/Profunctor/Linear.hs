@@ -29,15 +29,15 @@ import Control.Arrow (Kleisli(..))
 class Profunctor (arr :: * -> * -> *) where
   {-# MINIMAL dimap | lmap, rmap #-}
 
-  dimap :: (s ->. a) -> (b ->. t) -> a `arr` b -> s `arr` t
+  dimap :: (s #-> a) -> (b #-> t) -> a `arr` b -> s `arr` t
   dimap f g x = lmap f (rmap g x)
   {-# INLINE dimap #-}
 
-  lmap :: (s ->. a) -> a `arr` t -> s `arr` t
+  lmap :: (s #-> a) -> a `arr` t -> s `arr` t
   lmap f = dimap f id
   {-# INLINE lmap #-}
 
-  rmap :: (b ->. t) -> s `arr` b -> s `arr` t
+  rmap :: (b #-> t) -> s `arr` b -> s `arr` t
   rmap = dimap id
   {-# INLINE rmap #-}
 
@@ -63,9 +63,9 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
 -- Instances --
 ---------------
 
-newtype LinearArrow a b = LA (a ->. b)
+newtype LinearArrow a b = LA (a #-> b)
 -- | Temporary deconstructor since inference doesn't get it right
-getLA :: LinearArrow a b ->. a ->. b
+getLA :: LinearArrow a b #-> a #-> b
 getLA (LA f) = f
 
 instance Profunctor LinearArrow where
@@ -87,7 +87,7 @@ instance Strong Either Void (->) where
   first f (Left x) = Left (f x)
   first _ (Right y) = Right y
 
-data Exchange a b s t = Exchange (s ->. a) (b ->. t)
+data Exchange a b s t = Exchange (s #-> a) (b #-> t)
 instance Profunctor (Exchange a b) where
   dimap f g (Exchange p q) = Exchange (p . f) (g . q)
 
@@ -103,8 +103,8 @@ instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
                                    Left  x -> Prelude.fmap Left (f x)
                                    Right y -> Prelude.pure (Right y)
 
-data Market a b s t = Market (b ->. t) (s ->. Either t a)
-runMarket :: Market a b s t ->. (b ->. t, s ->. Either t a)
+data Market a b s t = Market (b #-> t) (s #-> Either t a)
+runMarket :: Market a b s t #-> (b #-> t, s #-> Either t a)
 runMarket (Market f g) = (f, g)
 
 instance Profunctor (Market a b) where

@@ -1,20 +1,8 @@
 # See https://hub.docker.com/r/tweag/linear-types/
-resolver: lts-14.1
+resolver: lts-14.6
 compiler: ghc-8.9
 allow-newer: true
 system-ghc: true
-docker:
-  enable: true
-  image: tweag/linear-types:1.0.5
-  stack-exe: download
-  mount:
-          ## For dante syntax checker
-          # mounting /tmp in the docker containers allows
-          # dante on the host system to copy its file in /tmp
-          # and stack on the docker system to read it in /tmp
-          #
-          # setup your emacs variable `dante-repl-command-line` as `("stack" "ghci" "--ghci-options" "-fdiagnostics-color=never")`
-          - /tmp:/tmp
 
 packages:
 - '.'
@@ -22,3 +10,7 @@ packages:
 # We must use a more recent version of primitive due to MonadFail
 extra-deps:
   - primitive-0.7.0.0
+
+nix:
+  shell-file: shell-stack.nix
+  path: ["nixpkgs=./nixpkgs.nix"]
