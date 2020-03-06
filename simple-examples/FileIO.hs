@@ -1,63 +1,73 @@
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module FileIO where
 
 import Unsafe.Coerce ( unsafeCoerce )
-import qualified System.IO as S
+import qualified System.IO as Sys
 import Control.Monad
+import Data.Text
 
+
+import qualified Control.Monad.Builder as Unrestricted
+import qualified Control.Monad.Linear as Control
+import qualified Control.Monad.Linear.Builder as Control
 import Data.Unrestricted.Linear
 import System.IO.Resource
-
-
--- openFile :: FilePath -> IOMode -> IO Handle
--- IOMode = S.ReadMode | WriteMode | AppendMode | ReadWriteMode
--- hGetLine :: Handle -> IO String
--- hPutStr :: Handle -> String -> IO ()
--- hClose :: Handle -> IO ()
-
-
+import System.IO.Linear
 
 
 {- Non-linear first line printing -}
 --------------------------------------------
 
+-- openFile :: FilePath -> IOMode -> IO Handle
+-- IOMode = Sys.ReadMode | WriteMode | AppendMode | ReadWriteMode
+-- hGetLine :: Handle -> IO String
+-- hPutStr :: Handle -> String -> IO ()
+-- hClose :: Handle -> IO ()
 
-printFirstLine :: S.FilePath -> IO ()
+
+printFirstLine :: Sys.FilePath -> Sys.IO ()
 printFirstLine fpath = do
-  fileHandle <- S.openFile fpath S.ReadMode
-  firstLine <- S.hGetLine fileHandle
-  putStrLn firstLine
-  S.hClose fileHandle
+  fileHandle <- Sys.openFile fpath Sys.ReadMode
+  firstLine <- Sys.hGetLine fileHandle
+  Sys.putStrLn firstLine
+  Sys.hClose fileHandle
 
 
-printFirstLineNoClose :: S.FilePath -> IO ()
+printFirstLineNoClose :: Sys.FilePath -> Sys.IO ()
 printFirstLineNoClose fpath = do
-  fileHandle <- S.openFile fpath S.ReadMode
-  firstLine <- S.hGetLine fileHandle
-  putStrLn firstLine
+  fileHandle <- Sys.openFile fpath Sys.ReadMode
+  firstLine <- Sys.hGetLine fileHandle
+  Sys.putStrLn firstLine
 
 
-printFirstLineAfterClose :: S.FilePath -> IO ()
+printFirstLineAfterClose :: Sys.FilePath -> Sys.IO ()
 printFirstLineAfterClose fpath = do
-  fileHandle <- S.openFile fpath S.ReadMode
-  S.hClose fileHandle
-  firstLine <- S.hGetLine fileHandle
-  putStrLn firstLine
+  fileHandle <- Sys.openFile fpath Sys.ReadMode
+  Sys.hClose fileHandle
+  firstLine <- Sys.hGetLine fileHandle
+  Sys.putStrLn firstLine
 
 
 {- Linear first line printing -}
 --------------------------------------------
 
--- This fails because the RIO instance isn't imported
--- Why???
+linearGetFirstLine :: Sys.FilePath -> RIO (Unrestricted Text)
+linearGetFirstLine fp = do
+    handle <- openFile fp Sys.ReadMode
+    (t, handle') <- hGetLine handle
+    hClose handle'
+    return t
+  where
+    Control.Builder{..} = Control.monadBuilder
 
-{-
-doNothing :: FilePath -> RIO ()
-doNothing fp = do
-  handle <- openFile fp S.ReadMode
-  hClose handle
--}
+linearPrintFirstLine :: Sys.FilePath -> Sys.IO ()
+linearPrintFirstLine fp = do
+  text <- run (linearGetFirstLine fp)
+  Sys.putStrLn (unpack text)
+
 
 
 
