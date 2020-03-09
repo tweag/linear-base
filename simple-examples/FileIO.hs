@@ -42,6 +42,7 @@ printFirstLine fpath = do
   Sys.hClose fileHandle
 
 
+-- This compiles but can cause issues!
 printFirstLineNoClose :: Sys.FilePath -> Sys.IO ()
 printFirstLineNoClose fpath = do
   fileHandle <- Sys.openFile fpath Sys.ReadMode
@@ -49,6 +50,7 @@ printFirstLineNoClose fpath = do
   Sys.putStrLn firstLine
 
 
+-- This compiles, but will error!
 printFirstLineAfterClose :: Sys.FilePath -> Sys.IO ()
 printFirstLineAfterClose fpath = do
   fileHandle <- Sys.openFile fpath Sys.ReadMode
