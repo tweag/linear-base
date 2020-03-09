@@ -12,6 +12,24 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE StandaloneDeriving     #-}
 
+
+{-|
+Module      : FileIO
+Description : The Linear File IO example from the Linear Haskell paper.
+
+We implement a function that prints the first line of a file.
+
+We do this with the normal file IO interface in base and the linear file IO
+interface in linear-base. With the latter, the protocol for using files is
+enforced by the linear type system. For instance, forgetting to close the file
+will induce a type error at compile time. That is, typechecking proves that all
+opened files are closed at some later point in execution. With the former
+interface, we have code that type checks but will error or cause errors at
+runtime.
+
+-}
+
+
 module FileIO where
 
 import Prelude
