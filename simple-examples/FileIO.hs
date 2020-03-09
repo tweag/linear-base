@@ -1,24 +1,31 @@
+{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeOperators        #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeInType           #-}
+{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE GADTs                #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE StandaloneDeriving     #-}
 
 module FileIO where
 
-import Unsafe.Coerce ( unsafeCoerce )
+import Prelude
 import qualified System.IO as Sys
-import Control.Monad
+import Control.Monad ()
 import Data.Text
 
-
-import qualified Control.Monad.Builder as Unrestricted
-import qualified Control.Monad.Linear as Control
+-- Linear Base Imports
 import qualified Control.Monad.Linear.Builder as Control
 import Data.Unrestricted.Linear
 import System.IO.Resource
-import System.IO.Linear
 
 
-{- Non-linear first line printing -}
+-- |  Non-linear first line printing
 --------------------------------------------
 
 -- openFile :: FilePath -> IOMode -> IO Handle
@@ -26,7 +33,6 @@ import System.IO.Linear
 -- hGetLine :: Handle -> IO String
 -- hPutStr :: Handle -> String -> IO ()
 -- hClose :: Handle -> IO ()
-
 
 printFirstLine :: Sys.FilePath -> Sys.IO ()
 printFirstLine fpath = do
@@ -51,7 +57,7 @@ printFirstLineAfterClose fpath = do
   Sys.putStrLn firstLine
 
 
-{- Linear first line printing -}
+-- | Linear first line printing
 --------------------------------------------
 
 linearGetFirstLine :: Sys.FilePath -> RIO (Unrestricted Text)
@@ -69,6 +75,70 @@ linearPrintFirstLine fp = do
   Sys.putStrLn (unpack text)
 
 
+{-
+    For clarity, we show this function without do notation.
+
+    Note that the current approach is limited.
+    We have to make the continuation use the unit type.
+
+    Enabling a more generic approach with a type index
+    for the multiplicity, as descibed in the paper is a work in progress.
+    This will hopefully result in using
+
+    `(>>==) RIO 'Many a #-> (a -> RIO p b) #-> RIO p b`
+
+    as the linear bind operation.
+-}
+
+-- | Linear and non-linear combinators
+-------------------------------------------------
+
+-- | Linear bind
+-- Notice the continuation has a linear arrow,
+-- i.e., (a #-> RIO b)
+(>>#=) :: RIO a #-> (a #-> RIO b) #-> RIO b
+(>>#=) = (>>=)
+  where
+    Control.Builder{..} = Control.monadBuilder
+
+-- | Non-linear bind
+-- Notice the continuation has a non-linear arrow,
+-- i.e., (() -> RIO b)
+(>>==) :: RIO () #-> (() -> RIO b) #-> RIO b
+(>>==) ma f = ma >> (f ())
+  where
+    Control.Builder{..} = Control.monadBuilder
+
+-- | Inject
+-- provided just to make the type explicit
+inject :: a #-> RIO a
+inject = return
+  where
+    Control.Builder{..} = Control.monadBuilder
 
 
+-- | The explicit example
+-------------------------------------------------
 
+getFirstLineExplicit :: Sys.FilePath -> RIO (Unrestricted Text)
+getFirstLineExplicit path =
+  (openFileForReading path) >>#=
+    readOneLine >>#=
+      closeAndReturnLine
+  where
+    openFileForReading :: Sys.FilePath -> RIO Handle
+    openFileForReading fp = openFile fp Sys.ReadMode
+
+    readOneLine :: Handle #-> RIO (Unrestricted Text, Handle)
+    readOneLine = hGetLine
+
+    closeAndReturnLine ::
+      (Unrestricted Text, Handle) #-> RIO (Unrestricted Text)
+    closeAndReturnLine (unrText,handle) =
+      hClose handle >>== (\_ -> inject unrText)
+
+
+printFirstLineExplicit :: Sys.FilePath -> Sys.IO ()
+printFirstLineExplicit fp = do
+  firstLine <- run $ getFirstLineExplicit fp
+  putStrLn $ unpack firstLine

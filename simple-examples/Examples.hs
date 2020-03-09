@@ -1,6 +1,5 @@
-module Examples where
-
+import System.Exit
 
 main :: IO ()
-main = putStrLn "Hello there"
+main = exitSuccess
 
