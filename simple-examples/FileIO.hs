@@ -107,7 +107,7 @@ linearPrintFirstLine fp = do
 
     `(>>==) RIO 'Many a #-> (a -> RIO p b) #-> RIO p b`
 
-    as the linear bind operation.
+    as the non-linear bind operation.
 -}
 
 -- | Linear and non-linear combinators
