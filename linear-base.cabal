@@ -85,7 +85,7 @@ test-suite simple-examples
   hs-source-dirs: simple-examples
   main-is: Examples.hs
   other-modules:
-    FileIO
+    FileIO, Pure
   build-depends:
     base,
     linear-base,
