@@ -144,7 +144,7 @@ getFirstLineExplicit :: Sys.FilePath -> RIO (Unrestricted Text)
 getFirstLineExplicit path =
   (openFileForReading path) >>#=
     readOneLine >>#=
-      closeAndReturnLine
+      closeAndReturnLine  -- Internally uses (>>==)
   where
     openFileForReading :: Sys.FilePath -> RIO Handle
     openFileForReading fp = openFile fp Sys.ReadMode

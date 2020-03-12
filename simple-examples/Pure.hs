@@ -13,8 +13,6 @@ types behaves.
 
 module Pure where
 
-import Prelude
-
 
 -- * Simple linear functions
 ------------------------------------------------------------
