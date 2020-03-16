@@ -1,16 +1,16 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 
-{-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeOperators        #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
-{-# LANGUAGE TypeInType           #-}
-{-# LANGUAGE TypeApplications     #-}
-{-# LANGUAGE GADTs                #-}
-{-# LANGUAGE TypeFamilies         #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE StandaloneDeriving     #-}
+{-# LANGUAGE LinearTypes         #-}
+{-# LANGUAGE RebindableSyntax    #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeInType          #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE StandaloneDeriving  #-}
 
 
 {-|
@@ -33,66 +33,69 @@ runtime.
 module FileIO where
 
 import Prelude
-import qualified System.IO as Sys
+import qualified System.IO as System
 import Control.Monad ()
 import Data.Text
 
 -- Linear Base Imports
 import qualified Control.Monad.Linear.Builder as Control
+import qualified System.IO.Resource as Linear
 import Data.Unrestricted.Linear
-import System.IO.Resource
 
 
--- |  Non-linear first line printing
+-- *  Non-linear first line printing
 --------------------------------------------
 
 -- openFile :: FilePath -> IOMode -> IO Handle
--- IOMode = Sys.ReadMode | WriteMode | AppendMode | ReadWriteMode
+-- IOMode = ReadMode | WriteMode | AppendMode | ReadWriteMode
 -- hGetLine :: Handle -> IO String
 -- hPutStr :: Handle -> String -> IO ()
 -- hClose :: Handle -> IO ()
 
-printFirstLine :: Sys.FilePath -> Sys.IO ()
+printFirstLine :: FilePath -> System.IO ()
 printFirstLine fpath = do
-  fileHandle <- Sys.openFile fpath Sys.ReadMode
-  firstLine <- Sys.hGetLine fileHandle
-  Sys.putStrLn firstLine
-  Sys.hClose fileHandle
+  fileHandle <- System.openFile fpath System.ReadMode
+  firstLine <- System.hGetLine fileHandle
+  System.putStrLn firstLine
+  System.hClose fileHandle
 
 
 -- This compiles but can cause issues!
-printFirstLineNoClose :: Sys.FilePath -> Sys.IO ()
+-- The number of file handles you can have active is finite and after that
+-- openFile errors. This is especially critical on mobile devices or systems
+-- with limited resources.
+printFirstLineNoClose :: FilePath -> System.IO ()
 printFirstLineNoClose fpath = do
-  fileHandle <- Sys.openFile fpath Sys.ReadMode
-  firstLine <- Sys.hGetLine fileHandle
-  Sys.putStrLn firstLine
+  fileHandle <- System.openFile fpath System.ReadMode
+  firstLine <- System.hGetLine fileHandle
+  System.putStrLn firstLine
 
 
--- This compiles, but will error!
-printFirstLineAfterClose :: Sys.FilePath -> Sys.IO ()
+-- This compiles, but will throw an error!
+printFirstLineAfterClose :: FilePath -> System.IO ()
 printFirstLineAfterClose fpath = do
-  fileHandle <- Sys.openFile fpath Sys.ReadMode
-  Sys.hClose fileHandle
-  firstLine <- Sys.hGetLine fileHandle
-  Sys.putStrLn firstLine
+  fileHandle <- System.openFile fpath System.ReadMode
+  System.hClose fileHandle
+  firstLine <- System.hGetLine fileHandle
+  System.putStrLn firstLine
 
 
--- | Linear first line printing
+-- * Linear first line printing
 --------------------------------------------
 
-linearGetFirstLine :: Sys.FilePath -> RIO (Unrestricted Text)
+linearGetFirstLine :: FilePath -> RIO (Unrestricted Text)
 linearGetFirstLine fp = do
-    handle <- openFile fp Sys.ReadMode
-    (t, handle') <- hGetLine handle
-    hClose handle'
+    handle <- Linear.openFile fp System.ReadMode
+    (t, handle') <- Linear.hGetLine handle
+    Linear.hClose handle'
     return t
   where
     Control.Builder{..} = Control.monadBuilder
 
-linearPrintFirstLine :: Sys.FilePath -> Sys.IO ()
+linearPrintFirstLine :: FilePath -> System.IO ()
 linearPrintFirstLine fp = do
-  text <- run (linearGetFirstLine fp)
-  Sys.putStrLn (unpack text)
+  text <- Linear.run (linearGetFirstLine fp)
+  System.putStrLn (unpack text)
 
 
 {-
@@ -108,10 +111,15 @@ linearPrintFirstLine fp = do
     `(>>==) RIO 'Many a #-> (a -> RIO p b) #-> RIO p b`
 
     as the non-linear bind operation.
+    See https://github.com/tweag/linear-base/issues/83.
 -}
 
--- | Linear and non-linear combinators
+-- * Linear and non-linear combinators
 -------------------------------------------------
+
+-- Some type synonyms
+type RIO = Linear.RIO
+type LinHandle = Linear.Handle
 
 -- | Linear bind
 -- Notice the continuation has a linear arrow,
@@ -123,9 +131,11 @@ linearPrintFirstLine fp = do
 
 -- | Non-linear bind
 -- Notice the continuation has a non-linear arrow,
--- i.e., (() -> RIO b)
+-- i.e., (() -> RIO b). For simplicity, we don't use
+-- a more general type, like the following:
+-- (>>==) :: RIO (Unrestricted a) #-> (a -> RIO b) #-> RIO b
 (>>==) :: RIO () #-> (() -> RIO b) #-> RIO b
-(>>==) ma f = ma >> (f ())
+(>>==) ma f = ma >>= (\() -> f ())
   where
     Control.Builder{..} = Control.monadBuilder
 
@@ -137,28 +147,28 @@ inject = return
     Control.Builder{..} = Control.monadBuilder
 
 
--- | The explicit example
+-- * The explicit example
 -------------------------------------------------
 
-getFirstLineExplicit :: Sys.FilePath -> RIO (Unrestricted Text)
+getFirstLineExplicit :: FilePath -> RIO (Unrestricted Text)
 getFirstLineExplicit path =
   (openFileForReading path) >>#=
     readOneLine >>#=
       closeAndReturnLine  -- Internally uses (>>==)
   where
-    openFileForReading :: Sys.FilePath -> RIO Handle
-    openFileForReading fp = openFile fp Sys.ReadMode
+    openFileForReading :: FilePath -> RIO LinHandle
+    openFileForReading fp = Linear.openFile fp System.ReadMode
 
-    readOneLine :: Handle #-> RIO (Unrestricted Text, Handle)
-    readOneLine = hGetLine
+    readOneLine :: LinHandle #-> RIO (Unrestricted Text, LinHandle)
+    readOneLine = Linear.hGetLine
 
     closeAndReturnLine ::
-      (Unrestricted Text, Handle) #-> RIO (Unrestricted Text)
+      (Unrestricted Text, LinHandle) #-> RIO (Unrestricted Text)
     closeAndReturnLine (unrText,handle) =
-      hClose handle >>== (\_ -> inject unrText)
+      Linear.hClose handle >>#= (\() -> inject unrText)
 
 
-printFirstLineExplicit :: Sys.FilePath -> Sys.IO ()
+printFirstLineExplicit :: FilePath -> System.IO ()
 printFirstLineExplicit fp = do
-  firstLine <- run $ getFirstLineExplicit fp
+  firstLine <- Linear.run $ getFirstLineExplicit fp
   putStrLn $ unpack firstLine

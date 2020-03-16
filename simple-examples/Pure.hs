@@ -21,10 +21,41 @@ module Pure where
    A linear function simply "consumes/uses" it's argument exactly once.
 
    Creating a formal definition is quite tricky and requires a good amount
-   of formalizing Haskell. A simple way to think about it is if (f :: a
-   #-> b), then as (f x) evaluates, x and/or the linear components of x,
-   are syntactically present exactly once, and if in a data structure, is
-   a linear argument to a constructor.
+   of formalizing Haskell.
+
+   Here's a rough way to think about it. Let f :: a -> b.  Suppose the we
+   don't have the identity, "f x = x" which is trivially linear. Then, the
+   thunk (f x) is basically a tree composed of function applications, data
+   constructors and case statements.
+
+   We say f is linear if for any thunk (f x) ...
+
+   I.
+     If x is not a function and is not deconstructed in a case statement:
+
+     case (a): (f x) is some function application (func t1 ... tn) or
+               a constructor (Constr t1 ... tn)
+
+       Either (i) exactly one of the t_i is x and the function func or
+       constructor Constr is linear on its ith argument, or (ii) x is used
+       exactly once in exactly one t_i.
+
+     case (b): (f x) is a case statement (case s of [a_i -> t_i]),
+
+        x is used exactly once if it's used exactly once in 
+        ***each*** t_i (and not at all in s)
+
+   II.
+
+     If x is a function, then for some argument u, (f u) is used 
+     exactly once.
+
+   III.
+
+     If x is deconstructed into (Constructor t1 ... tn) in a case statement
+     then whatever pieces t_i that are bound linearly by the constuctor, must
+     be consumed exactly once (or, only x is used exactly once).
+
 
    Examples will make this clearer.
 -}
@@ -68,8 +99,8 @@ nonLinearSubsume :: (a,a) -> (a,a)
 nonLinearSubsume (x,_) = (x,x)
 
 {-
-   Notice that the function above could not have a linear arrow. If it
-   did, it would not compile. Why is this?  Well, the first argument is
+   Notice that the function above could not have a linear arrow. If it did,
+   it would not compile. Why is this?  Well, the first argument would be
    linear, and the constructor is linear in both components.
 
    (,) :: a #-> b #-> (a,b)
@@ -177,7 +208,7 @@ linearIdentity3 = linearHoldExtract #. linearHold
    linearHoldPair :: LinearHolder a #-> (a,a)
    linearHoldPair (LinearHolder x) = (x,x)
 
-   In fact, we have the following equivalency:
+   In fact, we have the following equivalence:
 
    (LinearHolder a  #-> b) ≅ (a #-> b)
 -}
@@ -226,6 +257,6 @@ promote f (ForcedUnlinear x) = f x
 
    (ForcedUnlinear a  #-> b) ≅ (a -> b)
 
-   In the linear haskell POPL '18 paper, this datatype is called
-   UnRestricted.  (It's renamed here for clarity within this context.)
+   In the Linear Haskell POPL '18 paper, this datatype is called
+   Unrestricted.
 -}
