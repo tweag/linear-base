@@ -30,7 +30,7 @@ runtime.
 -}
 
 
-module FileIO where
+module Simple.FileIO where
 
 import Prelude
 import qualified System.IO as System

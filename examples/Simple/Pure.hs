@@ -7,11 +7,12 @@ Description : Pure functions showing the basics of linear haskell.
 
 We have simple linear functions and simple linear data structures that
 illustrate the basic concepts of how the type checker of GHC with linear
-types behaves.
+types behaves. The goal of this is to be a ridiculously simple tutorial
+on the basics of linear types.
 -}
 
 
-module Pure where
+module Simple.Pure where
 
 
 -- * Simple linear functions
@@ -20,54 +21,25 @@ module Pure where
 {-
    A linear function simply "consumes/uses" it's argument exactly once.
 
-   Creating a formal definition is quite tricky and requires a good amount
-   of formalizing Haskell.
-
-   Here's a rough way to think about it. Let f :: a -> b.  Suppose the we
-   don't have the identity, "f x = x" which is trivially linear. Then, the
-   thunk (f x) is basically a tree composed of function applications, data
-   constructors and case statements.
-
-   We say f is linear if for any thunk (f x) ...
-
-   I.
-     If x is not a function and is not deconstructed in a case statement:
-
-     case (a): (f x) is some function application (func t1 ... tn) or
-               a constructor (Constr t1 ... tn)
-
-       Either (i) exactly one of the t_i is x and the function func or
-       constructor Constr is linear on its ith argument, or (ii) x is used
-       exactly once in exactly one t_i.
-
-     case (b): (f x) is a case statement (case s of [a_i -> t_i]),
-
-        x is used exactly once if it's used exactly once in 
-        ***each*** t_i (and not at all in s)
-
-   II.
-
-     If x is a function, then for some argument u, (f u) is used 
-     exactly once.
-
-   III.
-
-     If x is deconstructed into (Constructor t1 ... tn) in a case statement
-     then whatever pieces t_i that are bound linearly by the constuctor, must
-     be consumed exactly once (or, only x is used exactly once).
-
-
-   Examples will make this clearer.
+   Giving a more precise idea of this is tricky, so first we present a
+   bunch of examples. You should try to get a sense of the arithmatic of how
+   many times an argument in a function is used. In other words, you should
+   have some idea of a counting function in your head, that can take some
+   haskell function f : A -> B and give a natural number as to the number of
+   times the argument of f is used in the body.
 -}
-
 
 linearIdentity :: a #-> a
 linearIdentity x = x
 
 {-
-   We say the first argument is linear since the arrow that follows it is
-   linear. In the RHS, it is present once, without being in a data
-   structure.
+   DEFINITION.
+   ==========
+   We say the argument of a function is linear if the arrow
+   that follows it is linear.
+
+   Here, the argument is present exactly once in the body and is
+   consumed exactly once.
 -}
 
 
@@ -85,13 +57,19 @@ linearSwap (x,y) = (y,x)
    Now, this does not mean that if we have some non-linear function with
    an argument (a,b) that `a` and `b` have to be consumed exactly once.
 
-   A linear arrow in a data constructor merely signifies that the argument
-   that preceedes that arrow must be used linearly if the input to a
-   linear function is this data type with this constructor. Here, since
-   `(,) x y` was the first input to linearSwap, which is a linear function
-   (meaning the first input is linear), the components `x` and `y` must
-   be used linearly.  With a non-linear function, this is not the case.
+   DEFINITION.
+   ==========
+   A linear arrow in a data constructor merely signifies that
+   the argument that preceedes that arrow must be used linearly if the
+   input to a linear function is this data type with this constructor.
 
+   Here, since `(,) x y` was the first input to linearSwap, which is a
+   linear function (meaning the first input is linear), the components `x`
+   and `y` must be used linearly. Indeed, we see the `x` and `y` are each
+   used exactly once.
+
+   With a non-linear function, this is not the case; a non-linear function
+   `f :: (x,y) -> B` does not have to use the `x` and `y` linearly.
    Consider the next function as an example.
 -}
 
@@ -99,9 +77,10 @@ nonLinearSubsume :: (a,a) -> (a,a)
 nonLinearSubsume (x,_) = (x,x)
 
 {-
-   Notice that the function above could not have a linear arrow. If it did,
-   it would not compile. Why is this?  Well, the first argument would be
-   linear, and the constructor is linear in both components.
+   This function is not linear on it's argument and could not have a linear
+   arrow. If it did, it would not compile. Why is this?  Well, the first
+   argument would be linear, and the constructor is linear in both
+   components.
 
    (,) :: a #-> b #-> (a,b)
 
@@ -111,15 +90,31 @@ nonLinearSubsume (x,_) = (x,x)
    zero times.
 -}
 
+linearPairIdentity :: (a,a) #-> (a,a)
+linearPairIdentity (x,y) = (x,y)
+
+{-
+   Here, notice that `(a,a)` is linear, and since `(,)` is linear
+   on both arguments, both `a`s must be used linearly, and indeed
+   they are. Each is consumed exactly once in a linear input
+   to the constructor `(,) :: a #-> b #-> (a,b)`.
+
+   Notice the general patter: we consumed `(a,b)` linearly by pattern
+   matching into `Constructor arg1 ... argn` and consumed the linearly
+   bound arguments linearly by giving them as arguments to some other
+   constructor that is linear on the appropreate arguments.
+-}
+
 
 linearIdentity2 :: a #-> a
 linearIdentity2 x = linearIdentity x
 
 {-
-   To use an input linearly (or a component of an input), we can pass it
-   to another linear function. Here, since linearIdentity is linear, we
-   can be sure the term (linearIdentity x) consumes x exactly once.
-   Hence, all of linearIdentity2 consumes the input x exactly once.
+   To use an input linearly (or a component of an input), we can pass it to
+   another linear function as well as a constructor.  Here, since
+   linearIdentity is linear, we can be sure the term (linearIdentity x)
+   consumes x exactly once.  Hence, all of linearIdentity2 consumes the
+   input x exactly once.
 
    If we replaced it with the original `id`, this would fail to type check
    because `id` has the non-linear type `a -> a`.  Thus, GHC isn't sure
@@ -138,9 +133,48 @@ nonLinearPair x = (linearIdentity x, linearIdentity x)
 nonLinearPair2 :: a -> (a,a)
 nonLinearPair2 x = (x, linearIdentity x)
 
+
 {-
-   Hopefully, this gives a basic sense of the arithmatic of how much an
-   input to a function is "used".
+
+   With several examples in hand, we can now give a more precise way of
+   constructively checking that an argument is "consumed exactly once".
+   Here's a rough (good enough most of the time) definition:
+
+   DEFINITION.
+   ==========
+   Let f :: A -> B.  Suppose the we don't have the identity, "f x = x"
+   which is trivially linear. Then, the thunk (f x) is basically a tree
+   composed of function applications, data constructors and case
+   statements.
+
+   We say f is linear if for any thunk (f x) ...
+
+   I.
+     If x is not a function and is not deconstructed in a case statement:
+
+     case (a): (f x) is some function application (func t1 ... tn) or
+               a constructor (Constr t1 ... tn)
+
+       Either (i) exactly one of the t_i is x and the function func or
+       constructor Constr is linear on its ith argument, or (ii) x is used
+       exactly once in exactly one t_i.
+
+     case (b): (f x) is a case statement (case s of [a_i -> t_i]),
+
+        x is used exactly once if it's used exactly once in
+        **each** t_i (and not at all in s)
+
+   II.
+
+     If x is a function, then for some argument u, (f u) is used
+     exactly once.
+
+   III.
+
+     If x is deconstructed into (Constructor t1 ... tn) in a case statement
+     then whatever pieces t_i that are bound linearly by the constuctor,
+     must be consumed exactly once.
+
 -}
 
 
@@ -150,9 +184,10 @@ regularIdentity x = linearIdentity x
 {-
    Of course, the fact that a function is linear makes no difference in
    non-linear functions. So, non-linear functions can call linear
-   functions willy-nilly and they will work as expected. To state the
-   obvious, linear functions are regular functions but not all functions
-   are linear functions.
+   functions willy-nilly and they will work as expected. (Obviously,
+   the converse is false, which is kind of the point of linear types.)
+   To state the obvious, linear functions are regular functions but not all
+   functions are linear functions.
 -}
 
 
@@ -177,8 +212,8 @@ linearCompose = linearIdentity #. linearSwap
 ------------------------------------------------------------
 
 {-
-  We can consume linearly bound inputs into data types if the constructor
-  has a linear arrow before the input.
+  As we've seen, we can consume linearly bound inputs into data types if
+  the constructor has a linear arrow before the input.
 -}
 
 data LinearHolder a where
@@ -250,6 +285,7 @@ demote f x = f (ForcedUnlinear x)
 
 promote :: (a -> b) -> (ForcedUnlinear a #-> b)
 promote f (ForcedUnlinear x) = f x
+
 
 {-
    Another way of saying this is the following equivalence proven by the
