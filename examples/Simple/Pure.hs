@@ -19,13 +19,13 @@ module Simple.Pure where
 ------------------------------------------------------------
 
 {-
-   A linear function simply "consumes/uses" it's argument exactly once.
+   A linear function simply "consumes/uses" its argument exactly once.
 
    Giving a more precise idea of this is tricky, so first we present a
    bunch of examples. You should try to get a sense of the arithmatic of how
    many times an argument in a function is used. In other words, you should
    have some idea of a counting function in your head, that can take some
-   haskell function f : A -> B and give a natural number as to the number of
+   haskell function f :: A -> B and give a natural number as to the number of
    times the argument of f is used in the body.
 -}
 
@@ -59,9 +59,9 @@ linearSwap (x,y) = (y,x)
 
    DEFINITION.
    ==========
-   A linear arrow in a data constructor merely signifies that
-   the argument that preceedes that arrow must be used linearly if the
-   input to a linear function is this data type with this constructor.
+   A linear arrow in a data constructor merely signifies that the argument to
+   the constructor that preceedes that arrow must be used linearly if the input
+   to a linear function is this data type with this constructor.
 
    Here, since `(,) x y` was the first input to linearSwap, which is a
    linear function (meaning the first input is linear), the components `x`
@@ -77,14 +77,15 @@ nonLinearSubsume :: (a,a) -> (a,a)
 nonLinearSubsume (x,_) = (x,x)
 
 {-
-   This function is not linear on it's argument and could not have a linear
-   arrow. If it did, it would not compile. Why is this?  Well, the first
-   argument would be linear, and the constructor is linear in both
+   This function is not linear on its argument and in fact could not have a
+   linear arrow. If it did, this file would not compile. Why is this?  Well,
+   the first argument would be linear, and the constructor is linear in both
    components.
 
    (,) :: a #-> b #-> (a,b)
 
-   Again, this means the `a` and `b` must be used linearly.
+   Again, in a linear function, this means the `a` and `b` must be used
+   linearly.
 
    Yet, in the body of the function, `a` is used twice and `b` is used
    zero times.
@@ -99,9 +100,9 @@ linearPairIdentity (x,y) = (x,y)
    they are. Each is consumed exactly once in a linear input
    to the constructor `(,) :: a #-> b #-> (a,b)`.
 
-   Notice the general patter: we consumed `(a,b)` linearly by pattern
-   matching into `Constructor arg1 ... argn` and consumed the linearly
-   bound arguments linearly by giving them as arguments to some other
+   Notice the general pattern: we consumed `(a,b)` linearly by pattern matching
+   into `Constructor arg1 ... argn` and consumed the linearly bound arguments
+   of the constructor linearly by giving them as arguments to some other
    constructor that is linear on the appropreate arguments.
 -}
 
@@ -110,16 +111,15 @@ linearIdentity2 :: a #-> a
 linearIdentity2 x = linearIdentity x
 
 {-
-   To use an input linearly (or a component of an input), we can pass it to
-   another linear function as well as a constructor.  Here, since
-   linearIdentity is linear, we can be sure the term (linearIdentity x)
-   consumes x exactly once.  Hence, all of linearIdentity2 consumes the
-   input x exactly once.
+   Of course, another way to use an input linearly (or a component of an input)
+   is to pass it to a linear function.  Here, since linearIdentity is linear,
+   we can be sure the term (linearIdentity x) consumes x exactly once.  Hence,
+   all of linearIdentity2 consumes the input x exactly once.
 
    If we replaced it with the original `id`, this would fail to type check
    because `id` has the non-linear type `a -> a`.  Thus, GHC isn't sure
-   that `id` uses its input exactly once.  If `id` doesn't use it's input
-   exactly once, then linearIdentity2 won't use it's input exactly once,
+   that `id` uses its input exactly once.  If `id` doesn't use its input
+   exactly once, then linearIdentity2 won't use its input exactly once,
    violating it's type signature.
 
    Now, this does not mean that merely using a linear function makes the
@@ -135,6 +135,13 @@ nonLinearPair2 x = (x, linearIdentity x)
 
 
 {-
+   The function below uses its input exactly thrice.
+-}
+
+nonLinearTriple :: a -> (a,(a,a))
+nonLinearTriple x = (linearIdentity x, linearIdentity (nonLinearPair2 x))
+
+{-
 
    With several examples in hand, we can now give a more precise way of
    constructively checking that an argument is "consumed exactly once".
@@ -142,7 +149,7 @@ nonLinearPair2 x = (x, linearIdentity x)
 
    DEFINITION.
    ==========
-   Let f :: A -> B.  Suppose the we don't have the identity, "f x = x"
+   Let f :: A #-> B.  Suppose that we don't have the identity, "f x = x"
    which is trivially linear. Then, the thunk (f x) is basically a tree
    composed of function applications, data constructors and case
    statements.
@@ -161,8 +168,7 @@ nonLinearPair2 x = (x, linearIdentity x)
 
      case (b): (f x) is a case statement (case s of [a_i -> t_i]),
 
-        x is used exactly once if it's used exactly once in
-        **each** t_i (and not at all in s)
+        x is used exactly once in **each** t_i (and not at all in s)
 
    II.
 
