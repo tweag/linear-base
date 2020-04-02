@@ -22,6 +22,7 @@ library
     Control.Monad.Linear.Builder
     Control.Optics.Linear.Internal
     Data.Array.Destination
+    Data.Array.Mutable.Linear
     Data.Array.Polarized
     Data.Array.Polarized.Pull
     Data.Array.Polarized.Push
@@ -30,6 +31,7 @@ library
     Data.Monoid.Linear
     Data.Num.Linear
     Data.Vector.Linear
+    Data.Vector.Mutable.Linear
     Data.Profunctor.Linear
     Data.Profunctor.Kleisli.Linear
     Data.Unrestricted.Linear
@@ -53,6 +55,7 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
+    Unsafe.MutableArray
 
 test-suite test
   type: exitcode-stdio-1.0
