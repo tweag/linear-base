@@ -32,8 +32,8 @@ data HashMap k v where
 -- # Construction and Modification
 --------------------------------------------------
 
-empty :: Hashable k => HashMap k v
-empty = Empty
+singleton :: Hashable k => (k,v) -> HashMap k v
+singleton = undefined
 
 alter ::  Hashable k => (Maybe a -> Maybe a) -> k -> HashMap k v #-> HashMap k v
 alter = undefined
@@ -62,8 +62,6 @@ lookup = undefined
 -- # Internal Library
 --------------------------------------------------
 
-
-findIndex :: Hashable k => k -> HashMap k v #-> 
 
 
 
