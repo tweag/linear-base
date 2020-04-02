@@ -9,7 +9,7 @@
 --
 --   - TODO:
 --   - Remove the use of error on indicies out of bound.
-module Data.Linear.Array
+module Data.Array.Mutable.Linear
   ( Array,
     alloc,
     write,
@@ -20,9 +20,10 @@ where
 
 import Data.Unrestricted.Linear (Unrestricted (..))
 import GHC.Exts
+import GHC.Stack
 import qualified Unsafe.Linear as Linear
 import Prelude hiding (length, read)
-import Data.Linear.Internal.MutableArray
+import Unsafe.MutableArray
 
 -- # Data types
 ----------------------------
@@ -34,7 +35,7 @@ data Array a where
 ----------------------------
 
 alloc :: Int -> a -> (Array a #-> Unrestricted b) -> Unrestricted b
-alloc size init f = f (Array size (unsafeNewMutArr size init))
+alloc size x f = f (Array size (newMutArr size x))
 
 -- # Mutations and Reads
 ----------------------------
@@ -45,7 +46,7 @@ length = Linear.toLinear unsafeLength
     unsafeLength :: Array a -> (Int, Array a)
     unsafeLength v@(Array size _) = (size, v)
 
-write :: Array a #-> Int -> a -> Array a
+write :: HasCallStack => Array a #-> Int -> a -> Array a
 write = Linear.toLinear writeUnsafe
   where
     writeUnsafe :: Array a -> Int -> a -> Array a
@@ -55,12 +56,12 @@ write = Linear.toLinear writeUnsafe
           () -> arr
       | otherwise = error "Index not in range"
 
-read :: Array a #-> Int -> (Array a, Maybe a)
+read :: HasCallStack => Array a #-> Int -> (Array a, Maybe a)
 read = Linear.toLinear readUnsafe
   where
     readUnsafe :: Array a -> Int -> (Array a, Maybe a)
-    readUnsafe arr@(Array size mutArr) i@(I# ix)
-      | indexInRange size i = (arr, Just $ readMutArr mutArr i)
+    readUnsafe arr@(Array size mutArr) ix
+      | indexInRange size ix = (arr, Just $ readMutArr mutArr ix)
       | otherwise = (arr, Nothing)
 
 -- # Internal library
