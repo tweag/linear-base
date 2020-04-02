@@ -24,7 +24,6 @@ newMutArr (I# size) x =
   where
     newArray = runRW# $ \stateRW -> newArray# size x stateRW
 
--- | writeMutArr should have evaluation forced
 writeMutArr :: MutableArray# RealWorld a -> Int -> a -> ()
 writeMutArr mutArr (I# ix) val =
   case doWrite of _ -> ()
