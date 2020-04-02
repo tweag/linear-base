@@ -27,6 +27,8 @@ library
     Data.Array.Polarized.Push
     Data.Bifunctor.Linear
     Data.Functor.Linear
+    Data.Linear.Vector
+    Data.Linear.Array
     Data.Monoid.Linear
     Data.Num.Linear
     Data.Vector.Linear
@@ -53,6 +55,7 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
+    Data.Linear.Internal.MutableArray
 
 test-suite test
   type: exitcode-stdio-1.0
