@@ -50,8 +50,8 @@ length = Linear.toLinear unsafeLength
     unsafeLength :: Array a -> (Int, Array a)
     unsafeLength v@(Array size _) = (size, v)
 
-write :: HasCallStack => Array a #-> Int -> a -> Array a
-write = Linear.toLinear writeUnsafe
+write :: HasCallStack => Array a #-> Int -> a #-> Array a
+write = Linear.coerce writeUnsafe
   where
     writeUnsafe :: Array a -> Int -> a -> Array a
     writeUnsafe arr@(Array size mutArr) ix val
