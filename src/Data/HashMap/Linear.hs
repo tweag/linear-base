@@ -8,13 +8,15 @@
 --
 
 module Data.HashMap.Linear
-  ( HashMap
+  (
   )
 where
 
-import Data.Hashable
-import Data.Vector.Mutable.Linear
 
+{-
+
+import Data.Hashable
+import Data.Array.Mutable.Linear
 
 
 -- # Core Data Types
@@ -26,24 +28,25 @@ type RobinVal k v = (k,v,Int)
 
 data HashMap k v where
   -- | HashMap size array-of-robin-values
-  HashMap :: Hashable k => Int -> Vector (RobinVal k v) #-> HashMap k v
+  HashMap :: Hashable k => Int -> Array (RobinVal k v) #-> HashMap k v
 
 
 -- # Construction and Modification
 --------------------------------------------------
 
-singleton :: Hashable k => (k,v) -> HashMap k v
+singleton :: Hashable k =>
+  (k,v) -> (HashMap k v #-> Unrestricted b) -> Unrestricted b
 singleton = undefined
 
 alter ::  Hashable k => (Maybe a -> Maybe a) -> k -> HashMap k v #-> HashMap k v
 alter = undefined
 
 insert :: Hashable k => HashMap k v #-> k -> v -> HashMap k v
-insert map k v = alter (\_ -> Just v) k map
+insert hmap k v = alter (\_ -> Just v) k hmap
 
 -- | If present, deletes key-value pair, otherwise does nothing
 delete :: Hashable k => HashMap k v #-> k -> HashMap k v
-delete map k = alter (\_ -> Nothing) k map
+delete hmap k = alter (\_ -> Nothing) k hmap
 
 
 -- # Querying
@@ -63,7 +66,7 @@ lookup = undefined
 --------------------------------------------------
 
 
-
+-}
 
 
 

@@ -12,26 +12,30 @@
 --
 --   - TODO:
 --
+--   - Is this fast?
 --   - Add doc.
---   - XXX: is doubleVec functional???
---
---   - Functor Instance
+--   - Add more of the core API from Data.Vector
+--   - Add control instances
 --   - Dupable instance
+--   - See if you can index by length nicely
 module Data.Vector.Mutable.Linear
   ( Vector,
     singleton,
+    singletonWithSize,
     read,
     write,
     snoc,
     length,
+    resize
   )
 where
 
 import GHC.Exts
 import GHC.Stack
 import qualified Unsafe.Linear as Linear
-import Prelude hiding (length, read)
 import Unsafe.MutableArray
+import Prelude.Linear hiding (read, length)
+import Prelude ()
 
 -- # Core data types
 -------------------------------------------------------
@@ -47,8 +51,16 @@ data Vector a where
 -------------------------------------------------------
 
 -- | Singleton vector
-singleton :: a -> Vector a
-singleton x = Vec (1,defaultSize) (newMutArr defaultSize x)
+singleton :: a -> (Vector a #-> Unrestricted b) -> Unrestricted b
+singleton x f = f $ Vec (1,defaultSize) (newMutArr defaultSize x)
+
+-- | Singleton with intial vector size
+singletonWithSize :: a -> Int -> (Vector a #-> Unrestricted b) -> Unrestricted b
+singletonWithSize x size f = f $ Vec (1,size) (newMutArr size x)
+
+-- | Resize the vector with larger non-negative size
+resize :: HasCallStack => Int -> Vector a -> Vector a
+resize newSize (Vec (len,_) ma) = Vec (len,newSize) (resizeMutArr ma newSize)
 
 -- | Length of the vector
 length :: Vector a #-> (Int, Vector a)
@@ -89,25 +101,7 @@ defaultSize :: Int
 defaultSize = 16
 
 doubleVec :: Vector a -> Vector a
-doubleVec v@(Vec (_, size) _) =
-  case newArray of
-    (# _, ma' #) -> copyIntoDoubled v ma'
-  where
-    (_, Just firstElem) = read v 0
-    (I# sizeX2) = 2 * size
-    newArray = runRW# $ \stateRW ->
-      newArray# sizeX2 firstElem stateRW
-
--- | Copy a vector into a mutable array of twice the size.
-copyIntoDoubled :: Vector a -> MutArr a -> Vector a
-copyIntoDoubled (Vec (len, size) ma) dest =
-  case copiedArray of
-    _ -> Vec (len, size * 2) dest
-  where
-    (I# len') = len
-    (I# zero) = 0 :: Int
-    copiedArray = runRW# $ \stateRW ->
-      copyMutableArray# ma zero dest zero len' stateRW
+doubleVec  = resize 2
 
 -- | Argument order: indexInRange len ix
 indexInRange :: Int -> Int -> Bool
