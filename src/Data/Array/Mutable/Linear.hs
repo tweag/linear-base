@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE UnboxedTuples #-}
 
 -- |
@@ -8,6 +9,7 @@
 --   Description: A fast fixed-size mutable array.
 --
 --   - TODO:
+--   - Add more of the API from Data.Vector
 --   - Remove the use of error on indicies out of bound.
 module Data.Array.Mutable.Linear
   ( Array,
@@ -15,6 +17,7 @@ module Data.Array.Mutable.Linear
     write,
     read,
     length,
+    resize
   )
 where
 
@@ -34,6 +37,7 @@ data Array a where
 -- # Creation
 ----------------------------
 
+-- | Allocate a constant array given a size and an initial value
 alloc :: Int -> a -> (Array a #-> Unrestricted b) -> Unrestricted b
 alloc size x f = f (Array size (newMutArr size x))
 
@@ -63,6 +67,10 @@ read = Linear.toLinear readUnsafe
     readUnsafe arr@(Array size mutArr) ix
       | indexInRange size ix = (arr, Just $ readMutArr mutArr ix)
       | otherwise = (arr, Nothing)
+
+resize :: HasCallStack => Int -> Array a #-> Array a
+resize newSize (Array _ mutArr) =
+  Array newSize (resizeMutArr mutArr newSize)
 
 -- # Internal library
 ------------------------
