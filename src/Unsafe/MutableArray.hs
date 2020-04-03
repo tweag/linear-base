@@ -23,6 +23,9 @@ import GHC.Exts
 
 type MutArr a = MutableArray# RealWorld a
 
+sizeMutArr :: MutArr a -> Int
+sizeMutArr arr  = I# (sizeofMutableArray# arr)
+
 newMutArr :: Int -> a -> MutArr a
 newMutArr (I# size) x =
   case newArray of

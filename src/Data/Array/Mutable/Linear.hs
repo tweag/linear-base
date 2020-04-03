@@ -58,15 +58,15 @@ write = Linear.toLinear writeUnsafe
       | indexInRange size ix =
         case writeMutArr mutArr ix val of
           () -> arr
-      | otherwise = error "Index not in range"
+      | otherwise = error "Write index out of bounds."
 
-read :: HasCallStack => Array a #-> Int -> (Array a, Maybe a)
-read = Linear.toLinear readUnsafe
+read :: HasCallStack => Array a #-> Int #-> (Array a, a)
+read = Linear.coerce readUnsafe
   where
-    readUnsafe :: Array a -> Int -> (Array a, Maybe a)
+    readUnsafe :: Array a -> Int -> (Array a, a)
     readUnsafe arr@(Array size mutArr) ix
-      | indexInRange size ix = (arr, Just $ readMutArr mutArr ix)
-      | otherwise = (arr, Nothing)
+      | indexInRange size ix = (arr, readMutArr mutArr ix)
+      | otherwise = error "Read index out of bounds."
 
 resize :: HasCallStack => Int -> Array a #-> Array a
 resize newSize (Array _ mutArr) =
