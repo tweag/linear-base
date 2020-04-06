@@ -28,6 +28,7 @@ library
     Data.Array.Polarized.Push
     Data.Bifunctor.Linear
     Data.Functor.Linear
+    Data.HashMap.Linear
     Data.Monoid.Linear
     Data.Num.Linear
     Data.Vector.Linear
@@ -45,6 +46,7 @@ library
     base >= 4.7 && < 5,
     containers,
     ghc-prim,
+    hashable,
     storable-tuple,
     text,
     transformers,
