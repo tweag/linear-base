@@ -28,7 +28,7 @@ type RobinVal k v = (k,v,Int)
 
 data HashMap k v where
   -- | HashMap size array-of-robin-values
-  HashMap :: Hashable k => Int -> Array (RobinVal k v) #-> HashMap k v
+  HashMap :: Int -> Array (RobinVal k v) #-> HashMap k v
 
 
 -- # Construction and Modification
