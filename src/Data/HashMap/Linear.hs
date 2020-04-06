@@ -162,14 +162,15 @@ queryIndex = Unsafe.toLinear unsafeQueryIx
   where
     unsafeQueryIx :: EqHashable k => HashMap k v -> k -> (HashMap k v, RobinQuery k)
     unsafeQueryIx h@(HashMap (size, _) arr) key =
-      (h, walkDownArr (arr, hash key `mod` size) (key, 0))
+      (h, walkDownArr (arr, hash key `mod` size) (key, 0) size )
 
-    walkDownArr :: EqHashable k => (RobinArr k v, Int) -> (k, PSL) -> RobinQuery k
-    walkDownArr (arr, ix) (key, psl) = case read arr ix of
+    walkDownArr :: EqHashable k => (RobinArr k v, Int) -> (k, PSL) -> Int -> RobinQuery k
+    walkDownArr (arr, ix) (key, psl) size = case read arr ix of
       (_, (k_ix, v_ix, psl_ix)) | psl_ix == (-1) -> IndexToInsert (key, psl) ix
       (_, (k_ix, v_ix, psl_ix)) | key == k_ix -> IndexToUpdate (key, psl) ix
       (_, (k_ix, v_ix, psl_ix)) | psl_ix < psl -> IndexToSwap (key, psl) ix
-      (_, (k_ix, v_ix, psl_ix)) -> walkDownArr (arr, ix + 1) (key, psl + PSL 1)
+      -- Is it even correct to mod by size?
+      (_, (k_ix, v_ix, psl_ix)) -> walkDownArr (arr, (ix + 1) `mod` size) (key, psl + PSL 1) 
 
 -- # Internal Library
 --------------------------------------------------
