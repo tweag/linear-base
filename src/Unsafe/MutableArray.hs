@@ -23,7 +23,7 @@ import GHC.Exts
 -- # Unsafe wrappers
 ----------------------------
 
-type MutArr a = MutableArray# RealWorld a
+type MutArr# a = MutableArray# RealWorld a
 
 sizeMutArr :: MutArr a -> Int
 sizeMutArr arr  = I# (sizeofMutableArray# arr)
@@ -35,13 +35,13 @@ newMutArr (I# size) x =
   where
     newArray = runRW# $ \stateRW -> newArray# size x stateRW
 
-writeMutArr :: MutArr a -> Int -> a -> ()
+writeMutArr :: MutArr# a -> Int -> a -> ()
 writeMutArr mutArr (I# ix) val =
   case doWrite of _ -> ()
   where
     doWrite = runRW# $ \stateRW -> writeArray# mutArr ix val stateRW
 
-readMutArr :: MutArr a -> Int -> a
+readMutArr :: MutArr# a -> Int -> a
 readMutArr mutArr (I# ix) =
   case doRead of (# _, a #) -> a
   where
@@ -59,7 +59,7 @@ resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
     () -> newArr
 
 -- | Copy the first mutable array into the second, larger mutable array
-copyIntoMutArr :: MutArr a -> MutArr a -> ()
+copyIntoMutArr :: MutArr# a -> MutArr# a -> ()
 copyIntoMutArr src dest = case doCopy of _ -> ()
   where
     doCopy = runRW# $ \stateRW -> copyMutableArray# src z dest z src_len stateRW
