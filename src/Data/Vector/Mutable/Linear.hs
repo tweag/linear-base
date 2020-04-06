@@ -10,14 +10,14 @@
 --   Module: Vector
 --   Description: A fast dynamic, mutable vector.
 --
---   - TODO:
+--   TODO:
 --
---   - Is this fast?
---   - Add doc.
---   - Add more of the core API from Data.Vector
---   - Add control instances
---   - Dupable instance
---   - See if you can index by length nicely
+--   * Is this fast?
+--   * Add doc.
+--   * Add more of the core API from Data.Vector
+--   * Add control instances
+--   * Dupable instance
+--   * See if you can index by length nicely
 module Data.Vector.Mutable.Linear
   ( Vector,
     singleton,
@@ -65,15 +65,15 @@ resize newSize (Vec (len,_) ma) = Vec (len,newSize) (resizeMutArr ma newSize)
 -- | Length of the vector
 length :: Vector a #-> (Int, Vector a)
 length = Linear.toLinear unsafeLength
-  where
-    unsafeLength :: Vector a -> (Int, Vector a)
-    unsafeLength v@(Vec (len, _) _) = (len, v)
+    where
+      unsafeLength :: Vector a -> (Int, Vector a)
+      unsafeLength v@(Vec (len, _) _) = (len, v)
 
 -- | Insert at the end of the vector
 snoc :: Vector a #-> a -> Vector a
 snoc (Vec (len, size) ma) x
   | len < size = write (Vec (len + 1, size) ma) len x
-  | otherwise = write (doubleVec (Vec (len + 1, size) ma)) len x
+  | otherwise = write (resize (size*2) (Vec (len,size) ma)) len x
 
 -- | Write to an element already written to before.
 -- Note: this will not write to elements beyond the current
@@ -84,24 +84,21 @@ write = Linear.toLinear writeUnsafe
     writeUnsafe :: Vector a -> Int -> a -> Vector a
     writeUnsafe v@(Vec (len, _) mutArr) ix val
       | indexInRange len ix = case writeMutArr mutArr ix val of () -> v
-      | otherwise = error "Index not in range"
+      | otherwise = error "Write index not in range."
 
 -- | Read from a vector, with an in-range index.
-read :: HasCallStack => Vector a #-> Int -> (Vector a, Maybe a)
+read :: HasCallStack => Vector a #-> Int -> (Vector a, a)
 read = Linear.toLinear readUnsafe
   where
-    readUnsafe :: Vector a -> Int -> (Vector a, Maybe a)
+    readUnsafe :: Vector a -> Int -> (Vector a, a)
     readUnsafe v@(Vec (len, _) mutArr) ix
-      | indexInRange len ix = (v, Just $ readMutArr mutArr ix)
-      | otherwise = (v, Nothing)
+      | indexInRange len ix = (v, readMutArr mutArr ix)
+      | otherwise = error "Read index not in range."
 
 -- # Internal library
 -------------------------------------------------------
 defaultSize :: Int
 defaultSize = 16
-
-doubleVec :: Vector a -> Vector a
-doubleVec  = resize 2
 
 -- | Argument order: indexInRange len ix
 indexInRange :: Int -> Int -> Bool

@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -10,11 +11,15 @@
 --   Internally, this uses robin hood hashing on mutable,
 --   linear arrays.
 --
--- TODO:
+--   TODO:
 --
--- - Make everything linear, I don't need to use Unsafe.toLinear
--- - Add singletonWithSize
--- - Much more stuff from Data.Map
+--   * Make everything linear, I don't need to use Unsafe.toLinear
+--   * Add singletonWithSize
+--   * swapFromRead repeats the probe sequence on the recurive insert call
+--     and this could be done away with
+--   * Make the lookup use smart search by probing from the mean PSL:
+--     probe at the mean, mean-1, mean+1, mean-2, mean+2, ...
+--   * Other functions from Data.Map
 
 module Data.HashMap.Linear
   ( singleton,
@@ -44,9 +49,7 @@ type RobinVal k v = (k,v,PSL)
 
 -- | A probe sequence length
 newtype PSL = PSL Int
-  deriving ( Prelude.Eq, Prelude.Ord,
-             Prelude.Num, Consumable
-           )
+  deriving (Prelude.Eq, Prelude.Ord, Prelude.Num)
 
 -- | An array of Robin values
 type RobinArr k v = Array (RobinVal k v)
@@ -61,7 +64,7 @@ data HashMap k v where
   -- The size is the amount of memory the array takes up.
   -- The count is the number of stored mappings.
   -- Our sparseness invariant: count*3 <= size.
-  HashMap :: EqHashable k => (Int, Int) -> RobinArr k v #-> HashMap k v
+  HashMap :: (Int, Int) -> RobinArr k v #-> HashMap k v
 
 -- INVARIANTS:
 --   * Cells are empty iff the PSL is -1.
@@ -93,7 +96,8 @@ singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
       HashMap (defaultSize, 1) (write arr (hash k `mod` defaultSize) (k,v,0))
 
 -- XXX: re-write linearly
-alter ::  EqHashable k => HashMap k v #-> (Maybe v -> Maybe v) -> k -> HashMap k v
+alter ::  EqHashable k =>
+  HashMap k v #-> (Maybe v -> Maybe v) -> k -> HashMap k v
 alter = Unsafe.toLinear unsafeAlter
   where
     unsafeAlter :: EqHashable k =>
@@ -115,7 +119,8 @@ insert hmap k v = insertFromQuery v $ queryIndex hmap k
     insertFromQuery v (HashMap sizes arr, IndexToUpdate (k,psl) ix) =
       HashMap sizes (write arr ix (k,v,psl))
     insertFromQuery v (HashMap sizes arr, IndexToSwap (k,psl) ix) =
-      (Unsafe.toLinear swapFromRead) (read arr ix) sizes ix (k,v,psl)
+      (Unsafe.toLinear swapFromRead)
+        (read (maybeResize arr sizes) ix) sizes ix (k,v,psl)
 
     swapFromRead :: EqHashable k => (RobinArr k v, RobinVal k v) ->
       (Int, Int) -> Int -> RobinVal k v #-> HashMap k v
@@ -124,7 +129,32 @@ insert hmap k v = insertFromQuery v $ queryIndex hmap k
 
 -- | If present, deletes key-value pair, otherwise does nothing
 delete :: EqHashable k => HashMap k v #-> k -> HashMap k v
-delete = undefined
+delete hmap k = deleteFromQuery $ queryIndex hmap k
+  where
+    deleteFromQuery :: EqHashable k =>
+      (HashMap k v, RobinQuery k) #-> HashMap k v
+    deleteFromQuery (h, IndexToInsert _ _) = h
+    deleteFromQuery (h, IndexToSwap _ _) = h
+    deleteFromQuery (h, IndexToUpdate _ ix) =
+      shiftBack h ix
+
+    -- Continue to shift back the next element and decrease the PSL
+    -- until we see an element with PSL 0. The arguments are:
+    -- `deleteShiftFrom (hashmap, size) index`
+    shiftBack :: EqHashable k => HashMap k v #-> Int -> HashMap k v
+    shiftBack (HashMap (size,count) arr) ix =
+      HashMap (size,count-1) ((Unsafe.toLinear shiftBackArr) arr size ix)
+
+    -- XXX: make this linear
+    shiftBackArr :: EqHashable k =>
+      RobinArr k v -> Int -> Int -> RobinArr k v
+    shiftBackArr arr size ix =
+      case read arr (ix + 1 `mod` size) of
+        (arr', (k,v,PSL p)) | p == 0 ->
+          case read arr' ix of
+            (arr'', (k',v',_)) -> write arr'' ix (k',v',-1)
+        (arr', (k,v,PSL p)) ->
+          shiftBackArr (write arr ix (k,v,PSL (p-1))) size (ix+1 `mod` size)
 
 -- If the load is too high, resize
 maybeResize :: EqHashable k => RobinArr k v #-> (Int, Int) -> RobinArr k v
@@ -160,23 +190,25 @@ lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
 queryIndex :: EqHashable k => HashMap k v #-> k -> (HashMap k v, RobinQuery k)
 queryIndex = Unsafe.toLinear unsafeQueryIx
   where
-    unsafeQueryIx :: EqHashable k => HashMap k v -> k -> (HashMap k v, RobinQuery k)
+    unsafeQueryIx :: EqHashable k =>
+      HashMap k v -> k -> (HashMap k v, RobinQuery k)
     unsafeQueryIx h@(HashMap (size, _) arr) key =
       (h, walkDownArr (arr, hash key `mod` size) (key, 0) size )
 
-    walkDownArr :: EqHashable k => (RobinArr k v, Int) -> (k, PSL) -> Int -> RobinQuery k
+    walkDownArr :: EqHashable k =>
+      (RobinArr k v, Int) -> (k, PSL) -> Int -> RobinQuery k
     walkDownArr (arr, ix) (key, psl) size = case read arr ix of
       (_, (k_ix, v_ix, psl_ix)) | psl_ix == (-1) -> IndexToInsert (key, psl) ix
       (_, (k_ix, v_ix, psl_ix)) | key == k_ix -> IndexToUpdate (key, psl) ix
       (_, (k_ix, v_ix, psl_ix)) | psl_ix < psl -> IndexToSwap (key, psl) ix
-      -- Is it even correct to mod by size?
-      (_, (k_ix, v_ix, psl_ix)) -> walkDownArr (arr, (ix + 1) `mod` size) (key, psl + PSL 1) 
+      (_, (k_ix, v_ix, psl_ix)) ->
+        walkDownArr (arr, (ix + 1) `mod` size) (key, psl + PSL 1) size
 
 -- # Internal Library
 --------------------------------------------------
 
 -- | Default intial size of underlying array.
--- We initially assume space for 8 pairs, and allocate
--- 8*2. We aim to make the number of pairs some power of two.
+-- We initially assume space for 8 pairs, and allocate 8*3 slots.
+-- We aim to make the number of pairs some power of two.
 defaultSize :: Int
 defaultSize = (2^3) * 3
