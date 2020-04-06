@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -17,6 +19,7 @@
 --   * Add singletonWithSize
 --   * swapFromRead repeats the probe sequence on the recurive insert call
 --     and this could be done away with
+--   * We don't resize to make the array smaller when we have too much space
 --   * Make the lookup use smart search by probing from the mean PSL:
 --     probe at the mean, mean-1, mean+1, mean-2, mean+2, ...
 --   * Other functions from Data.Map
@@ -110,18 +113,18 @@ alter = Unsafe.toLinear unsafeAlter
 
 -- | If present, update value, otherwise insert new mapping
 insert :: EqHashable k => HashMap k v #-> k -> v -> HashMap k v
-insert hmap k v = insertFromQuery v $ queryIndex hmap k
+insert hmap k v = insertFromQuery v $ queryIndex (maybeResize hmap) k
   where
     insertFromQuery :: EqHashable k =>
       v #-> (HashMap k v, RobinQuery k) #-> HashMap k v
-    insertFromQuery v (HashMap sizes arr, IndexToInsert (k,psl) ix) =
-      HashMap sizes (write (maybeResize arr sizes) ix (k,v,psl))
+    insertFromQuery v (HashMap (size,count) arr, IndexToInsert (k,psl) ix) =
+      HashMap (size,count+1) (write arr ix (k,v,psl))
     insertFromQuery v (HashMap sizes arr, IndexToUpdate (k,psl) ix) =
       HashMap sizes (write arr ix (k,v,psl))
     insertFromQuery v (HashMap sizes arr, IndexToSwap (k,psl) ix) =
-      (Unsafe.toLinear swapFromRead)
-        (read (maybeResize arr sizes) ix) sizes ix (k,v,psl)
+      (Unsafe.toLinear swapFromRead) (read arr ix) sizes ix (k,v,psl)
 
+    -- XXX: This re-does the probe sequence of (k',v')
     swapFromRead :: EqHashable k => (RobinArr k v, RobinVal k v) ->
       (Int, Int) -> Int -> RobinVal k v #-> HashMap k v
     swapFromRead (arr', (k',v',_)) sizes ix (k,v,psl) =
@@ -150,15 +153,36 @@ delete hmap k = deleteFromQuery $ queryIndex hmap k
       RobinArr k v -> Int -> Int -> RobinArr k v
     shiftBackArr arr size ix =
       case read arr (ix + 1 `mod` size) of
-        (arr', (k,v,PSL p)) | p == 0 ->
+        (arr', (_,_,PSL p)) | p == 0 ->
           case read arr' ix of
             (arr'', (k',v',_)) -> write arr'' ix (k',v',-1)
         (arr', (k,v,PSL p)) ->
-          shiftBackArr (write arr ix (k,v,PSL (p-1))) size (ix+1 `mod` size)
+          shiftBackArr (write arr' ix (k,v,PSL (p-1))) size (ix+1 `mod` size)
 
--- If the load is too high, resize
-maybeResize :: EqHashable k => RobinArr k v #-> (Int, Int) -> RobinArr k v
-maybeResize = undefined
+-- | If the load is too high resize by tripling the array.
+maybeResize :: EqHashable k => HashMap k v #-> HashMap k v
+maybeResize (HashMap (size, count) arr)
+   | count*3 < size = HashMap (size, count) arr
+   | otherwise = HashMap (size*3, count) (Unsafe.toLinear tripleArr arr)
+  where
+    tripleArr :: EqHashable k => RobinArr k v -> RobinArr k v
+    tripleArr arr = case read arr 0 of
+      (arr', (k,v,_)) ->
+        moveHanging size (resizeSeed (size*3) (k,v,-1) arr', 0)
+
+    -- | After copying over to an array trice the original size,
+    -- we need to move all "hanging elements", i.e., those triples (k,v,psl)
+    -- where the psl is greater than the index of the cell.
+    -- Theorem. The hanging elements of a robin array form a prefix.
+    -- The proof is left as an exercise to the reader.
+    -- Arguments: `adjustModedPrefix original-size (arr,ix)`
+    moveHanging :: EqHashable k =>
+      Int -> (RobinArr k v, Int) -> RobinArr k v
+    moveHanging size (arr,ix) = case read arr ix of
+      (arr', (_,_,PSL p)) | p <= ix -> arr'
+      (arr', (k,v,PSL p)) -> case write arr' ix (k,v,-1) of
+        arr'' ->
+          moveHanging size ((write arr'' (size + ix) (k,v,PSL p)), ix+1)
 
 -- # Querying
 --------------------------------------------------
@@ -187,6 +211,7 @@ lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
 
 -- | Internal function:
 -- Find the index a key ought to hash into, and the PSL it should have.
+-- NOTE: if the underlying array is too small, this never terminates.
 queryIndex :: EqHashable k => HashMap k v #-> k -> (HashMap k v, RobinQuery k)
 queryIndex = Unsafe.toLinear unsafeQueryIx
   where
@@ -198,10 +223,10 @@ queryIndex = Unsafe.toLinear unsafeQueryIx
     walkDownArr :: EqHashable k =>
       (RobinArr k v, Int) -> (k, PSL) -> Int -> RobinQuery k
     walkDownArr (arr, ix) (key, psl) size = case read arr ix of
-      (_, (k_ix, v_ix, psl_ix)) | psl_ix == (-1) -> IndexToInsert (key, psl) ix
-      (_, (k_ix, v_ix, psl_ix)) | key == k_ix -> IndexToUpdate (key, psl) ix
-      (_, (k_ix, v_ix, psl_ix)) | psl_ix < psl -> IndexToSwap (key, psl) ix
-      (_, (k_ix, v_ix, psl_ix)) ->
+      (_, (_, _, psl_ix)) | psl_ix == (-1) -> IndexToInsert (key, psl) ix
+      (_, (k_ix, _, _)) | key == k_ix -> IndexToUpdate (key, psl) ix
+      (_, (_, _, psl_ix)) | psl_ix < psl -> IndexToSwap (key, psl) ix
+      _ ->
         walkDownArr (arr, (ix + 1) `mod` size) (key, psl + PSL 1) size
 
 -- # Internal Library
@@ -211,4 +236,4 @@ queryIndex = Unsafe.toLinear unsafeQueryIx
 -- We initially assume space for 8 pairs, and allocate 8*3 slots.
 -- We aim to make the number of pairs some power of two.
 defaultSize :: Int
-defaultSize = (2^3) * 3
+defaultSize = 24

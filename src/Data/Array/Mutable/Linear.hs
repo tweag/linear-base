@@ -17,7 +17,8 @@ module Data.Array.Mutable.Linear
     write,
     read,
     length,
-    resize
+    resize,
+    resizeSeed
   )
 where
 
@@ -71,6 +72,11 @@ read = Linear.coerce readUnsafe
 resize :: HasCallStack => Int -> Array a #-> Array a
 resize newSize (Array _ mutArr) =
   Array newSize (resizeMutArr mutArr newSize)
+
+-- Resize with a seed value for the newly allocated elements
+resizeSeed :: HasCallStack => Int -> a -> Array a #-> Array a
+resizeSeed newSize seed (Array _ mutArr) =
+  Array newSize (resizeMutArrSeed mutArr seed newSize)
 
 -- # Internal library
 ------------------------
