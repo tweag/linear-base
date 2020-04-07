@@ -51,8 +51,8 @@ length = Linear.toLinear unsafeLength
     unsafeLength :: Array a -> (Int, Array a)
     unsafeLength v@(Array size _) = (size, v)
 
-write :: HasCallStack => Array a #-> Int -> a #-> Array a
-write = Linear.coerce writeUnsafe
+write :: HasCallStack => Array a #-> Int -> a -> Array a
+write = Linear.toLinear writeUnsafe
   where
     writeUnsafe :: Array a -> Int -> a -> Array a
     writeUnsafe arr@(Array size mutArr) ix val
@@ -61,8 +61,8 @@ write = Linear.coerce writeUnsafe
           () -> arr
       | otherwise = error "Write index out of bounds."
 
-read :: HasCallStack => Array a #-> Int #-> (Array a, a)
-read = Linear.coerce readUnsafe
+read :: HasCallStack => Array a #-> Int -> (Array a, a)
+read = Linear.toLinear readUnsafe
   where
     readUnsafe :: Array a -> Int -> (Array a, a)
     readUnsafe arr@(Array size mutArr) ix

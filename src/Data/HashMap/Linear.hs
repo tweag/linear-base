@@ -59,7 +59,7 @@ type RobinArr k v = Array (RobinVal k v)
 
 -- | At minimum, we need to store hashable
 -- and identifiable keys
-type EqHashable k = (Eq k, Hashable k)
+type Keyable k = (Eq k, Hashable k)
 
 -- | A mutable hashmap with a linear API
 data HashMap k v where
@@ -78,18 +78,18 @@ data HashMap k v where
 data RobinQuery k where
   -- | A key, PSL pair to insert at an index, that has not
   -- yet been touched. Invariant: the PSL must be -1 at that index.
-  IndexToInsert :: EqHashable k => (k, PSL) -> Int -> RobinQuery k
+  IndexToInsert :: (k, PSL) -> Int -> RobinQuery k
   -- A key, PSL pair to update the value at an index.
-  IndexToUpdate :: EqHashable k => (k, PSL) -> Int -> RobinQuery k
+  IndexToUpdate :: (k, PSL) -> Int -> RobinQuery k
   -- | A key, PSL pair for a swap at an index.
   -- The swapped-out pair will then need to be inserted downstream.
-  IndexToSwap :: EqHashable k => (k, PSL) -> Int -> RobinQuery k
+  IndexToSwap :: (k, PSL) -> Int -> RobinQuery k
 
 -- # Construction and Modification
 --------------------------------------------------
 
 -- | Run a computation using a singleton hashmap
-singleton :: EqHashable k =>
+singleton :: Keyable k =>
   (k,v) -> (HashMap k v #-> Unrestricted b) -> Unrestricted b
 singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
   alloc defaultSize (k,v,-1) applyHM
@@ -99,11 +99,11 @@ singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
       HashMap (defaultSize, 1) (write arr (hash k `mod` defaultSize) (k,v,0))
 
 -- XXX: re-write linearly
-alter ::  EqHashable k =>
+alter ::  Keyable k =>
   HashMap k v #-> (Maybe v -> Maybe v) -> k -> HashMap k v
 alter = Unsafe.toLinear unsafeAlter
   where
-    unsafeAlter :: EqHashable k =>
+    unsafeAlter :: Keyable k =>
       HashMap k v -> (Maybe v -> Maybe v) -> k -> HashMap k v
     unsafeAlter hmap f k =
       case lookup hmap k of
@@ -112,11 +112,11 @@ alter = Unsafe.toLinear unsafeAlter
           Just v -> insert hmap' k v
 
 -- | If present, update value, otherwise insert new mapping
-insert :: EqHashable k => HashMap k v #-> k -> v -> HashMap k v
+insert :: Keyable k => HashMap k v #-> k -> v -> HashMap k v
 insert hmap k v = insertFromQuery v $ queryIndex (maybeResize hmap) k
   where
-    insertFromQuery :: EqHashable k =>
-      v #-> (HashMap k v, RobinQuery k) #-> HashMap k v
+    insertFromQuery :: Keyable k =>
+      v -> (HashMap k v, RobinQuery k) #-> HashMap k v
     insertFromQuery v (HashMap (size,count) arr, IndexToInsert (k,psl) ix) =
       HashMap (size,count+1) (write arr ix (k,v,psl))
     insertFromQuery v (HashMap sizes arr, IndexToUpdate (k,psl) ix) =
@@ -125,16 +125,16 @@ insert hmap k v = insertFromQuery v $ queryIndex (maybeResize hmap) k
       (Unsafe.toLinear swapFromRead) (read arr ix) sizes ix (k,v,psl)
 
     -- XXX: This re-does the probe sequence of (k',v')
-    swapFromRead :: EqHashable k => (RobinArr k v, RobinVal k v) ->
-      (Int, Int) -> Int -> RobinVal k v #-> HashMap k v
+    swapFromRead :: Keyable k => (RobinArr k v, RobinVal k v) ->
+      (Int, Int) -> Int -> RobinVal k v -> HashMap k v
     swapFromRead (arr', (k',v',_)) sizes ix (k,v,psl) =
       insert (HashMap sizes (write arr' ix (k,v,psl))) k' v'
 
 -- | If present, deletes key-value pair, otherwise does nothing
-delete :: EqHashable k => HashMap k v #-> k -> HashMap k v
+delete :: Keyable k => HashMap k v #-> k -> HashMap k v
 delete hmap k = deleteFromQuery $ queryIndex hmap k
   where
-    deleteFromQuery :: EqHashable k =>
+    deleteFromQuery :: Keyable k =>
       (HashMap k v, RobinQuery k) #-> HashMap k v
     deleteFromQuery (h, IndexToInsert _ _) = h
     deleteFromQuery (h, IndexToSwap _ _) = h
@@ -144,12 +144,12 @@ delete hmap k = deleteFromQuery $ queryIndex hmap k
     -- Continue to shift back the next element and decrease the PSL
     -- until we see an element with PSL 0. The arguments are:
     -- `deleteShiftFrom (hashmap, size) index`
-    shiftBack :: EqHashable k => HashMap k v #-> Int -> HashMap k v
+    shiftBack :: Keyable k => HashMap k v #-> Int -> HashMap k v
     shiftBack (HashMap (size,count) arr) ix =
       HashMap (size,count-1) ((Unsafe.toLinear shiftBackArr) arr size ix)
 
     -- XXX: make this linear
-    shiftBackArr :: EqHashable k =>
+    shiftBackArr :: Keyable k =>
       RobinArr k v -> Int -> Int -> RobinArr k v
     shiftBackArr arr size ix =
       case read arr (ix + 1 `mod` size) of
@@ -160,12 +160,12 @@ delete hmap k = deleteFromQuery $ queryIndex hmap k
           shiftBackArr (write arr' ix (k,v,PSL (p-1))) size (ix+1 `mod` size)
 
 -- | If the load is too high resize by tripling the array.
-maybeResize :: EqHashable k => HashMap k v #-> HashMap k v
+maybeResize :: Keyable k => HashMap k v #-> HashMap k v
 maybeResize (HashMap (size, count) arr)
    | count*3 < size = HashMap (size, count) arr
    | otherwise = HashMap (size*3, count) (Unsafe.toLinear tripleArr arr)
   where
-    tripleArr :: EqHashable k => RobinArr k v -> RobinArr k v
+    tripleArr :: Keyable k => RobinArr k v -> RobinArr k v
     tripleArr arr = case read arr 0 of
       (arr', (k,v,_)) ->
         moveHanging size (resizeSeed (size*3) (k,v,-1) arr', 0)
@@ -175,8 +175,8 @@ maybeResize (HashMap (size, count) arr)
     -- where the psl is greater than the index of the cell.
     -- Theorem. The hanging elements of a robin array form a prefix.
     -- The proof is left as an exercise to the reader.
-    -- Arguments: `adjustModedPrefix original-size (arr,ix)`
-    moveHanging :: EqHashable k =>
+    -- Arguments: `moveHanging original-size (arr,ix)`
+    moveHanging :: Keyable k =>
       Int -> (RobinArr k v, Int) -> RobinArr k v
     moveHanging size (arr,ix) = case read arr ix of
       (arr', (_,_,PSL p)) | p <= ix -> arr'
@@ -190,16 +190,16 @@ maybeResize (HashMap (size, count) arr)
 size :: HashMap k v #-> (HashMap k v, Int)
 size (HashMap (size,count) arr) = (HashMap (size,count) arr, count)
 
-member :: EqHashable k => HashMap k v #-> k -> (HashMap k v, Bool)
+member :: Keyable k => HashMap k v #-> k -> (HashMap k v, Bool)
 member hmap k = memberFromQuery (queryIndex hmap k)
   where
-    memberFromQuery :: EqHashable k =>
+    memberFromQuery :: Keyable k =>
       (HashMap k v, RobinQuery k) #-> (HashMap k v, Bool)
     memberFromQuery (h, IndexToInsert _ _) = (h, False)
     memberFromQuery (h, IndexToSwap _ _) = (h, False)
     memberFromQuery (h, IndexToUpdate _ _) = (h, True)
 
-lookup :: EqHashable k => HashMap k v #-> k -> (HashMap k v, Maybe v)
+lookup :: Keyable k => HashMap k v #-> k -> (HashMap k v, Maybe v)
 lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
   where
     lookupFromIx :: (HashMap k v, RobinQuery k) -> (HashMap k v, Maybe v)
@@ -212,15 +212,15 @@ lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
 -- | Internal function:
 -- Find the index a key ought to hash into, and the PSL it should have.
 -- NOTE: if the underlying array is too small, this never terminates.
-queryIndex :: EqHashable k => HashMap k v #-> k -> (HashMap k v, RobinQuery k)
+queryIndex :: Keyable k => HashMap k v #-> k -> (HashMap k v, RobinQuery k)
 queryIndex = Unsafe.toLinear unsafeQueryIx
   where
-    unsafeQueryIx :: EqHashable k =>
+    unsafeQueryIx :: Keyable k =>
       HashMap k v -> k -> (HashMap k v, RobinQuery k)
     unsafeQueryIx h@(HashMap (size, _) arr) key =
       (h, walkDownArr (arr, hash key `mod` size) (key, 0) size )
 
-    walkDownArr :: EqHashable k =>
+    walkDownArr :: Keyable k =>
       (RobinArr k v, Int) -> (k, PSL) -> Int -> RobinQuery k
     walkDownArr (arr, ix) (key, psl) size = case read arr ix of
       (_, (_, _, psl_ix)) | psl_ix == (-1) -> IndexToInsert (key, psl) ix
