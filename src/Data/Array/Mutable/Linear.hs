@@ -17,7 +17,8 @@ module Data.Array.Mutable.Linear
     write,
     read,
     length,
-    resize
+    resize,
+    resizeSeed
   )
 where
 
@@ -58,19 +59,24 @@ write = Linear.toLinear writeUnsafe
       | indexInRange size ix =
         case writeMutArr mutArr ix val of
           () -> arr
-      | otherwise = error "Index not in range"
+      | otherwise = error "Write index out of bounds."
 
-read :: HasCallStack => Array a #-> Int -> (Array a, Maybe a)
+read :: HasCallStack => Array a #-> Int -> (Array a, a)
 read = Linear.toLinear readUnsafe
   where
-    readUnsafe :: Array a -> Int -> (Array a, Maybe a)
+    readUnsafe :: Array a -> Int -> (Array a, a)
     readUnsafe arr@(Array size mutArr) ix
-      | indexInRange size ix = (arr, Just $ readMutArr mutArr ix)
-      | otherwise = (arr, Nothing)
+      | indexInRange size ix = (arr, readMutArr mutArr ix)
+      | otherwise = error "Read index out of bounds."
 
 resize :: HasCallStack => Int -> Array a #-> Array a
 resize newSize (Array _ mutArr) =
   Array newSize (resizeMutArr mutArr newSize)
+
+-- Resize with a seed value for the newly allocated elements
+resizeSeed :: HasCallStack => Int -> a -> Array a #-> Array a
+resizeSeed newSize seed (Array _ mutArr) =
+  Array newSize (resizeMutArrSeed mutArr seed newSize)
 
 -- # Internal library
 ------------------------

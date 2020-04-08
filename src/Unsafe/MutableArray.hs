@@ -12,7 +12,9 @@ module Unsafe.MutableArray
     readMutArr,
     writeMutArr,
     resizeMutArr,
-    copyIntoMutArr
+    resizeMutArrSeed,
+    copyIntoMutArr,
+    sizeMutArr
   )
 where
 
@@ -22,6 +24,9 @@ import GHC.Exts
 ----------------------------
 
 type MutArr# a = MutableArray# RealWorld a
+
+sizeMutArr :: MutArr# a -> Int
+sizeMutArr arr  = I# (sizeofMutableArray# arr)
 
 newMutArr :: Int -> a -> MutArr# a
 newMutArr (I# size) x =
@@ -44,7 +49,12 @@ readMutArr mutArr (I# ix) =
 
 -- | Resize a mutable array, using the first value to fill in the new cells
 resizeMutArr :: MutArr# a -> Int -> MutArr# a
-resizeMutArr mutArr newSize = case newMutArr newSize (readMutArr mutArr 0) of
+resizeMutArr mutArr newSize =
+  resizeMutArrSeed mutArr (readMutArr mutArr 0) newSize
+
+-- | Resize a mutable array, using a seed value
+resizeMutArrSeed :: MutArr# a -> a -> Int -> MutArr# a
+resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
   newArr -> case copyIntoMutArr mutArr newArr of
     () -> newArr
 
