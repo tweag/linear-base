@@ -8,8 +8,14 @@ packages:
 - '.'
 
 # We must use a more recent version of primitive due to MonadFail
+# Hedgehog requires a newer version of constraints
 extra-deps:
   - primitive-0.7.0.0
+  - constraints-0.11
+  - git: git@github.com:hedgehogqa/haskell-hedgehog.git
+    commit: 3eaa0fa0140e565119f15ed4807e6e91e971c5ed
+    subdirs:
+      - hedgehog
 
 nix:
   shell-file: shell-stack.nix
