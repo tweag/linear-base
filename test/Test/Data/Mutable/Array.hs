@@ -4,13 +4,18 @@
 module Test.Data.Mutable.Array (mutArrTests) where
 
 import Hedgehog
+import Control.Monad.Morph ( lift )
+import Test.Tasty
+import Test.Tasty.Hedgehog ( testProperty )
 
-mutArrTests :: IO Bool
-mutArrTests = checkParallel group
+mutArrTests :: TestTree
+mutArrTests = testGroup "Mutable array tests" group
 
-group :: Group
-group = Group "Mutable array tests" $
-  []
+group :: [TestTree]
+group =
+  [testProperty "always true property" alwaysTrue]
 
+alwaysTrue :: Property
+alwaysTrue = property $ lift $ return ()
 
 

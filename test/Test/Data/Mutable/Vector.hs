@@ -4,13 +4,17 @@
 module Test.Data.Mutable.Vector (mutVecTests) where
 
 import Hedgehog
+import Control.Monad.Morph ( lift )
+import Test.Tasty
+import Test.Tasty.Hedgehog ( testProperty )
 
-mutVecTests :: IO Bool
-mutVecTests = checkParallel group
+mutVecTests :: TestTree
+mutVecTests = testGroup "Mutable vector tests" group
 
-group :: Group
-group = Group "Mutable vector tests" $
-  []
+group :: [TestTree]
+group =
+  [testProperty "always true property" alwaysTrue]
 
-
+alwaysTrue :: Property
+alwaysTrue = property $ lift $ return ()
 
