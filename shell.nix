@@ -7,6 +7,7 @@ mkShell {
   buildInputs = [
     haskell.compiler.ghcLinearTypes20191220
     nix
+    git
     stack
     cacert
   ];
