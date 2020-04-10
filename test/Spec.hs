@@ -1,2 +1,17 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
+
+import Test.Data.Mutable.Array (mutArrTests)
+import Test.Data.Mutable.Vector (mutVecTests)
+import Test.Data.Mutable.HashMap (mutHMTests)
+
 main :: IO ()
-main = putStrLn "No test suite yet. Stay tuned!"
+main = sequence_ allTests
+
+allTests :: [IO Bool]
+allTests =
+  [ mutArrTests
+  , mutVecTests
+  , mutHMTests
+  ]
+

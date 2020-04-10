@@ -8,8 +8,11 @@ packages:
 - '.'
 
 # We must use a more recent version of primitive due to MonadFail
+# Hedgehog requires a newer version of constraints
 extra-deps:
   - primitive-0.7.0.0
+  - constraints-0.11
+  - hedgehog-1.0.2
 
 nix:
   shell-file: shell-stack.nix
