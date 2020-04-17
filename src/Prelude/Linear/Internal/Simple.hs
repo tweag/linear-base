@@ -56,3 +56,7 @@ foldr :: (a #-> b #-> b) -> b #-> [a] #-> b
 foldr f z = \case
   [] -> z
   x:xs -> f x (foldr f z xs)
+
+not :: Prelude.Bool #-> Prelude.Bool
+not Prelude.False = Prelude.True
+not Prelude.True = Prelude.False
