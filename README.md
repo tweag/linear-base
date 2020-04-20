@@ -7,35 +7,33 @@ Linear base is a collection of all the standard library code one needs to
 develop applications with linear types. It is named `linear-base` to be an
 analog to the original [`base`] package that ships with GHC.
 
-**The purpose of `linear-base` is to provide the minimal facilities you need to
+The purpose of `linear-base` is to provide the minimal facilities you need to
 write _practical_ Linear Haskell code, i.e., Haskell code that uses the
-`-XLinearHaskell` language extension.**
+`-XLinearHaskell` language extension.
 
 ## Motivation
 
 _Why do you need `linear-base` to write linear projects?_
 
-* First, if you are writing a linear function, you cannot use the standard
+1. If you are writing a linear function, you cannot use the standard
   non-linear data types, functions and classes in `base`. Even simple uses of
   `base` facilities break down. For instance, if `n` is a linearly bound `Int`,
   the RHS of an definition cannot write `n + 1` --- this will not type check. We need
-  linear variants of `Functor`s, `Monad`s, `($)`, etc.
+  linear variants of `Num`, `Functor`s, `Monad`s, `($)`, etc.
 
-* Second, there are several primitive data structures, functions and classes
-  that can only be safely released with `-XLinearHaskell`. _Some of these are
-  new and exciting because they are not in `base`._ For example, the API for
-  file IO released by `linear-base` is safe unlike the current API
-  which allows, say, reading from a closed file handle.
-  Consider another good example: `linear-base` releases a safe API for mutable
-  arrays allowing values to be updated in place!
+2. There are several primitive data structures, functions and classes
+  that can only be safely released with `-XLinearHaskell`.  For example, the
+  API for file IO released by `linear-base` is safe unlike the current API
+  which allows, say, reading from a closed file handle.  _Some of these are new
+  and exciting because they are not in `base`, e.g., `linear-base` releases a
+  safe API for mutable arrays allowing values to be updated in place!_
 
 ## Getting Started
 
-Please follow these instructions carefully without skimming :)
-
-1. In your stack project, add our [`shell-stack.nix`] and [`nixpkgs.nix`] files.
-2. Edit your `stack.yaml` to have the following fields.  _Don't forget to use a
-   recent commit in the `extra-deps`._
+1. Install [nix](https://nixos.org/nix/).
+2. In your stack project, add our [`shell-stack.nix`] and [`nixpkgs.nix`] files.
+3. Edit your `stack.yaml` to have the following fields.  _Use an appropreate
+   commit in the `extra-deps`._
 
 ```yaml
 resolver: lts-14.6
@@ -52,18 +50,18 @@ extra-deps:
     commit: 5dcb68d52229753f381110e8b0bb681245080235
 ```
 
-3. Add `linear-base` to your cabal file's `build-depends:` for the appropriate
+4. Add `linear-base` to your cabal file's `build-depends:` for the appropriate
    library or executable.
 
-4. You're done! You can build with `stack --nix build` and test with `stack
+5. You're done! You can build with `stack --nix build` and test with `stack
    --nix test` and so on.  To learn more about stack-nix integration, see
    [here](https://docs.haskellstack.org/en/stable/nix_integration/).
 
 ## User Guide
 
-If you already know what `-XLinearHaskell` does and what the linear arrow `a #-> b`
-means, then read the [User Guide] to know how to use `linear-base` and look at
-the [`/examples`] sub-folder.
+If you already know what `-XLinearHaskell` does and what the linear arrow `a
+#-> b` means, then read the [User Guide] and the [`/examples`] to know how to
+use `linear-base`.
 
 ## Learning about `-XLinearHaskell`
 
@@ -72,7 +70,8 @@ There are plenty of excellent resources and examples to help you.
 
 ### Tutorials and Examples
 
- * See the [`/examples`] sub-folder. There is a README to guide you.
+ * See the [`/examples`] sub-folder. There is a README organizing the examples
+   and pointing out tutorials.
  * [Linear examples on watertight 3D models](https://github.com/gelisam/linear-examples)
 
 ### The Paper and Blog Posts
@@ -92,12 +91,12 @@ There are plenty of excellent resources and examples to help you.
 
 Linear base is maintained by [Tweag I/O].
 
-To contribute please see the [Design Document] for what needs work, the style guide,
-advice on making pull requests and so on.
+To contribute please see the [Design Document] for instructions and advice on
+making pull requests.
 
 ## Licence
 
-See [Licence](https://github.com/tweag/linear-base/blob/doc-overview/LICENSE).
+See our [Licence](https://github.com/tweag/linear-base/blob/doc-overview/LICENSE).
 
 Copyright © Tweag I/O
 
