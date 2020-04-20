@@ -18,14 +18,14 @@ _Why do you need `linear-base` to write linear projects?_
 * First, if you are writing a linear function, you cannot use the standard
   non-linear data types, functions and classes in `base`. Even simple uses of
   `base` facilities break down. For instance, if `n` is a linearly bound `Int`,
-  and the RHS of an definition uses `n + 1`, this will not type check. We need
+  the RHS of an definition cannot write `n + 1` --- this will not type check. We need
   linear variants of `Functor`s, `Monad`s, `($)`, etc.
 
 * Second, there are several primitive data structures, functions and classes
   that can only be safely released with `-XLinearHaskell`. _Some of these are
   new and exciting because they are not in `base`._ For example, the API for
-  file IO released by `linear-base` is safe unlike the current API for file IO
-  in `base` which allows, say, reading from a closed file handle.
+  file IO released by `linear-base` is safe unlike the current API
+  which allows, say, reading from a closed file handle.
   Consider another good example: `linear-base` releases a safe API for mutable
   arrays allowing values to be updated in place!
 
