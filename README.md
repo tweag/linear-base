@@ -1,11 +1,12 @@
-# Linear base
+Linear base
+===========
 
 [![License MIT](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/tweag/linear-base/blob/master/LICENSE)
 [![Build status](https://badge.buildkite.com/5b60ab93dadba234a95e04e6568985918552dcc9e7685ede0d.svg)](https://buildkite.com/tweag-1/linear-base)
 
-Linear base is a collection of all the standard library code one needs to
-develop applications with linear types. It is named `linear-base` to be an
-analog to the original [`base`] package that ships with GHC.
+Linear base is a standard library for developing applications with linear
+types. It is named `linear-base` to be an analog to the original [`base`]
+package that ships with GHC.
 
 The purpose of `linear-base` is to provide the minimal facilities you need to
 write _practical_ Linear Haskell code, i.e., Haskell code that uses the
@@ -44,10 +45,12 @@ allow-newer: true
 system-ghc: true
 
 nix:
+  enable: true
   shell-file: shell-stack.nix
   path: ["nixpkgs=./nixpkgs.nix"]
 
 extra-deps:
+  - primitive-0.7.0.0
   - git: https://github.com/tweag/linear-base.git
     commit: 5dcb68d52229753f381110e8b0bb681245080235
 ```
@@ -77,13 +80,15 @@ There are plenty of excellent resources and examples to help you.
    and pointing out tutorials.
  * [Linear examples on watertight 3D models](https://github.com/gelisam/linear-examples)
 
-### The Paper and Blog Posts
+### Reading Material
 
-  * [Here is the paper](https://arxiv.org/pdf/1710.09756.pdf) behind `-XLinearTypes`.
+  * There is a [wiki page](https://gitlab.haskell.org/ghc/ghc/-/wikis/linear-types).
   * Key Blog posts
     * [Predictable performance](https://www.tweag.io/posts/2017-03-13-linear-types.html) (the first blog post from Tweag on this)
     * [IO State Transitions](https://www.tweag.io/posts/2017-08-03-linear-typestates.html)
     * [Streaming](https://www.tweag.io/posts/2018-06-21-linear-streams.html)
+    * See [here](https://www.tweag.io/tag/linear-types.html) for all of Tweag's blog posts on linear types.
+  * [Here is the paper](https://arxiv.org/pdf/1710.09756.pdf) behind `-XLinearTypes`.
 
 ### Talks
 

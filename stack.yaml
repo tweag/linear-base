@@ -15,5 +15,6 @@ extra-deps:
   - hedgehog-1.0.2
 
 nix:
+  enable: true
   shell-file: shell-stack.nix
   path: ["nixpkgs=./nixpkgs.nix"]
