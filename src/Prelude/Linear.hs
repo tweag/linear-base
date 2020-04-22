@@ -1,9 +1,15 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+-- |
+-- This module defines all the facilities you need when writing linear code. As
+-- an analog to prelude, it has the basic tools any haskell program using
+-- -XLinearHaskell will probably need.
+--
+-- Import this module qualified as Linear to avoid name clashes.
+
 module Prelude.Linear
   ( -- * Standard 'Prelude' function with linear types
-    -- $linearized-prelude
     ($)
   , (<*)
   , foldr

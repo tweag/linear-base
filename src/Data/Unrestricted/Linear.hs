@@ -28,7 +28,6 @@ module Data.Unrestricted.Linear
   , dup2
   , dup3
   ) where
--- $ unrestricted
 
 import qualified Data.Functor.Linear.Internal as Data
 import Data.Vector.Linear (V)
