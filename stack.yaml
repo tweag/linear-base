@@ -16,6 +16,7 @@ extra-deps:
   - tasty-hedgehog-1.0.0.2
   - optparse-applicative-0.15.1.0
 
+
 nix:
   shell-file: shell-stack.nix
   path: ["nixpkgs=./nixpkgs.nix"]
