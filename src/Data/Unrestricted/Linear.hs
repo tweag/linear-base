@@ -163,6 +163,15 @@ instance Movable Double where
   -- copying an 'Double#' and using it several times. /!\
   move (D# i) = Unsafe.toLinear (\j -> Unrestricted (D# j)) i
 
+instance Consumable Char where
+  consume (C# c) = Unsafe.toLinear (\_ -> ()) c
+
+instance Dupable Char where
+  dupV (C# c) = Unsafe.toLinear (\x -> Data.pure (C# x)) c
+
+instance Movable Char where
+  move (C# c) = Unsafe.toLinear (\x -> Unrestricted (C# x)) c
+
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
 
@@ -183,6 +192,18 @@ instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
 
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
+
+instance Consumable a => Consumable (Prelude.Maybe a) where
+  consume Prelude.Nothing = ()
+  consume (Prelude.Just x) = consume x
+
+instance Dupable a => Dupable (Prelude.Maybe a) where
+  dupV Prelude.Nothing = Data.pure Prelude.Nothing
+  dupV (Prelude.Just x) = Data.fmap Prelude.Just (dupV x)
+
+instance Movable a => Movable (Prelude.Maybe a) where
+  move (Prelude.Nothing) = Unrestricted Prelude.Nothing
+  move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
 
 instance Consumable a => Consumable [a] where
   consume [] = ()

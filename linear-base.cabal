@@ -70,7 +70,11 @@ test-suite test
   build-depends:
     base,
     linear-base,
-    hedgehog
+    hedgehog,
+    tasty,
+    tasty-hedgehog,
+    mmorph
+
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   default-language: Haskell2010
 

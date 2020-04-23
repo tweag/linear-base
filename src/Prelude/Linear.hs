@@ -32,6 +32,7 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
+  , not
   , module Data.Num.Linear
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
@@ -60,6 +61,7 @@ import Prelude hiding
   , Semigroup(..)
   , Monoid(..)
   , Num(..)
+  , not
   )
 import Prelude.Linear.Internal.Simple
 

@@ -1,12 +1,14 @@
-{-# OPTIONS_GHC -Wno-name-shadowing #-}
-
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE StrictData #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 -- |
 --   A mutable hashmap with a linear interface.
@@ -23,36 +25,37 @@
 --   * Make the lookup use smart search by probing from the mean PSL:
 --     probe at the mean, mean-1, mean+1, mean-2, mean+2, ...
 --   * Other functions from Data.Map
-
 module Data.HashMap.Linear
-  ( singleton,
+  ( HashMap,
+    singleton,
     alter,
     insert,
     delete,
+    insertAll,
     size,
     member,
-    lookup
+    lookup,
   )
 where
 
+import Data.Array.Mutable.Linear
 import Data.Hashable
 import Data.Unrestricted.Linear
-import Data.Array.Mutable.Linear
-import Prelude.Linear hiding (read, lookup, (+))
+import Prelude.Linear hiding ((+), lookup, read)
+import qualified Unsafe.Linear as Unsafe
 import Prelude ((+))
 import qualified Prelude
-import qualified Unsafe.Linear as Unsafe
 
 -- # Core Data Types
 --------------------------------------------------
 
 -- | Robin values are triples of the key, value and PSL
 -- (the probe sequence length).
-type RobinVal k v = (k,v,PSL)
+type RobinVal k v = (k, v, PSL)
 
 -- | A probe sequence length
 newtype PSL = PSL Int
-  deriving (Prelude.Eq, Prelude.Ord, Prelude.Num)
+  deriving (Prelude.Eq, Prelude.Ord, Prelude.Num, Prelude.Show)
 
 -- | An array of Robin values
 type RobinArr k v = Array (RobinVal k v)
@@ -90,17 +93,20 @@ data RobinQuery k where
 
 -- | Run a computation using a singleton hashmap
 singleton :: Keyed k =>
-  (k,v) -> (HashMap k v #-> Unrestricted b) -> Unrestricted b
+  (k, v) -> (HashMap k v #-> Unrestricted b) -> Unrestricted b
 singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
-  alloc defaultSize (k,v,-1) applyHM
+  alloc defaultSize (k, v, -1) applyHM
   where
     applyHM :: Array (RobinVal k v) #-> Unrestricted b
-    applyHM arr = f $
-      HashMap (defaultSize, 1) (write arr (hash k `mod` defaultSize) (k,v,0))
+    applyHM arr = let ixToHash = (hash k) `mod` defaultSize in
+      f $ HashMap (defaultSize, 1) (write arr ixToHash (k, v, 0))
 
 -- XXX: re-write linearly
-alter ::  Keyed k =>
-  HashMap k v #-> (Maybe v -> Maybe v) -> k -> HashMap k v
+alter ::
+  Keyed k =>
+  HashMap k v #-> (Maybe v -> Maybe v) ->
+  k ->
+  HashMap k v
 alter = Unsafe.toLinear unsafeAlter
   where
     unsafeAlter :: Keyed k =>
@@ -117,83 +123,85 @@ insert hmap k v = insertFromQuery v $ queryIndex (maybeResize hmap) k
   where
     insertFromQuery :: Keyed k =>
       v -> (HashMap k v, RobinQuery k) #-> HashMap k v
-    insertFromQuery v (HashMap (size,count) arr, IndexToInsert (k,psl) ix) =
-      HashMap (size,count+1) (write arr ix (k,v,psl))
-    insertFromQuery v (HashMap sizes arr, IndexToUpdate (k,psl) ix) =
-      HashMap sizes (write arr ix (k,v,psl))
-    insertFromQuery v (HashMap sizes arr, IndexToSwap (k,psl) ix) =
-      (Unsafe.toLinear swapFromRead) (read arr ix) sizes ix (k,v,psl)
-
+    insertFromQuery v (HashMap (!size, !count) arr, IndexToInsert (k, psl) ix) =
+      HashMap (size, count + 1) (write arr ix (k, v, psl))
+    insertFromQuery v (HashMap sizes arr, IndexToUpdate (k, psl) ix) =
+      HashMap sizes (write arr ix (k, v, psl))
+    insertFromQuery v (HashMap sizes arr, IndexToSwap (k, psl) ix) =
+      (Unsafe.toLinear swapFromRead) (read arr ix) sizes ix (k, v, psl)
     -- XXX: This re-does the probe sequence of (k',v')
-    swapFromRead :: Keyed k => (RobinArr k v, RobinVal k v) ->
-      (Int, Int) -> Int -> RobinVal k v -> HashMap k v
-    swapFromRead (arr', (k',v',_)) sizes ix (k,v,psl) =
-      insert (HashMap sizes (write arr' ix (k,v,psl))) k' v'
+    swapFromRead ::
+      Keyed k =>
+      (RobinArr k v, RobinVal k v) ->
+      (Int, Int) ->
+      Int ->
+      RobinVal k v ->
+      HashMap k v
+    swapFromRead (arr', (k', v', _)) sizes ix (k, v, psl) =
+      insert (HashMap sizes (write arr' ix (k, v, psl))) k' v'
 
 -- | If present, deletes key-value pair, otherwise does nothing
 delete :: Keyed k => HashMap k v #-> k -> HashMap k v
 delete hmap k = deleteFromQuery $ queryIndex hmap k
   where
-    deleteFromQuery :: Keyed k =>
-      (HashMap k v, RobinQuery k) #-> HashMap k v
+    deleteFromQuery :: Keyed k => (HashMap k v, RobinQuery k) #-> HashMap k v
     deleteFromQuery (h, IndexToInsert _ _) = h
     deleteFromQuery (h, IndexToSwap _ _) = h
     deleteFromQuery (h, IndexToUpdate _ ix) =
       shiftBack h ix
-
     -- Continue to shift back the next element and decrease the PSL
-    -- until we see an element with PSL 0. The arguments are:
-    -- `deleteShiftFrom (hashmap, size) index`
+    -- until we see an element with PSL 0 (or an empty cell, with PSL -1).
+    -- The arguments are: `deleteShiftFrom (hashmap, size) index`
     shiftBack :: Keyed k => HashMap k v #-> Int -> HashMap k v
-    shiftBack (HashMap (size,count) arr) ix =
-      HashMap (size,count-1) ((Unsafe.toLinear shiftBackArr) arr size ix)
-
+    shiftBack (HashMap (!size, !count) arr) ix =
+      HashMap (size, count -1) ((Unsafe.toLinear shiftBackArr) arr size ix)
     -- XXX: make this linear
-    shiftBackArr :: Keyed k =>
-      RobinArr k v -> Int -> Int -> RobinArr k v
+    shiftBackArr :: Keyed k => RobinArr k v -> Int -> Int -> RobinArr k v
     shiftBackArr arr size ix =
-      case read arr (ix + 1 `mod` size) of
-        (arr', (_,_,PSL p)) | p == 0 ->
+      case read arr ((ix + 1) `mod` size) of
+        (arr', (_, _, PSL p)) | p <= 0 ->
           case read arr' ix of
-            (arr'', (k',v',_)) -> write arr'' ix (k',v',-1)
-        (arr', (k,v,PSL p)) ->
-          shiftBackArr (write arr' ix (k,v,PSL (p-1))) size (ix+1 `mod` size)
+            (arr'', (k', v', _)) -> write arr'' ix (k', v', -1)
+        (arr', (k, v, PSL p)) ->
+          let arr'' = (write arr' ix (k, v, PSL (p -1))) in
+            shiftBackArr arr''  size ((ix + 1) `mod` size)
 
 -- | If the load is too high resize by tripling the array.
+-- XXX: This is ugly, but algorithmically simple and correct.
 maybeResize :: Keyed k => HashMap k v #-> HashMap k v
-maybeResize (HashMap (size, count) arr)
-   | count*3 < size = HashMap (size, count) arr
-   | otherwise = HashMap (size*3, count) (Unsafe.toLinear tripleArr arr)
+maybeResize (HashMap (!size, !count) arr)
+  | count * 3 < size = HashMap (size, count) arr
+  | otherwise =
+    (Unsafe.toLinear withAssocList) $
+      (Unsafe.toLinear assocList) (HashMap (size, count) arr)
   where
-    tripleArr :: Keyed k => RobinArr k v -> RobinArr k v
-    tripleArr arr = case read arr 0 of
-      (arr', (k,v,_)) ->
-        moveHanging size (resizeSeed (size*3) (k,v,-1) arr', 0)
+    withAssocList :: Keyed k => (HashMap k v, [(k, v)]) -> HashMap k v
+    withAssocList (HashMap _ arr, kvs@((k, v) : _)) =
+      let resizedArr = resizeSeed (size * 3) (k, v, -1) arr in
+        insertAll kvs (HashMap (size * 3, 0) resizedArr)
+    assocList :: Keyed k => HashMap k v -> (HashMap k v, [(k, v)])
+    assocList h@(HashMap _ arr) = (h, filterValidPSL (snd (toList arr)))
+      where
+        filterValidPSL [] = []
+        filterValidPSL ((k, v, psl) : xs)
+          | psl < 0 = filterValidPSL xs
+          | otherwise = (k, v) : filterValidPSL xs
 
-    -- | After copying over to an array trice the original size,
-    -- we need to move all "hanging elements", i.e., those triples (k,v,psl)
-    -- where the psl is greater than the index of the cell.
-    -- Theorem. The hanging elements of a robin array form a prefix.
-    -- The proof is left as an exercise to the reader.
-    -- Arguments: `moveHanging original-size (arr,ix)`
-    moveHanging :: Keyed k =>
-      Int -> (RobinArr k v, Int) -> RobinArr k v
-    moveHanging size (arr,ix) = case read arr ix of
-      (arr', (_,_,PSL p)) | p <= ix -> arr'
-      (arr', (k,v,PSL p)) -> case write arr' ix (k,v,-1) of
-        arr'' ->
-          moveHanging size ((write arr'' (size + ix) (k,v,PSL p)), ix+1)
+insertAll :: Keyed k => [(k, v)] -> HashMap k v #-> HashMap k v
+insertAll [] hmap = hmap
+insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
 
 -- # Querying
 --------------------------------------------------
 
 size :: HashMap k v #-> (HashMap k v, Int)
-size (HashMap (size,count) arr) = (HashMap (size,count) arr, count)
+size (HashMap (!size, !count) arr) = (HashMap (size, count) arr, count)
 
 member :: Keyed k => HashMap k v #-> k -> (HashMap k v, Bool)
 member hmap k = memberFromQuery (queryIndex hmap k)
   where
-    memberFromQuery :: Keyed k =>
+    memberFromQuery ::
+      Keyed k =>
       (HashMap k v, RobinQuery k) #-> (HashMap k v, Bool)
     memberFromQuery (h, IndexToInsert _ _) = (h, False)
     memberFromQuery (h, IndexToSwap _ _) = (h, False)
@@ -205,9 +213,8 @@ lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
     lookupFromIx :: (HashMap k v, RobinQuery k) -> (HashMap k v, Maybe v)
     lookupFromIx (h, IndexToInsert _ _) = (h, Nothing)
     lookupFromIx (h@(HashMap _ arr), IndexToUpdate _ ix) =
-      case read arr ix of (_,(_,v,_)) -> (h, Just v)
+      case read arr ix of (_, (_, v, _)) -> (h, Just v)
     lookupFromIx (h, IndexToSwap _ _) = (h, Nothing)
-
 
 -- | Internal function:
 -- Find the index a key ought to hash into, and the PSL it should have.
@@ -215,19 +222,27 @@ lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
 queryIndex :: Keyed k => HashMap k v #-> k -> (HashMap k v, RobinQuery k)
 queryIndex = Unsafe.toLinear unsafeQueryIx
   where
-    unsafeQueryIx :: Keyed k =>
-      HashMap k v -> k -> (HashMap k v, RobinQuery k)
+    unsafeQueryIx :: Keyed k => HashMap k v -> k -> (HashMap k v, RobinQuery k)
     unsafeQueryIx h@(HashMap (size, _) arr) key =
-      (h, walkDownArr (arr, hash key `mod` size) (key, 0) size )
-
+      (h, walkDownArr (arr, (hash key) `mod` size) (key, 0) size)
     walkDownArr :: Keyed k =>
       (RobinArr k v, Int) -> (k, PSL) -> Int -> RobinQuery k
     walkDownArr (arr, ix) (key, psl) size = case read arr ix of
       (_, (_, _, psl_ix)) | psl_ix == (-1) -> IndexToInsert (key, psl) ix
       (_, (k_ix, _, _)) | key == k_ix -> IndexToUpdate (key, psl) ix
       (_, (_, _, psl_ix)) | psl_ix < psl -> IndexToSwap (key, psl) ix
-      _ ->
-        walkDownArr (arr, (ix + 1) `mod` size) (key, psl + PSL 1) size
+      _ -> walkDownArr (arr, (ix + 1) `mod` size) (key, psl + PSL 1) size
+
+-- # Instances
+--------------------------------------------------
+
+instance Consumable (HashMap k v) where
+  consume :: HashMap k v #-> ()
+  consume (HashMap _ arr) = consume arr
+
+-- # This is provided for debugging only.
+instance (Show k, Show v) => Show (HashMap k v) where
+  show (HashMap _ robinArr) = show robinArr
 
 -- # Internal Library
 --------------------------------------------------
