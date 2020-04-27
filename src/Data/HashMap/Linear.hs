@@ -35,6 +35,7 @@ module Data.HashMap.Linear
     size,
     member,
     lookup,
+    Keyed,
   )
 where
 
