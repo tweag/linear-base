@@ -3,13 +3,27 @@
 
 -- |
 -- This module defines all the facilities you need when writing linear code. As
--- an analog to prelude, it has the basic tools any haskell program using
--- -XLinearHaskell will probably need.
+-- an analog to the original 'Prelude', it has the basic tools any haskell
+-- program using @-XLinearHaskell@ will probably need.
 --
--- Import this module qualified as Linear to avoid name clashes.
+-- This module is designed to be imported unqualifed.
+--
+-- A simple example:
+--
+-- > {-# LANGUAGE LinearTypes #-}
+-- > import Prelude.Linear
+-- >
+-- > makeInt :: Either Int Bool #-> Int
+-- > makeInt = either id boolToInt
+-- >
+-- > boolToInt :: Bool #-> Int
+-- > boolToInt False = 0
+-- > boolToInt True = 1
+--
+--
 
 module Prelude.Linear
-  ( -- * Standard 'Prelude' function with linear types
+  ( -- * Standard Types, Classes and Related Functions
     ($)
   , (<*)
   , foldr
@@ -22,13 +36,14 @@ module Prelude.Linear
   , either
   , maybe
   , forget
+  , not
   , Semigroup(..)
   , Monoid(..)
-    -- * Unrestricted
+    -- * Using 'Unrestricted' values in linear Code
     -- $ unrestricted
   , Unrestricted(..)
   , unUnrestricted
-    -- * Typeclasses for non-linear actions
+    -- * Doing non-linear operations inside linear functions
     -- $ comonoid
   , Consumable(..)
   , Dupable(..)
@@ -38,7 +53,6 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
-  , not
   , module Data.Num.Linear
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude

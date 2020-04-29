@@ -261,7 +261,8 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
 
 -- | Given a "System.IO" computation on an unsafe resource,
 -- lift it to @RIO@ computaton on the acquired resource.
--- That is @a -> IO b@ turns into @UnsafeResource a #-> RIO (Unrestricted b)@ 
+-- That is function of type @a -> IO b@ turns into a function of type
+-- @UnsafeResource a #-> RIO (Unrestricted b)@ 
 -- along with threading the @UnsafeResource a@.
 --
 -- Note that the result @b@ can be used non-linearly.

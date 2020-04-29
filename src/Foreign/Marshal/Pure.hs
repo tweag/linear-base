@@ -16,39 +16,66 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
--- | This module introduces primitives to /safely/ allocate and discard
--- in-memory storage for values /explicitly/. Values discarded explicitly don't
--- need to be managed by the garbage collector (GC), which therefore has less
--- work to do. Less work for the GC can sometimes mean more predictable request
--- latencies in multi-threaded and distributed applications.
+-- | This module introduces primitives to /safely/ allocate and discard system
+-- heap memory (/not GC heap memory/) for storing  values /explicitly/.
+-- (Basically, a haskell program has a GC that at runtime, manages its own heap
+-- by freeing and allocating space from the system heap.) Values discarded
+-- explicitly don't need to be managed by the garbage collector (GC), which
+-- therefore has less work to do. Less work for the GC can sometimes mean more
+-- predictable request latencies in multi-threaded and distributed
+-- applications.
 --
 -- This module is meant to be imported qualified.
 --
--- == Examples
+-- == The Interface
 --
--- You can find example data structure implementations in @Foreign.List@ and
--- @Foreign.Heap@ of the @example@ directory in the source repository.
+-- Run a computation that uses heap memory by passing a continuation to
+-- 'withPool' of type @Pool #-> Unrestricted b@. Allocate and free with
+-- 'alloc' and 'deconstruct'. Make as many or as few pools you need, by
+-- using the 'Dupable' and 'Consumable' instances of  'Pool'.
 --
--- == Pools
+-- A toy example:
 --
--- The module interface is structured around a notion of memory 'Pool'. Passing
--- linear pool arguments is an alternative to passing continuations to
--- functions. Passing continuations can break tail-recursion in certain cases.
+-- > {-# LANGUAGE LinearTypes #-}
+-- > import Data.Unrestricted.Linear
+-- > import qualified Foreign.Marshal.Pure as Manual
+-- >
+-- > three :: Int
+-- > three = unUnrestricted (Manual.withPool nothingWith3)
+-- >
+-- > nothingWith3 :: Pool #-> Unrestricted Int
+-- > nothingWith3 pool = move (Manual.deconstruct (Manual.alloc 3 pool))
+--
+-- === What are 'Pool's?
+--
+-- 'Pool's are memory pools from which a user can safely allocate and use
+-- heap memory manually by passing 'withPool' a continuation.
+-- An alternative design would have allowed passing continuations to
+-- allocation functions but this could break tail-recursion in certain cases.
 --
 -- Pools play another role: resilience to exceptions. If an exception is raised,
 -- all the data in the pool is deallocated.
 --
--- Data from one pool can refer to data in another pool and vice versa.
+-- Note that data from one pool can refer to data in another pool and vice
+-- versa.
+--
+-- == Large Examples
+--
+-- You can find example data structure implementations in @Foreign.List@ and
+-- @Foreign.Heap@ [here](https://github.com/tweag/linear-base/tree/master/examples/Foreign).
 
 module Foreign.Marshal.Pure
-  ( KnownRepresentable
-  , Representable(..)
-  , MkRepresentable(..)
-  , Pool
+  (
+  -- * Allocating and using values on the heap
+    Pool
   , withPool
   , Box
   , alloc
   , deconstruct
+  -- * Typeclasses for values that can be allocated
+  , KnownRepresentable
+  , Representable(..)
+  , MkRepresentable(..)
   ) where
 
 import Control.Exception
@@ -306,6 +333,7 @@ freeAll start end = do
 
 -- TODO: document individual functions
 
+-- | Given a linear computation that manages memory, run that computation.
 withPool :: (Pool #-> Unrestricted b) #-> Unrestricted b
 withPool scope = Unsafe.toLinear performScope scope
     -- XXX: do ^ without `toLinear` by using linear IO
@@ -379,6 +407,7 @@ reprNew a =
 -- passing-style API (but there is still some design to be done there). This
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
+-- | Store a value @a@ on the system heap that is not managed by the GC.
 alloc :: forall a. Representable a => a #-> Pool #-> Box a
 alloc a (Pool pool) =
     Unsafe.toLinear mkPtr a
@@ -397,6 +426,7 @@ reprPeek ptr | Dict <- storable @(AsKnown a) = do
   knownRepr <- peek (castPtr ptr :: Ptr (AsKnown a))
   return (ofKnown knownRepr)
 
+-- | Retrieve the value stored on system heap memory.
 deconstruct :: Representable a => Box a #-> a
 deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $ mask_ $ do
   res <- reprPeek ptr

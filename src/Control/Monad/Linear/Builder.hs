@@ -3,6 +3,24 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 
+-- | This module provides tools to use do notation with linear monads after
+-- '-XRebindableSyntax' is turned on.
+--
+-- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE RebindableSyntax #-}
+-- > {-# LANGUAGE RecordWildCards #-}
+-- > import qualified Control.Monad.Builder as Control
+-- > func = do
+-- >   ...
+-- >   where
+-- >     Control.Builder {..} = Control.monadBuilder
+--
+-- Using '-XRebindableSyntax' means that do notation uses in scope definitions
+-- of @(>>=)@, @return@, and @(>>)@ to desugar the @do@ block.
+--
+-- In this module, we create a record 'monadBuilder' that has @(>>=)@ and so on
+-- as members. We use -XRecordWildCards to those functions in scope with the
+-- wildcard @Control.Builder {..}@.
 module Control.Monad.Linear.Builder
   ( BuilderType(..)
   , monadBuilder

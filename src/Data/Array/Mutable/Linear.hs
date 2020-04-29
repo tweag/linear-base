@@ -9,24 +9,48 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 -- |
---   Module: Array
---   Description: A fast fixed-size mutable array.
+-- This module provides a pure linear interface for arrays with in-place
+-- mutation.
 --
---   - TODO:
---   - Add more of the API from Data.Vector
---   - Remove the use of error on indicies out of bound.
---   - Use toVec instead of toList
---   - Read should return an (Unrestricted a)
+-- To use these mutable arrays, create a linear computation of type
+-- @Array a #-> Unrestricted b@ and feed it to 'alloc' or 'fromList'.
+--
+-- == A Tiny Example
+--
+-- > {-# LANGUAGE LinearTypes #-}
+-- > import Prelude.Linear
+-- > import Data.Unrestricted.Linear
+-- > import qualified Unsafe.Linear as Unsafe
+-- > import qualified Data.Array.Mutable.Linear as Array
+-- >
+-- > isTrue :: Bool
+-- > isTrue = unUnrestricted $ Array.fromList [0..10] isFirstZero
+-- >
+-- > isFalse :: Bool
+-- > isFalse = unUnrestricted $ Array.fromList [1,2,3] isFirstZero
+-- >
+-- > isFirstZero :: Array.Array Int #-> Unrestricted Bool
+-- > isFirstZero arr = withReadingFirst (Array.read arr 0)
+-- >   where
+-- >     withReadingFirst :: (Array.Array Int, Int) #-> Unrestricted Bool
+-- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
+-- >
+-- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
+-- > (===) = Unsafe.toLinear2 (==)
 module Data.Array.Mutable.Linear
-  ( Array,
+  ( -- * Mutable Linear Arrays
+    Array,
+    -- * Performing Computations with Arrays
     alloc,
+    fromList,
+    -- * Mutators
     write,
-    read,
-    length,
     resize,
     resizeSeed,
+    -- * Accessors
+    read,
+    length,
     toList,
-    fromList
   )
 where
 
@@ -55,6 +79,7 @@ alloc size x f
   | size > 0 = f (Array size (Unsafe.newMutArr size x))
   | otherwise = error $ "Trying to allocate an array of size " ++ show size
 
+-- | Allocate an array from a non-empty list (and error on empty lists)
 fromList :: HasCallStack =>
   [a] -> (Array a #-> Unrestricted b) -> Unrestricted b
 fromList [] _ = error $ "Trying to allocate from an empty list."

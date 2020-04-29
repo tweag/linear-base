@@ -29,13 +29,12 @@
 --   Linear.fromSystemIOU $ putStrLn "hello world today"
 -- @
 --
--- = Replacing 'IO' With This Module.
+-- = Replacing The Original @IO@ With This Module.
 --
 -- This module will be deprecated if the definition for 'IO' found here is
 -- upstreamed in "System.IO".  When multiplicity-polymorphism is implemented,
 -- this module will supercede IO by providing a seamless replacement for
--- "System.IO" functions that work exactly as before along side linear APIs for
--- managing resourses like handles.
+-- "System.IO" that won't break non-linear code.
 
 module System.IO.Linear
   ( IO(..)
@@ -102,7 +101,8 @@ fromSystemIO :: System.IO a #-> IO a
 fromSystemIO = Unsafe.coerce
 
 -- | Coerces a standard IO action to a linear IO action, allowing you to use
--- the result @a@ in a non-linear manner by wrapping it inside 'Unrestricted'.
+-- the result of type @a@ in a non-linear manner by wrapping it inside
+-- 'Unrestricted'.
 fromSystemIOU :: System.IO a -> IO (Unrestricted a)
 fromSystemIOU action =
   fromSystemIO (Unrestricted <$> action)
@@ -176,6 +176,8 @@ writeIORef r a = fromSystemIO $ System.writeIORef r a
 --
 -- Note that the types of @throw@ and @catch@ sport only unrestricted arrows.
 -- Having any of the arrows be linear is unsound.
+-- See [here](http://dev.stephendiehl.com/hask/index.html#control.exception)
+-- to learn about exceptions.
 
 throwIO :: Exception e => e -> IO a
 throwIO e = fromSystemIO $ System.throwIO e

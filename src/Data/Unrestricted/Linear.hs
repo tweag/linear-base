@@ -10,15 +10,70 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 
+-- | This module provides essential tools for doing non-linear things
+-- in linear code.
+--
+-- = /Critical/ Definition: Restricted
+--
+-- In a linear function @f :: a #-> b@, the argument @a@ must
+-- be used in a linear way. Its use is __restricted__ while
+-- an argument in a non-linear function is __unrestricted__.
+--
+-- Hence, a linear function with an argument of @Unrestricted a@ can use the
+-- @a@ in an unrestricted way. That is, we have the following equivalence:
+--
+-- @
+-- (Unrestricted a #-> b) ≌ (a -> b)
+-- @
+--
+-- = Consumable, Dupable, Moveable classes
+--
+-- Use these classes to perform some non-linear action on linearly bound values.
+--
+-- If a type is 'Consumable', you can __consume__ it in a linear function that
+-- doesn't need that value to produce it's result:
+--
+-- > first :: Consumable b => (a,b) #-> a
+-- > first (a,b) = withConsume (consume b) a
+-- >   where
+-- >     withConsume :: () #-> a #-> a
+-- >     withConsume () x = x
+--
+-- If a type is 'Dupable', you can __duplicate__ it as much as you like.
+--
+-- > -- checkIndex ix size_of_array
+-- > checkIndex :: Int #-> Int #-> Bool
+-- > checkIndex ix size = withDuplicate (dup2 ix) size
+-- >   where
+-- >     withDuplicate :: (Int, Int) #-> Int #-> Bool
+-- >     withDuplicate (ix,ix') size = (0 <= ix) && (ix < size)
+-- >     (<) :: Int #-> Int #-> Bool
+-- >     (<) = ...
+-- >
+-- >     (<=) :: Int #-> Int #-> Bool
+-- >     (<=) = ...
+-- >
+-- >     (&&) :: Bool #-> Bool #-> Bool
+-- >     (&&) = ...
+--
+-- If a type is 'Moveable', you can __move__ it inside 'Unrestricted'
+-- and use it in any non-linear way you would like.
+--
+-- > diverge :: Int #-> Bool
+-- > diverge ix = fromMove (move ix)
+-- >   where
+-- >     fromMove :: Unrestricted Int #-> Bool
+-- >     fromMove (Unrestricted 0) = True
+-- >     fromMove (Unrestricted 1) = True
+-- >     fromMove (Unrestricted x) = False
+--
 module Data.Unrestricted.Linear
   ( -- * Unrestricted
-    -- $ unrestricted
     Unrestricted(..)
   , unUnrestricted
   , lift
   , lift2
-    -- * Duplicating and consuming value linearly
-    -- $ comonoid
+    -- * Performing non-linear actions on linearly bound values
   , Consumable(..)
   , Dupable(..)
   , Movable(..)
@@ -38,14 +93,27 @@ import Data.Monoid.Linear
 import qualified Prelude
 import qualified Unsafe.Linear as Unsafe
 
--- $ unrestricted
 
--- | @Unrestricted a@ represents unrestricted values of type @a@ in a linear context,
+
+-- | @Unrestricted a@ represents unrestricted values of type @a@ in a linear
+-- context. The key idea is that because the contructor holds @a@ with a
+-- regular arrow, a function that uses @Unrestricted a@ linearly can use @a@
+-- however it likes.
+-- > someLinear :: Unrestricted a #-> (a,a)
+-- > someLinear (Unrestricted a) = (a,a)
 data Unrestricted a where
   Unrestricted :: a -> Unrestricted a
 
--- | Project an @a@ out of an @Unrestricted a@. If the @Unrestricted a@ is
--- linear, then we get only a linear value out.
+-- | Get an @a@ out of an @Unrestricted a@. If you call this function on a
+-- linearly bound @Unrestricted a@, then the @a@ you get out has to be used
+-- linearly, for example:
+--
+-- > restricted :: Unrestricted a #-> b
+-- > restricted x = f (unUnrestricted x)
+-- >   where
+-- >     -- f __must__ be linear
+-- >     f :: a #-> b
+-- >     f x = ...
 unUnrestricted :: Unrestricted a #-> a
 unUnrestricted (Unrestricted a) = a
 
@@ -57,36 +125,36 @@ lift f (Unrestricted a) = Unrestricted (f a)
 lift2 :: (a -> b -> c) -> Unrestricted a #-> Unrestricted b #-> Unrestricted c
 lift2 f (Unrestricted a) (Unrestricted b) = Unrestricted (f a b)
 
--- $ comonoid
 
 class Consumable a where
   consume :: a #-> ()
 
--- | Like 'seq' but since the first argument is restricted to be of type @()@ it
--- is consumed, hence @seqUnit@ is linear in its first argument.
+-- | Consume the unit and return the second argument.
+-- This is like 'seq' but since the first argument is restricted to be of type
+-- @()@ it is consumed, hence @seqUnit@ is linear in its first argument.
 seqUnit :: () #-> b #-> b
 seqUnit () b = b
 
--- | Like 'seq' but the first argument is restricted to be 'Consumable'. Hence the
--- first argument is 'consume'-ed and the result consumed.
+-- | Consume the first argument and return the second argument.
+-- This is like 'seq' but the first argument is restricted to be 'Consumable'.
 lseq :: Consumable a => a #-> b #-> b
 lseq a b = seqUnit (consume a) b
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
 --
--- * @first consume (dup a) ≃ a ≃ first consume (dup a)@ (neutrality)
--- * @first dup (dup a) ≃ (second dup (dup a))@ (associativity)
+-- * @first consume (dup2 a) ≃ a ≃ second consume (dup2 a)@ (neutrality)
+-- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
 --
--- Where the @(≃)@ sign represent equality up to type isomorphism
+-- Where the @(≃)@ sign represents equality up to type isomorphism.
 class Consumable a => Dupable a where
   dupV :: KnownNat n => a #-> V n a
 
--- | The laws of the @Movable@ class mean that @move@ is compatible with @consume@
--- and @dup@.
+-- | The laws of the @Movable@ class mean that @move@ is compatible with
+-- @consume@ and @dup@.
 --
--- * @case move x of {Unrestricted _ -> ()} = consume x@ (this law is trivial)
+-- * @case move x of {Unrestricted _ -> ()} = consume x@
 -- * @case move x of {Unrestricted x -> x} = x@
--- * @case move x of {Unrestricted x -> (x, x)} = dup x@
+-- * @case move x of {Unrestricted x -> (x, x)} = dup2 x@
 class Dupable a => Movable a where
   move :: a #-> Unrestricted a
 
