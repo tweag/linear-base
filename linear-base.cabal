@@ -27,10 +27,16 @@ library
     Data.Array.Polarized.Pull
     Data.Array.Polarized.Push
     Data.Bifunctor.Linear
+    Data.Bool.Linear
+    Data.Either.Linear
+    Data.Eq.Linear
     Data.Functor.Linear
     Data.HashMap.Linear
+    Data.Maybe.Linear
     Data.Monoid.Linear
     Data.Num.Linear
+    Data.Ord.Linear
+    Data.Tuple.Linear
     Data.Vector.Linear
     Data.Vector.Mutable.Linear
     Data.Profunctor.Linear

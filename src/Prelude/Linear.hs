@@ -13,8 +13,6 @@ module Prelude.Linear
   , curry
   , uncurry
   , (.)
-  , either
-  , maybe
   , forget
   , Semigroup(..)
   , Monoid(..)
@@ -32,8 +30,10 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
-  , not
   , module Data.Num.Linear
+  , module Data.Either.Linear
+  , module Data.Bool.Linear
+  , module Data.Maybe.Linear
     -- * Re-exports from the standard 'Prelude' for convenience
   , module Prelude
   ) where
@@ -42,6 +42,9 @@ import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear
 import Data.Num.Linear
+import Data.Bool.Linear
+import Data.Either.Linear
+import Data.Maybe.Linear
 import Prelude hiding
   ( ($)
   , id
@@ -49,11 +52,14 @@ import Prelude hiding
   , seq
   , curry
   , uncurry
-  , either
   , flip
   , foldr
-  , maybe
   , (.)
+  , maybe
+  , either
+  , (||)
+  , (&&)
+  , not
   , Functor(..)
   , Applicative(..)
   , Monad(..)
@@ -61,21 +67,8 @@ import Prelude hiding
   , Semigroup(..)
   , Monoid(..)
   , Num(..)
-  , not
   )
 import Prelude.Linear.Internal.Simple
-
--- | Linearly typed replacement for the standard `either` function, to allow
--- linear consumption of an @Either@.
-either :: (a #-> c) -> (b #-> c) -> Either a b #-> c
-either f _ (Left x) = f x
-either _ g (Right y) = g y
-
--- | Linearly typed replacement for the standard `maybe` function, to allow
--- linear consumption of a @Maybe@.
-maybe :: b -> (a #-> b) -> Maybe a #-> b
-maybe x _ Nothing = x
-maybe _ f (Just y) = f y
 
 -- XXX: temporary: with multiplicity polymorphism functions expecting a
 -- non-linear arrow would allow a linear arrow passed, so this would be
