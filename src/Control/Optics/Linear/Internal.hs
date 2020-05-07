@@ -8,9 +8,39 @@
 
 -- | This module provides linear optics.
 --
--- Optics and lenses are notroiously complicated.
+-- The documentation below provides an overview of the optics provided in this
+-- module and examples of how to use them.
 --
--- == Learning about optics
+-- **Please access this background material if you are unfamiliar with lens and
+-- optics.**
+--
+-- == Helpful Background Material
+--
+--  * [A great intro to lens talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
+--  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
+--  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
+--  that contains some nice examples
+--
+-- == What are the optics in this file?
+--
+-- === Overview
+--
+-- An optic is basically a getter and a mapper into some type tradionally
+-- called @s@. Getters and mappers are basically functions with these types:
+--
+-- > getter :: s -> a
+-- > mapper :: (a -> a) -> s -> s
+--
+-- If we want to be able to modify some of the @a@s by applying a function of type
+-- @a -> b@ inside some @s@ to make a @t@, we want these types:
+--
+-- > getter :: t -> b
+-- > mapper :: (a -> b) -> s -> t
+--
+--
+-- == What optics are in this module?
+--
+-- There are four optics provided in this module.
 --
 -- Here's a basic diagram
 --
@@ -24,8 +54,9 @@
 --         \     /
 --           Iso
 --
--- The upward arrow means "is a specialization of".
--- So, an @Iso@ is a speciailization of a @Prism@, and any @Iso@ is a @Prism@
+-- The upward arrow means "is a specialization of" or "is a strict subset of".
+-- So, an @Iso@ is a speciailization of a @Prism@, and any @Iso@ is a @Prism@.
+-- On the other hand, there are some @Prism@s that are not @Iso@s.
 --
 -- === At a high level, what is each optic useful for?
 --
@@ -39,19 +70,27 @@
 -- where @arr@ is some specific kind of arrow. Note that is is a rank-2 type
 -- (which just means that there is a @forall@ nested inside a @forall@).
 --
--- * Traversals are optics where @a `arr` b@ is @a -> f b@ for applicative f
--- * Lenses are optics where
+-- * 'Traversal's are optics where @a `arr` b@ is @a -> f b@ for any
+--   @Applicative f@
+-- * 'Lens'es are optics where @a `arr` b@ is @a -> f b@ for any @Functor f@
+-- * 'Iso's are optics where @a `arr` b@ is @a `p` f b@ for any
+--    @Profunctor p@ and @Functor f@
+-- * 'Prism's are optics where @a `arr` b@ is @a `c` f b@ for any
+--   @Choice c@ and @Applicative f@
 --
--- These specialize because ...
+-- ==== How do these specialize?
 --
+-- * Any @Lens@ is a @Traversal@.
 --
 -- == Examples of 'Lens'-es
 --
--- == Examples of 'Prism's
+-- == Examples of 'Traversal's
 --
 -- == Examples of 'Iso'morphisms
 --
--- == Examples of 'Traversal's
+-- == Examples of 'Prism's
+--
+--
 --
 module Control.Optics.Linear.Internal
   ( -- * Types
