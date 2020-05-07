@@ -6,6 +6,18 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
+-- | This module provides linear optics.
+--
+-- == Learning about optics
+--
+-- == Examples of 'Lens'-es
+--
+-- == Examples of 'Prism's
+--
+-- == Examples of 'Iso'morphisms
+--
+-- == Examples of 'Traversal's
+--
 module Control.Optics.Linear.Internal
   ( -- * Types
     Optic_(..)
@@ -44,8 +56,18 @@ import Data.Void
 import Prelude.Linear
 import qualified Prelude as P
 
+
+-- | A wrapper for an Optic that uses a "Data.Profunctor.Linear" @arr@
 newtype Optic_ arr a b s t = Optical (a `arr` b -> s `arr` t)
 
+-- | @Optic c a b s t@ is essentially
+-- > forall arr. c arr => (a `arr` b ) -> (s `arr` t)
+-- for some @arr@ that is an instance of "Data.Profunctor.Linear".
+--
+-- An optic is a generic way of lifting a computation on values of type @a@ to
+-- values of type @s@. You have some value of type @s@, from which you could
+-- access value(s) of type @a@. After performing computations of type
+-- @a `arr` b@, you change that value of type @s@ into a value of type @t@.
 type Optic c a b s t =
   forall arr. c arr => Optic_ arr a b s t
 
