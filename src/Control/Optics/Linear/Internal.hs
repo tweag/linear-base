@@ -8,7 +8,42 @@
 
 -- | This module provides linear optics.
 --
+-- Optics and lenses are notroiously complicated.
+--
 -- == Learning about optics
+--
+-- Here's a basic diagram
+--
+--        Traversal
+--          ^    ^
+--         /      \
+--        /        \
+--     Lens       Prism
+--       ^         ^
+--        \       /
+--         \     /
+--           Iso
+--
+-- The upward arrow means "is a specialization of".
+-- So, an @Iso@ is a speciailization of a @Prism@, and any @Iso@ is a @Prism@
+--
+-- === At a high level, what is each optic useful for?
+--
+--
+-- === How do the types work out?
+--
+-- All optics are functions of the type
+--
+-- > forall arr. (a `arr` b) -> (s `arr` t)
+--
+-- where @arr@ is some specific kind of arrow. Note that is is a rank-2 type
+-- (which just means that there is a @forall@ nested inside a @forall@).
+--
+-- * Traversals are optics where @a `arr` b@ is @a -> f b@ for applicative f
+-- * Lenses are optics where
+--
+-- These specialize because ...
+--
 --
 -- == Examples of 'Lens'-es
 --
