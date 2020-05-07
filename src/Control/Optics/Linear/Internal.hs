@@ -8,6 +8,15 @@
 
 -- | This module provides linear optics.
 --
+--
+--
+-- TODO: most of this stuff hasn't yet been translated to work for 'Strong'
+-- and 'Wandering' constraints. I'll document that first, and then document this.
+--
+--
+--
+--
+--
 -- The documentation below provides an overview of the optics provided in this
 -- module and examples of how to use them.
 --
@@ -63,12 +72,13 @@
 --
 -- === How do the types work out?
 --
--- All optics are functions of the type
+-- All optics are functions, called __optic functions__ of the type
 --
 -- > forall arr. (a `arr` b) -> (s `arr` t)
 --
 -- where @arr@ is some specific kind of arrow. Note that is is a rank-2 type
 -- (which just means that there is a @forall@ nested inside a @forall@).
+--
 --
 -- * 'Traversal's are optics where @a `arr` b@ is @a -> f b@ for any
 --   @Applicative f@
@@ -80,7 +90,39 @@
 --
 -- ==== How do these specialize?
 --
--- * Any @Lens@ is a @Traversal@.
+-- Any @Lens@ is a @Traversal@. A @Lens@ is a function that can be applied
+-- for /any/ functor. A @Traversal@ is a function that can be applied for /any/
+-- applicative functor. (Recall that these are rank-2 types.) An applicative
+-- functor is a specific kind of functor. Hence, if I have a function that can
+-- be applied for any functor, and I provide arguments that feature an
+-- applicative functor, that works. Put another way, a @Lens@ is a more generic
+-- function than a @Traversal@ since a @Traversal@ has a stricter constraint,
+-- i.e., @Applicative@ is stricter (and includes) @Functor@.  
+-- * Any @Prism@ is a @Traversal@. A @Prism@ has a stricter condition: the
+-- optic function must work for /any/ @Choice c@. A traversal's optic function
+-- works for the function arrow @->@, which is an instance of @Choice@.
+--
+--
+-- Please take care to notice and understand the principle at play:
+--
+-- __If @D@ is a stricter constraint than @C@ (@C => D@), then the rank-2 type
+-- @forall x. C x => f@ is a special case of @forall x. D x => f@__
+--
+-- Hence, we create specific kinds of Traversals by relaxing the constraints of
+-- Traversals.
+--
+-- In summary:
+--
+-- * Lenses are Traversals because Traversal's have a stricter constraint:
+-- @Applicative f@ is stricter than @Functor f@
+-- * Prisms are Traversals because Traversals have a stricter constraint:
+-- The function arrow @a -> f b@ is stricter than using 
+-- any @Choice c@ in @a `c` b@.
+-- * Isos are Lenses because Isos have a stricter constraint:
+-- A @a -> f b@ is stricter than using any @Profunctor p@ in @a `p` f b@.
+-- * Isos are Prisms because Isos have a stricter constraint:
+-- A @Choice c => Profunctor c@ is a stricter constraint on the @arr@.
+--
 --
 -- == Examples of 'Lens'-es
 --
