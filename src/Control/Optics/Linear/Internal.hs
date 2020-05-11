@@ -11,8 +11,8 @@
 -- == Overview
 --
 -- /Some familiarity with optics is needed to understand linear optics.
--- Please go through the background material section if you are unfamiliar with
--- lens, prisms, traversals or isomorphisms./
+-- Please go through the (hopefully friendly!) background material section
+-- if you are unfamiliar with lenses, prisms, traversals or isomorphisms./
 --
 -- This documentation provides
 --
@@ -31,7 +31,8 @@
 -- In types: a (linear) optic of type @Optic a b s t@ is a way of viewing the
 -- sub-structures of type @a@ in the structure of type @s@ and mapping a
 -- function from an @a@ to a @b@ on those sub-structures in @s@ which change an
--- @s@ to a @t@.
+-- @s@ to a @t@. The non-polymorphic version of the optic is specialized
+-- to the types @Optic a a s s@.
 --
 -- There are four basic optics: traversals, lenses, prisms and isomorphisms.
 --
@@ -93,6 +94,8 @@
 -- where @arr@ is some specific kind of arrow. Note that is is a rank-2 type
 -- (which just means that there is a @forall@ nested inside a @forall@).
 --
+-- TODO: rewrite the following for the types here
+--
 -- Any @Lens@ is a @Traversal@. A @Lens@ is a function that can be applied
 -- for /any/ functor. A @Traversal@ is a function that can be applied for /any/
 -- applicative functor. (Recall that these are rank-2 types.) An applicative
@@ -107,45 +110,47 @@
 --
 -- Please take care to notice and understand the principle at play:
 --
--- __If @D@ is a stricter constraint than @C@ (@C => D@), then the rank-2 type
--- @forall x. C x => f@ is a special case of @forall x. D x => f@__
+-- __If @D@ is a stricter constraint than @C@ (i.e., any @D@ instance has a @C@
+-- instance), then the rank-2 type @forall x. C x => f@ is a special case of
+-- @forall x. D x => f@__
 --
 -- Hence, we create specific kinds of Traversals by relaxing the constraints of
 -- Traversals.
 --
 -- === More abstractly ...
 --
--- This is quite complicated. With simple types like a @Maybe a@ or
--- @Monad m => a -> m b@, we can develop a sense of what the type means abstractly.
--- This is much harder with optics because of all the type classes and the rank-2 types.
+-- This is quite complicated. With simple types like a @Maybe a@ or @Monad m =>
+-- a -> m b@, we can develop a sense of what the type means abstractly.  This
+-- is much harder with optics because of all the type classes and the rank-2
+-- types.
 --
 -- TODO
 --
 module Control.Optics.Linear.Internal
-  ( -- * Types
+  ( -- * Definitions of Optics
     Optic_(..)
   , Optic
   , Iso, Iso'
   , Lens, Lens'
   , Prism, Prism'
   , Traversal, Traversal'
+    -- * Constructing optics
+  , iso, prism
     -- * Composing optics
   , (.>)
-    -- * Common optics
+    -- * Using standard optics
   , swap, assoc
   , _1, _2
   , _Left, _Right
   , _Just, _Nothing
   , traversed
-    -- * Using optics
+    -- * Consuming optics
   , get, set, gets
   , match, build
   , over, over'
   , traverseOf, traverseOf'
   , lengthOf
   , withIso, withPrism
-    -- * Constructing optics
-  , iso, prism
   )
   where
 
@@ -160,17 +165,21 @@ import Prelude.Linear
 import qualified Prelude as P
 
 
+-- # Data Type Definitions
+-------------------------------------------------------------------------------
+
 -- | A wrapper for an Optic that uses a "Data.Profunctor.Linear" @arr@
 newtype Optic_ arr a b s t = Optical (a `arr` b -> s `arr` t)
 
--- | @Optic c a b s t@ is essentially
--- > forall arr. c arr => (a `arr` b ) -> (s `arr` t)
--- for some @arr@ that is an instance of "Data.Profunctor.Linear".
+-- | @Optic c a b s t@ is a first class object that allows
+-- viewing and mapping over sub-structures of type @a@ in a type @s@
+-- such that replacing all @a@s with @b@s yields a new structure
+-- of type @t@. The `arr` is something that behaves like a function
+-- (specificially, it is a 'Profunctor') and the types is basically:
 --
--- An optic is a generic way of lifting a computation on values of type @a@ to
--- values of type @s@. You have some value of type @s@, from which you could
--- access value(s) of type @a@. After performing computations of type
--- @a `arr` b@, you change that value of type @s@ into a value of type @t@.
+-- > Optic c a b s t = forall arr. c arr => a `arr` b -> s `arr` t
+--
+-- Note that it is a rank-2 type.
 type Optic c a b s t =
   forall arr. c arr => Optic_ arr a b s t
 
@@ -183,17 +192,20 @@ type Prism' a s = Prism a a s s
 type Traversal a b s t = Optic Wandering a b s t
 type Traversal' a s = Traversal a a s s
 
+-- # Composing Optics
+-------------------------------------------------------------------------------
+
+(.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
+Optical f .> Optical g = Optical (f P.. g)
+
+-- # Common Optics
+-------------------------------------------------------------------------------
+
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = iso Bifunctor.swap Bifunctor.swap
 
 assoc :: SymmetricMonoidal m u => Iso ((a `m` b) `m` c) ((d `m` e) `m` f) (a `m` (b `m` c)) (d `m` (e `m` f))
 assoc = iso Bifunctor.lassoc Bifunctor.rassoc
-
-(.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
-Optical f .> Optical g = Optical (f P.. g)
-
-prism :: (b #-> t) -> (s #-> Either t a) -> Prism a b s t
-prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
 
 _1 :: Lens a b (a,c) (b,c)
 _1 = Optical first
@@ -215,6 +227,9 @@ _Nothing = prism (\() -> Nothing) Left
 
 traversed :: Traversable t => Traversal a b (t a) (t b)
 traversed = Optical wander
+
+-- #  Using Optics
+-------------------------------------------------------------------------------
 
 over :: Optic_ LinearArrow a b s t -> (a #-> b) -> s #-> t
 over (Optical l) f = getLA (l (LA f))
@@ -254,9 +269,6 @@ over' (Optical l) f = l f
 traverseOf' :: Optic_ (NonLinear.Kleisli f) a b s t -> (a -> f b) -> s -> f t
 traverseOf' (Optical l) f = NonLinear.runKleisli (l (NonLinear.Kleisli f))
 
-iso :: (s #-> a) -> (b #-> t) -> Iso a b s t
-iso f g = Optical (dimap f g)
-
 withIso :: Optic_ (Exchange a b) a b s t -> ((s #-> a) -> (b #-> t) -> r) -> r
 withIso (Optical l) f = f fro to
   where Exchange fro to = l (Exchange id id)
@@ -264,3 +276,13 @@ withIso (Optical l) f = f fro to
 withPrism :: Optic_ (Market a b) a b s t -> ((b #-> t) -> (s #-> Either t a) -> r) -> r
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)
+
+-- # Constructing Optics
+-------------------------------------------------------------------------------
+
+iso :: (s #-> a) -> (b #-> t) -> Iso a b s t
+iso f g = Optical (dimap f g)
+
+prism :: (b #-> t) -> (s #-> Either t a) -> Prism a b s t
+prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
+
