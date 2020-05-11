@@ -24,17 +24,14 @@
 -- **Optics can be conceptualized as a first class object with which you can
 -- view and map functions over sub-structure(s) within a larger structure.**
 --
--- __Linear__ optics are optics where the \"viewing\" and \"mapping\" are done
--- with linear functions (and any corresponding structures hold values linearly, i.e.,
--- with constructors that use linear arrows).
+-- /Linear/ optics are optics where the \"viewing\" and \"mapping\" are done
+-- with linear functions (and any corresponding structures hold values
+-- linearly, i.e., with constructors that use linear arrows).
 --
--- There are four optics:
---
---
--- > optic :: ClassConstraint f => (a `arr` b) -> (s `arr` t)
---
--- where `arr` is similar to a function arrow, specificially, @a `arr` b@ is like any computation
--- that composes with a linear function before or after it.
+-- In types: a (linear) optic of type @Optic a b s t@ is a way of viewing the
+-- sub-structures of type @a@ in the structure of type @s@ and mapping a
+-- function from an @a@ to a @b@ on those sub-structures in @s@ which change an
+-- @s@ to a @t@.
 --
 -- There are four basic optics: traversals, lenses, prisms and isomorphisms.
 --
@@ -52,12 +49,20 @@
 -- -}
 -- @
 --
--- The upward arrow means "is a specialization of" or "is a strict subset of".
--- So, an @Iso@ is a speciailization of a @Prism@, and any @Iso@ is a @Prism@.
--- On the other hand, there are some @Prism@s that are not @Iso@s.
+-- In the diagram above, the arrows @X --> Y@ mean any of the following
+-- equivalent things:
 --
+--  * X is a specialization of Y
+--  * X is a strict subset of Y
+--  * You can (basically) implement @f :: X -> Y@ with @f = id@.
+--
+-- Here's how to think about each optic:
+--
+-- TODO
 --
 -- == Examples
+--
+-- TODO
 --
 -- === 'Lens' Examples
 --
@@ -78,7 +83,6 @@
 --
 --
 -- == Appendix: How do the types make sense?
---
 --
 -- === At a technical level...
 --
