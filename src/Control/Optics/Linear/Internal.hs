@@ -8,51 +8,38 @@
 
 -- | This module provides linear optics.
 --
+-- == Overview
+--
+-- /Some familiarity with optics is needed to understand linear optics.
+-- Please go through the background material section if you are unfamiliar with
+-- lens, prisms, traversals or isomorphisms./
+--
+-- This documentation provides
+--
+--  * a high-level idea of what linear optics are and how to think about them
+--  * examples of using these optics
+--
+-- == How do I think about /linear/ optics?
+--
+-- **Optics can be conceptualized as a first class object with which you can
+-- view and map functions over sub-structure(s) within a larger structure.**
+--
+-- __Linear__ optics are optics where the \"viewing\" and \"mapping\" are done
+-- with linear functions (and any corresponding structures hold values linearly, i.e.,
+-- with constructors that use linear arrows).
+--
+-- There are four optics:
 --
 --
--- TODO: most of this stuff hasn't yet been translated to work for 'Strong'
--- and 'Wandering' constraints. I'll document that first, and then document this.
+-- > optic :: ClassConstraint f => (a `arr` b) -> (s `arr` t)
 --
+-- where `arr` is similar to a function arrow, specificially, @a `arr` b@ is like any computation
+-- that composes with a linear function before or after it.
 --
+-- There are four basic optics: traversals, lenses, prisms and isomorphisms.
 --
---
---
--- The documentation below provides an overview of the optics provided in this
--- module and examples of how to use them.
---
--- **Please access this background material if you are unfamiliar with lens and
--- optics.**
---
--- == Helpful Background Material
---
---  * [A great intro to lens talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
---  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
---  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
---  that contains some nice examples
---
--- == What are the optics in this file?
---
--- === Overview
---
--- An optic is basically a getter and a mapper into some type tradionally
--- called @s@. Getters and mappers are basically functions with these types:
---
--- > getter :: s -> a
--- > mapper :: (a -> a) -> s -> s
---
--- If we want to be able to modify some of the @a@s by applying a function of type
--- @a -> b@ inside some @s@ to make a @t@, we want these types:
---
--- > getter :: t -> b
--- > mapper :: (a -> b) -> s -> t
---
---
--- == What optics are in this module?
---
--- There are four optics provided in this module.
---
--- Here's a basic diagram
---
+-- @
+-- {-
 --        Traversal
 --          ^    ^
 --         /      \
@@ -62,15 +49,38 @@
 --        \       /
 --         \     /
 --           Iso
+-- -}
+-- @
 --
 -- The upward arrow means "is a specialization of" or "is a strict subset of".
 -- So, an @Iso@ is a speciailization of a @Prism@, and any @Iso@ is a @Prism@.
 -- On the other hand, there are some @Prism@s that are not @Iso@s.
 --
--- === At a high level, what is each optic useful for?
+--
+-- == Examples
+--
+-- === 'Lens' Examples
+--
+-- === 'Traversal' Examples
+--
+-- === 'Prism' Examples
+--
+-- === 'Iso' Examples
+--
+
+-- == Background Material
+--
+--  * [A great intro to lens talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
+--  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
+--  * [A friendly introduction to prisms and isos](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
+--  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
+--  that contains some nice examples
 --
 --
--- === How do the types work out?
+-- == Appendix: How do the types make sense?
+--
+--
+-- === At a technical level...
 --
 -- All optics are functions, called __optic functions__ of the type
 --
@@ -78,17 +88,6 @@
 --
 -- where @arr@ is some specific kind of arrow. Note that is is a rank-2 type
 -- (which just means that there is a @forall@ nested inside a @forall@).
---
---
--- * 'Traversal's are optics where @a `arr` b@ is @a -> f b@ for any
---   @Applicative f@
--- * 'Lens'es are optics where @a `arr` b@ is @a -> f b@ for any @Functor f@
--- * 'Iso's are optics where @a `arr` b@ is @a `p` f b@ for any
---    @Profunctor p@ and @Functor f@
--- * 'Prism's are optics where @a `arr` b@ is @a `c` f b@ for any
---   @Choice c@ and @Applicative f@
---
--- ==== How do these specialize?
 --
 -- Any @Lens@ is a @Traversal@. A @Lens@ is a function that can be applied
 -- for /any/ functor. A @Traversal@ is a function that can be applied for /any/
@@ -102,7 +101,6 @@
 -- optic function must work for /any/ @Choice c@. A traversal's optic function
 -- works for the function arrow @->@, which is an instance of @Choice@.
 --
---
 -- Please take care to notice and understand the principle at play:
 --
 -- __If @D@ is a stricter constraint than @C@ (@C => D@), then the rank-2 type
@@ -111,28 +109,13 @@
 -- Hence, we create specific kinds of Traversals by relaxing the constraints of
 -- Traversals.
 --
--- In summary:
+-- === More abstractly ...
 --
--- * Lenses are Traversals because Traversal's have a stricter constraint:
--- @Applicative f@ is stricter than @Functor f@
--- * Prisms are Traversals because Traversals have a stricter constraint:
--- The function arrow @a -> f b@ is stricter than using 
--- any @Choice c@ in @a `c` b@.
--- * Isos are Lenses because Isos have a stricter constraint:
--- A @a -> f b@ is stricter than using any @Profunctor p@ in @a `p` f b@.
--- * Isos are Prisms because Isos have a stricter constraint:
--- A @Choice c => Profunctor c@ is a stricter constraint on the @arr@.
+-- This is quite complicated. With simple types like a @Maybe a@ or
+-- @Monad m => a -> m b@, we can develop a sense of what the type means abstractly.
+-- This is much harder with optics because of all the type classes and the rank-2 types.
 --
---
--- == Examples of 'Lens'-es
---
--- == Examples of 'Traversal's
---
--- == Examples of 'Iso'morphisms
---
--- == Examples of 'Prism's
---
---
+-- TODO
 --
 module Control.Optics.Linear.Internal
   ( -- * Types
