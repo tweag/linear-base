@@ -34,13 +34,15 @@
 -- linearly, i.e., with constructors that use linear arrows).__
 --
 -- In types: a (linear) optic of type @Optic a b s t@ is a way of viewing the
--- sub-structures of type @a@ in the structure of type @s@ and mapping a
+-- sub-structure(s) of type @a@ in the structure of type @s@ and mapping a
 -- function from an @a@ to a @b@ on those sub-structures in @s@ which change an
 -- @s@ to a @t@. The non-polymorphic version of the optic is specialized
 -- to the types @Optic a a s s@ and is usually defined with a tick mark,
 -- e.g., the non-polymorphic @Lens@ is @Lens'@.
 --
--- There are four basic optics: traversals, lenses, prisms and isomorphisms.
+-- There are four basic optics: traversals, lenses, prisms and isomorphisms:
+--
+-- ==== Sub-typing diagram of optics
 --
 -- @
 -- {-
@@ -61,11 +63,26 @@
 --
 --  * X is a specialization of Y
 --  * X is a strict subset of Y
---  * You can (basically) implement @f :: X -> Y@ with @f = id@.
+--  * You can (basically) implement @f :: X -> Y@ with @f = id@
+--  but you can't implement @f :: Y -> X@.
 --
 -- === How can each optic be used? How do I think about them?
 --
--- TODO
+-- * A @Traversal a b s t@ is roughly equivalent to
+-- @(s -> (Tree a,x), (Tree b,x) -> t)@ for some type @x@.
+-- It provides a means of accessing several @a@s organized in
+-- some structural way in an @s@,
+-- and a means of changing them to @b@s to create a @t@.
+-- In very ordinary language, it's like walking or traversing the
+-- data structure, going across cases and inside definitions.
+--
+-- * A @Lens a b s t@ is roughly equivalent to
+-- @(s -> (a,x), (b,x) -> t)@ for some type @x@. It's a traversal
+-- on exactly one @a@ in a @s@.
+--
+-- * A @Prism a b s t@ is roughly equivalent to a
+-- @(s -> Either a x, Either b x -> t)@ for some type @x@.
+-- It's focusing on one branch or case that a type could be.
 --
 -- == Examples
 --
@@ -79,10 +96,10 @@
 --
 -- === 'Iso' Examples
 --
-
+--
 -- == Background Material
 --
---  * [A great intro to lens talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
+--  * [A great intro-to-lenses talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
 --  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
 --  * [A friendly introduction to prisms and isos](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
 --  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
@@ -98,7 +115,7 @@
 --
 -- === What are the optic types and why?
 --
--- All optics are functions, called __optic functions__ of the type
+-- All optics are functions, called __optic functions__ of the form
 --
 -- > forall arr. (a `arr` b) -> (s `arr` t)
 --
@@ -130,17 +147,16 @@
 --
 -- This works because these are rank-2 types. The @iso@ is an optic function
 -- that transforms any profunctor computation of type 
--- @Profunctor p => a `p` b@.  The second argument to @convert@ is @a_p_b@ which
--- is a computation of type @Strong (,) () p => a `p` b@. However, since the
--- @Strong@ constraint implies @Profunctor@ constraint, we can give
--- @a_p_b@ to @iso@. We could not write @convert@ with the types going the
--- other way.
+-- @Profunctor p => a `p` b@.  The second argument to @convert@ is @a_p_b@
+-- which is a computation of type @Strong (,) () p => a `p` b@. However, since
+-- the @Strong@ constraint implies @Profunctor@ constraint, we can give @a_p_b@
+-- to @iso@. We could not write @convert@ with the types going the other way.
 --
 -- More generally, since isomorphisms are functions that work on all
 -- profunctors, they are also functions that work on all profunctors
 -- with additional constraints. Moreover, there are more optic functions that
 -- work on all profunctors with that @Strong@ constraint since the assumption
--- of futher constraints allows other optic functions to be written.  This is
+-- of further constraints allows other optic functions to be written. This is
 -- analogus to how in abstract algebra, a theorem on groups is still a theorem
 -- about abelian groups and in fact, the theorems that hold on abelian groups
 -- are a superset of the theorems that hold on just groups.
@@ -153,19 +169,19 @@
 --
 -- === What do these optic types /mean/?
 --
--- This is quite complicated. With simple types like a @Maybe a@ or @Monad m =>
--- a -> m b@, we can develop a sense of what the type means abstractly. This
--- is much harder with optics because of all the type classes and the rank-2
--- types.
+-- This is quite complicated. With simple types like a @Maybe a@ or
+-- @Monad m => a -> m b@, we can develop a sense of what the type means
+-- abstractly. This is much harder with optics because of all the type classes
+-- and the rank-2 types.
 --
--- Even classic lens type, for instance, is not easily grasped abtractly:
+-- Even the classic lens type, for instance, is not easily grasped abtractly:
 --
 -- > type Lens s a = forall f. Functor f => (a -> f a) -> (s -> f s)
 --
 -- So, suffice it to say that the types of linear optics are simply generic
 -- enough to making the interface we want, i.e., providing a first class object
--- with which we can map over sub-structure(s) in a structure and view
--- sub-structure(s) in a structure.
+-- with which we can map over sub-structure(s) within a structure and view
+-- sub-structure(s) within a structure.
 --
 -- However, due to the fact that they are so general, they have several other
 -- unforseen use cases.
