@@ -11,13 +11,16 @@
 --
 -- Please import this module qualified.
 --
--- == Conventions from "Control.Optics.Linear.Internal"
+-- == Conventions & Connections to "Control.Optics.Linear.Internal"
 --
--- Many Profunctors are heavily used throughout optics.
+-- Since profunctors are heavily used throughout optics, many conventions and
+-- ideas about optics are used in this module:
 --
 -- * @TypeName a b s t@ means we have an optic of some @s@ with sub-structures
 -- of type @a@ that if replaced by @b@s yield a @t@.
--- * @Strong@ and @Wandering@ are classes
+-- * @Strong@ and @Wandering@ are classes drawn from
+-- [this paper](https://www.cs.ox.ac.uk/jeremy.gibbons/publications/proyo.pdf)
+-- * 'Exchange' and 'Market' are ways of encoding isomorphisms and prisms
 --
 module Data.Profunctor.Linear
   ( Profunctor(..)
