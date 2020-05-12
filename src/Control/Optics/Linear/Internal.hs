@@ -94,17 +94,172 @@
 --
 -- == Examples
 --
--- === 'Lens' Examples
--- TODO
+-- === 'Lens' Example
 --
--- === 'Traversal' Examples
--- TODO
+-- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE StandaloneDeriving #-}
+-- > {-# LANGUAGE DeriveAnyClass #-}
+-- > {-# LANGUAGE TypeOperators #-}
+-- > {-# LANGUAGE FlexibleContexts #-}
+-- > {-# LANGUAGE RankNTypes #-}
+-- > {-# LANGUAGE GADTs #-}
+-- > {-# LANGUAGE RebindableSyntax #-}
+-- > {-# LANGUAGE RecordWildCards #-}
+-- > {-# LANGUAGE TypeApplications #-}
+-- > {-# LANGUAGE TypeInType #-}
+-- > {-# LANGUAGE TypeFamilies #-}
+-- > import qualified Data.Profunctor.Kleisli.Linear as Linear
+-- > import qualified Data.Profunctor.Linear as Linear
+-- > import Data.Bifunctor.Linear
+-- > import Control.Optics.Linear.Internal
+-- >
+-- > data Person where
+-- >   Person ::
+-- >     { age :: Int
+-- >     , name :: String
+-- >     , home :: Address
+-- >     } #-> Person
+-- >
+-- > data Address where
+-- >   Address ::
+-- >     { street :: String
+-- >     , zipcode :: Int
+-- >     } #-> Address
+-- >
+-- > personAddL :: Lens' Address Person
+-- > personAddL = lens (\(Person a n h) -> (h, Person a n))
+-- >
+-- > lens :: (s #-> (a, b #-> t)) -> Lens a b s t
+-- > lens decompose = Optical $ \a_arr_b ->
+-- >   Linear.dimap decompose apply (Linear.first a_arr_b)
+-- >   where
+-- >     apply :: (b, b #-> t) #-> t
+-- >     apply (b, f) = f b
+-- > overAddr :: (Address #-> Address) -> Person #-> Person
+-- > overAddr = over personAddL
 --
--- === 'Prism' Examples
--- TODO
+-- === 'Traversal' Example
 --
--- === 'Iso' Examples
--- TODO
+-- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE StandaloneDeriving #-}
+-- > {-# LANGUAGE DeriveAnyClass #-}
+-- > {-# LANGUAGE TypeOperators #-}
+-- > {-# LANGUAGE FlexibleContexts #-}
+-- > {-# LANGUAGE RankNTypes #-}
+-- > {-# LANGUAGE GADTs #-}
+-- > {-# LANGUAGE RebindableSyntax #-}
+-- > {-# LANGUAGE RecordWildCards #-}
+-- > {-# LANGUAGE TypeApplications #-}
+-- > {-# LANGUAGE TypeInType #-}
+-- > {-# LANGUAGE TypeFamilies #-}
+-- > import qualified Data.Profunctor.Kleisli.Linear as Linear
+-- > import qualified Data.Profunctor.Linear as Linear
+-- > import Data.Bifunctor.Linear
+-- > import Control.Optics.Linear.Internal
+-- > import qualified Control.Monad.Linear as Control
+-- > import Data.Functor.Identity
+-- >
+-- > data IntStructure where
+-- >   OneInt :: Int #-> IntStructure
+-- >   SomeInts :: [Int] -> IntStructure
+-- >   deriving Show
+-- >
+-- > extract :: IntStructure #-> Maybe Int
+-- > extract (OneInt i) = Just i
+-- > extract (SomeInts []) = Nothing
+-- > extract (SomeInts (i:_)) = Just i
+-- >
+-- > buildUp :: Maybe Int #-> IntStructure
+-- > buildUp Nothing = SomeInts []
+-- > buildUp (Just i) = OneInt i
+-- >
+-- > -- A traversal that only looks at one int, in two different cases
+-- >
+-- > intStructT :: Traversal' Int IntStructure
+-- > intStructT = Optical $ \int_arr_int ->
+-- >   Linear.dimap extract buildUp (Linear.wander int_arr_int)
+-- >
+-- > traverseSubPiece :: Control.Applicative f =>
+-- >   Traversal' a s -> (a #-> f a) -> (s #->  f s)
+-- > traverseSubPiece (Optical opt) f = Linear.runKleisli (opt (Linear.Kleisli f))
+-- >
+-- > incInt :: Int #-> Identity Int
+-- > incInt x = Identity (x+1)
+-- >
+-- > exampleTraversal :: IntStructure #-> Identity IntStructure
+-- > exampleTraversal = traverseSubPiece intStructT incInt
+-- >
+-- > intStruct :: IntStructure
+-- > intStruct = SomeInts [45,2,12,9]
+-- >
+-- > -- *module> exampleTraversal intStruct
+-- > -- Identity (OneInt 46))
+--
+-- === 'Prism' Example
+--
+-- Building off the previous example ...
+--
+-- > caseIntStruct :: IntStructure #-> Either IntStructure Int
+-- > caseIntStruct (SomeInts xs) = Left (SomeInts xs)
+-- > caseIntStruct (OneInt i) = Right i
+-- >
+-- > intStructPrism :: Prism' Int IntStructure
+-- > intStructPrism = prism OneInt caseIntStruct
+-- >
+-- > incrementOneCase :: IntStructure #-> Identity IntStructure
+-- > incrementOneCase  = traverseOf intStructPrism incInt
+-- >
+-- > intStruct :: IntStructure
+-- > intStruct = SomeInts [45,2,12,9]
+-- >
+-- > intStruct' :: IntStructure
+-- > intStruct' = OneInt 42
+-- >
+-- > -- *module> incrementOneCase intStruct
+-- > -- Identity (SomeInts [45,2,12,9])
+-- > -- *module> incrementOneCase intStruct'
+-- > -- Identity (OneInt 43)
+--
+-- === 'Iso' Example
+--
+-- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE StandaloneDeriving #-}
+-- > {-# LANGUAGE DeriveAnyClass #-}
+-- > {-# LANGUAGE TypeOperators #-}
+-- > {-# LANGUAGE FlexibleContexts #-}
+-- > {-# LANGUAGE RankNTypes #-}
+-- > {-# LANGUAGE GADTs #-}
+-- > {-# LANGUAGE RebindableSyntax #-}
+-- > {-# LANGUAGE RecordWildCards #-}
+-- > {-# LANGUAGE TypeApplications #-}
+-- > {-# LANGUAGE TypeInType #-}
+-- > {-# LANGUAGE TypeFamilies #-}
+-- > import qualified Data.Profunctor.Kleisli.Linear as Linear
+-- > import qualified Data.Profunctor.Linear as Linear
+-- > import Data.Bifunctor.Linear
+-- > import Control.Optics.Linear.Internal
+-- >
+-- > data Pair a b where
+-- >   Pair :: a #-> b #-> Pair a b
+-- >   deriving Show
+-- >
+-- > toTuple :: Pair a b #-> (a,b)
+-- > toTuple (Pair a b) = (a,b)
+-- >
+-- > fromTuple :: (a,b) #-> Pair a b
+-- > fromTuple (a,b) = Pair a b
+-- >
+-- > pairTupleIso :: Iso' (a,b) (Pair a b)
+-- > pairTupleIso = iso toTuple fromTuple
+-- >
+-- > pair1 :: Pair Int Int
+-- > pair1 = Pair 2 3
+-- >
+-- > setPairViaTuple :: (a,b) -> Pair a b -> Pair a b
+-- > setPairViaTuple newVal pair = set pairTupleIso newVal pair
+-- >
+-- > -- *module> setPairViaTuple (5,6) pair1
+-- > -- Pair 5 6
 --
 -- == Background Material
 --
