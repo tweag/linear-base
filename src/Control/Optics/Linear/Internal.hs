@@ -68,34 +68,43 @@
 --
 -- === How can each optic be used? How do I think about them?
 --
--- * A @Traversal a b s t@ is roughly equivalent to
--- @(s -> (Tree a,x), (Tree b,x) -> t)@ for some type @x@.
--- It provides a means of accessing several @a@s organized in
--- some structural way in an @s@,
--- and a means of changing them to @b@s to create a @t@.
--- In very ordinary language, it's like walking or traversing the
--- data structure, going across cases and inside definitions.
+-- * A @Traversal a b s t@ is roughly equivalent to a
+--  @(s #-> (Tree a,x), (Tree b,x) #-> t)@ for some type @x@.
+--  It provides a means of accessing several @a@s organized in
+--  some structural way in an @s@,
+--  and a means of changing them to @b@s to create a @t@.
+--  In very ordinary language, it's like walking or traversing the
+--  data structure, going across cases and inside definitions.
 --
--- * A @Lens a b s t@ is roughly equivalent to
--- @(s -> (a,x), (b,x) -> t)@ for some type @x@. It's a traversal
--- on exactly one @a@ in a @s@.
+-- * A @Lens a b s t@ is roughly equivalent to a
+--  @(s #-> (a,x), (b,x) #-> t)@ for some type @x@. It's a traversal
+--  on exactly one @a@ in a @s@.
 --
 -- * A @Prism a b s t@ is roughly equivalent to a
--- @(s -> Either a x, Either b x -> t)@ for some type @x@.
--- It's focusing on one branch or case that a type could be.
+--  @(s #-> Either a x, Either b x #-> t)@ for some sum type @x@.
+--  It's focusing on one branch or case that a sum type could be.
+--
+-- * An @Iso a b s t@ is equivalent to a @(s #-> a, b #-> t)@.  In the simple
+--  case of an @Iso' a s@, this is equivalent to inverse functions
+--  @(s #-> a, a #-> s)@.  In the general case an @Iso a b s t@ means if you
+--  have the isomorphisms @(a #-> b, b #-> a)@ and @(s #-> t, t #-> a)@, then
+--  you can use @(s #-> a, b #-> t)@ to form isomorphisms between @s@, @t@,
+--  @a@ and @b@.
+--
 --
 -- == Examples
 --
+-- === 'Lens' Examples
 -- TODO
 --
--- === 'Lens' Examples
---
 -- === 'Traversal' Examples
+-- TODO
 --
 -- === 'Prism' Examples
+-- TODO
 --
 -- === 'Iso' Examples
---
+-- TODO
 --
 -- == Background Material
 --
