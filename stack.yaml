@@ -18,5 +18,6 @@ extra-deps:
 
 
 nix:
+  enable: true
   shell-file: shell-stack.nix
   path: ["nixpkgs=./nixpkgs.nix"]
