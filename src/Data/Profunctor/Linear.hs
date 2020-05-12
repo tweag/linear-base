@@ -9,10 +9,16 @@
 
 -- | This module provides profunctor classes and instances
 --
--- This module uses many definitions and conventions from
--- "Control.Optics.Linear.Internal". Most prominently,
---  @TypeName a b s t@ means we have an optic of some @s@ with sub-structures
---  of type @a@ that if replaced by @b@s yield a @t@.
+-- Please import this module qualified.
+--
+-- == Conventions from "Control.Optics.Linear.Internal"
+--
+-- Many Profunctors are heavily used throughout optics.
+--
+-- * @TypeName a b s t@ means we have an optic of some @s@ with sub-structures
+-- of type @a@ that if replaced by @b@s yield a @t@.
+-- * @Strong@ and @Wandering@ are classes
+--
 module Data.Profunctor.Linear
   ( Profunctor(..)
   , Monoidal(..)

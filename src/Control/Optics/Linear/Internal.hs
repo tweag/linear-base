@@ -32,7 +32,8 @@
 -- sub-structures of type @a@ in the structure of type @s@ and mapping a
 -- function from an @a@ to a @b@ on those sub-structures in @s@ which change an
 -- @s@ to a @t@. The non-polymorphic version of the optic is specialized
--- to the types @Optic a a s s@.
+-- to the types @Optic a a s s@ and is usually defined with a tick mark, 
+-- e.g., the non-polymorphic @Lens@ is @Lens'@.
 --
 -- There are four basic optics: traversals, lenses, prisms and isomorphisms.
 --
@@ -82,6 +83,11 @@
 --  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
 --  that contains some nice examples
 --
+-- === Background on implementation
+--
+-- * Many ideas are drawn from
+-- [this paper](https://www.cs.ox.ac.uk/jeremy.gibbons/publications/proyo.pdf)
+--
 --
 -- == Appendix: How do the types make sense?
 --
@@ -125,6 +131,7 @@
 -- types.
 --
 -- TODO
+--
 --
 module Control.Optics.Linear.Internal
   ( -- * Definitions of Optics
@@ -183,12 +190,19 @@ newtype Optic_ arr a b s t = Optical (a `arr` b -> s `arr` t)
 type Optic c a b s t =
   forall arr. c arr => Optic_ arr a b s t
 
+-- | TODO
 type Iso a b s t = Optic Profunctor a b s t
 type Iso' a s = Iso a a s s
+
+-- | TODO
 type Lens a b s t = Optic (Strong (,) ()) a b s t
 type Lens' a s = Lens a a s s
+
+-- | TODO
 type Prism a b s t = Optic (Strong Either Void) a b s t
 type Prism' a s = Prism a a s s
+
+-- | TODO
 type Traversal a b s t = Optic Wandering a b s t
 type Traversal' a s = Traversal a a s s
 
@@ -207,24 +221,37 @@ swap = iso Bifunctor.swap Bifunctor.swap
 assoc :: SymmetricMonoidal m u => Iso ((a `m` b) `m` c) ((d `m` e) `m` f) (a `m` (b `m` c)) (d `m` (e `m` f))
 assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 
+-- | Lens for the first element of a tuple
 _1 :: Lens a b (a,c) (b,c)
 _1 = Optical first
 
+-- | Lens for the second element of a tuple
 _2 :: Lens a b (c,a) (c,b)
 _2 = Optical second
 
+-- | Prism for viewing and mapping over the
+-- left case of an either
 _Left :: Prism a b (Either a c) (Either b c)
 _Left = Optical first
 
+-- | Prism for viewing and mapping over the
+-- right case of an either
 _Right :: Prism a b (Either c a) (Either c b)
 _Right = Optical second
 
+-- | Prism for viewing and mapping over the
+-- just case of a maybe
 _Just :: Prism a b (Maybe a) (Maybe b)
 _Just = prism Just (maybe (Left Nothing) Right)
 
+-- | Prism for the viewing and mapping over
+-- the nothing case of a maybe
 _Nothing :: Prism' () (Maybe a)
 _Nothing = prism (\() -> Nothing) Left
 
+-- | The default traversal of a traversible of type @t@.
+-- Mapping over and getting all @a@s is done via
+-- the @Traversable@ instance.
 traversed :: Traversable t => Traversal a b (t a) (t b)
 traversed = Optical wander
 
