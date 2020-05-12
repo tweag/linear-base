@@ -5,10 +5,38 @@
 {-# LANGUAGE TupleSections #-}
 
 
--- | This module provides
+-- | This module provides (linear) kleisli and cokleisli arrows
 --
--- Import this module qualified.
+-- Please import this module qualified to avoid name conflicts.
 --
+-- == What are Kleisli arrows?
+--
+-- The basic idea is that a Kleisli arrow is like a function arrow
+-- and @Kleisli m a b@ is similar to a function from @a@ to @b@.
+--
+-- Specifically, Kleisli arrows are used to abstract over a monadic computation
+-- from some type @a@ to some type @b@. That is, if @:-->@ is a Kleisli arrow,
+-- then @f :: a :--> b@ is really a function $f :: a -> M b$ for some monad
+-- @M@.
+--
+-- Here, we provide __linear__ Kleisi arrows. An example for the @Maybe@
+-- monad:
+--
+-- > type a :--> b = a #-> Maybe b
+--
+-- == Why make this definition?
+--
+-- We can use this definition to describe properties of these
+-- kind-of-like-function-arrow arrows. In this module, we do this with several
+-- typeclass instances.
+--
+-- For instance, if @m@ is any functor, @Kleisli m@ is a @Profunctor@.
+--
+-- == CoKleisli
+--
+-- A CoKleisli arrow is just one that represents a computation from
+-- a @m a@ to an @a@ via a linear arrow. (It's a Co-something because it
+-- reverses the order of the function arrows in the something.)
 module Data.Profunctor.Kleisli.Linear
   ( Kleisli(..)
   , CoKleisli(..)

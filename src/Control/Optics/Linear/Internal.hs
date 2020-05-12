@@ -16,23 +16,28 @@
 --
 -- This documentation provides
 --
---  * a high-level idea of what linear optics are and how to think about them
+--  * a high-level idea of
+--     * what linear optics are
+--     * how to think about linear optics
+--     * how these relate to the standard optic definitions in @lens@
 --  * examples of using these optics
 --
--- == How do I think about /linear/ optics?
+-- == Conceptualizing and using optics
+--
+-- === What are /linear/ optics?
 --
 -- **Optics can be conceptualized as a first class object with which you can
 -- view and map functions over sub-structure(s) within a larger structure.**
 --
--- /Linear/ optics are optics where the \"viewing\" and \"mapping\" are done
+-- __/Linear/ optics are optics where the \"viewing\" and \"mapping\" are done
 -- with linear functions (and any corresponding structures hold values
--- linearly, i.e., with constructors that use linear arrows).
+-- linearly, i.e., with constructors that use linear arrows).__
 --
 -- In types: a (linear) optic of type @Optic a b s t@ is a way of viewing the
 -- sub-structures of type @a@ in the structure of type @s@ and mapping a
 -- function from an @a@ to a @b@ on those sub-structures in @s@ which change an
 -- @s@ to a @t@. The non-polymorphic version of the optic is specialized
--- to the types @Optic a a s s@ and is usually defined with a tick mark, 
+-- to the types @Optic a a s s@ and is usually defined with a tick mark,
 -- e.g., the non-polymorphic @Lens@ is @Lens'@.
 --
 -- There are four basic optics: traversals, lenses, prisms and isomorphisms.
@@ -58,7 +63,7 @@
 --  * X is a strict subset of Y
 --  * You can (basically) implement @f :: X -> Y@ with @f = id@.
 --
--- Here's how to think about each optic:
+-- === How can each optic be used? How do I think about them?
 --
 -- TODO
 --
@@ -114,7 +119,7 @@
 -- optic function must work for /any/ @Choice c@. A traversal's optic function
 -- works for the function arrow @->@, which is an instance of @Choice@.
 --
--- Please take care to notice and understand the principle at play:
+-- Please take care to understand the principle at play:
 --
 -- __If @D@ is a stricter constraint than @C@ (i.e., any @D@ instance has a @C@
 -- instance), then the rank-2 type @forall x. C x => f@ is a special case of
@@ -131,7 +136,6 @@
 -- types.
 --
 -- TODO
---
 --
 module Control.Optics.Linear.Internal
   ( -- * Definitions of Optics
