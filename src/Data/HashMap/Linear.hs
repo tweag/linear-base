@@ -11,27 +11,25 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 -- |
---   A mutable hashmap with a linear interface.
---   Internally, this uses robin hood hashing on mutable,
---   linear arrays.
+-- This module provides mutable hashmaps with a linear interface.
 --
---   TODO:
+-- To use mutable hashmaps, create a linear computation of type
+-- @HashMap k v #-> Unrestricted b@ and feed it to 'singleton' with
+-- an initial key-value pair @(k,v)@.
 --
---   * Make everything linear, I don't need to use Unsafe.toLinear
---   * Add singletonWithSize
---   * swapFromRead repeats the probe sequence on the recurive insert call
---     and this could be done away with
---   * We don't resize to make the array smaller when we have too much space
---   * Make the lookup use smart search by probing from the mean PSL:
---     probe at the mean, mean-1, mean+1, mean-2, mean+2, ...
---   * Other functions from Data.Map
+-- This hashmap is implemented with robin hood hashing which has good average
+-- case performance.
 module Data.HashMap.Linear
-  ( HashMap,
+  ( -- * A mutable hashmap
+    HashMap,
+    -- * Run a computation using a 'HashMap'
     singleton,
+    -- * Modifiers and Constructors
     alter,
     insert,
     delete,
     insertAll,
+    -- * Accessors
     size,
     member,
     lookup,
@@ -46,6 +44,16 @@ import Prelude.Linear hiding ((+), lookup, read)
 import qualified Unsafe.Linear as Unsafe
 import Prelude ((+))
 import qualified Prelude
+
+-- # Implementation Notes
+-- This is a simple implementatation of robin hood hashing.
+--
+-- See these links:
+--
+-- * https://programming.guide/robin-hood-hashing.html
+-- * https://andre.arko.net/2017/08/24/robin-hood-hashing/
+-- * https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf
+--
 
 -- # Core Data Types
 --------------------------------------------------
@@ -103,6 +111,10 @@ singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
       f $ HashMap (defaultSize, 1) (write arr ixToHash (k, v, 0))
 
 -- XXX: re-write linearly
+-- | Given a key @k@ to 'lookup', look up a @Maybe v@ and feed it to
+-- a function @Maybe v -> Maybe v@, and if the result is @Nothing@,
+-- delete that key, and otherwise, replace the value with the @v@
+-- in the returned @Just v@.
 alter ::
   Keyed k =>
   HashMap k v #-> (Maybe v -> Maybe v) ->
@@ -118,7 +130,8 @@ alter = Unsafe.toLinear unsafeAlter
           Nothing -> delete hmap' k
           Just v -> insert hmap' k v
 
--- | If present, update value, otherwise insert new mapping
+-- | If the key is present, this update the value,
+-- otherwise insert a new key-value pair.
 insert :: Keyed k => HashMap k v #-> k -> v -> HashMap k v
 insert hmap k v = insertFromQuery v $ queryIndex (maybeResize hmap) k
   where
@@ -141,7 +154,8 @@ insert hmap k v = insertFromQuery v $ queryIndex (maybeResize hmap) k
     swapFromRead (arr', (k', v', _)) sizes ix (k, v, psl) =
       insert (HashMap sizes (write arr' ix (k, v, psl))) k' v'
 
--- | If present, deletes key-value pair, otherwise does nothing
+-- | This deletes the key-value pair if it is present, and otherwise does
+-- nothing.
 delete :: Keyed k => HashMap k v #-> k -> HashMap k v
 delete hmap k = deleteFromQuery $ queryIndex hmap k
   where
@@ -188,6 +202,8 @@ maybeResize (HashMap (!size, !count) arr)
           | psl < 0 = filterValidPSL xs
           | otherwise = (k, v) : filterValidPSL xs
 
+-- | 'insert' (in the provided order) a list of key-value pairs to a given
+-- hashmap.
 insertAll :: Keyed k => [(k, v)] -> HashMap k v #-> HashMap k v
 insertAll [] hmap = hmap
 insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)

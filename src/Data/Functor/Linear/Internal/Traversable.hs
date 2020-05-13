@@ -27,6 +27,28 @@ import Prelude (Maybe(..), Either(..))
 -- TODO: write the laws
 -- TODO: maybe add a Foldable class between Functor and Traversable as well
 
+-- | A linear data traversible is a functor of type @t a@ where you can apply a
+-- linear effectful action of type @a #-> f b@ on each value of type @a@ and
+-- compose this to perform an action on the whole functor, resulting in a value
+-- of type @f (t b)@.
+--
+-- To learn more about 'Traversable', see here:
+--
+--  * \"Applicative Programming with Effects\",
+--    by Conor McBride and Ross Paterson,
+--    /Journal of Functional Programming/ 18:1 (2008) 1-13, online at
+--    <http://www.soi.city.ac.uk/~ross/papers/Applicative.html>.
+--
+--  * \"The Essence of the Iterator Pattern\",
+--    by Jeremy Gibbons and Bruno Oliveira,
+--    in /Mathematically-Structured Functional Programming/, 2006, online at
+--    <http://web.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/#iterator>.
+--
+--  * \"An Investigation of the Laws of Traversals\",
+--    by Mauro Jaskelioff and Ondrej Rypacek,
+--    in /Mathematically-Structured Functional Programming/, 2012, online at
+--    <http://arxiv.org/pdf/1202.2919>.
+--
 class Data.Functor t => Traversable t where
   {-# MINIMAL traverse | sequence #-}
 
@@ -63,7 +85,7 @@ mapAccumR f s t = swap $ runStateR (traverse (\b -> StateR $ \i -> swap $ f i b)
 swap :: (a,b) #-> (b,a)
 swap (x,y) = (y,x)
 
--- right-to-left state transformer
+-- | A right-to-left state transformer
 newtype StateR s a = StateR (s #-> (a, s))
   deriving (Data.Functor, Data.Applicative) via Control.Data (StateR s)
 

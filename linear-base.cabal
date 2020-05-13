@@ -39,7 +39,6 @@ library
     Data.Unrestricted.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
-    Prelude.Linear.Internal.Simple
     System.IO.Linear
     System.IO.Resource
     Unsafe.Linear
@@ -58,6 +57,7 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
+    Prelude.Linear.Internal.Simple
     Unsafe.MutableArray
 
 test-suite test

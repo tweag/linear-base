@@ -15,10 +15,32 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | This module defines vectors of known length which can hold linear values
+-- | This module defines vectors of known length which can hold linear values.
 --
 -- Having a known length matters with linear types, because many common vector
 -- operations (like zip) are not total with linear types.
+--
+-- Make these vectors by giving any finite number of arguments to 'make'
+-- and use them with 'elim':
+--
+-- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE TypeApplications #-}
+-- > {-# LANGUAGE TypeInType #-}
+-- > {-# LANGUAGE TypeFamilies #-}
+-- >
+-- > import Prelude.Linear
+-- > import qualified Data.Vector.Linear as Vector
+-- >
+-- > isTrue :: Bool
+-- > isTrue = Vector.elim (listMaker 4 9) doSomething
+-- >   where
+-- >     -- GHC can't figure out this type equality, so this is needed.
+-- >     listMaker :: Int #-> Int #-> Vector.V 2 Int
+-- >     listMaker = Vector.make @2 @Int
+-- >
+-- > doSomething :: Int #-> Int #-> Bool
+-- > doSomething x y = lseq x (lseq y True)
+--
 --
 -- A much more expensive library of vectors of known size (including matrices
 -- and tensors of all dimensions) is the [@linear@ library on

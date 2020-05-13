@@ -7,26 +7,49 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# OPTIONS_GHC -Wno-unbanged-strict-patterns #-}
 
--- |
---   Module: Vector
---   Description: A fast dynamic, mutable vector.
+-- | Mutable vectors with a linear API.
 --
---   TODO:
+-- Vectors are arrays that grow automatically, that you can append to with
+-- 'snoc'.
 --
---   * Is this fast?
---   * Add doc.
---   * Add more of the core API from Data.Vector.
---     Mainly just cons, insert and delete.
---   * Add control instances
---   * Dupable instance
---   * See if you can index by length nicely
+-- To use mutable vectors, create a linear computation of type
+-- @Vector a #-> Unrestricted b@ and feed it to 'constant' or 'fromList'.
+--
+-- == Example
+--
+-- > {-# LANGUAGE LinearTypes #-}
+-- > import Prelude.Linear
+-- > import Data.Unrestricted.Linear
+-- > import qualified Unsafe.Linear as Unsafe
+-- > import qualified Data.Vector.Mutable.Linear as Vector
+-- >
+-- > isTrue :: Bool
+-- > isTrue = unUnrestricted $ Vector.fromList [0..10] isFirstZero
+-- >
+-- > isFalse :: Bool
+-- > isFalse = unUnrestricted $ Vector.fromList [1,2,3] isFirstZero
+-- >
+-- > isFirstZero :: Vector.Vector Int #-> Unrestricted Bool
+-- > isFirstZero arr = withReadingFirst (Vector.read arr 0)
+-- >   where
+-- >     withReadingFirst :: (Vector.Vector Int, Int) #-> Unrestricted Bool
+-- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
+-- >
+-- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
+-- > (===) = Unsafe.toLinear2 (==)
+--
+--
 module Data.Vector.Mutable.Linear
-  ( Vector,
+  ( -- * A mutable vector
+    Vector,
+    -- * Run a computation with a vector
     constant,
     fromList,
-    read,
+    -- * Mutators
     write,
     snoc,
+    -- * Accessors
+    read,
     length,
   )
 where
@@ -51,14 +74,16 @@ data Vector a where
 -- # API: Construction, Mutation, Queries
 -------------------------------------------------------------------------------
 
--- | Allocate a constant vector of a given size
+-- | Allocate a constant vector of a given non-zero size (and error on a bad
+-- size)
 constant :: HasCallStack =>
   Int -> a -> (Vector a #-> Unrestricted b) -> Unrestricted b
 constant size x f
   | size <= 0 = error ("Trying to construct a vector of size " ++ show size)
   | otherwise = f $ Vec (size, size) (Unsafe.newMutArr size x)
 
--- | Allocator from a non-empty list
+-- XXX: long line below
+-- | Allocator from a non-empty list (and error on empty lists)
 fromList :: HasCallStack => [a] -> (Vector a #-> Unrestricted b) -> Unrestricted b
 fromList [] _ = error "Trying to allocate a vector from an empty list"
 fromList xs@(x:_) (f :: Vector a #-> Unrestricted b) =
@@ -84,9 +109,8 @@ snoc (Vec (len, size) ma) x
   | len < size = write (Vec (len + 1, size) ma) len x
   | otherwise = write (unsafeResize (size * 2) (Vec (len + 1, size) ma)) len x
 
--- | Write to an element already written to before.
--- Note: this will not write to elements beyond the current
--- length of the array.
+-- | Write to an element already written to before.  Note: this will not write
+-- to elements beyond the current length of the array and will error instead.
 write :: HasCallStack => Vector a #-> Int -> a -> Vector a
 write = Unsafe.toLinear writeUnsafe
   where
@@ -95,7 +119,8 @@ write = Unsafe.toLinear writeUnsafe
       | indexInRange len ix = case Unsafe.writeMutArr mutArr ix val of () -> v
       | otherwise = error "Write index not in range."
 
--- | Read from a vector, with an in-range index.
+-- | Read from a vector, with an in-range index and error for an index that is
+-- out of range (with the usual range @0..length-1@).
 read :: HasCallStack => Vector a #-> Int -> (Vector a, a)
 read = Unsafe.toLinear readUnsafe
   where

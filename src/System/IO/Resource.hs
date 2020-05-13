@@ -10,23 +10,57 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 
--- | This module defines a resource-aware IO monad. It provide facilities to add
--- in your own resources.
+-- | This module defines an IO monad for linearly working with system resources
+-- like files. It provides tools to take resources that are currently
+-- unsafely accessible from "System.IO" and use them in this monad.
 --
--- Functions in this module are meant to be qualified.
-
--- XXX: This would be better as a multiplicity-parametric relative monad, but
--- until we have multiplicity polymorphism, we use a linear monad.
-
+-- Import this module qualified to avoid name clashes.
+--
+-- To use this RIO monad, create some @RIO@ computation,
+-- run it to get a "System.IO" computation.
+--
+-- = A simple example
+-- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE RebindableSyntax #-}
+-- > {-# LANGUAGE RecordWildCards #-}
+-- >
+-- > import qualified System.IO.Resource as Linear
+-- > import qualified Control.Monad.Linear.Builder as Control
+-- > import qualified Data.Text as Text
+-- > import Data.Unrestricted.Linear
+-- > import System.IO
+-- > import Prelude
+-- >
+-- > linearWriteToFile :: IO ()
+-- > linearWriteToFile = Linear.run $ do
+-- >   handle1 <- Linear.openFile "/home/user/test.txt" WriteMode
+-- >   handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
+-- >   () <- Linear.hClose handle2
+-- >   return (Unrestricted ())
+-- >   where
+-- >     Control.Builder {..} = Control.monadBuilder
+--
+-- To enable do notation, as in the example above, we need the last line.
+--
+-- Since do notation is specific to @Control.Monad@, we used -XRebindableSyntax.
+-- This allows us to use do notation and define, in scope, our own @(>>=)@,
+-- @return@, and @(>>)@ which are used in desugaring the do block.
+--
+-- We create a record in "Control.Monad.Linear.Builder" that has as members
+-- @(>>=)@ and so on.
+-- We use -XRecordWildCards, get those functions in scope with the wildcard
+-- @Control.Builder {..}@.
 module System.IO.Resource
-  ( RIO
+  ( -- * The Resource I/O Monad
+    RIO
   , run
-    -- * Monadic primitives
+    -- * Using Resource Handles
     -- $monad
-    -- * Files
     -- $files
   , Handle
-  , openFile
+    -- ** File I/O
+  , openFile 
+    -- ** Working with Handles
   , hClose
   , hGetChar
   , hPutChar
@@ -60,6 +94,10 @@ import qualified Prelude as P
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
+-- XXX: This would be better as a multiplicity-parametric relative monad, but
+-- until we have multiplicity polymorphism, we use a linear monad.
+
+
 newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 
 -- | The resource-aware I/O monad. This monad guarantees that acquired resources
@@ -69,6 +107,8 @@ newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
 unRIO :: RIO a #-> IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
 
+-- | Take a @RIO@ computation with a value @a@ that is not linearly bound and
+-- make it a "System.IO" computation.
 run :: RIO (Unrestricted a) -> System.IO a
 run (RIO action) = do
     rrm <- System.newIORef (ReleaseMap IntMap.empty)
@@ -130,6 +170,7 @@ instance Control.Monad RIO where
 -- Havoc on the abstraction. But we could provide a smart constructor/view to
 -- unsafely convert to file handles in order for the Handle API to be
 -- extensible.
+
 newtype Handle = Handle (UnsafeResource System.Handle)
 
 -- | See 'System.IO.openFile'
@@ -174,13 +215,14 @@ hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
 
 -- $new-resources
 
--- | The type of resources. Each safe resource is implemented as an abstract
--- newtype wrapper around @Resource R@ where @R@ is the unsafe variant of the
--- resource.
+-- | The type of system resources.  To create and use resources, you need to
+-- use the API since the constructor is not released.
 data UnsafeResource a where
   UnsafeResource :: Int -> a -> UnsafeResource a
-  -- Note that both components are unrestricted.
+ -- Note that both components are unrestricted.
 
+-- | Given an unsafe resource, release it with the linear IO action provided
+-- when the resrouce was acquired.
 unsafeRelease :: UnsafeResource a #-> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
@@ -191,6 +233,11 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
       where
         Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
+-- | Given a resource in the "System.IO.Linear.IO" monad, and
+-- given a function to release that resource, provides that resource in
+-- the @RIO@ monad. For example, releasing a @Handle@ from "System.IO"
+-- would be done with @fromSystemIO hClose@. Because this release function
+-- is an input, and could be wrong, this function is unsafe.
 unsafeAcquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
@@ -212,10 +259,16 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         True -> 0
         False -> fst (IntMap.findMax releaseMap) + 1
 
+-- | Given a "System.IO" computation on an unsafe resource,
+-- lift it to @RIO@ computaton on the acquired resource.
+-- That is function of type @a -> IO b@ turns into a function of type
+-- @UnsafeResource a #-> RIO (Unrestricted b)@ 
+-- along with threading the @UnsafeResource a@.
+--
+-- Note that the result @b@ can be used non-linearly.
 unsafeFromSystemIOResource
   :: (a -> System.IO b)
-  -> UnsafeResource a
-  #-> RIO (Unrestricted b, UnsafeResource a)
+  -> (UnsafeResource a #-> RIO (Unrestricted b, UnsafeResource a))
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
@@ -226,8 +279,7 @@ unsafeFromSystemIOResource action (UnsafeResource key resource) =
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
-  -> UnsafeResource a
-  #-> RIO (UnsafeResource a)
+  -> (UnsafeResource a #-> RIO (UnsafeResource a))
 unsafeFromSystemIOResource_ action resource = do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
     return resource
