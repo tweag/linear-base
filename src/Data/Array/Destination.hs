@@ -19,8 +19,8 @@
 -- In this style of programming, certain functions are given
 -- an array to write into instead of returning a result.
 --
--- This style is common place in C programming. One might use it to write this
--- function, in which @sum@ is a destiniation array.
+-- This style is commonplace in C programming. One might use it to write this
+-- function, in which @sum@ is a destination array.
 --
 -- @
 -- void add(int size, int *a, int *b, int *sum){
@@ -28,11 +28,24 @@
 -- }
 -- @
 --
--- C programs using DPS are much more efficient.
--- [TODO why and how!? ... explain!!]
+-- C programs written in DPS use memory efficiently; that is, they allocate
+-- less space from the system heap.
+-- For instance: we could use @add@ to add four arrays with only one
+-- temporary array, basically like so:
+--
+-- @
+-- add(arr1, arr2, temp1);
+-- add(arr3, temp1, temp1);
+-- add(arr4, temp1, temp1);
+-- @
+--
+-- If we had the type @int *add(int size, int *a, int *b)@, then
+-- we would need three allocations. That is, we would be calling @malloc@
+-- for arrays of size @size@ three times. (In general, for adding \(n\) arrays,
+-- we would do this \(n-1\) times.
 --
 -- For a deeper background, see
--- [this paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/11/dps-fhpc17.pdf)
+-- [this paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/11/dps-fhpc17.pdf).
 --
 -- == Why do we need linear types?
 --
@@ -43,55 +56,48 @@
 --
 -- Since 'DArray' doesn't have a 'Consumable' instance, the only way to
 -- consume it is with the given API (e.g., with 'fill' or perhaps
--- 'fromFunction'). 
+-- 'fromFunction').
 --
--- Hence, /linearity enforces that any function using a 'DArray' consumes it
--- and does so by writing to each cell of the array/.
---
--- Another property of the API is that we guarentee efficient stack allocation
--- of destination arrays -- i.e., unlike how C programmers must be careful to
--- maintain the DPS idioms, here the type system enforces them.
---
--- == How do I reason about and write memory performant DPS code?
---
--- [TODO because I have no earthly idea ... and this seems critical]
+-- __Hence, linearity enforces that any function using a 'DArray',__
+-- __consumes it and does so by writing to each cell of the array.__
 --
 -- == Example
 --
---
 -- > import qualified Data.Array.Destination as DPS
+-- > import Prelude hiding ( Num(..), ($) )
+-- > import Data.Vector (Vector, (!), fromList)
+-- > import qualified Prelude as P
 -- >
 -- > -- | An application of a DPS computation
--- > -- This uses a DPS-style function, and hence uses @alloc@
--- > someAxpy :: IO (Vector Int)
--- > someAxpy = do
--- >   a <- inputScalarA
+-- > normSumIO :: IO Double
+-- > normSumIO = do
 -- >   x <- inputVectorX
 -- >   y <- inputVectorY
--- >   return (DPS.alloc 100 (axpy x a y))
+-- >   z <- inputVectorZ
+-- >   return (normSum x y z)
 -- >
 -- > -- | Query from environment
--- > inputVectorX :: IO [Int]
--- > inputVectorX = return [1..100]
+-- > inputVectorX :: IO (Vector Int)
+-- > inputVectorX = return (fromList [1..100])
 -- >
 -- > -- | Query from environment
--- > inputVectorY :: IO [Int]
--- > inputVectorY = return (map (\x -> (7 * (x+3)) `div` 11) [1..100])
+-- > inputVectorY :: IO (Vector Int)
+-- > inputVectorY =
+-- >   return (fromList (map (\x -> (7 * (x+3)) `div` 11) [1..100]))
 -- >
 -- > -- | Query from environment
--- > inputScalarA :: IO Int
--- > inputScalarA = return 5
+-- > inputVectorZ :: IO (Vector Int)
+-- > inputVectorZ = return (fromList [negate i | i <- [1..100]])
 -- >
--- > -- | @axpy x a b y@
--- > -- computes y = a . x + b for vectors y, x and scalars a,b.
--- > -- precondition: the two lists are of the same length
--- > --
--- > -- Because of linear types, we are sure the array is written to
--- > axpy :: [Int] -> Int -> [Int] -> DPS.DArray Int #-> ()
--- > axpy x a y = DPS.fromFunction destArrayWriter
--- >   where
--- >     destArrayWriter :: Int -> Int
--- >     destArrayWriter ix = a * (x !! ix) + (y !! ix)
+-- > -- | Take the norm of the sum of three vectors
+-- > normSum :: Vector Int -> Vector Int -> Vector Int -> Double
+-- > normSum x y z = sqrt P.$ fromIntegral P.$ sum P.$
+-- >   DPS.alloc 100 $ vecSum z P.$ DPS.alloc 100 (vecSum x y)
+-- >
+-- > -- | Add two vectors of the same size (crashes if
+-- > -- the sizes don't match)
+-- > vecSum :: Vector Int -> Vector Int -> DPS.DArray Int #-> ()
+-- > vecSum xs ys = DPS.fromFunction (\i -> (xs ! i) + (ys ! i))
 --
 module Data.Array.Destination
   ( DArray
