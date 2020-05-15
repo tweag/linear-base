@@ -124,8 +124,7 @@ import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
 
 -- | A destination array, @DArray@ is an array that's meant to be written to
--- in a DPS-computation. 
---
+-- in a DPS-computation.
 newtype DArray a = DArray (MVector RealWorld a)
 
 -- XXX: use of Vector in types is temporary. I will probably move away from
@@ -145,7 +144,8 @@ alloc n = Unsafe.toLinear unsafeAlloc
 replicate :: a -> DArray a #-> ()
 replicate a = fromFunction (const a)
 
--- | Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
+-- | @fill a dest@ fills a singleton destination array.
+-- Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
 fill :: a #-> DArray a #-> ()
 fill = Unsafe.toLinear2 unsafeFill
     -- XXX: we will probably be able to spare this unsafe cast given a (linear)
@@ -159,8 +159,8 @@ fill = Unsafe.toLinear2 unsafeFill
 
 -- | @'split' n dest = (destl, destr)@ such as @destl@ has length @n@.
 --
--- 'split' is total: if @n@ is larger than the length of @dest@, then @destr@ is
--- empty.
+-- 'split' is total: if @n@ is larger than the length of @dest@, 
+-- then @destr@ is empty.
 split :: Int -> DArray a #-> (DArray a, DArray a)
 split n = Unsafe.toLinear unsafeSplit
   where
@@ -169,12 +169,11 @@ split n = Unsafe.toLinear unsafeSplit
         (DArray dsl, DArray dsr)
 
 -- | Convert a Vector into a destination array to be filled, possibly with
--- a conversion function.
--- Assumes both arrays have the same size.
+-- a conversion function. Both arrays must have the same size.
 mirror :: Vector a -> (a #-> b) -> DArray b #-> ()
 mirror v f = fromFunction (\t -> f (v ! t))
 
--- | Fill a destination array using the given function.
+-- | Fill a destination array using the given index-to-value function.
 fromFunction :: (Int -> b) -> DArray b #-> ()
 fromFunction f = Unsafe.toLinear unsafeFromFunction
   where unsafeFromFunction (DArray ds) = unsafeDupablePerformIO Prelude.$ do
