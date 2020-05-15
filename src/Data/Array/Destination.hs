@@ -2,9 +2,102 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | This module provides destination arrays
+--
+-- We can use linear types to release a safe API for destination arrays
+-- and DPS; with this it's much easier to write memory efficient programs
+-- that can often be as fast as idomatic C code (with the simplicity of
+-- Haskell and FP, of course).
+--
+-- == What are destination arrays and DPS?
+--
+-- Destination arrays are arrays that are meant to written to inside a
+-- function. These arrays are used for DPS (destination passing style
+-- programming), a style of programming that uses memory
+-- efficiently.
+--
+-- In this style of programming, certain functions are given
+-- an array to write into instead of returning a result.
+--
+-- This style is common place in C programming. One might use it to write this
+-- function, in which @sum@ is a destiniation array.
+--
+-- @
+-- void add(int size, int *a, int *b, int *sum){
+--   for (int i=0; i<size;++i){sum[i]=a[i]+b[i];}
+-- }
+-- @
+--
+-- C programs using DPS are much more efficient.
+-- [TODO why and how!? ... explain!!]
+--
+-- For a deeper background, see
+-- [this paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/11/dps-fhpc17.pdf)
+--
+-- == Why do we need linear types?
+--
+-- Because of linear types, any function that uses a destination array
+-- must take that 'DArray' as a linear argument. This is because the only
+-- way to create a 'DArray' is through 'alloc' which takes a linear
+-- continutation of type @DArray a #-> ()@.
+--
+-- Since 'DArray' doesn't have a 'Consumable' instance, the only way to
+-- consume it is with the given API (e.g., with 'fill' or perhaps
+-- 'fromFunction'). 
+--
+-- Hence, /linearity enforces that any function using a 'DArray' consumes it
+-- and does so by writing to each cell of the array/.
+--
+-- Another property of the API is that we guarentee efficient stack allocation
+-- of destination arrays -- i.e., unlike how C programmers must be careful to
+-- maintain the DPS idioms, here the type system enforces them.
+--
+-- == How do I reason about and write memory performant DPS code?
+--
+-- [TODO because I have no earthly idea ... and this seems critical]
+--
+-- == Example
+--
+--
+-- > import qualified Data.Array.Destination as DPS
+-- >
+-- > -- | An application of a DPS computation
+-- > -- This uses a DPS-style function, and hence uses @alloc@
+-- > someAxpy :: IO (Vector Int)
+-- > someAxpy = do
+-- >   a <- inputScalarA
+-- >   x <- inputVectorX
+-- >   y <- inputVectorY
+-- >   return (DPS.alloc 100 (axpy x a y))
+-- >
+-- > -- | Query from environment
+-- > inputVectorX :: IO [Int]
+-- > inputVectorX = return [1..100]
+-- >
+-- > -- | Query from environment
+-- > inputVectorY :: IO [Int]
+-- > inputVectorY = return (map (\x -> (7 * (x+3)) `div` 11) [1..100])
+-- >
+-- > -- | Query from environment
+-- > inputScalarA :: IO Int
+-- > inputScalarA = return 5
+-- >
+-- > -- | @axpy x a b y@
+-- > -- computes y = a . x + b for vectors y, x and scalars a,b.
+-- > -- precondition: the two lists are of the same length
+-- > --
+-- > -- Because of linear types, we are sure the array is written to
+-- > axpy :: [Int] -> Int -> [Int] -> DPS.DArray Int #-> ()
+-- > axpy x a y = DPS.fromFunction destArrayWriter
+-- >   where
+-- >     destArrayWriter :: Int -> Int
+-- >     destArrayWriter ix = a * (x !! ix) + (y !! ix)
+--
 module Data.Array.Destination
   ( DArray
+    -- * Running a DPS-style function that takes a @DArray@
   , alloc
+    -- * Writing to and using @DArray@s in functions
   , replicate
   , split
   , mirror
@@ -24,19 +117,9 @@ import Prelude.Linear hiding (replicate)
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
 
--- | An array destination ('DArray') is a form a constructor for arrays, which
--- make it possible to create by adding a new element to it in
--- O(1).
+-- | A destination array, @DArray@ is an array that's meant to be written to
+-- in a DPS-computation. 
 --
--- Destination-passing style is common in C programming, where we pass a mutable
--- data-structure to a function, whose responsibility it is to fill the array.
---
--- Through linear types, however, we can expose array destinations as /pure/
--- data structures (even though, operationally, filling the destination is
--- implemented by mutations under the hood). Moreover, we make sure that each
--- cell in the destination will be filled exactly once (in particular no cell
--- will be forgotten), and we can't read cells in the destination, therefore
--- there is no risk of reading an uninitialised cell.
 newtype DArray a = DArray (MVector RealWorld a)
 
 -- XXX: use of Vector in types is temporary. I will probably move away from
