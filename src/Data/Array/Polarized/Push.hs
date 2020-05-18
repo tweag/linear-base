@@ -5,8 +5,13 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 
--- | This module is intended to be imported qualified, e.g.
--- > import qualified Data.Array.Polarized.Push as Push
+-- | This module provides push arrays.
+--
+-- These are part of a larger framework for controlling when garbage collector
+-- memory is allocated in computations that use arrays -- please
+-- read "Data.Array.Polarized".
+--
+-- Import this module qualified for clarity and to avoid name conflicts.
 module Data.Array.Polarized.Push where
 
 -- XXX: it might be better to hide the data constructor, in case we wish to
@@ -25,10 +30,9 @@ import qualified Prelude
 -- PushArray into a commutative monoid, for instance summing all the elements,
 -- and this is not yet possible, although it should be.
 
--- | PushArrays are those arrays which are friendly in returned value position.
--- They are easy to create and can be constructed by supplying elements in any
--- order. Dually, they are harder to consume as they will supply their elements
--- in an unknown order, and allocation is generally required for consumption.
+-- | Push arrays are easy to write to but not easy to read from since their
+-- elements are in an unknown order. You need to allocate them to read from
+-- them.
 data Array a where
   Array :: (forall b. (a %1-> b) -> DArray b %1-> ()) %1-> Int -> Array a
   deriving Prelude.Semigroup via NonLinear (Array a)
@@ -51,16 +55,16 @@ instance Semigroup (Array a) where
 
 -- XXX: the use of Vector in the type of alloc is temporary (see also "Data.Array.Destination")
 -- | Convert a PushArray into a Vector by allocating. This would be a common
--- end to a fusion pipeline.
+-- end to a computation using push and pull arrays.
 alloc :: Array a %1-> Vector a
 alloc (Array k n) = DArray.alloc n (k id)
 
--- | @`make` x n@ creates a PushArray of length @n@ in which every element is
--- @x@.
+-- | @`make` x n@ creates a push array of length @n@ 
+-- in which every element is @x@.
 make :: a -> Int -> Array a
 make x n = Array (\k -> DArray.replicate (k x)) n
 
--- | Concatenate two PushArrays.
+-- | Concatenate two push arrays.
 append :: Array a %1-> Array a %1-> Array a
 append (Array kl nl) (Array kr nr) =
     Array
