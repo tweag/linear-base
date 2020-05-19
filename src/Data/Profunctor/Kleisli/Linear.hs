@@ -3,13 +3,15 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TupleSections #-}
+
+-- | This module is intended to be imported qualified
+
 module Data.Profunctor.Kleisli.Linear
   ( Kleisli(..)
   , CoKleisli(..)
   )
   where
 
--- | This module is intended to be imported qualified
 
 import Data.Profunctor.Linear
 import Data.Void

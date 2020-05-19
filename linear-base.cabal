@@ -36,6 +36,7 @@ library
     Data.Monoid.Linear
     Data.Num.Linear
     Data.Ord.Linear
+    Data.Set.Mutable.Linear
     Data.Tuple.Linear
     Data.Vector.Linear
     Data.Vector.Mutable.Linear
@@ -44,7 +45,6 @@ library
     Data.Unrestricted.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
-    Prelude.Linear.Internal.Simple
     System.IO.Linear
     System.IO.Resource
     Unsafe.Linear
@@ -63,6 +63,7 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
+    Prelude.Linear.Internal.Simple
     Unsafe.MutableArray
 
 test-suite test
@@ -73,6 +74,7 @@ test-suite test
     Test.Data.Mutable.Array
     Test.Data.Mutable.Vector
     Test.Data.Mutable.HashMap
+    Test.Data.Mutable.Set
   build-depends:
     base,
     linear-base,

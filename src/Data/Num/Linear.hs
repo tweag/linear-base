@@ -5,8 +5,27 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
+
+-- | This module provides a linear 'Num' class with instances.
+-- Import this module to use linear versions of @(+)@, @(-)@, etc, on numeric
+-- types like 'Int' and 'Double'.
+--
+-- == The Typeclass Hierarchy
+--
+-- The 'Num' class is broken up into several instances. Here is the basic
+-- hierarchy:
+--
+-- * Additive ⊆ AddIdentity ⊆ AdditiveGroup
+-- * MultIdentity ⊆ MultIdentity
+-- * (AddIdentity ∩ MultIdentity) ⊆ Semiring
+-- * (AdditiveGroup ∩ Semiring) ⊆ Ring
+-- * (FromInteger ∩ Ring) ⊆ Num
+--
 module Data.Num.Linear
-  ( Additive(..)
+  (
+  -- * Num and sub-classes
+    Num(..)
+  , Additive(..)
   , AddIdentity(..)
   , AdditiveGroup(..)
   , Multiplicative(..)
@@ -14,7 +33,7 @@ module Data.Num.Linear
   , Semiring
   , Ring
   , FromInteger(..)
-  , Num(..)
+  -- * Mechanisms for deriving instances
   , Adding(..), getAdded
   , Multiplying(..), getMultiplied
   )
@@ -26,15 +45,20 @@ import Data.Unrestricted.Linear
 import qualified Unsafe.Linear as Unsafe
 import Data.Monoid.Linear
 
--- laws: associative, commutative
+-- | A type that can be added linearly.  The operation @(+)@ is associative and
+-- commutative, i.e., for all @a@, @b@, @c@
+--
+-- > (a + b) + c = a + (b + c)
+-- > a + b = b + c
 class Additive a where
   (+) :: a #-> a #-> a
 
--- laws: is an identity for +
+-- | An 'Additive' type with an identity on @(+)@.
 class Additive a => AddIdentity a where
   zero :: a
 
--- usual abelian group laws
+-- | An 'AddIdentity' with inverses that satisfies
+-- the laws of an [abelian group](https://en.wikipedia.org/wiki/Abelian_group)
 class AddIdentity a => AdditiveGroup a where
   {-# MINIMAL negate | (-) #-}
   negate :: a #-> a
@@ -42,24 +66,38 @@ class AddIdentity a => AdditiveGroup a where
   (-) :: a #-> a #-> a
   x - y = x + negate y
 
--- laws: associative
+-- | A numeric type with an associative @(*)@ operation
 class Multiplicative a where
   (*) :: a #-> a #-> a
 
--- laws: is an identity for *
+-- | A 'Multipcative' type with an identity for @(*)@
 class Multiplicative a => MultIdentity a where
   one :: a
 
--- laws: distributivity, annihilation
--- | Having a linear (*) means we can't short-circuit multiplication by zero
+-- | A [semiring](https://en.wikipedia.org/wiki/Semiring) class. This is
+-- basically a numeric type with mutliplication, addition and with identities
+-- for each. The laws:
+--
+-- > zero * x = zero
+-- > a * (b + c) = (a * b) + (a * c)
 class (AddIdentity a, MultIdentity a) => Semiring a where
 
--- no additional laws
+-- Note:
+-- Having a linear (*) means we can't short-circuit multiplication by zero
+
+-- | A 'Ring' instance is a numeric type with @(+)@, @(-)@, @(*)@ and all
+-- the following properties: a group with @(+)@ and a 'MultIdentity' with @(*)@
+-- along with distributive laws.
 class (AdditiveGroup a, Semiring a) => Ring a where
 
--- no laws on its own, but should be compatible with all above classes if both
--- are given. In particular, fromInteger should be a homomorphism to the
--- relevant structure
+
+-- | A numeric type that 'Integer's can be embedded into while satisfying
+-- all the typeclass laws @Integer@s obey. That is, if there's some property
+-- like commutivity of integers @x + y == y + x@, then we must have:
+--
+-- > fromInteger x + fromInteger y == fromInteger y + fromInteger x
+--
+-- For mathy folk: @fromInteger@ should be a homomorphism over @(+)@ and @(*)@.
 class FromInteger a where
   fromInteger :: Prelude.Integer #-> a
 

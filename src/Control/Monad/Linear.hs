@@ -1,6 +1,20 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+
+-- | This module defines the linear monad hierarchy and classic monad instances.
+--
+-- It's critical to know that the linear monad hierarchy is different from
+-- the "Data.Control.Functor" hierarchy.
+-- To understand the differences see this [blog post](https://www.tweag.io/posts/2020-01-16-data-vs-control.html).
+--
+-- == New to monads?
+--
+-- If you are unfamiliar with monads, we recommend [these](https://mmhaskell.com/monads/)
+-- tutorials on functors, monads, reader and writer monads, state monads and
+-- monad transformers for what's featured in this module. (Of course, there are
+-- a plethora of resources on monads in the Haskell community; find what works
+-- best for you!)
 module Control.Monad.Linear
   ( -- * Linear monad hierarchy
     -- $monad
@@ -11,18 +25,20 @@ module Control.Monad.Linear
   , Applicative(..)
   , dataPureDefault
   , Monad(..)
-  , MonadFail(..)
   , return
   , join
   , ap
-  , Data(..)
   , foldM
+  , MonadFail(..)
+  , Data(..)
   -- * Monad transformers
   -- ** ReaderT monad transformer
+  -- $readerT
   , Reader, reader, runReader, mapReader, withReader
   , ReaderT(..), runReaderT, mapReaderT, withReaderT
   , ask, local, asks
   -- ** StateT monad
+  -- $stateT
   , State, state, runState, execState, mapState, withState
   , StateT(..), runStateT, execStateT, mapStateT, withStateT
   , get, put, modify, gets
@@ -35,9 +51,46 @@ import Data.Unrestricted.Linear
 import Prelude.Linear.Internal.Simple ((.), ($))
 import qualified Data.Functor.Linear.Internal as Data
 
+
+-- $stateT
+-- This is a linear version of the standard state monad.
+-- The linear arrows ensure that the state is threaded linearly through
+-- functions of the form @a #-> StateT s m a@. That is, when sequencing 
+-- @f :: a #-> StateT s m b@ and @g :: b #-> StateT s m c@,
+-- the type system enforces that state produced by $f$ is fed into @g@.
+--
+-- For this reason, there is only one way to define '(>>=)':
+--
+-- > instance Monad m => Applicative (StateT s m) where
+-- > StateT mx >>= f = StateT $ \s -> do
+-- >   (x, s') <- mx s
+-- >   runStateT (f x) s'
+--
+-- To see examples and learn about all the standard state monad functions, see
+-- [here](https://hackage.haskell.org/package/mtl-2.2.2/docs/Control-Monad-State-Lazy.html).
+-- To learn the basics of the state monad, see
+-- [here](https://mmhaskell.com/monads/state).
+--
+
+
+-- $readerT
+-- See [here](https://mmhaskell.com/monads/reader-writer) to learn about
+-- the basics of reader monads. To know about the standard reader monad
+-- functions, see the documentation of the standard reader monad
+-- [here](https://hackage.haskell.org/package/mtl-2.2.2/docs/Control-Monad-Reader.html).
+
+-- | A linear reader monad transformer.
+-- This reader monad requires that use of the read-only state is explict.
+--
+-- The monad instance requires that @r@ be 'Dupable'.  This means that you
+-- should use the linear reader monad just like the non-linear monad, except
+-- that the type system ensures that you explicity use or discard the
+-- read-only state (with the 'Consumable' instance).
 newtype ReaderT r m a = ReaderT (r #-> m a)
 
 -- XXX: Replace with a newtype deconstructor once it can be inferred as linear.
+-- | Provide an intial read-only state and run the monadic computation in 
+-- a reader monad transformer
 runReaderT :: ReaderT r m a #-> r #-> m a
 runReaderT (ReaderT f) = f
 
@@ -89,7 +142,6 @@ asks f = ReaderT (return . f)
 
 instance Dupable r => MonadTrans (ReaderT r) where
   lift x = ReaderT (`lseq` x)
-
 
 get :: (Applicative m, Dupable s) => StateT s m s
 get = state dup

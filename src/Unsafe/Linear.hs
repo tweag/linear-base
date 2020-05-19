@@ -5,15 +5,28 @@
 
 -- | Unsafe coercions for linearly typed code.
 --
--- This module is intended to be imported qualified. /All/ functions in this
--- module are unsafe.
+-- Use this module to coerce non-linear functions to be linear or values
+-- bound linearly to be another type. /All/ functions in this module are
+-- unsafe.
+--
+-- Hence:
+--
+-- * Import this module qualifed as Unsafe.
+-- * Do not use this unless you have to. Specifically, if you can write a
+-- linear function @f :: A #-> B@, do not write a non-linear version and coerce
+-- it.
 
-module Unsafe.Linear where
+module Unsafe.Linear
+  ( -- * Unsafe Coersions
+    coerce,
+    toLinear,
+    toLinear2,
+    toLinear3,
+  )
+  where
 
 import qualified Unsafe.Coerce as NonLinear
 import GHC.Exts (TYPE, RuntimeRep)
-
--- * Linearly typed @unsafeCoerce@, and useful variant to deal with linear types
 
 -- | Linearly typed @unsafeCoerce@
 coerce :: a #-> b

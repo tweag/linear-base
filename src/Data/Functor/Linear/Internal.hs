@@ -1,17 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
--- | = The data functor hierarchy
---
--- This module defines the data functor library. These are linear functors which
--- are better understood as containers of data. Unlike unrestricted functor,
--- there is a split between such data functors and control functors which
--- represent effects (see "Control.Monad.Linear" for more).
---
--- The data functor hierarchy contains a notion of applicative functors
--- (containers which can be zipped) and traversable functors (containers which
--- store a finite number of values).
-
 module Data.Functor.Linear.Internal where
 
 import Prelude.Linear.Internal.Simple
@@ -25,6 +14,10 @@ import qualified Control.Monad.Trans.Maybe as NonLinear
 import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 
+-- | Linear Data Functors should be thought of as containers holding values of
+-- type @a@ over which you are able to apply a linear function of type @a #->
+-- b@ __on each__ value of type @a@ in the functor and consume a given functor
+-- of type @f a@.
 class Functor f where
   fmap :: (a #-> b) -> f a #-> f b
 

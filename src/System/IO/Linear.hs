@@ -9,24 +9,45 @@
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE UnboxedTuples #-}
 
--- | This module redefines 'IO' with linear types. It defines a drop-in
--- replacement for 'System.IO.IO' in @System.IO@. This module will be deprecated
--- if the definition for 'IO' found here is upstreamed in "System.IO".
+-- | This module redefines 'IO' with linear types.
 --
--- It will be much more pleasant when multiplicity-polymorphism has been
--- implemented, in this case it will really supersede IO.
+-- To use this @IO@, do the following:
+--
+--  * use @ main = withLinearIO $ do ...@
+--  * pull in any safe non-linear 'IO' functions with
+--  @fromSystemIO@ and @fromSystemIOU@
+--  * for mutable IO references/pointers, file handles, or any resources, use
+--  the linear APIs provided here and in other linear @System.IO@ modules
+--
+-- = Example
+-- @
+-- import qualified System.IO.Linear as Linear
+-- import qualified Prelude.Linear as Linear
+--
+-- main :: IO ()
+-- main = Linear.withLinearIO $
+--   Linear.fromSystemIOU $ putStrLn "hello world today"
+-- @
+--
+-- = Replacing The Original @IO@ With This Module.
+--
+-- This module will be deprecated if the definition for 'IO' found here is
+-- upstreamed in "System.IO".  When multiplicity-polymorphism is implemented,
+-- this module will supercede IO by providing a seamless replacement for
+-- "System.IO" that won't break non-linear code.
 
 module System.IO.Linear
   ( IO(..)
+  -- * Interfacing with "System.IO"
   , fromSystemIO
   , fromSystemIOU
   , withLinearIO
-  -- * Ref
+  -- * Using Mutable References
   -- $ioref
   , newIORef
   , readIORef
   , writeIORef
-  -- * Exceptions
+  -- * Catching and Throwing Exceptions
   -- $exceptions
   , throwIO
   , catch
@@ -44,18 +65,30 @@ import Prelude.Linear hiding (IO)
 import qualified Unsafe.Linear as Unsafe
 import qualified System.IO as System
 
--- | Like the standard IO monad, but as a linear state monad. Thanks to the
--- linear arrow, we can safely expose the internal representation.
+
+-- | This is the linear IO monad.
+-- It is a newtype around a function that transitions from one
+-- @State# RealWorld@ to another, producing a value of type @a@ along with it.
+-- The @State# RealWorld@ is the state of the world/machine outside the program.
+--
+-- The only way, such a computation is run is by putting it in @Main.main@
+-- somewhere.
+--
+-- Note that this is the same definition as the standard IO monad, but with a
+-- linear arrow enforcing the implicit invariant that IO actions linearly
+-- thread the state of the real world. Hence, we can safely release the
+-- constructor to this newtype.
 newtype IO a = IO (State# RealWorld #-> (# State# RealWorld, a #))
   deriving (Data.Functor, Data.Applicative) via (Control.Data IO)
 type role IO representational
 
-unIO :: IO a #-> State# RealWorld #-> (# State# RealWorld, a #)
 -- Defined separately because projections from newtypes are considered like
 -- general projections of data types, which take an unrestricted argument.
+unIO :: IO a #-> State# RealWorld #-> (# State# RealWorld, a #)
 unIO (IO action) = action
 
--- | Coerces a standard IO action into a linear IO action
+-- | Coerces a standard IO action into a linear IO action.
+-- Note that the value @a@ must be used linearly in the linear IO monad.
 fromSystemIO :: System.IO a #-> IO a
 -- The implementation relies on the fact that the monad abstraction for IO
 -- actually enforces linear use of the @RealWorld@ token.
@@ -67,20 +100,23 @@ fromSystemIO :: System.IO a #-> IO a
 -- think that it is safe, hence no "unsafe" in the name.
 fromSystemIO = Unsafe.coerce
 
+-- | Coerces a standard IO action to a linear IO action, allowing you to use
+-- the result of type @a@ in a non-linear manner by wrapping it inside
+-- 'Unrestricted'.
 fromSystemIOU :: System.IO a -> IO (Unrestricted a)
 fromSystemIOU action =
   fromSystemIO (Unrestricted <$> action)
 
+-- | Convert a linear IO action to a "System.IO" action.
 toSystemIO :: IO a #-> System.IO a
 toSystemIO = Unsafe.coerce -- basically just subtyping
 
--- | Use at the top of @main@ function in your program to switch to the linearly
--- typed version of 'IO':
+-- | Use at the top of @main@ function in your program to switch to the
+-- linearly typed version of 'IO':
 --
 -- @
 -- main :: IO ()
--- main = withLinearIO $ do
---     ...
+-- main = Linear.withLinearIO $ do ...
 -- @
 withLinearIO :: IO (Unrestricted a) -> System.IO a
 withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
@@ -120,9 +156,12 @@ instance Control.Monad IO where
       cont (# s', () #) y' = unIO y' s'
 
 -- $ioref
+-- @IORef@s are mutable references to values, or pointers to values.
+-- You can create, mutate and read them from running IO actions.
 --
--- All arrows are unrestricted: IORefs containing linear values can make linear
--- values escape their scope.
+-- Note that all arrows are unrestricted.  This is because IORefs containing
+-- linear values can make linear values escape their scope and be used
+-- non-linearly.
 
 newIORef :: a -> IO (Unrestricted (IORef a))
 newIORef a = fromSystemIOU (System.newIORef a)
@@ -137,6 +176,8 @@ writeIORef r a = fromSystemIO $ System.writeIORef r a
 --
 -- Note that the types of @throw@ and @catch@ sport only unrestricted arrows.
 -- Having any of the arrows be linear is unsound.
+-- See [here](http://dev.stephendiehl.com/hask/index.html#control.exception)
+-- to learn about exceptions.
 
 throwIO :: Exception e => e -> IO a
 throwIO e = fromSystemIO $ System.throwIO e
