@@ -34,7 +34,6 @@ module Prelude.Linear
   , uncurry
   , (.)
   , forget
-  , not
   , Semigroup(..)
   , Monoid(..)
     -- * Using 'Unrestricted' values in linear Code
