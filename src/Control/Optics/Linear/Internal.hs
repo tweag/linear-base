@@ -10,28 +10,34 @@
 --
 -- == Overview
 --
--- /Some familiarity with optics is needed to understand linear optics.
--- Please go through the (hopefully friendly!) background material section
--- if you are unfamiliar with lenses, prisms, traversals or isomorphisms./
+-- /Some familiarity with optics is needed to understand linear optics./
+-- /Please go through the (hopefully friendly!) background material section/
+-- /if you are unfamiliar with lenses, prisms, traversals or isomorphisms./
 --
 -- This documentation provides
 --
---  * a high-level idea of
---     * what linear optics are
---     * how to think about linear optics
---     * how these relate to the standard optic definitions in @lens@
---  * examples of using these optics
+--  * Some bird's eye views on (1) what linear optics are, (2) how to think
+--  about them, and (3) an overview of the types
+--  * Examples of using these optics
+--
+-- == Background Material
+--
+--  * [A great intro-to-lenses talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
+--  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
+--  * [A friendly introduction to prisms and isos](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
+--  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
+--  that contains some nice examples
 --
 -- == Conceptualizing and using optics
 --
 -- === What are /linear/ optics?
 --
--- **Optics can be conceptualized as a first class object with which you can
--- view and map functions over sub-structure(s) within a larger structure.**
+-- Optics can be conceptualized as a first class object with which you can
+-- view and map functions over sub-structure(s) within a larger structure.
 --
--- __/Linear/ optics are optics where the \"viewing\" and \"mapping\" are done
--- with linear functions (and any corresponding structures hold values
--- linearly, i.e., with constructors that use linear arrows).__
+-- __ /Linear/ optics are optics where the \"viewing\" and \"mapping\" are__
+-- __done with linear functions (and any corresponding structures hold values__
+-- __linearly, i.e., with constructors that use linear arrows).__
 --
 -- In types: a (linear) optic of type @Optic a b s t@ is a way of viewing the
 -- sub-structure(s) of type @a@ in the structure of type @s@ and mapping a
@@ -40,23 +46,15 @@
 -- to the types @Optic a a s s@ and is usually defined with a tick mark,
 -- e.g., the non-polymorphic @Lens@ is @Lens'@.
 --
--- There are four basic optics: traversals, lenses, prisms and isomorphisms:
+-- There are four basic optics: traversals, lenses, prisms and isomorphisms.
 --
 -- ==== Sub-typing diagram of optics
 --
--- @
--- {-
---        Traversal
---          ^    ^
---         /      \
---        /        \
---     Lens       Prism
---       ^         ^
---        \       /
---         \     /
---           Iso
--- -}
--- @
+-- \[ \texttt{Traversal} \]
+-- \[ \Huge \nearrow ~~~~~ \nwarrow \]
+-- \[ \texttt{Lens}\hspace{6em}\texttt{Prism} \]
+-- \[ \Huge \nwarrow ~~~~~ \nearrow \]
+-- \[ \texttt{Iso} \]
 --
 -- In the diagram above, the arrows @X --> Y@ mean any of the following
 -- equivalent things:
@@ -69,28 +67,58 @@
 -- === How can each optic be used? How do I think about them?
 --
 -- * A @Traversal a b s t@ is roughly equivalent to a
---  @(s #-> (Tree a,x), (Tree b,x) #-> t)@ for some type @x@.
---  It provides a means of accessing several @a@s organized in
---  some structural way in an @s@,
---  and a means of changing them to @b@s to create a @t@.
---  In very ordinary language, it's like walking or traversing the
---  data structure, going across cases and inside definitions.
+--  @s #-> (Tree a, Tree b #-> t)@.
+--  It provides a means of accessing several @a@s organized in some
+--  structural way in an @s@, and a means of changing them to @b@s to create a
+--  @t@. In very ordinary language, it's like walking or traversing the data
+--  structure, going across cases and inside definitions. In more imaganitive
+--  language, it's like selecting some specific @a@s by looking at each
+--  constructor of a data definition and recursing on each non-base type.
 --
--- * A @Lens a b s t@ is roughly equivalent to a
---  @(s #-> (a,x), (b,x) #-> t)@ for some type @x@. It's a traversal
---  on exactly one @a@ in a @s@.
+-- * A @Lens a b s t@ is equivalent to a @(s #-> (a,b #-> t)@.  It is a way to
+--  cut up an instance of a /product type/ @s@ into an @a@ and a way to take a
+--  @b@ to fill the place of the @a@ in @s@ which yields a @t@. When @a=b@ and
+--  @s=t@, this type is much more intuitive: @(s #-> (a,a #-> s))@.  This is a
+--  traversal on exactly one @a@ in a @s@.
 --
--- * A @Prism a b s t@ is roughly equivalent to a
---  @(s #-> Either a x, Either b x #-> t)@ for some sum type @x@.
---  It's focusing on one branch or case that a sum type could be.
+-- * A @Prism a b s t@ is equivalent to @(s #-> Either a t, b #-> t)@ for some
+--  /sum type/ @s@. In the non-polymorphic version, this is a 
+--  @(s #-> Either a s, a #-> s)@ which represent taking one case of a sum type
+--  and a way to build the sum-type given that one case.  A prism is a
+--  traversal focusing on one branch or case that a sum type could be.
 --
 -- * An @Iso a b s t@ is equivalent to a @(s #-> a, b #-> t)@.  In the simple
 --  case of an @Iso' a s@, this is equivalent to inverse functions
 --  @(s #-> a, a #-> s)@.  In the general case an @Iso a b s t@ means if you
---  have the isomorphisms @(a #-> b, b #-> a)@ and @(s #-> t, t #-> a)@, then
---  you can use @(s #-> a, b #-> t)@ to form isomorphisms between @s@, @t@,
---  @a@ and @b@.
+--  have the isomorphisms @(a #-> b, b #-> a)@ and @(s #-> t, t #-> s)@, then
+--  you can form isomorphisms between @s@, @t@, @a@ and @b@.
 --
+-- === A bird's eye view of the types
+--
+-- The types of linear optics are generalizations of the standard optic
+-- types from the @lens@ package.
+--
+-- These are the standard optic types:
+--
+-- These are (basically) the linear optic types:
+--
+-- Here is a table that lists the instances of the typeclasses which
+-- generalize the standard optics:
+--
+-- +-----------+----------+----------+----------+
+-- | Header 1  | Header 2 | Header 3 | Header 4 |
+-- +===========+==========+==========+==========+
+-- | body row  | column 2 | column 3 | column 4 |
+-- +-----------+----------+----------+----------+
+-- | body row  |          |          |          |
+-- +-----------+----------+---------------------+
+-- | body row  |          |          |          |
+-- +-----------+----------+----------+----------+
+-- | body row  |          |          |          |
+-- +-----------+----------+----------+----------+
+--
+-- TODO: Because of these instances, each class can basically
+-- implement the standard optic types.
 --
 -- == Examples
 --
@@ -261,20 +289,6 @@
 -- > -- *module> setPairViaTuple (5,6) pair1
 -- > -- Pair 5 6
 --
--- == Background Material
---
---  * [A great intro-to-lenses talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
---  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
---  * [A friendly introduction to prisms and isos](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
---  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)
---  that contains some nice examples
---
--- === Background on implementation
---
--- * Many ideas are drawn from
--- [this paper](https://www.cs.ox.ac.uk/jeremy.gibbons/publications/proyo.pdf)
---
---
 -- == Appendix: How do the types make sense?
 --
 -- === What are the optic types and why?
@@ -327,9 +341,9 @@
 --
 -- __Please take care to understand the principle at play:__
 --
--- /If @D@ is a stricter constraint than @C@ (i.e., any @D@ instance has a @C@
--- instance), then the rank-2 type @forall x. C x => f@ is a sub-type of
--- @forall x. D x => f@/
+-- /If @D@ is a stricter constraint than @C@ (i.e., any @D@ instance has a @C@/
+-- /instance), then the rank-2 type @forall x. C x => f@ is a sub-type of/
+-- /@forall x. D x => f@/
 --
 -- === What do these optic types /mean/?
 --
@@ -338,7 +352,7 @@
 -- abstractly. This is much harder with optics because of all the type classes
 -- and the rank-2 types.
 --
--- Even the classic lens type, for instance, is not easily grasped abtractly:
+-- Even the classic lens type, for instance, is not obvious:
 --
 -- > type Lens s a = forall f. Functor f => (a -> f a) -> (s -> f s)
 --
@@ -349,6 +363,11 @@
 --
 -- However, due to the fact that they are so general, they have several other
 -- unforseen use cases.
+--
+-- === Background on implementation
+--
+-- * Many ideas are drawn from
+-- [this paper](https://www.cs.ox.ac.uk/jeremy.gibbons/publications/proyo.pdf)
 module Control.Optics.Linear.Internal
   ( -- * Definitions of Optics
     Optic_(..)
