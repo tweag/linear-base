@@ -100,22 +100,48 @@
 --
 -- These are the standard optic types:
 --
+-- > type Traversal s t a b =
+-- >   forall f. Applicative f => (a -> f b) -> s -> f t
+-- > type Lens s a =
+-- >   forall f. Functor f => (a -> f a) -> (s -> f t)
+-- > type Prism s t a b =
+-- >   forall p f. (Choice p, Applicative f) => p a (f b) -> p s (f t)
+-- > type Iso s t a b =
+-- >   forall p f. (Profunctor p, Functor f) => a `p` (f b) -> s `p` (f t)
+--
 -- These are (basically) the linear optic types:
+--
+-- > type Traversal a b s t =
+-- >   forall arr.  Wandering arr => (a `arr` b) -> (s `arr` t)
+-- > type Lens a b s t =
+-- >   forall arr. Strong (,) () arr => (a `arr` b) -> (s `arr` t)
+-- > type Prism a b s t =
+-- >   forall arr. Strong Either Void arr => (a `arr` b) -> (s `arr` t)
+-- > type Iso a b s t =
+-- >   forall arr. Profunctor arr => (a `arr` b) -> (s `arr` t)
 --
 -- Here is a table that lists the instances of the typeclasses which
 -- generalize the standard optics:
 --
--- +-----------+----------+----------+----------+
--- | Header 1  | Header 2 | Header 3 | Header 4 |
--- +===========+==========+==========+==========+
--- | body row  | column 2 | column 3 | column 4 |
--- +-----------+----------+----------+----------+
--- | body row  |          |          |          |
--- +-----------+----------+---------------------+
--- | body row  |          |          |          |
--- +-----------+----------+----------+----------+
--- | body row  |          |          |          |
--- +-----------+----------+----------+----------+
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               | Profunctor | Strong (,) () | Strong Either Void | Wandering |
+-- +===============+============+===============+====================+===========+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
+-- |               |            |               |                    |           |
+-- +---------------+------------+---------------+--------------------+-----------+
 --
 -- TODO: Because of these instances, each class can basically
 -- implement the standard optic types.
