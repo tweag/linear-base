@@ -120,31 +120,54 @@
 -- > type Iso a b s t =
 -- >   forall arr. Profunctor arr => (a `arr` b) -> (s `arr` t)
 --
--- Here is a table that lists the instances of the typeclasses which
--- generalize the standard optics:
+-- Below is a table that lists the instances of the typeclasses which
+-- generalize the standard optics.
 --
--- +---------------+------------+---------------+--------------------+-----------+
--- |               | Profunctor | Strong (,) () | Strong Either Void | Wandering |
--- +===============+============+===============+====================+===========+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
--- |               |            |               |                    |           |
--- +---------------+------------+---------------+--------------------+-----------+
+-- Note that Kleisli arrows basically defined like so:
 --
--- TODO: Because of these instances, each class can basically
--- implement the standard optic types.
+-- > type Kleisli f a b = a #-> f b
+--
+-- /Note: We abbreviate Control for Control.Monad.Linear./
+--
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- |                 | Profunctor | Strong (,) () | Strong Either Void | Wandering |
+-- +=================+============+===============+====================+===========+
+-- |     @(->)@      |     X      |       X       |         X          |           |
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- |    @(#->)@      |     X      |       X       |         X          |           |
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- |    (Prelude)    |            |               |                    |           |
+-- |  @Functor f@    |            |               |                    |           |
+-- | @=> Kleisli f@  |     X (4)  |       X       |                    |           |
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- | (Data.Functor)  |            |               |                    |           |
+-- |  @Functor f@    |            |               |                    |           |
+-- | @=> Kleisli f@  |     X      |               |                    |           |
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- |    (Prelude)    |            |               |                    |           |
+-- | @Applicative f@ |            |               |                    |           |
+-- | @=> Kleisli f@  |     X      |       X       |         X   (3)    |           |
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- |    (Control)    |            |               |                    |           |
+-- |   @Functor f@   |            |               |                    |           |
+-- | @=> Kleisli f@  |     X      |       X (2)   |                    |           |
+-- +-----------------+------------+---------------+--------------------+-----------+
+-- |    (Control)    |            |               |                    |           |
+-- | @Applicative f@ |            |               |                    |           |
+-- | @=> Kleisli f@  |     X      |       X       |         X          |     X (1) |
+-- +-----------------+------------+---------------+--------------------+-----------+
+--
+-- Essentially:
+--
+--  * The instance marked (1) implies that the linear traversal definition
+--    includes the standard one
+--  * The instance marked by (2) implies that the linear lens definition
+--    includes the standard one
+--  * The instance marked by (3) implies that the linear prism definition
+--    includes the standard one
+--  * The instance marked by (4) implies that the linear iso definition
+--    includes the standard one
+--
 --
 -- == Examples
 --
