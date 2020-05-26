@@ -1,3 +1,8 @@
-# New project template
+# Linear Streams
 
-Use this template when creating a new project.
+A streaming library based off of [streaming] that uses linear types to enforce
+invariants of how streams are used. These invariants make sure that resources
+are used correctly and as expected, e.g., file handles are not read from after
+they are closed from "old" stream references.
+
+[streaming]: https://github.com/haskell-streaming/streaming
