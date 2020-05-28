@@ -67,7 +67,7 @@
 -- === How can each optic be used? How do I think about them?
 --
 -- * A @Traversal a b s t@ is roughly equivalent to a
---  @s #-> (Tree a, Tree b #-> t)@.
+--  @s \#-> (Tree a, Tree b \#-> t)@.
 --  It provides a means of accessing several @a@s organized in some
 --  structural way in an @s@, and a means of changing them to @b@s to create a
 --  @t@. In very ordinary language, it's like walking or traversing the data
@@ -75,22 +75,22 @@
 --  language, it's like selecting some specific @a@s by looking at each
 --  constructor of a data definition and recursing on each non-base type.
 --
--- * A @Lens a b s t@ is equivalent to a @(s #-> (a,b #-> t)@.  It is a way to
+-- * A @Lens a b s t@ is equivalent to a @(s \#-> (a,b \#-> t)@.  It is a way to
 --  cut up an instance of a /product type/ @s@ into an @a@ and a way to take a
 --  @b@ to fill the place of the @a@ in @s@ which yields a @t@. When @a=b@ and
---  @s=t@, this type is much more intuitive: @(s #-> (a,a #-> s))@.  This is a
+--  @s=t@, this type is much more intuitive: @(s \#-> (a,a \#-> s))@.  This is a
 --  traversal on exactly one @a@ in a @s@.
 --
--- * A @Prism a b s t@ is equivalent to @(s #-> Either a t, b #-> t)@ for some
+-- * A @Prism a b s t@ is equivalent to @(s \#-> Either a t, b \#-> t)@ for some
 --  /sum type/ @s@. In the non-polymorphic version, this is a 
---  @(s #-> Either a s, a #-> s)@ which represent taking one case of a sum type
+--  @(s \#-> Either a s, a \#-> s)@ which represent taking one case of a sum type
 --  and a way to build the sum-type given that one case.  A prism is a
 --  traversal focusing on one branch or case that a sum type could be.
 --
--- * An @Iso a b s t@ is equivalent to a @(s #-> a, b #-> t)@.  In the simple
+-- * An @Iso a b s t@ is equivalent to a @(s \#-> a, b \#-> t)@.  In the simple
 --  case of an @Iso' a s@, this is equivalent to inverse functions
---  @(s #-> a, a #-> s)@.  In the general case an @Iso a b s t@ means if you
---  have the isomorphisms @(a #-> b, b #-> a)@ and @(s #-> t, t #-> s)@, then
+--  @(s \#-> a, a \#-> s)@.  In the general case an @Iso a b s t@ means if you
+--  have the isomorphisms @(a \#-> b, b \#-> a)@ and @(s \#-> t, t \#-> s)@, then
 --  you can form isomorphisms between @s@, @t@, @a@ and @b@.
 --
 -- === A bird's eye view of the types
@@ -102,8 +102,8 @@
 --
 -- > type Traversal s t a b =
 -- >   forall f. Applicative f => (a -> f b) -> s -> f t
--- > type Lens s a =
--- >   forall f. Functor f => (a -> f a) -> (s -> f t)
+-- > type Lens s t a b =
+-- >   forall f. Functor f => (a -> f b) -> (s -> f t)
 -- > type Prism s t a b =
 -- >   forall p f. (Choice p, Applicative f) => p a (f b) -> p s (f t)
 -- > type Iso s t a b =
@@ -134,7 +134,7 @@
 -- +=================+============+===============+====================+===========+
 -- |     @(->)@      |     X      |       X       |         X          |           |
 -- +-----------------+------------+---------------+--------------------+-----------+
--- |    @(#->)@      |     X      |       X       |         X          |           |
+-- |    @(\#->)@     |     X      |       X       |         X          |           |
 -- +-----------------+------------+---------------+--------------------+-----------+
 -- |    (Prelude)    |            |               |                    |           |
 -- |  @Functor f@    |            |               |                    |           |
