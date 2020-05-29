@@ -5,22 +5,23 @@
 -- | This module provides destination arrays
 --
 -- We can use linear types to release a safe API for destination arrays
--- and DPS; with this it's much easier to write memory efficient programs
--- that can often be as fast as idomatic C code (with the simplicity of
--- Haskell and FP, of course).
+-- and DPS (destination passing style).
 --
 -- == What are destination arrays and DPS?
 --
--- Destination arrays are arrays that are meant to written to inside a
--- function. These arrays are used for DPS (destination passing style
--- programming), a style of programming that uses memory
--- efficiently.
+-- There are several lists which must, despite program optimizations
+-- (i.e., [deforesting](https://www.sciencedirect.com/science/article/pii/030439759090147A)),
+-- be allocated, filled, passed along and de-allocated. When the allocation
+-- of these arrays is controlled by the programmer and not
+-- done by Haskell's GC (garbage collector), programs are often more efficient.
 --
--- In this style of programming, certain functions are given
--- an array to write into instead of returning a result.
+-- DPS is a style of programming in which functions that produce such arrays
+-- take them as arguments -- moving the responsibility of allocating, using
+-- and freeing those arrays to the caller. The arrays passed as arguments
+-- to functions that must be written to are called /destination arrays/.
 --
--- This style is commonplace in C programming. One might use it to write this
--- function, in which @sum@ is a destination array.
+-- Here is a C function that adds vectors written in DPS style; it
+-- takes in the destiniation array @sum@ and writes to it:
 --
 -- @
 -- void add(int size, int *a, int *b, int *sum){
@@ -28,76 +29,53 @@
 -- }
 -- @
 --
--- C programs written in DPS use memory efficiently; that is, they allocate
--- less space from the system heap.
--- For instance: we could use @add@ to add four arrays with only one
--- temporary array, basically like so:
+-- == Linear Types Enforce Destination Arrays are Filled
 --
--- @
--- add(arr1, arr2, temp1);
--- add(arr3, temp1, temp1);
--- add(arr4, temp1, temp1);
--- @
---
--- If we had the type @int *add(int size, int *a, int *b)@, then
--- we would need three allocations. That is, we would be calling @malloc@
--- for arrays of size @size@ three times. (In general, for adding \(n\) arrays,
--- we would do this \(n-1\) times.
---
--- For a deeper background, see
--- [this paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/11/dps-fhpc17.pdf).
---
--- == Why do we need linear types?
+-- Linear types are used to ensure that the destination array
+-- is always written to. Why? Well:
 --
 -- Because of linear types, any function that uses a destination array
 -- must take that 'DArray' as a linear argument. This is because the only
 -- way to create a 'DArray' is through 'alloc' which takes a linear
--- continutation of type @DArray a #-> ()@.
+-- continutation of type @DArray a #-> ()@ and any function inside that
+-- continuation that uses a @DArray@ must use it linearly.
 --
 -- Since 'DArray' doesn't have a 'Consumable' instance, the only way to
 -- consume it is with the given API (e.g., with 'fill' or perhaps
--- 'fromFunction').
+-- 'fromFunction') which fills the destiniation array completely
+-- (or errors as we desire).
 --
--- __Hence, linearity enforces that any function using a 'DArray',__
--- __consumes it and does so by writing to each cell of the array.__
+-- For a deeper background on destination arrays see
+-- [this paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/11/dps-fhpc17.pdf).
 --
 -- == Example
 --
+-- > import qualified Prelude.Linear as Linear
 -- > import qualified Data.Array.Destination as DPS
--- > import Prelude hiding ( Num(..), ($) )
--- > import Data.Vector (Vector, (!), fromList)
--- > import qualified Prelude as P
+-- > import qualified Data.Vector (Vector)
+-- > import qualified Data.Vector as Vector
 -- >
--- > -- | An application of a DPS computation
--- > normSumIO :: IO Double
--- > normSumIO = do
--- >   x <- inputVectorX
--- >   y <- inputVectorY
--- >   z <- inputVectorZ
--- >   return (normSum x y z)
+-- > -- Computes the diff of a vector and writes to an array
+-- > -- | diff [1,2,3,4] is [2-1,3-2,4-3]
+-- > ComputeDiff :: Vector Int -> DPS.DArray Int #-> ()
+-- > ComputeDiff vec = DPS.fromFunction
+-- >   (\ix -> (vec Vector.! (ix + 1)) - (vec Vector.! ix))
 -- >
--- > -- | Query from environment
--- > inputVectorX :: IO (Vector Int)
--- > inputVectorX = return (fromList [1..100])
+-- > SomeAction :: IO ()
+-- > SomeAction = do
+-- >   vec <- inputVector
+-- >   let diffSize = (Vector.length vec) - 1
+-- >   let vecToSend = DPS.alloc diffSize (computeDiff vec)
+-- >   sendVectorToTwoServers vecToSend
+-- >   where
 -- >
--- > -- | Query from environment
--- > inputVectorY :: IO (Vector Int)
--- > inputVectorY =
--- >   return (fromList (map (\x -> (7 * (x+3)) `div` 11) [1..100]))
+-- >     sendVectorToTwoServers :: Vector Int -> IO ()
+-- >     sendVectorToTwoServers _ = {- fake implementation -}
+-- >       return ()
 -- >
--- > -- | Query from environment
--- > inputVectorZ :: IO (Vector Int)
--- > inputVectorZ = return (fromList [negate i | i <- [1..100]])
--- >
--- > -- | Take the norm of the sum of three vectors
--- > normSum :: Vector Int -> Vector Int -> Vector Int -> Double
--- > normSum x y z = sqrt P.$ fromIntegral P.$ sum P.$
--- >   DPS.alloc 100 $ vecSum z P.$ DPS.alloc 100 (vecSum x y)
--- >
--- > -- | Add two vectors of the same size (crashes if
--- > -- the sizes don't match)
--- > vecSum :: Vector Int -> Vector Int -> DPS.DArray Int #-> ()
--- > vecSum xs ys = DPS.fromFunction (\i -> (xs ! i) + (ys ! i))
+-- >     inputVector :: IO (Vector Int)
+-- >     inputVector =
+-- >       return (fromList (map (\x -> (7 * (x+3)) `div` 11) [1..100]))
 --
 module Data.Array.Destination
   ( DArray
