@@ -55,14 +55,14 @@
 -- > import qualified Data.Vector (Vector)
 -- > import qualified Data.Vector as Vector
 -- >
--- > -- Computes the diff of a vector and writes to an array
--- > -- | diff [1,2,3,4] is [2-1,3-2,4-3]
--- > ComputeDiff :: Vector Int -> DPS.DArray Int #-> ()
--- > ComputeDiff vec = DPS.fromFunction
+-- > -- | Computes the diff of a vector and writes to an array
+-- > -- diff [1,2,3,4] is [2-1,3-2,4-3]
+-- > computeDiff :: Vector Int -> DPS.DArray Int #-> ()
+-- > computeDiff vec = DPS.fromFunction
 -- >   (\ix -> (vec Vector.! (ix + 1)) - (vec Vector.! ix))
 -- >
--- > SomeAction :: IO ()
--- > SomeAction = do
+-- > someAction :: IO ()
+-- > someAction = do
 -- >   vec <- inputVector
 -- >   let diffSize = (Vector.length vec) - 1
 -- >   let vecToSend = DPS.alloc diffSize (computeDiff vec)
