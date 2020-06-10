@@ -20,8 +20,11 @@ import qualified Unsafe.Linear as Unsafe
 -- XXX: Temporary as `($)` should get its typing rule directly from the type
 -- inference mechanism.
 ($) f x = f x
-
 infixr 0 $
+
+(&) :: a #-> (a #-> b) #-> b
+x & f = f x
+infixl 1 &
 
 id :: a #-> a
 id x = x
@@ -56,3 +59,9 @@ foldr :: (a #-> b #-> b) -> b #-> [a] #-> b
 foldr f z = \case
   [] -> z
   x:xs -> f x (foldr f z xs)
+
+foldl :: (b #-> a -> b) -> b #-> [a] -> b
+foldl _ b [] = b
+foldl f b (x:xs) = foldl f (f b x) xs
+
+

@@ -2,7 +2,8 @@ Linear base
 ===========
 
 [![License MIT](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/tweag/linear-base/blob/master/LICENSE)
-[![Build status](https://badge.buildkite.com/5b60ab93dadba234a95e04e6568985918552dcc9e7685ede0d.svg)](https://buildkite.com/tweag-1/linear-base)
+[![Build status](https://badge.buildkite.com/5b60ab93dadba234a95e04e6568985918552dcc9e7685ede0d.svg?branch=master)](https://buildkite.com/tweag-1/linear-base)
+
 
 Linear base is a standard library for developing applications with linear
 types. It is named `linear-base` to be an analog to the original [`base`]
@@ -39,8 +40,8 @@ version of GHC with support for linear types.
    commit in the `extra-deps`._
 
 ```yaml
-resolver: lts-14.6
-compiler: ghc-8.9
+resolver: lts-16.2
+compiler: ghc-8.11
 allow-newer: true
 system-ghc: true
 
@@ -50,9 +51,12 @@ nix:
   path: ["nixpkgs=./nixpkgs.nix"]
 
 extra-deps:
-  - primitive-0.7.0.0
+  - git: https://github.com/facundominguez/quickcheck.git
+    commit: a498e7b41131cf7955b9e154ab26d37d1be10304
+  - git: https://github.com/facundominguez/lifted-async.git
+    commit: 898eb485b21cc321058345998eedd8c409c326fd
   - git: https://github.com/tweag/linear-base.git
-    commit: 5dcb68d52229753f381110e8b0bb681245080235
+    commit: 705522f0bad3f1083bb3447b9f476f6f84d21410
 ```
 
 4. Add `linear-base` to your cabal file's `build-depends:` for the appropriate

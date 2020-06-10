@@ -95,9 +95,11 @@ test-suite examples
     Foreign.Heap
     Simple.FileIO
     Simple.Pure
+    Simple.TopSort
   build-depends:
     base,
     hspec,
+    HUnit,
     linear-base,
     QuickCheck,
     storable-tuple,
