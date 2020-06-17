@@ -1,7 +1,7 @@
 # Design
 
 This document describes our _solution_ to maintaining linear stream invariants
-and building out streams with different levels of linearity (or fineness).
+and building out streams with different levels of linearity (or affineness).
 
 ## Goal
 
