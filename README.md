@@ -7,5 +7,5 @@ they are closed from "old" stream references.
 
 See [Design.md] for the development process.
 
-[Design.md]: https://github.com/tweag/linear-streams/blob/master/Design.md
+[Design.md]: https://github.com/tweag/linear-streams/blob/master/DESIGN.md
 [streaming]: https://github.com/haskell-streaming/streaming
