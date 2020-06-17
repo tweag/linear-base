@@ -162,10 +162,7 @@ infRead :: IO ()
 infRead = do
     Right (v1, s) <- S.next streamTwoLines
     putStrLn v1
-    let infUseOfS = do
-        Right (secret, _) <- S.next s
-        putStrLn secret
-        infUseOfS
+    let infUseOfS = S.next s >>= (\(Right (secret, _)) -> putStrLn secret) >> infUseOfS
     infUseOfS
 
 
