@@ -12,16 +12,17 @@ The goal is not to merely port the streaming library.
 > and (2) are easy to use.
 
 
-While the existing streaming library is great, it has many over-complicated parts to it that
-very much seem like they could be improved. Here's a basic list:
+While the existing streaming library is great and simple, it still has many over-complicated parts 
+that seem like they could be improved. Here's a basic list:
 
  * All the functor-general stuff should ideally either be removed, or accompanied with a
  version only for `Of`. In general, unless functor generality is well motivated,
  it's a good idea to omit it for simplicity.
- * If there's a way to simplify the `Stream` type to still do a `splitAt` or
-   `copy`, do so. A `Stream f m r` that has the functor or monad be itself a
-   stream are (in my view) too complicated.
-
+ * If there's a way to simplify the `Stream` type to make the types of `splitAt` or
+   `copy` easier to grasp, do so. A `Stream f m r` that has the functor or monad be itself a
+   stream are (in my view) too complicated. We should specialize these so that it's clear
+   what the behavior of the functor and monad is.
+   
 ## Development process
 
   * We will first migrate the [existing work] to be synced with linear base and the current GHC.
@@ -44,7 +45,6 @@ very much seem like they could be improved. Here's a basic list:
 
  * The advanced Streaming module
  * The sum and compose manipulation
-
 
 
 [existing work]: https://github.com/m0ar/safe-streaming
