@@ -10,5 +10,6 @@ nix:
 
 extra-deps:
   - primitive-0.7.0.0
+  - streaming-0.2.3.0
   - git: https://github.com/tweag/linear-base.git
-    commit: 676e4e43e66bb8034bf2ccca13cc0418f2623c4b
+    commit: 6d85698940a66bd6f10113fbad1fa6b8ba82e7a0
