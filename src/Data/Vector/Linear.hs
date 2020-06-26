@@ -57,6 +57,7 @@ module Data.Vector.Linear
 
 import qualified Data.Functor.Linear.Internal as Data
 import qualified Data.Functor.Linear.Internal.Traversable as Data
+import Data.Kind (Type)
 import Data.Proxy
 import Data.Type.Equality
 import Data.Vector (Vector)
@@ -77,7 +78,7 @@ import qualified Prelude as Prelude
 import Prelude.Linear.Internal.Simple
 import qualified Unsafe.Linear as Unsafe
 
-newtype V (n :: Nat) (a :: *) = V (Vector a)
+newtype V (n :: Nat) (a :: Type) = V (Vector a)
   deriving (Eq, Ord, Prelude.Functor)
   -- Using vector rather than, say, 'Array' (or directly 'Array#') because it
   -- offers many convenience function. Since all these unsafeCoerces probably
@@ -101,7 +102,7 @@ instance KnownNat n => Data.Traversable (V n) where
     (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Data.<$>
     Data.traverse f (Unsafe.toLinear Vector.toList xs)
 
-type family FunN (n :: Nat) (a :: *) (b :: *) :: * where
+type family FunN (n :: Nat) (a :: Type) (b :: Type) :: Type where
   FunN 0 a b = b
   FunN n a b = a #-> FunN (n-1) a b
 

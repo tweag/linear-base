@@ -20,13 +20,14 @@ module Data.Profunctor.Linear
 import qualified Data.Functor.Linear as Data
 import Data.Bifunctor.Linear hiding (first, second)
 import Prelude.Linear
+import Data.Kind (Type)
 import Data.Void
 import qualified Prelude
 import Control.Arrow (Kleisli(..))
 
 -- TODO: write laws
 
-class Profunctor (arr :: * -> * -> *) where
+class Profunctor (arr :: Type -> Type -> Type) where
   {-# MINIMAL dimap | lmap, rmap #-}
 
   dimap :: (s #-> a) -> (b #-> t) -> a `arr` b -> s `arr` t

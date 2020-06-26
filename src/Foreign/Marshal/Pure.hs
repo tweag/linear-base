@@ -80,7 +80,7 @@ module Foreign.Marshal.Pure
 
 import Control.Exception
 import qualified Data.Functor.Linear as Data
-import Data.Kind (Constraint)
+import Data.Kind (Constraint, Type)
 import Data.Word (Word8)
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils
@@ -96,7 +96,7 @@ import qualified Unsafe.Linear as Unsafe
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
 -- the one that was released with 8.2, and that `mtl` fails to compile against
 -- it), therefore, I'm redefining `Dict` here, as it's cheap.
-data Dict :: Constraint -> * where
+data Dict :: Constraint -> Type where
   Dict :: c => Dict c
 
 -- TODO: organise into sections
@@ -190,7 +190,7 @@ instance KnownRepresentable a => KnownRepresentable (Maybe a) where
 -- * 'ofKnown' may be partial, but must be total on the image of 'toKnown'
 -- * @ofKnown . toKnown == id@
 class (KnownRepresentable (AsKnown a)) => Representable a where
-  type AsKnown a :: *
+  type AsKnown a :: Type
 
   toKnown :: a #-> AsKnown a
   ofKnown :: AsKnown a #-> a
