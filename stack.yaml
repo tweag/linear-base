@@ -1,21 +1,17 @@
 # See https://hub.docker.com/r/tweag/linear-types/
-resolver: lts-14.6
-compiler: ghc-8.9
+resolver: lts-16.2
+compiler: ghc-8.11
 allow-newer: true
 system-ghc: true
 
 packages:
 - '.'
 
-# We must use a more recent version of primitive due to MonadFail
-# Hedgehog requires a newer version of constraints
 extra-deps:
-  - primitive-0.7.0.0
-  - constraints-0.11
-  - hedgehog-1.0.2
-  - tasty-hedgehog-1.0.0.2
-  - optparse-applicative-0.15.1.0
-
+- git: https://github.com/facundominguez/quickcheck.git
+  commit: a498e7b41131cf7955b9e154ab26d37d1be10304
+- git: https://github.com/facundominguez/lifted-async.git
+  commit: 898eb485b21cc321058345998eedd8c409c326fd
 
 nix:
   enable: true

@@ -5,7 +5,8 @@ mkShell {
   LANG="C.UTF-8";
 
   buildInputs = [
-    haskell.compiler.ghcLinearTypes20191220
+    haskell.compiler.ghcHEAD
+    git
     nix
     stack
     cacert
