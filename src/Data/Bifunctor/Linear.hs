@@ -27,6 +27,7 @@ module Data.Bifunctor.Linear
   where
 
 import Prelude.Linear
+import Data.Kind (Type)
 import Data.Void
 
 -- | The Bifunctor class
@@ -81,7 +82,8 @@ instance Bifunctor Either where
 --  * @rassoc . lassoc = id@
 --  * @lassoc . rassoc = id@
 --  * @second swap . rassoc . first swap = rassoc . swap . rassoc@
-class Bifunctor m => SymmetricMonoidal (m :: * -> * -> *) (u :: *) | m -> u, u -> m where
+class Bifunctor m => SymmetricMonoidal (m :: Type -> Type -> Type) (u :: Type)
+    | m -> u, u -> m where
   {-# MINIMAL swap, (rassoc | lassoc) #-}
   rassoc :: (a `m` b) `m` c #-> a `m` (b `m` c)
   rassoc = swap . lassoc . swap . lassoc . swap
