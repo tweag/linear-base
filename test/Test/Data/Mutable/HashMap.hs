@@ -61,11 +61,11 @@ type HMTest = HMap #-> Unrestricted Bool
 -- | Run a test on a random HashMap
 testOnAnyHM :: PropertyT IO HMTest -> Property
 testOnAnyHM propHmtest = property $ do
-  (kv : kvs) <- forAll keyVals
+  kvs <- forAll keyVals
   let randHM = makeHM kvs
   hmtest <- propHmtest
   let test = hmtest Linear.. randHM
-  assert $ unUnrestricted Linear.$ HashMap.singleton kv test
+  assert $ unUnrestricted Linear.$ HashMap.empty test
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
@@ -118,18 +118,18 @@ compareMaybes (Unrestricted a) (Unrestricted b) = Unrestricted (a == b)
 
 -- | Key generator
 key :: Gen Int
-key = Gen.int $ Range.linearFrom 0 (-900) 900
+key = Gen.int $ Range.linearFrom 0 (-400) 400
 
 -- | Value generator
 val :: Gen String
 val = do
-  let strSize = Range.singleton 4
+  let strSize = Range.singleton 3
   Gen.string strSize Gen.alpha
 
 -- | Random pairs
 keyVals :: Gen [(Int, String)]
 keyVals = do
-  size <- Gen.int $ Range.constantFrom 600 400 800
+  size <- Gen.int $ Range.constantFrom 400 0 800
   let sizeGen = Range.singleton size
   keys <- Gen.list sizeGen key
   vals <- Gen.list sizeGen val

@@ -6,6 +6,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
@@ -24,6 +25,7 @@ module Data.HashMap.Linear
     HashMap,
     -- * Run a computation using a 'HashMap'
     singleton,
+    empty,
     -- * Modifiers and Constructors
     alter,
     insert,
@@ -38,6 +40,7 @@ module Data.HashMap.Linear
 where
 
 import Data.Array.Mutable.Linear
+import Data.Default
 import Data.Hashable
 import Data.Unrestricted.Linear
 import Prelude.Linear hiding ((+), lookup, read)
@@ -109,6 +112,15 @@ singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
     applyHM :: Array (RobinVal k v) #-> Unrestricted b
     applyHM arr = let ixToHash = (hash k) `mod` defaultSize in
       f $ HashMap (defaultSize, 1) (write arr ixToHash (k, v, 0))
+
+-- | Run a computation using an empty hashmap
+empty :: (Keyed k, Default k, Default v) =>
+  (HashMap k v #-> Unrestricted b) -> Unrestricted b
+empty (f :: HashMap k v #-> Unrestricted b) =
+  alloc defaultSize (def :: k, def :: v, PSL (-1)) applyHMfunc
+  where
+    applyHMfunc :: Array (k, v, PSL) #-> Unrestricted b
+    applyHMfunc arr = f $ HashMap (defaultSize, 0) arr
 
 -- XXX: re-write linearly
 -- | Given a key @k@ to 'lookup', look up a @Maybe v@ and feed it to
