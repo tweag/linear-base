@@ -25,7 +25,9 @@
 module Prelude.Linear
   ( -- * Standard Types, Classes and Related Functions
     ($)
+  , (&)
   , (<*)
+  , foldl
   , foldr
   , const
   , id
@@ -73,6 +75,7 @@ import Prelude hiding
   , curry
   , uncurry
   , flip
+  , foldl
   , foldr
   , (.)
   , maybe

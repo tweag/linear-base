@@ -24,6 +24,7 @@ module Data.HashMap.Linear
     HashMap,
     -- * Run a computation using a 'HashMap'
     singleton,
+    singleton',
     -- * Modifiers and Constructors
     alter,
     insert,
@@ -110,6 +111,10 @@ singleton (k :: k, v :: v) (f :: HashMap k v #-> Unrestricted b) =
     applyHM arr = let ixToHash = (hash k) `mod` defaultSize in
       f $ HashMap (defaultSize, 1) (write arr ixToHash (k, v, 0))
 
+singleton' :: Keyed k =>
+  (k, v) -> (HashMap k v #-> Unrestricted b) -> b
+singleton' kv f = unUnrestricted (singleton kv f)
+
 -- XXX: re-write linearly
 -- | Given a key @k@ to 'lookup', look up a @Maybe v@ and feed it to
 -- a function @Maybe v -> Maybe v@, and if the result is @Nothing@,
@@ -126,7 +131,7 @@ alter = Unsafe.toLinear unsafeAlter
       HashMap k v -> (Maybe v -> Maybe v) -> k -> HashMap k v
     unsafeAlter hmap f k =
       case lookup hmap k of
-        (hmap', maybeV) -> case f maybeV of
+        (hmap', Unrestricted maybeV) -> case f maybeV of
           Nothing -> delete hmap' k
           Just v -> insert hmap' k v
 
@@ -224,14 +229,14 @@ member hmap k = memberFromQuery (queryIndex hmap k)
     memberFromQuery (h, IndexToSwap _ _) = (h, False)
     memberFromQuery (h, IndexToUpdate _ _) = (h, True)
 
-lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Maybe v)
+lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Unrestricted (Maybe v))
 lookup hmap k = (Unsafe.toLinear lookupFromIx) $ queryIndex hmap k
   where
-    lookupFromIx :: (HashMap k v, RobinQuery k) -> (HashMap k v, Maybe v)
-    lookupFromIx (h, IndexToInsert _ _) = (h, Nothing)
+    lookupFromIx :: (HashMap k v, RobinQuery k) -> (HashMap k v, Unrestricted (Maybe v))
+    lookupFromIx (h, IndexToInsert _ _) = (h, Unrestricted Nothing)
     lookupFromIx (h@(HashMap _ arr), IndexToUpdate _ ix) =
-      case read arr ix of (_, (_, v, _)) -> (h, Just v)
-    lookupFromIx (h, IndexToSwap _ _) = (h, Nothing)
+      case read arr ix of (_, (_, v, _)) -> (h, Unrestricted (Just v))
+    lookupFromIx (h, IndexToSwap _ _) = (h, Unrestricted Nothing)
 
 -- | Internal function:
 -- Find the index a key ought to hash into, and the PSL it should have.
