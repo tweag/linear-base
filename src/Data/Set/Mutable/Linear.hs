@@ -1,17 +1,18 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 -- |
 -- This module defines linear mutable sets.
 -- Please import this module qualified to avoid name clashes.
-
 module Data.Set.Mutable.Linear
   ( -- * Mutable Sets
     Set,
-    singleton,
+    empty,
     insert,
     delete,
     size,
@@ -23,9 +24,7 @@ where
 
 import qualified Data.HashMap.Linear as Linear
 import Data.Unrestricted.Linear
-import qualified Data.Coerce as Coerce
 import qualified Prelude.Linear as Linear
-import Unsafe.Linear as Unsafe
 import GHC.Stack
 
 
@@ -37,19 +36,18 @@ newtype Set a = Set (Linear.HashMap a ())
 
 type Keyed a = Linear.Keyed a
 
+
 -- # Constructors and Mutators
 -------------------------------------------------------------------------------
 
-singleton :: Keyed a => a -> (Set a #-> Unrestricted b) -> Unrestricted b
-singleton a (f :: Set a #-> Unrestricted b) = Linear.singleton (a,()) f'
+empty :: Keyed a => Int -> (Set a #-> Unrestricted b) -> Unrestricted b
+empty s (f :: Set a #-> Unrestricted b) = Linear.empty (Linear.Size s) f'
   where
     f' :: Linear.HashMap a () #-> Unrestricted b
     f' hmap = f (Set hmap)
 
-fromList :: HasCallStack =>
-  Keyed a => [a] -> (Set a #-> Unrestricted b) -> Unrestricted b
-fromList [] _ = error "Creating a set from an empty list"
-fromList (x:xs) f = singleton x (f Linear.. insertAll xs)
+fromList :: (HasCallStack, Keyed a) => [a] -> (Set a #-> Unrestricted b) -> Unrestricted b
+fromList xs f = empty ((length xs) * 2 + 1) (f Linear.. insertAll xs)
   where
     insertAll :: Keyed a => [a] -> Set a #-> Set a
     insertAll [] set = set
@@ -61,6 +59,7 @@ insert (Set hmap) a = Set (Linear.insert hmap a ())
 delete :: Keyed a => Set a #-> a -> Set a
 delete (Set hmap) a = Set (Linear.delete hmap a)
 
+
 -- # Accessors
 -------------------------------------------------------------------------------
 
@@ -68,16 +67,18 @@ size :: Keyed a => Set a #-> (Set a, Int)
 size (Set hmap) = fromHashMapSize (Linear.size hmap)
   where
     fromHashMapSize :: (Linear.HashMap a (), Int) #-> (Set a, Int)
-    fromHashMapSize = Unsafe.toLinear Coerce.coerce
+    fromHashMapSize (hmap, size) = (Set hmap, size)
 
 member :: Keyed a => Set a #-> a -> (Set a, Bool)
 member (Set hmap) a = fromHashMapMember (Linear.member hmap a)
   where
     fromHashMapMember :: (Linear.HashMap a (), Bool) #-> (Set a, Bool)
-    fromHashMapMember = Unsafe.toLinear Coerce.coerce
+    fromHashMapMember (hmap, bool) = (Set hmap, bool)
+
 
 -- # Typeclass Instances
 -------------------------------------------------------------------------------
 
 instance Consumable (Set a) where
   consume (Set hmap) = consume hmap
+

@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData #-}
@@ -59,6 +60,7 @@ import GHC.Exts hiding (toList, fromList)
 import GHC.Stack
 import qualified Unsafe.Linear as Unsafe
 import qualified Unsafe.MutableArray as Unsafe
+import Prelude.Linear ((&))
 import Prelude hiding (length, read)
 import qualified Prelude
 
@@ -112,12 +114,13 @@ write = Unsafe.toLinear writeUnsafe
           () -> arr
       | otherwise = error "Write index out of bounds."
 
-read :: HasCallStack => Array a #-> Int -> (Array a, a)
+read :: HasCallStack => Array a #-> Int -> (Array a, Unrestricted a)
 read = Unsafe.toLinear readUnsafe
   where
-    readUnsafe :: Array a -> Int -> (Array a, a)
+    readUnsafe :: Array a -> Int -> (Array a, Unrestricted a)
     readUnsafe arr@(Array size mutArr) ix
-      | indexInRange size ix = (arr, Unsafe.readMutArr mutArr ix)
+      | indexInRange size ix =
+          (arr, Unrestricted $ Unsafe.readMutArr mutArr ix)
       | otherwise = error "Read index out of bounds."
 
 -- | Using first element as seed, resize to a constant array
@@ -132,16 +135,15 @@ resizeSeed newSize seed (Array _ _) =
 
 -- XXX: Replace with toVec
 toList :: Array a #-> (Array a, [a])
-toList = Unsafe.toLinear unsafetoList
+toList arr = length arr & \case
+  (arr', len) -> move len & \case
+    Unrestricted len' -> toListWalk (len' - 1) arr' []
   where
-    unsafetoList :: Array a -> (Array a, [a])
-    unsafetoList arr@(Array size _) = toListWalk 0 size arr []
-      where
-        toListWalk :: Int -> Int -> Array a -> [a] -> (Array a, [a])
-        toListWalk ix size arr accum
-          | ix == size = (arr, accum)
-          | otherwise =
-            toListWalk (ix + 1) size arr ((snd $ read arr ix) : accum)
+  toListWalk :: Int -> Array a #-> [a] -> (Array a, [a])
+  toListWalk ix arr accum
+    | ix < 0 = (arr, accum)
+    | otherwise = read arr ix & \case
+        (arr', Unrestricted x) -> toListWalk (ix - 1) arr' (x:accum)
 
 -- # Instances
 -------------------------------------------------------------------------------
