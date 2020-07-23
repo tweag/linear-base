@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
-{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MagicHash #-}
 
 
 module Simple.TopSort where
@@ -50,8 +51,9 @@ topsort = reverse . postOrder . fmap (  \(n,nbrs) -> (n,(nbrs,0))  )
   where
     postOrder :: [(Node, ([Node], Int))] -> [Node]
     postOrder [] = []
-    postOrder (x : xs) = let nodes = map fst (x:xs) in
-      HMap.singleton' x $ \hm -> postOrderHM nodes (HMap.insertAll xs hm)
+    postOrder (xs) = let nodes = map fst xs in
+      unUnrestricted Linear.$ HMap.empty (HMap.Size (length xs * 2)) $
+        \hm -> postOrderHM nodes (HMap.insertAll xs hm)
 
 
 postOrderHM :: [Node] -> InDegGraph #-> Unrestricted [Node]
@@ -72,8 +74,11 @@ postOrderHM nodes dag = findSources nodes (computeInDeg nodes dag) & \case
       incNodes (Unrestricted ns) dag = Linear.foldl incNode dag ns
 
       incNode :: InDegGraph #-> Node -> InDegGraph
-      incNode dag node =
-        HMap.alter dag (\(Just (n,d)) -> Just (n,d+1)) node
+      incNode dag node = HMap.lookup dag node & \case
+        (dag', Unrestricted Nothing) -> dag'
+        (dag', Unrestricted (Just (n,d))) ->
+          HMap.insert dag' node (n,d+1)
+        --HMap.alter dag (\(Just (n,d)) -> Just (n,d+1)) node
 
 
 -- pluckSources sources postOrdSoFar dag
@@ -92,8 +97,10 @@ pluckSources (s:ss) postOrd dag = HMap.lookup dag s & \case
 
     -- Decrement the degree of a node, save it if it is now a source
     decDegree :: Node -> InDegGraph #-> (InDegGraph, Unrestricted (Maybe Node))
-    decDegree node dag =
-      checkSource node (HMap.alter dag (\(Just (n,d)) -> Just (n,d-1)) node)
+    decDegree node dag = HMap.lookup dag node & \case
+        (dag', Unrestricted Nothing) -> (dag', Unrestricted Nothing)
+        (dag', Unrestricted (Just (n,d))) ->
+          checkSource node (HMap.insert dag' node (n,d-1))
 
 
 -- Given a list of nodes, determines which are sources

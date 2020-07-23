@@ -30,9 +30,7 @@ mutHMTests = testGroup "Mutable hashmap tests" group
 
 group :: [TestTree]
 group =
-  [ testProperty "∀ k,v. lookup k (sing k v) = Just v" lookupSing1,
-    testProperty "∀ k,v,k'/=k. lookup k' (sing k v) = Nothing" lookupSing2,
-    testProperty "∀ k,v,m. lookup k (insert m k v) = Just v" lookupInsert1,
+  [ testProperty "∀ k,v,m. lookup k (insert m k v) = Just v" lookupInsert1,
     testProperty
       "∀ k,v,m,k'/=k. lookup k'(insert m k v) = lookup k' m"
       lookupInsert2,
@@ -58,14 +56,19 @@ type HMap = HashMap.HashMap Int String
 -- | A test checks a boolean property on a hashmap and consumes it
 type HMTest = HMap #-> Unrestricted Bool
 
+
+maxSize :: Int
+maxSize = 800
+
 -- | Run a test on a random HashMap
 testOnAnyHM :: PropertyT IO HMTest -> Property
 testOnAnyHM propHmtest = property $ do
-  (kv : kvs) <- forAll keyVals
+  kvs <- forAll keyVals
   let randHM = makeHM kvs
   hmtest <- propHmtest
   let test = hmtest Linear.. randHM
-  assert $ unUnrestricted Linear.$ HashMap.singleton kv test
+  let initSize = maxSize `div` 50
+  assert $ unUnrestricted Linear.$ HashMap.empty (HashMap.Size initSize) test
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
@@ -118,18 +121,18 @@ compareMaybes (Unrestricted a) (Unrestricted b) = Unrestricted (a == b)
 
 -- | Key generator
 key :: Gen Int
-key = Gen.int $ Range.linearFrom 0 (-900) 900
+key = Gen.int $ Range.linearFrom 0 (-20) 20
 
 -- | Value generator
 val :: Gen String
 val = do
-  let strSize = Range.singleton 4
+  let strSize = Range.singleton 3
   Gen.string strSize Gen.alpha
 
 -- | Random pairs
 keyVals :: Gen [(Int, String)]
 keyVals = do
-  size <- Gen.int $ Range.constantFrom 600 400 800
+  size <- Gen.int $ Range.linearFrom 0 maxSize maxSize
   let sizeGen = Range.singleton size
   keys <- Gen.list sizeGen key
   vals <- Gen.list sizeGen val
@@ -142,21 +145,6 @@ makeHM ((k, v) : xs) hmap = makeHM xs (HashMap.insert hmap k v)
 
 -- # Tests
 --------------------------------------------------------------------------------
-
-lookupSing1 :: Property
-lookupSing1 = property $ do
-  k <- forAll key
-  v <- forAll val
-  let test = testKVPairExists (k, v)
-  assert $ unUnrestricted Linear.$ HashMap.singleton (k, v) test
-
-lookupSing2 :: Property
-lookupSing2 = property $ do
-  k <- forAll key
-  v <- forAll val
-  k' <- forAll $ Gen.filter (/= k) key
-  let test = testKeyMissing k'
-  assert $ unUnrestricted Linear.$ HashMap.singleton (k, v) test
 
 lookupInsert1 :: Property
 lookupInsert1 = testOnAnyHM $ do
