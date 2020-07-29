@@ -1,15 +1,17 @@
-resolver: lts-14.6
-compiler: ghc-8.9
+# See https://hub.docker.com/r/tweag/linear-types/
+resolver: lts-16.2
+compiler: ghc-8.11
 allow-newer: true
 system-ghc: true
+
+packages:
+- '.'
+
+extra-deps:
+  - git: https://github.com/tweag/linear-base.git
+    commit: 627bf381a94473aca89c9a5ce98c69ceb7a22266
 
 nix:
   enable: true
   shell-file: shell-stack.nix
   path: ["nixpkgs=./nixpkgs.nix"]
-
-extra-deps:
-  - primitive-0.7.0.0
-  - streaming-0.2.3.0
-  - git: https://github.com/tweag/linear-base.git
-    commit: 6d85698940a66bd6f10113fbad1fa6b8ba82e7a0

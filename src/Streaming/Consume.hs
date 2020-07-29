@@ -2,7 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 -- | This module provides all functions that take input streams
--- but do not produce output streams
+-- but do not return output streams.
 module Streaming.Consume
   ( -- * Consuming streams of elements
   {-
@@ -52,11 +52,6 @@ module Streaming.Consume
   , foldrT
   -}
   ) where
-
-import Streaming.Type
-import Prelude hiding (mconcat, maximum, minimum, sum, product, any, all,
-                      writeFile, print)
-import System.IO hiding (print, writeFile)
 
 
 

@@ -1,6 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
 
-module Streaming.Linear
+module Streaming.Prelude
   ( module Streaming.Consume
   , module Streaming.Many
   , module Streaming.Process
@@ -13,5 +13,3 @@ import Streaming.Many
 import Streaming.Process
 import Streaming.Produce
 import Streaming.Type
-
-

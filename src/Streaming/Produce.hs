@@ -1,10 +1,10 @@
 {-# LANGUAGE LinearTypes #-}
 
--- | This module provides all producers of a stream
+-- | This module provides all functions which produce a
+-- 'Stream (Of a) m r' from some given non-stream inputs.
 module Streaming.Produce
-  ( yield
+  ( {- yield
   , each
-    {-
   , each'
   , unfoldr
   , stdinLn
@@ -24,19 +24,6 @@ module Streaming.Produce
   , seconds
   -}
   ) where
-
-import Prelude hiding (readLn, replicate)
-import Streaming.Type
-import qualified Control.Monad.Linear as Linear
-import qualified Data.Foldable.Linear as Linear
-import System.IO hiding (readLn)
-
-
-yield :: Linear.Monad m => a -> Stream (Of a) m ()
-yield a = Step (a :> Return ())
-
-each :: (Linear.Monad m, Linear.Foldable f) => f a #-> Stream (Of a) m ()
-each = Linear.foldr (\a p -> Step (a :> p)) (Return ())
 
 
 

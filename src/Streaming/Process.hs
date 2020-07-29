@@ -7,8 +7,8 @@ module Streaming.Process
   (
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
-    next
   {-
+    next
   , uncons
   , splitAt
   , split
@@ -56,18 +56,6 @@ module Streaming.Process
   , duplicate'
   -}
   ) where
-
-import Streaming.Type
-import qualified Prelude.Linear as Linear
-import qualified Control.Monad.Linear as Linear
-import qualified Control.Monad.Linear.Builder as Control
-
-next :: Linear.Monad m => Stream (Of a) m r #-> m (Either r (a, Stream (Of a) m r))
-next (Return r) = Linear.return Linear.$ Left r
-next (Effect m) = m Linear.>>= next
-next (Step (a :> rest)) = Linear.return Linear.$ Right (a, rest)
-{-# INLINABLE next #-}
-
 
 
 
