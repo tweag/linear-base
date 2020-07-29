@@ -22,6 +22,7 @@ module Data.Functor.Linear
   , Applicative(..)
   , (<$>)
   , (<$)
+  , (*>)
   , Const(..)
     -- * Linear traversable hierarchy
     -- $ traversable
@@ -30,6 +31,7 @@ module Data.Functor.Linear
   )
   where
 
+import Prelude.Linear.Internal.Simple
 import Data.Functor.Linear.Internal
 import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
@@ -39,3 +41,6 @@ import Data.Unrestricted.Linear
 -- and consume the functor @f b@.
 (<$) :: (Functor f, Consumable b) => a -> f b #-> f a
 a <$ fb = fmap (`lseq` a) fb
+
+(*>) :: (Applicative f, Consumable a) => f a #-> f b #-> f b
+fa *> fb = (id <$ fa) <*> fb

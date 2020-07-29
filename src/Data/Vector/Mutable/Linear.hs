@@ -90,7 +90,7 @@ fromList xs@(x:_) (f :: Vector a #-> Unrestricted b) =
   constant (Prelude.length xs) x buildThenRun
   where
     buildThenRun :: Vector a #-> Unrestricted b
-    buildThenRun vec = f $ doWrites (zip xs [0..]) vec
+    buildThenRun vec = f $ doWrites (Prelude.zip xs [0..]) vec
 
     doWrites :: [(a,Int)] -> Vector a #-> Vector a
     doWrites [] vec = vec

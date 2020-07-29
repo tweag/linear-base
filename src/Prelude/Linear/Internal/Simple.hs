@@ -9,6 +9,7 @@ module Prelude.Linear.Internal.Simple where
 
 import qualified Prelude as Prelude
 import qualified Unsafe.Linear as Unsafe
+import GHC.Exts (FUN)
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
 -- simply reimplemented here. For harder function, we reuse the Prelude
@@ -21,6 +22,13 @@ import qualified Unsafe.Linear as Unsafe
 -- inference mechanism.
 ($) f x = f x
 infixr 0 $
+
+-- FIXME: This is usually implemented with `seq` which is not linear, or
+-- with a BangPattern, which requires a let binding. There must be a way
+-- to type this safely, but I could not figure it out.
+($!) :: (a #-> b) #-> a #-> b
+($!) f = Unsafe.toLinear2 (Prelude.$!) (forget f)
+infixr 0 $!
 
 (&) :: a #-> (a #-> b) #-> b
 x & f = f x
@@ -53,15 +61,15 @@ uncurry f (x,y) = f x y
 (.) :: (b #-> c) #-> (a #-> b) #-> a #-> c
 f . g = \x -> f (g x)
 
--- | Linearly typed replacement for the standard 'Prelude.foldr' function,
--- to allow linear consumption of a list.
-foldr :: (a #-> b #-> b) -> b #-> [a] #-> b
-foldr f z = \case
-  [] -> z
-  x:xs -> f x (foldr f z xs)
+-- XXX: temporary: with multiplicity polymorphism functions expecting a
+-- non-linear arrow would allow a linear arrow passed, so this would be
+-- redundant
+-- | Convenience operator when a higher-order function expects a non-linear
+-- arrow but we have a linear arrow
+forget :: (a #-> b) #-> a -> b
+forget f x = f x
 
-foldl :: (b #-> a -> b) -> b #-> [a] -> b
-foldl _ b [] = b
-foldl f b (x:xs) = foldl f (f b x) xs
-
+-- | Replacement for the flip function with generalized multiplicities.
+flip :: FUN r (FUN p a (FUN q b c)) (FUN q b (FUN p a c))
+flip f b a = f a b
 

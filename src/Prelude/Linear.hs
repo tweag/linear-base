@@ -27,11 +27,13 @@ module Prelude.Linear
     ($)
   , (&)
   , (<*)
+  , flip
   , foldl
   , foldr
   , const
   , id
   , seq
+  , ($!)
   , curry
   , uncurry
   , (.)
@@ -67,14 +69,16 @@ import Data.Num.Linear
 import Data.Bool.Linear
 import Data.Either.Linear
 import Data.Maybe.Linear
+import Data.Foldable.Linear
 import Prelude hiding
   ( ($)
   , id
   , const
   , seq
+  , flip
+  , ($!)
   , curry
   , uncurry
-  , flip
   , foldl
   , foldr
   , (.)
@@ -91,20 +95,7 @@ import Prelude hiding
   , Monoid(..)
   , Num(..)
   )
-import GHC.Exts (FUN)
 import Prelude.Linear.Internal.Simple
-
--- XXX: temporary: with multiplicity polymorphism functions expecting a
--- non-linear arrow would allow a linear arrow passed, so this would be
--- redundant
--- | Convenience operator when a higher-order function expects a non-linear
--- arrow but we have a linear arrow
-forget :: (a #-> b) #-> a -> b
-forget f x = f x
-
--- | Replacement for the flip function with generalized multiplicities.
-flip :: FUN r (FUN p a (FUN q b c)) (FUN q b (FUN p a c))
-flip f b a = f a b
 
 -- | Linearly typed replacement for the standard '(Prelude.<*)' function.
 (<*) :: (Data.Applicative f, Consumable b) => f a #-> f b #-> f a

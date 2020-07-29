@@ -112,10 +112,8 @@ ap f x = f >>= (\f' -> fmap f' x)
 -- | Fold from left to right with a linear monad.
 -- This is a linear version of 'NonLinear.foldM'.
 foldM :: forall m a b. Monad m => (b #-> a #-> m b) -> b #-> [a] #-> m b
-foldM f z0 xs = foldr f' return xs z0
-  where
-    f' :: a #-> (b #-> m b) #-> b #-> m b
-    f' x k z = f z x >>= k
+foldM _ i [] = return i
+foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 
 -----------------------------------------------
 -- Deriving Data.XXX in terms of Control.XXX --
