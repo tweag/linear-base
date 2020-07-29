@@ -19,10 +19,8 @@ map :: (a #-> b) -> [a] #-> [b]
 map = fmap
 
 -- | @filter p xs@ returns a list with elements satisfying the predicate.
--- 'Dupable' constraint is there because after apply the predicate to the
--- elements, we possibly need to use the same element in the result.
 --
--- See also: 'Data.Maybe.Linear.mapMaybe'
+-- See 'Data.Maybe.Linear.mapMaybe' if you do not want the 'Dupable' constraint.
 filter :: Dupable a => (a #-> Bool) -> [a] #-> [a]
 filter _ [] = []
 filter p (x:xs) =
