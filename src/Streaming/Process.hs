@@ -8,6 +8,7 @@
 -- process a single stream.
 module Streaming.Process
   ( mapMaybe
+  , map
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
   {-
@@ -83,7 +84,11 @@ mapMaybe f stream = stream & \case
     Builder{..} = monadBuilder
 
 
-
+map :: CMonad m => (a -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
+map f stream = stream & \case
+  Return r -> Return r
+  Step (a :> rest) -> Step $ (f a) :> map f rest
+  Effect ms -> Effect $ Control.fmap (map f) ms
 
 
 
