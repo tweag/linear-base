@@ -10,6 +10,8 @@
 module Streaming.Type
   ( Stream (..)
   , Of (..)
+  , CFunctor
+  , CMonad
   ) where
 
 import qualified Data.Functor.Linear as Data
