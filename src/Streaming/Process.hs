@@ -1,10 +1,14 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | This module provides functions that take one input
 -- stream and produce one output stream. These are functions that
 -- process a single stream.
 module Streaming.Process
-  (
+  ( mapMaybe
+  , map
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
   {-
@@ -57,10 +61,30 @@ module Streaming.Process
   -}
   ) where
 
+import Streaming.Type
+import Prelude.Linear ((&), ($), (.))
+import Prelude (Maybe(..))
+import qualified Control.Monad.Linear as Control
+import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 
 
+-- # Stream transformations
+-------------------------------------------------------------------------------
 
+mapMaybe :: Control.Monad m =>
+  (a -> Maybe b) -> Stream (Of a) m r #-> Stream (Of b) m r
+mapMaybe f stream = stream & \case
+  Return r -> Return r
+  Effect ms -> Effect $ ms >>= (return . mapMaybe f)
+  Step (a :> s) -> case f a of
+    Just b -> Step $ b :> (mapMaybe f s)
+    Nothing -> mapMaybe f s
+  where
+    Builder{..} = monadBuilder
 
-
-
+map :: Control.Monad m => (a -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
+map f stream = stream & \case
+  Return r -> Return r
+  Step (a :> rest) -> Step $ (f a) :> map f rest
+  Effect ms -> Effect $ Control.fmap (map f) ms
 

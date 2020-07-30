@@ -44,4 +44,18 @@ exactly once. We never bind some `m a` twice.
 
 Linear types lets us enforce this.
 
+## Design
+
+Effectively, all of the design boils down to changing the `m` in
+`Stream f m r` to have a `Control.Monad.Linear.Monad` instance.
+We do this for as many API functions as we can.
+
+This change requires the `f` to have a `Control.Monad.Linear.Functor` instance
+and a `Control.Monad` instance for any `Stream f m` with appropriate `m` and `f`.
+In general, all changes are necessarily implied from just changing the `m`.
+
+## Conventions
+
+ * We use `Text` in place of `String`
+
 [streaming]: https://github.com/haskell-streaming/streaming
