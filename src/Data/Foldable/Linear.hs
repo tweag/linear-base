@@ -3,8 +3,17 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Data.Foldable.Linear where
+module Data.Foldable.Linear
+  ( Foldable (..)
+  , all
+  , and
+  , or
+  , traverse_
+  , sequence_
+  , foldMapDefault
+  ) where
 
 import qualified Prelude as Prelude
 import Prelude (Maybe(..), Either(..), Int, Ordering (..))
@@ -18,7 +27,6 @@ import Data.Maybe.Linear
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Functor.Linear
 import Data.Monoid.Linear
-import Data.Ord (Down(Down))
 
 class Foldable t where
     {-# MINIMAL foldMap | foldr #-}
@@ -43,10 +51,10 @@ class Foldable t where
         f' k x z = k $! f x z
 
     foldl :: (b #-> a #-> b) -> b #-> t a #-> b
-    foldl f z t = appEndo (getDual (foldMap (Dual . Endo . flip f) t)) z
+    foldl f z t = appEndo (getDual' (foldMap (Dual . Endo . flip f) t)) z
       where
-        getDual :: Dual a #-> a
-        getDual (Dual a) = a
+        getDual' :: Dual a #-> a
+        getDual' (Dual a) = a
 
     foldl' :: forall a b. (b #-> a #-> b) -> b #-> t a #-> b
     foldl' f z0 xs = foldr f' id xs z0
@@ -108,7 +116,7 @@ instance Foldable NonEmpty where
   foldMap f (x:|xs) = f x <> foldMap f xs
 
 instance Consumable a => Foldable (Either a) where
-  foldMap f (Left l) = l `lseq` mempty
+  foldMap _ (Left l) = l `lseq` mempty
   foldMap f (Right r) = f r
 
 maximumBy :: (Foldable t, Dupable a) => (a #-> a #-> Ordering) -> t a #-> a
@@ -155,6 +163,15 @@ sequence_ :: (Foldable t, Applicative f, Consumable a)
           => t (f a) #-> f ()
 sequence_ = traverse_ id
 
+
+-- | This function can be used as a value for 'foldMap' given a 'Traversable'
+-- and a 'Consumable' instance.
+--
+-- Note: Unlike their base counterparts, 'Data.Foldable.Linear' is not a
+-- superclass of 'Data.Traversable.Linear'; since there are 'Traversable's
+-- which are not 'Foldable', for example `(a,)` or `Const a`. This type
+-- signature also witnesses that by requring an extra `Consumable (t ())`
+-- constraint.
 foldMapDefault :: (Traversable t, Monoid m, Consumable (t ())) => (a #-> m) -> t a #-> m
 foldMapDefault f xs = sequence ((\a -> (f a, ())) <$> xs) & \case
   (m, t) -> t `lseq` m
