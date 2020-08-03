@@ -32,7 +32,7 @@ The scrutinee on (i.e., `x` in
 the current implementation of the typechecker.
 
 For now, we can mimic a linear case statement using the
-`-XLamdbaCase` language extension and the `(&)` from `Prelude.Linear`:
+`-XLambdaCase` language extension and the `(&)` from `Prelude.Linear`:
 
 
 ```haskell
