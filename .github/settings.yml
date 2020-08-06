@@ -2,6 +2,8 @@ repository:
   has_wiki: false
 
 labels:
+  - name: "Bikeshedding"
+    color: ff800e
   - name: "duplicate"
     color: cfd3d7
   - name: "good first issue"
