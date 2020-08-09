@@ -7,7 +7,8 @@
 -- stream and produce one output stream. These are functions that
 -- process a single stream.
 module Streaming.Process
-  (
+  ( mapMaybe
+  , map
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
     next
@@ -109,4 +110,3 @@ map f stream = stream & \case
   Return r -> Return r
   Step (a :> rest) -> Step $ (f a) :> map f rest
   Effect ms -> Effect $ Control.fmap (map f) ms
-
