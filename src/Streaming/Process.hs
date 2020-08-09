@@ -11,64 +11,83 @@ module Streaming.Process
   , map
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
-  {-
     next
-  , uncons
-  , splitAt
-  , split
-  , break
-  , breakWhen
-  , span
-  , group
-  , groupBy
+  --, uncons
+  --, splitAt
+  --, split
+  --, break
+  --, breakWhen
+  --, span
+  --, group
+  --, groupBy
+  --, distinguish
+  --, switch
+  --, seperate
+  --, unseparate
+  --, eitherToSum
+  --, sumToEither
+  --, sumToCompose
+  --, composeToSum
   -- * Partitions
-  , partitionEithers
-  , partition
+  --, partitionEithers
+  --, partition
   -- * Maybes
-  , catMaybes
+  --, catMaybes
   , mapMaybe
   -- ** Direct Transformations
   , map
-  , mapM
-  , maps
-  , mapped
-  , for
-  , with
-  , subst
-  , copy
-  , copy'
-  , store
-  , chain
-  , sequence
-  , filter
-  , filterM
-  , delay
-  , intersperse
-  , take
-  , takeWhile
-  , takeWhileM
-  , drop
-  , dropWhile
-  , concat
-  , scan
-  , scanM
-  , scanned
-  , read
-  , show
-  , cons
-  , duplicate
-  , duplicate'
-  -}
+  --, mapM
+  --, maps
+  --, mapped
+  --, for
+  --, with
+  --, subst
+  --, copy
+  --, copy'
+  --, store
+  --, chain
+  --, sequence
+  --, filter
+  --, filterM
+  --, delay
+  --, intersperse
+  --, take
+  --, takeWhile
+  --, takeWhileM
+  --, drop
+  --, dropWhile
+  --, concat
+  --, scan
+  --, scanM
+  --, scanned
+  --, read
+  --, show
+  --, cons
+  --, duplicate
+  --, duplicate'
   ) where
 
 import Streaming.Type
 import Prelude.Linear ((&), ($), (.))
-import Prelude (Maybe(..))
+import Prelude (Maybe(..), Either(..))
 import qualified Control.Monad.Linear as Control
 import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 
 
--- # Stream transformations
+-- # Splitting and inspecting streams of elements
+-------------------------------------------------------------------------------
+
+next :: Control.Monad m =>
+  Stream (Of a) m r #-> m (Either r (a, Stream (Of a) m r))
+next stream = stream & \case
+  Return r -> return $ Left r
+  Effect ms -> ms >>= next
+  Step (a :> as) -> return $ Right (a, as)
+  where
+    Builder{..} = monadBuilder
+
+
+-- # Maybes
 -------------------------------------------------------------------------------
 
 mapMaybe :: Control.Monad m =>
@@ -82,9 +101,12 @@ mapMaybe f stream = stream & \case
   where
     Builder{..} = monadBuilder
 
+
+-- # Direct Transformations
+-------------------------------------------------------------------------------
+
 map :: Control.Monad m => (a -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
 map f stream = stream & \case
   Return r -> Return r
   Step (a :> rest) -> Step $ (f a) :> map f rest
   Effect ms -> Effect $ Control.fmap (map f) ms
-
