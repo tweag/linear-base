@@ -17,6 +17,10 @@ extra-deps:
   commit: c98aa9e33bf6871098d6f4ac94eeaac10383d696
   subdirs:
     - hedgehog
+# below is required for getting quickcheck compile
+- random-1.2.0
+- splitmix-0.1.0.1
+
 nix:
   enable: true
   shell-file: shell-stack.nix
