@@ -1,0 +1,18 @@
+packages: *.cabal
+
+allow-newer: all
+
+-- If you update below, make sure to also update stack.yaml too
+
+source-repository-package
+  -- https://github.com/nick8325/quickcheck/pull/311
+  type: git
+  location: https://github.com/phadej/quickcheck.git
+  tag: d659a5e44b3304e7599321d506bf48d2e88389d0
+
+source-repository-package
+  -- https://github.com/hedgehogqa/haskell-hedgehog/pull/392
+  type: git
+  location: https://github.com/utdemir/haskell-hedgehog.git
+  tag: c98aa9e33bf6871098d6f4ac94eeaac10383d696
+  subdir: hedgehog
