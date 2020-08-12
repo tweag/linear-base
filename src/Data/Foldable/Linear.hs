@@ -12,7 +12,9 @@ module Data.Foldable.Linear
   , or
   , traverse_
   , sequence_
+  -- * Helpers for creating instances
   , foldMapDefault
+  , ConsumableViaFoldable (..)
   ) where
 
 import qualified Prelude as Prelude
@@ -100,8 +102,11 @@ class Foldable t where
     maximum :: (Dupable a, Prelude.Ord a) => t a #-> a
     maximum = maximumBy compare
 
-instance {-# OVERLAPPABLE #-} (Foldable t, Consumable a) => Consumable (t a) where
-  consume = foldl' (flip lseq) ()
+-- | A wrapper which implements a 'Consumable' instance given a 'Foldable'.
+-- Suitable to use with @-XDerivingVia@.
+newtype ConsumableViaFoldable a = ConsumableViaFoldable a
+instance (Foldable t, Consumable a) => Consumable (ConsumableViaFoldable (t a)) where
+  consume (ConsumableViaFoldable xs) = foldl' (flip lseq) () xs
 
 instance Foldable [] where
   foldr f z = \case
