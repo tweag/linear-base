@@ -5,9 +5,8 @@ mkShell {
   LANG="C.UTF-8";
 
   buildInputs = [
-    (haskell.packages.ghcHEAD.ghcWithPackages (ps: [
-      cabal-install
-    ]))
+    haskell.compiler.ghcHEAD
+    cabal-install
     git
     nix
     stack
