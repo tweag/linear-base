@@ -56,10 +56,12 @@ where
 
 import GHC.Exts hiding (fromList)
 import GHC.Stack
-import Prelude.Linear hiding (length, read)
+import qualified Prelude.Linear as Linear
+import Data.Unrestricted.Linear
+import Prelude hiding (read, length)
+import qualified Prelude as Prelude
 import qualified Unsafe.Linear as Unsafe
 import qualified Unsafe.MutableArray as Unsafe
-import qualified  Prelude
 
 -- # Core data types
 -------------------------------------------------------------------------------
@@ -80,7 +82,7 @@ constant :: HasCallStack =>
   Int -> a -> (Vector a #-> Unrestricted b) -> Unrestricted b
 constant size x f
   | size <= 0 = error ("Trying to construct a vector of size " ++ show size)
-  | otherwise = f $ Vec (size, size) (Unsafe.newMutArr size x)
+  | otherwise = f Linear.$ Vec (size, size) (Unsafe.newMutArr size x)
 
 -- XXX: long line below
 -- | Allocator from a non-empty list (and error on empty lists)
@@ -90,7 +92,7 @@ fromList xs@(x:_) (f :: Vector a #-> Unrestricted b) =
   constant (Prelude.length xs) x buildThenRun
   where
     buildThenRun :: Vector a #-> Unrestricted b
-    buildThenRun vec = f $ doWrites (zip xs [0..]) vec
+    buildThenRun vec = f Linear.$ doWrites (zip xs [0..]) vec
 
     doWrites :: [(a,Int)] -> Vector a #-> Vector a
     doWrites [] vec = vec

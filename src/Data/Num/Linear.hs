@@ -149,6 +149,7 @@ liftU2 f x y = lifted f (move x) (move y)
 -- A newtype wrapper to give the underlying monoid for an additive structure.
 newtype Adding a = Adding a
   deriving Prelude.Semigroup via NonLinear (Adding a)
+  deriving newtype (Consumable, Movable, Dupable)
 
 getAdded :: Adding a #-> a
 getAdded (Adding x) = x
@@ -162,6 +163,7 @@ instance AddIdentity a => Monoid (Adding a)
 -- A newtype wrapper to give the underlying monoid for a multiplicative structure.
 newtype Multiplying a = Multiplying a
   deriving Prelude.Semigroup via NonLinear (Multiplying a)
+  deriving newtype (Consumable, Movable, Dupable)
 
 getMultiplied :: Multiplying a #-> a
 getMultiplied (Multiplying x) = x

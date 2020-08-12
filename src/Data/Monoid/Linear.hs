@@ -17,13 +17,15 @@ module Data.Monoid.Linear
   -- * Endo
   , Endo(..), appEndo
   , NonLinear(..)
-  , module Data.Semigroup
+  , All(All), getAll
+  , Any(Any), getAny
+  , Dual(Dual), getDual
   )
   where
 
 import Prelude.Linear.Internal.Simple
-import Data.Semigroup hiding (Semigroup(..), Endo(..))
-import qualified Data.Semigroup as Prelude
+import Data.Semigroup (All(All), Any(Any), Dual(Dual))
+
 import GHC.Types hiding (Any)
 import qualified Prelude
 
@@ -68,15 +70,25 @@ instance (Semigroup a, Semigroup b) => Semigroup (a,b) where
   (a,x) <> (b,y) = (a <> b, x <> y)
 instance (Monoid a, Monoid b) => Monoid (a,b)
 
+getDual :: Dual a #-> a
+getDual (Dual a) = a
+
 instance Semigroup a => Semigroup (Dual a) where
   Dual x <> Dual y = Dual (y <> x)
 instance Monoid a => Monoid (Dual a)
+
+getAll :: All #-> Bool
+getAll (All a) = a
 
 instance Semigroup All where
   All False <> All False = All False
   All False <> All True = All False
   All True  <> All False = All False
   All True  <> All True = All True
+
+getAny :: Any #-> Bool
+getAny (Any a) = a
+
 instance Semigroup Any where
   Any False <> Any False = Any False
   Any False <> Any True = Any True

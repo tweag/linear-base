@@ -87,8 +87,9 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude (($), return, (<*>))
-import Prelude.Linear hiding (($))
+import Prelude
+import qualified Prelude.Linear as Linear
+import Data.Unrestricted.Linear
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
 
@@ -208,20 +209,20 @@ class (KnownRepresentable (AsKnown a)) => Representable a where
 -- tuples of Representable (not only KnownRepresentable) are Representable.
 instance Representable Word where
   type AsKnown Word = Word
-  toKnown = id
-  ofKnown = id
+  toKnown = Linear.id
+  ofKnown = Linear.id
 instance Representable Int where
   type AsKnown Int = Int
-  toKnown = id
-  ofKnown = id
+  toKnown = Linear.id
+  ofKnown = Linear.id
 instance Representable (Ptr a) where
   type AsKnown (Ptr a) = Ptr a
-  toKnown = id
-  ofKnown = id
+  toKnown = Linear.id
+  ofKnown = Linear.id
 instance Representable () where
   type AsKnown () = ()
-  toKnown = id
-  ofKnown = id
+  toKnown = Linear.id
+  ofKnown = Linear.id
 instance
   (Representable a, Representable b)
   => Representable (a, b) where
@@ -282,7 +283,7 @@ data Pool where
 -- Implementing a doubly-linked list with `Ptr`
 
 data DLL a = DLL { prev :: Ptr (DLL a), elt :: Ptr a, next :: Ptr (DLL a) }
-  deriving Eq
+  deriving Prelude.Eq
 
 -- XXX: probably replaceable by storable-generic
 instance Storable (DLL a) where
@@ -376,8 +377,8 @@ instance Storable (Box a) where
 instance KnownRepresentable (Box a) where
 instance Representable (Box a) where
   type AsKnown (Box a) = Box a
-  ofKnown = id
-  toKnown = id
+  ofKnown = Linear.id
+  toKnown = Linear.id
 
 -- TODO: a way to store GC'd data using a StablePtr
 

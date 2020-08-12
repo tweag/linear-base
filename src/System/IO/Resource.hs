@@ -59,7 +59,7 @@ module System.IO.Resource
     -- $files
   , Handle
     -- ** File I/O
-  , openFile 
+  , openFile
     -- ** Working with Handles
   , hClose
   , hGetChar
@@ -89,7 +89,7 @@ import qualified Data.IntMap.Strict as IntMap
 import Data.IntMap.Strict (IntMap)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import Prelude.Linear hiding (IO)
+import Prelude.Linear
 import qualified Prelude as P
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
@@ -117,7 +117,7 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease P.$ Unrestricted.fmap snd P.$ IntMap.toList releaseMap))
+           safeRelease P.$ Unrestricted.fmap P.snd P.$ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
@@ -257,12 +257,12 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
     releaseKey releaseMap =
       case IntMap.null releaseMap of
         True -> 0
-        False -> fst (IntMap.findMax releaseMap) + 1
+        False -> P.fst (IntMap.findMax releaseMap) + 1
 
 -- | Given a "System.IO" computation on an unsafe resource,
 -- lift it to @RIO@ computaton on the acquired resource.
 -- That is function of type @a -> IO b@ turns into a function of type
--- @UnsafeResource a #-> RIO (Unrestricted b)@ 
+-- @UnsafeResource a #-> RIO (Unrestricted b)@
 -- along with threading the @UnsafeResource a@.
 --
 -- Note that the result @b@ can be used non-linearly.

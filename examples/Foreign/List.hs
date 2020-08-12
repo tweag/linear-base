@@ -12,7 +12,7 @@ module Foreign.List where
 import qualified Data.List as List
 import Foreign.Marshal.Pure (Pool, Box)
 import qualified Foreign.Marshal.Pure as Manual
-import Prelude.Linear hiding (map, foldl, foldr)
+import Prelude.Linear hiding (foldl, foldr)
 
 -- XXX: we keep the last Cons in Memory here. A better approach would be to
 -- always keep a Box instead.

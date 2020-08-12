@@ -61,7 +61,8 @@ import qualified Control.Exception as System (throwIO, catch, mask_)
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import GHC.Exts (State#, RealWorld)
-import Prelude.Linear hiding (IO)
+import qualified Prelude
+import Prelude.Linear
 import qualified Unsafe.Linear as Unsafe
 import qualified System.IO as System
 
@@ -105,7 +106,7 @@ fromSystemIO = Unsafe.coerce
 -- 'Unrestricted'.
 fromSystemIOU :: System.IO a -> IO (Unrestricted a)
 fromSystemIOU action =
-  fromSystemIO (Unrestricted <$> action)
+  fromSystemIO (Unrestricted Prelude.<$> action)
 
 -- | Convert a linear IO action to a "System.IO" action.
 toSystemIO :: IO a #-> System.IO a
@@ -119,7 +120,7 @@ toSystemIO = Unsafe.coerce -- basically just subtyping
 -- main = Linear.withLinearIO $ do ...
 -- @
 withLinearIO :: IO (Unrestricted a) -> System.IO a
-withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
+withLinearIO action = (\x -> unUnrestricted x) Prelude.<$> (toSystemIO action)
 
 -- * Monadic interface
 

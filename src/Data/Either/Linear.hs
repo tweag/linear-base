@@ -4,7 +4,8 @@
 
 -- | This module contains useful functions for working with 'Either's.
 module Data.Either.Linear
-  ( either
+  ( Either(..)
+  , either
   , lefts
   , rights
   , fromLeft

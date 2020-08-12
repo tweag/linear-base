@@ -20,7 +20,7 @@ import Data.Vector.Mutable (MVector)
 import qualified Data.Vector.Mutable as MVector
 import GHC.Exts (RealWorld)
 import qualified Prelude as Prelude
-import Prelude.Linear hiding (replicate)
+import Prelude.Linear
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
 
@@ -63,8 +63,8 @@ fill = Unsafe.toLinear2 unsafeFill
     -- length function on destination.
   where
     unsafeFill a (DArray ds) =
-      if MVector.length ds /= 1 then
-        error "Destination.fill: requires a destination of size 1"
+      if MVector.length ds Prelude./= 1 then
+        Prelude.error "Destination.fill: requires a destination of size 1"
       else
         unsafeDupablePerformIO Prelude.$ MVector.write ds 0 a
 

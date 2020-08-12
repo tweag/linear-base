@@ -17,13 +17,13 @@ import Foreign.List (List)
 import qualified Foreign.List as List
 import Foreign.Marshal.Pure (Pool)
 import qualified Foreign.Marshal.Pure as Manual
-import Prelude (return)
+import Prelude (return, IO, Show)
 import qualified Prelude as P
 import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a #-> List a #-> Unrestricted Bool
+eqList :: forall a. (Manual.Representable a, Movable a, P.Eq a) => List a #-> List a #-> Unrestricted Bool
 eqList l1 l2 =
     eqUL (move (List.toList l1)) (move (List.toList l2))
   where
@@ -64,7 +64,7 @@ main = hspec P.$ do
     describe "exceptions" P.$ do
       it "doesn't corrupt memory" P.$ do
         property (\(l :: [Int]) -> do
-          let l' = l ++ (throw InjectedError)
+          let l' = l P.++ (throw InjectedError)
           catch @InjectedError
             (P.void P.$ evaluate
                (Manual.withPool $ \pool ->
@@ -118,7 +118,7 @@ main = hspec P.$ do
           property (\(x :: [Int]) (y :: [Int]) ->
             let xs = Vector.fromList x
                 ys = Vector.fromList y
-             in Push.alloc (Polarized.walk xs <> Polarized.walk ys) == xs Vector.++ ys)
+             in Push.alloc (Polarized.walk xs <> Polarized.walk ys) == (xs Vector.++ ys))
 
       describe "make" P.$
         it "matches Vector.replicate" P.$
@@ -133,7 +133,7 @@ main = hspec P.$ do
           property (\(x :: [Int]) (y :: [Int]) ->
             let xs = Vector.fromList x
                 ys = Vector.fromList y
-             in Pull.toVector (Pull.fromVector xs <> Pull.fromVector ys) == xs Vector.++ ys)
+             in Pull.toVector (Pull.fromVector xs <> Pull.fromVector ys) == (xs Vector.++ ys))
 
       describe "asList" P.$
         it "roundtrips correctly" P.$
@@ -149,18 +149,18 @@ main = hspec P.$ do
           property (\(x :: [Int]) (NonNegative n) ->
             let xs = Pull.fromVector (Vector.fromList x)
                 (l,r) = Pull.split n xs
-             in (Pull.asList l, Pull.asList r) == splitAt n x)
+             in (Pull.asList l, Pull.asList r) == P.splitAt n x)
 
       -- TODO: test `zip` to make sure it does error when given different lengths
       describe "zip" P.$
         it "doesn't fail for equal lengths" P.$
           property (\(x :: [(Int, Int)])  ->
-            let (x',y') = unzip x
+            let (x',y') = P.unzip x
                 xs = Pull.fromVector (Vector.fromList x')
                 ys = Pull.fromVector (Vector.fromList y')
-             in Pull.asList (Pull.zip xs ys) == zip x' y')
+             in Pull.asList (Pull.zip xs ys) == P.zip x' y')
 
       describe "make" P.$
         it "matches list replicate" P.$
           property (\(x :: Int) (NonNegative n) ->
-            Pull.asList (Pull.make x n) == replicate n x)
+            Pull.asList (Pull.make x n) == P.replicate n x)

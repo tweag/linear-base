@@ -52,12 +52,23 @@ module Prelude.Linear
   , dup
   , dup2
   , dup3
+  , module Data.Eq.Linear
   , module Data.Num.Linear
   , module Data.Either.Linear
   , module Data.Bool.Linear
   , module Data.Maybe.Linear
-    -- * Re-exports from the standard 'Prelude' for convenience
-  , module Prelude
+  , module Data.Ord.Linear
+  , module Data.Monoid.Linear
+  -- * Re-exports from Prelude
+  , Prelude.Char
+  , Prelude.String
+  , Prelude.FilePath
+  , Prelude.Int
+  , Prelude.Integer
+  , Prelude.Float
+  , Prelude.Double
+  , Prelude.Word
+  , Prelude.otherwise
   ) where
 
 import qualified Data.Functor.Linear as Data
@@ -67,30 +78,9 @@ import Data.Num.Linear
 import Data.Bool.Linear
 import Data.Either.Linear
 import Data.Maybe.Linear
-import Prelude hiding
-  ( ($)
-  , id
-  , const
-  , seq
-  , curry
-  , uncurry
-  , flip
-  , foldl
-  , foldr
-  , (.)
-  , maybe
-  , either
-  , (||)
-  , (&&)
-  , not
-  , Functor(..)
-  , Applicative(..)
-  , Monad(..)
-  , Traversable(..)
-  , Semigroup(..)
-  , Monoid(..)
-  , Num(..)
-  )
+import Data.Eq.Linear
+import Data.Ord.Linear
+import qualified Prelude
 import GHC.Exts (FUN)
 import Prelude.Linear.Internal.Simple
 

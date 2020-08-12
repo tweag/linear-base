@@ -91,6 +91,7 @@ import GHC.TypeLits
 import GHC.Types hiding (Any)
 import Data.Monoid.Linear
 import qualified Prelude
+import qualified Data.Semigroup as Prelude
 import qualified Unsafe.Linear as Unsafe
 
 
@@ -318,12 +319,12 @@ void :: (Data.Functor f, Consumable a) => f a #-> f ()
 void = Data.fmap consume
 
 -- Some stock instances
-deriving instance Consumable a => Consumable (Sum a)
-deriving instance Dupable a => Dupable (Sum a)
-deriving instance Movable a => Movable (Sum a)
-deriving instance Consumable a => Consumable (Product a)
-deriving instance Dupable a => Dupable (Product a)
-deriving instance Movable a => Movable (Product a)
+deriving instance Consumable a => Consumable (Prelude.Sum a)
+deriving instance Dupable a => Dupable (Prelude.Sum a)
+deriving instance Movable a => Movable (Prelude.Sum a)
+deriving instance Consumable a => Consumable (Prelude.Product a)
+deriving instance Dupable a => Dupable (Prelude.Product a)
+deriving instance Movable a => Movable (Prelude.Product a)
 deriving instance Consumable All
 deriving instance Dupable All
 deriving instance Movable All

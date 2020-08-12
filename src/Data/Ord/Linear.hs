@@ -6,6 +6,7 @@
 
 module Data.Ord.Linear
   ( Ord(..)
+  , Ordering(..)
   , min
   , max
   , compare

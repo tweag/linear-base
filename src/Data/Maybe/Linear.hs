@@ -3,7 +3,8 @@
 
 -- | This module provides linear functions on the standard 'Maybe' type.
 module Data.Maybe.Linear
-  ( maybe
+  ( Maybe(..)
+  , maybe
   , fromMaybe
   , maybeToList
   , catMaybes
