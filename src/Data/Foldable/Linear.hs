@@ -46,7 +46,7 @@ class Foldable t where
     foldr :: (a #-> b #-> b) -> b #-> t a #-> b
     foldr f z t = appEndo (foldMap (Endo . f) t) z
 
-    foldr' :: forall a b. (a #-> b #-> b) -> b #-> t a -> b
+    foldr' :: forall a b. (a #-> b #-> b) -> b #-> t a #-> b
     foldr' f z0 xs = foldl f' id xs z0
       where
         f' :: (b #-> b) #-> a #-> b #-> b
