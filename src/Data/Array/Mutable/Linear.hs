@@ -120,7 +120,8 @@ read = Unsafe.toLinear readUnsafe
     readUnsafe :: Array a -> Int -> (Array a, Unrestricted a)
     readUnsafe arr@(Array size mutArr) ix
       | indexInRange size ix =
-          (arr, Unrestricted $ Unsafe.readMutArr mutArr ix)
+          let val = Unsafe.readMutArr mutArr ix
+          in  val `seq` (arr, Unrestricted val)
       | otherwise = error "Read index out of bounds."
 
 -- | Using first element as seed, resize to a constant array
