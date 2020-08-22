@@ -7,7 +7,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | This module defines an IO monad for linearly working with system resources
@@ -21,35 +21,25 @@
 --
 -- = A simple example
 -- > {-# LANGUAGE LinearTypes #-}
--- > {-# LANGUAGE RebindableSyntax #-}
+-- > {-# LANGUAGE QualifiedDo #-}
 -- > {-# LANGUAGE RecordWildCards #-}
 -- >
 -- > import qualified System.IO.Resource as Linear
--- > import qualified Control.Monad.Linear.Builder as Control
+-- > import qualified Control.Monad.Linear as Control
 -- > import qualified Data.Text as Text
 -- > import Data.Unrestricted.Linear
 -- > import System.IO
 -- > import Prelude
 -- >
 -- > linearWriteToFile :: IO ()
--- > linearWriteToFile = Linear.run $ do
+-- > linearWriteToFile = Linear.run $ Control.do
 -- >   handle1 <- Linear.openFile "/home/user/test.txt" WriteMode
 -- >   handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
 -- >   () <- Linear.hClose handle2
--- >   return (Unrestricted ())
--- >   where
--- >     Control.Builder {..} = Control.monadBuilder
+-- >   Control.return (Unrestricted ())
 --
--- To enable do notation, as in the example above, we need the last line.
---
--- Since do notation is specific to @Control.Monad@, we used -XRebindableSyntax.
--- This allows us to use do notation and define, in scope, our own @(>>=)@,
--- @return@, and @(>>)@ which are used in desugaring the do block.
---
--- We create a record in "Control.Monad.Linear.Builder" that has as members
--- @(>>=)@ and so on.
--- We use -XRecordWildCards, get those functions in scope with the wildcard
--- @Control.Builder {..}@.
+-- To enable do notation, `QualifiedDo` extension is used. But since QualifiedDo
+-- only modifies the desugaring of binds, we still need to qualify `Control.return`.
 module System.IO.Resource
   ( -- * The Resource I/O Monad
     RIO
@@ -78,10 +68,8 @@ module System.IO.Resource
 
 import Control.Exception (onException, mask, finally)
 import qualified Control.Monad as Unrestricted (fmap)
-import qualified Control.Monad.Builder as Unrestricted
 import qualified Data.Functor.Linear as Data
 import qualified Control.Monad.Linear as Control
-import qualified Control.Monad.Linear.Builder as Control
 import Data.Coerce
 import qualified Data.IORef as System
 import Data.IORef (IORef)
@@ -122,20 +110,15 @@ run (RIO action) = do
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
-    Unrestricted.Builder{..} = Unrestricted.monadBuilder
-      -- used in the do-notation
-
     safeRelease :: [Linear.IO ()] -> System.IO ()
-    safeRelease [] = return ()
+    safeRelease [] = P.return ()
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
     moveLinearIO :: Movable a => Linear.IO a #-> Linear.IO (Unrestricted a)
-    moveLinearIO action' = do
+    moveLinearIO action' = Control.do
         result <- action'
-        return $ move result
-      where
-        Control.Builder{..} = Control.monadBuilder -- used in the do-notation
+        Control.return $ move result
 
 -- | Should not be applied to a function that acquires or releases resources.
 unsafeFromSystemIO :: System.IO a #-> RIO a
@@ -152,17 +135,13 @@ instance Control.Applicative RIO where
   (<*>) = Control.ap
 
 instance Control.Monad RIO where
-  x >>= f = RIO $ \releaseMap -> do
+  x >>= f = RIO $ \releaseMap -> Control.do
       a <- unRIO x releaseMap
       unRIO (f a) releaseMap
-    where
-      Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
-  x >> y = RIO $ \releaseMap -> do
+  x >> y = RIO $ \releaseMap -> Control.do
       unRIO x releaseMap
       unRIO y releaseMap
-    where
-      Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
 -- $files
 
@@ -175,13 +154,11 @@ newtype Handle = Handle (UnsafeResource System.Handle)
 
 -- | See 'System.IO.openFile'
 openFile :: FilePath -> System.IOMode -> RIO Handle
-openFile path mode = do
+openFile path mode = Control.do
     h <- unsafeAcquire
       (Linear.fromSystemIOU P.$ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
-    return $ Handle h
-  where
-    Control.Builder {..} = Control.monadBuilder -- used in the do-notation
+    Control.return $ Handle h
 
 hClose :: Handle #-> RIO ()
 hClose (Handle h) = unsafeRelease h
@@ -226,12 +203,10 @@ data UnsafeResource a where
 unsafeRelease :: UnsafeResource a #-> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
-    releaseWith key rrm = do
+    releaseWith key rrm = Control.do
         Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
-      where
-        Control.Builder {..} = Control.monadBuilder -- used in the do-notation
 
 -- | Given a resource in the "System.IO.Linear.IO" monad, and
 -- given a function to release that resource, provides that resource in
@@ -242,7 +217,7 @@ unsafeAcquire
   :: Linear.IO (Unrestricted a)
   -> (a -> Linear.IO ())
   -> RIO (UnsafeResource a)
-unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
+unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (Control.do
     Unrestricted resource <- acquire
     Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
     () <-
@@ -250,10 +225,8 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (do
         rrm
         (ReleaseMap
           (IntMap.insert (releaseKey releaseMap) (release resource) releaseMap))
-    return $ UnsafeResource (releaseKey releaseMap) resource)
+    Control.return $ UnsafeResource (releaseKey releaseMap) resource)
   where
-    Control.Builder {..} = Control.monadBuilder -- used in the do-notation
-
     releaseKey releaseMap =
       case IntMap.null releaseMap of
         True -> 0
@@ -272,16 +245,11 @@ unsafeFromSystemIOResource
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
-      return (Unrestricted c, UnsafeResource key resource))
-  where
-    Unrestricted.Builder{..} = Unrestricted.monadBuilder
-      -- used in the do-notation
+      P.return (Unrestricted c, UnsafeResource key resource))
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
   -> (UnsafeResource a #-> RIO (UnsafeResource a))
-unsafeFromSystemIOResource_ action resource = do
+unsafeFromSystemIOResource_ action resource = Control.do
     (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
-    return resource
-  where
-    Control.Builder {..} = Control.monadBuilder -- used in the do-notation
+    Control.return resource

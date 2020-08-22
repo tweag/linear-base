@@ -1,4 +1,5 @@
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RebindableSyntax #-}
@@ -28,7 +29,7 @@ module Simple.FileIO where
 
 import Control.Monad ()
 -- Linear Base Imports
-import qualified Control.Monad.Linear.Builder as Control
+import qualified Control.Monad.Linear as Control
 import Data.Text
 import Data.Unrestricted.Linear
 import qualified System.IO as System
@@ -73,13 +74,11 @@ printFirstLineAfterClose fpath = do
 --------------------------------------------
 
 linearGetFirstLine :: FilePath -> RIO (Unrestricted Text)
-linearGetFirstLine fp = do
+linearGetFirstLine fp = Control.do
   handle <- Linear.openFile fp System.ReadMode
   (t, handle') <- Linear.hGetLine handle
   Linear.hClose handle'
-  return t
-  where
-    Control.Builder {..} = Control.monadBuilder
+  Control.return t
 
 linearPrintFirstLine :: FilePath -> System.IO ()
 linearPrintFirstLine fp = do
@@ -114,9 +113,7 @@ type LinHandle = Linear.Handle
 -- Notice the continuation has a linear arrow,
 -- i.e., (a #-> RIO b)
 (>>#=) :: RIO a #-> (a #-> RIO b) #-> RIO b
-(>>#=) = (>>=)
-  where
-    Control.Builder {..} = Control.monadBuilder
+(>>#=) = (Control.>>=)
 
 -- | Non-linear bind
 -- Notice the continuation has a non-linear arrow,
@@ -124,16 +121,12 @@ type LinHandle = Linear.Handle
 -- a more general type, like the following:
 -- (>>==) :: RIO (Unrestricted a) #-> (a -> RIO b) #-> RIO b
 (>>==) :: RIO () #-> (() -> RIO b) #-> RIO b
-(>>==) ma f = ma >>= (\() -> f ())
-  where
-    Control.Builder {..} = Control.monadBuilder
+(>>==) ma f = ma Control.>>= (\() -> f ())
 
 -- | Inject
 -- provided just to make the type explicit
 inject :: a #-> RIO a
-inject = return
-  where
-    Control.Builder {..} = Control.monadBuilder
+inject = Control.return
 
 -- * The explicit example
 -------------------------------------------------
