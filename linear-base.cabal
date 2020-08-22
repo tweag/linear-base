@@ -1,18 +1,17 @@
 name: linear-base
 version: 0.1.0.0
+cabal-version: >=1.10
 homepage: https://github.com/tweag/linear-base#README
-license: BSD3
+license: MIT
 license-file: LICENSE
-author: Tweag I/O
+author: Tweag
 maintainer: arnaud.spiwack@tweag.io
-copyright: (c) 2017 EURL Tweag
+copyright: (c) Tweag Holding and affiliates
 category: Prelude
-synopsis: Basic facilities for working with linear types.
-description: Please see README.md.
-
 build-type: Simple
 extra-source-files: README.md
-cabal-version: >=1.10
+synopsis: Standard library for linear types.
+description: Please see README.md.
 
 library
   hs-source-dirs: src
@@ -55,7 +54,7 @@ library
     text,
     transformers,
     vector
-  default-language:    Haskell2010
+  default-language: Haskell2010
   other-modules:
     Control.Monad.Linear.Internal
     Data.Functor.Linear.Internal
