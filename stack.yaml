@@ -1,5 +1,5 @@
 # See https://hub.docker.com/r/tweag/linear-types/
-resolver: lts-16.2
+resolver: lts-16.8
 compiler: ghc-8.11
 allow-newer: true
 system-ghc: true
@@ -7,11 +7,19 @@ system-ghc: true
 packages:
 - '.'
 
+# If you update the extra-deps, make sure to also update cabal.project
 extra-deps:
-- git: https://github.com/facundominguez/quickcheck.git
-  commit: a498e7b41131cf7955b9e154ab26d37d1be10304
-- git: https://github.com/facundominguez/lifted-async.git
-  commit: 898eb485b21cc321058345998eedd8c409c326fd
+# https://github.com/nick8325/quickcheck/pull/311
+- git: https://github.com/phadej/quickcheck.git
+  commit: d659a5e44b3304e7599321d506bf48d2e88389d0
+# https://github.com/hedgehogqa/haskell-hedgehog/pull/392
+- git: https://github.com/utdemir/haskell-hedgehog.git
+  commit: c98aa9e33bf6871098d6f4ac94eeaac10383d696
+  subdirs:
+    - hedgehog
+# below is required for getting quickcheck compile
+- random-1.2.0
+- splitmix-0.1.0.1
 
 nix:
   enable: true

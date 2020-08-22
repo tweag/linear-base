@@ -6,6 +6,7 @@ mkShell {
 
   buildInputs = [
     haskell.compiler.ghcHEAD
+    cabal-install
     git
     nix
     stack
