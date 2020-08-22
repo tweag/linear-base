@@ -6,7 +6,7 @@ with pkgs;
 
 haskell.lib.buildStackProject {
   name = "linear-base";
-  buildInputs = [ git gradle zlib ];
+  buildInputs = [ git zlib ];
   ghc = pkgs.haskell.compiler.ghcHEAD;
   LANG = "en_US.utf8";
 }
