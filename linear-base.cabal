@@ -60,7 +60,7 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
-    Prelude.Linear.Internal.Simple
+    Prelude.Linear.Internal
     Unsafe.MutableArray
 
 test-suite test

@@ -2,10 +2,10 @@
 -- in the linear-base library (except possibly "Unsafe.Linear").
 
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
-module Prelude.Linear.Internal.Simple where
+module Prelude.Linear.Internal where
 
 import qualified Prelude as Prelude
 import qualified Unsafe.Linear as Unsafe
@@ -63,5 +63,3 @@ foldr f z = \case
 foldl :: (b #-> a -> b) -> b #-> [a] -> b
 foldl _ b [] = b
 foldl f b (x:xs) = foldl f (f b x) xs
-
-

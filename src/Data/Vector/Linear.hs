@@ -75,7 +75,7 @@ import Prelude
   , error
   , (-))
 import qualified Prelude as Prelude
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 
 newtype V (n :: Nat) (a :: Type) = V (Vector a)

@@ -16,7 +16,7 @@ module Data.Profunctor.Kleisli.Linear
 import Data.Profunctor.Linear
 import Data.Void
 import Prelude.Linear (Either(..), either)
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 

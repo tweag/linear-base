@@ -19,7 +19,7 @@ module Data.Functor.Linear.Internal.Traversable
 import qualified Control.Monad.Linear.Internal as Control
 import qualified Data.Functor.Linear.Internal as Data
 import Data.Functor.Const
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
 
 -- $traversable
