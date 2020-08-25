@@ -64,7 +64,7 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,s. len (resize s a) = s" lenResize
   , testProperty "∀ a,s,x. len (resizeSeed s x a) = s" lenResizeSeed
-  -- unit tests
+  -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
   ]
 
