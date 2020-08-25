@@ -64,6 +64,8 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,s. len (resize s a) = s" lenResize
   , testProperty "∀ a,s,x. len (resizeSeed s x a) = s" lenResizeSeed
+  -- unit tests
+  , testProperty "do not reorder reads and writes" readAndWriteTest
   ]
 
 -- # Internal Library
@@ -225,3 +227,14 @@ lenResizeSeedTest newSize val arr =
   compInts
     (move newSize)
     (move Linear.$ getSnd Linear.$ Array.length (Array.resizeSeed newSize val arr))
+
+-- https://github.com/tweag/linear-base/pull/135
+readAndWriteTest :: Property
+readAndWriteTest = withTests 1 . property $
+  unUnrestricted (Array.fromList "a" test) === 'a'
+  where
+    test :: Array.Array Char #-> Unrestricted Char
+    test arr =
+      Array.read arr 0 Linear.& \(arr', before) ->
+        Array.write arr' 0 'b' Linear.& \arr'' ->
+          arr'' `Linear.lseq` before
