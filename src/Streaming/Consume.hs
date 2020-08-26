@@ -92,7 +92,7 @@ stdoutLn' stream = stream & \case
     Builder{..} = monadBuilder
 
 print :: Show a => Stream (Of a) IO r #-> IO r
-print = stdoutLn' . map (Text.pack Prelude.. show)
+print = stdoutLn' . map (Text.pack Prelude.. Prelude.show)
 
 -- | Write a stream to a handle and return the handle.
 toHandle :: Handle #-> Stream (Of Text) RIO r #-> RIO (r, Handle)
