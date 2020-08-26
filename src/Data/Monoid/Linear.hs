@@ -21,7 +21,7 @@ module Data.Monoid.Linear
   )
   where
 
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 import Data.Semigroup hiding (Semigroup(..), Endo(..))
 import qualified Data.Semigroup as Prelude
 import GHC.Types hiding (Any)

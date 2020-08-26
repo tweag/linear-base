@@ -3,7 +3,7 @@
 
 module Data.Functor.Linear.Internal where
 
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
 import Data.Functor.Const
 import Data.Monoid.Linear

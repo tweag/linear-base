@@ -48,7 +48,7 @@ module Control.Monad.Linear
 import Control.Monad.Linear.Internal
 import Data.Functor.Identity
 import Data.Unrestricted.Linear
-import Prelude.Linear.Internal.Simple ((.), ($))
+import Prelude.Linear.Internal ((.), ($))
 import qualified Data.Functor.Linear.Internal as Data
 
 

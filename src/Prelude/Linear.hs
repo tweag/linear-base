@@ -92,7 +92,7 @@ import Prelude hiding
   , Num(..)
   )
 import GHC.Exts (FUN)
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 
 -- XXX: temporary: with multiplicity polymorphism functions expecting a
 -- non-linear arrow would allow a linear arrow passed, so this would be

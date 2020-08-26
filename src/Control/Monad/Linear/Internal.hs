@@ -8,7 +8,7 @@
 
 module Control.Monad.Linear.Internal where
 
-import Prelude.Linear.Internal.Simple
+import Prelude.Linear.Internal
 import Prelude (String)
 import qualified Control.Monad as NonLinear ()
 import Data.Functor.Identity
