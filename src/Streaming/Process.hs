@@ -7,8 +7,7 @@
 -- stream and produce one output stream. These are functions that
 -- process a single stream.
 module Streaming.Process
-  ( mapMaybe
-  , map
+  (
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
     next
