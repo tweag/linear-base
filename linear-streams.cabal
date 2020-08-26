@@ -19,6 +19,7 @@ library
     Streaming.Prelude
   other-modules:
     Streaming.Consume
+    Streaming.Interop
     Streaming.Many
     Streaming.Process
     Streaming.Produce
@@ -26,7 +27,8 @@ library
   build-depends:
     base >= 4.7 && < 5,
     linear-base,
-    text
+    text,
+    containers
   default-language: Haskell2010
 
 test-suite examples

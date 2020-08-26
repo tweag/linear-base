@@ -2,6 +2,7 @@
 
 module Streaming.Prelude
   ( module Streaming.Consume
+  , module Streaming.Interop
   , module Streaming.Many
   , module Streaming.Process
   , module Streaming.Produce
@@ -9,6 +10,7 @@ module Streaming.Prelude
   ) where
 
 import Streaming.Consume
+import Streaming.Interop
 import Streaming.Many
 import Streaming.Process
 import Streaming.Produce
