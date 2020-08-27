@@ -127,7 +127,7 @@ read = Unsafe.toLinear readUnsafe
 -- | Using first element as seed, resize to a constant array
 resize :: HasCallStack => Int -> Array a #-> Array a
 resize newSize (Array _ mutArr) =
-  let (# a #) = Unsafe.readMutArr mutArr 0
+  let !(# a #) = Unsafe.readMutArr mutArr 0
   in  Array newSize (Unsafe.newMutArr newSize a)
 
 -- | Resize to a new constant array given a seed value

@@ -73,7 +73,7 @@ readMutArr mutArr (I# ix) =
 -- fails for a size smaller than the size of the given array.
 resizeMutArr :: MutArr# a -> Int -> MutArr# a
 resizeMutArr mutArr newSize =
-  let (# a #) = readMutArr mutArr 0
+  let !(# a #) = readMutArr mutArr 0
   in  resizeMutArrSeed mutArr a newSize
 
 -- | Grow a mutable array. This is given an array, a given larger size,
