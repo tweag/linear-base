@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE BangPatterns #-}
 
 -- |
 -- This module defines convenient and unsafe wrappers around the MutableArray#
