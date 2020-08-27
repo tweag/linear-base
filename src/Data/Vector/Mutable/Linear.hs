@@ -126,7 +126,9 @@ read = Unsafe.toLinear readUnsafe
   where
     readUnsafe :: Vector a -> Int -> (Vector a, a)
     readUnsafe v@(Vec (len, _) mutArr) ix
-      | indexInRange len ix = (v, Unsafe.readMutArr mutArr ix)
+      | indexInRange len ix =
+          let !(# a #) = Unsafe.readMutArr mutArr ix
+          in  (v, a)
       | otherwise = error "Read index not in range."
 
 -- # Instances

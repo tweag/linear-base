@@ -43,6 +43,8 @@ group =
   , testProperty "∀ s,x. len (constant s x) = s" lenConst
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,x. len (snoc a x) = 1 + len a" lenSnoc
+  -- Regression tests
+  , testProperty "do not reorder reads and writes" readAndWriteTest
   ]
 
 -- # Internal Library
@@ -194,3 +196,14 @@ lenSnocTest val vec = fromLen Linear.$ Linear.fmap move (Vector.length vec)
       Unrestricted (TestT IO ())
     fromLen (vec, Unrestricted len) =
       compInts (move (len+1)) (getSnd (Vector.length (Vector.snoc vec val)))
+
+-- https://github.com/tweag/linear-base/pull/135
+readAndWriteTest :: Property
+readAndWriteTest = withTests 1 . property $
+  unUnrestricted (Vector.fromList "a" test) === 'a'
+  where
+    test :: Vector.Vector Char #-> Unrestricted Char
+    test vec =
+      Vector.read vec 0 Linear.& \(vec', before) ->
+        Vector.write vec' 0 'b' Linear.& \vec'' ->
+          vec'' `Linear.lseq` move before

@@ -57,9 +57,13 @@ writeMutArr mutArr (I# ix) val =
 
 -- | Read from a given mutable array arr, given an index
 -- in [0, size(arr)-1]
-readMutArr :: MutArr# a -> Int -> a
+--
+-- This returns an unboxed tuple to give the callee the
+-- ability to evaluate the function call without evaluating
+-- the final result.
+readMutArr :: MutArr# a -> Int -> (# a #)
 readMutArr mutArr (I# ix) =
-  case doRead of (# _, a #) -> a
+  case doRead of (# _, a #) -> (# a #)
   where
     doRead = runRW# $ \stateRW -> readArray# mutArr ix stateRW
 
@@ -69,7 +73,8 @@ readMutArr mutArr (I# ix) =
 -- fails for a size smaller than the size of the given array.
 resizeMutArr :: MutArr# a -> Int -> MutArr# a
 resizeMutArr mutArr newSize =
-  resizeMutArrSeed mutArr (readMutArr mutArr 0) newSize
+  let (# a #) = readMutArr mutArr 0
+  in  resizeMutArrSeed mutArr a newSize
 
 -- | Grow a mutable array. This is given an array, a given larger size,
 -- and it returns a larger array of the given size using the seed value

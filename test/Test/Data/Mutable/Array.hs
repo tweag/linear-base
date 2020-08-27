@@ -66,6 +66,7 @@ group =
   , testProperty "∀ a,s,x. len (resizeSeed s x a) = s" lenResizeSeed
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
+  , testProperty "do not evaluate values unnecesesarily" strictnessTest
   ]
 
 -- # Internal Library
@@ -238,3 +239,14 @@ readAndWriteTest = withTests 1 . property $
       Array.read arr 0 Linear.& \(arr', before) ->
         Array.write arr' 0 'b' Linear.& \arr'' ->
           arr'' `Linear.lseq` before
+
+-- https://github.com/tweag/linear-base/issues/142
+strictnessTest :: Property
+strictnessTest = withTests 1 . property $
+  unUnrestricted (Array.fromList [()] test) === ()
+  where
+    test :: Array.Array () #-> Unrestricted ()
+    test arr =
+      Array.write arr 0 (error "this should not be evaluated") Linear.& \arr ->
+      Array.read arr 0 Linear.& \(arr, Unrestricted _) ->
+        arr `Linear.lseq` Unrestricted ()
