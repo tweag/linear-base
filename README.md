@@ -54,6 +54,13 @@ This change requires the `f` to have a `Control.Monad.Linear.Functor` instance
 and a `Control.Monad` instance for any `Stream f m` with appropriate `m` and `f`.
 In general, all changes are necessarily implied from just changing the `m`.
 
+### Terminology
+
+ * If the monad of the stream is a normal monad, we call the stream an
+   **unrestricted stream**.
+ * If the monad of the stream has a `Control.Monad` instance, then we call the
+   stream a **linear stream**.
+
 ## Conventions
 
  * We use `Text` in place of `String`
