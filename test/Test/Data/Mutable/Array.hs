@@ -55,15 +55,16 @@ group :: [TestTree]
 group =
   -- All tests for exprs of the form (read (const ...) i)
   [ testProperty "∀ s,i,x. read (alloc s x) i = x" readAlloc
-  , testProperty "∀ s,a,i. read (resize s a) i = read a 0" readResize
   , testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1
   , testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2
-  , testProperty "∀ a,s,x,i. read (resizeSeed s x a) i = x" readResizeSeed
   -- All tests for exprs of the form (length (const ...))
   , testProperty "∀ s,x. len (alloc s x) = s" lenAlloc
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
-  , testProperty "∀ a,s. len (resize s a) = s" lenResize
-  , testProperty "∀ a,s,x. len (resizeSeed s x a) = s" lenResizeSeed
+  , testProperty "∀ a,s. len (growBy s a) = len a + s" lenGrowBy
+  , testProperty "∀ a,s. len (shrinkTo s a) = len s" lenShrinkTo
+  -- Tests against a reference implementation
+  , testProperty "growBy" growByReference
+  , testProperty "shrinkTo" shrinkToReference
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
   , testProperty "do not evaluate values unnecesesarily" strictnessTest
@@ -77,7 +78,7 @@ type ArrayTester = Array.Array Int #-> Unrestricted (TestT IO ())
 -- | A random list
 list :: Gen [Int]
 list = do
-  size <- Gen.int $ Range.linearFrom 1 1 1000
+  size <- Gen.int $ Range.linearFrom 0 1 1000
   let size' = Range.singleton size
   Gen.list size' $ Gen.int $ Range.linearFrom 0 (-1000) 1000
 
@@ -107,24 +108,7 @@ readAlloc = property $ do
   test $ unUnrestricted Linear.$ Array.alloc size val (readAllocTest ix val)
 
 readAllocTest :: Int -> Int -> ArrayTester
-readAllocTest ix val arr = compInts (getSnd (Array.read arr ix)) (move val)
-
-readResize :: Property
-readResize = property $ do
-  l <- forAll list
-  let size = length l
-  newSize <- forAll $ Gen.element [size..(size*4)]
-  ix <- forAll $ Gen.element [0..newSize-1]
-  let tester = readResizeTest newSize ix
-  test $ unUnrestricted Linear.$ Array.fromList l tester
-
-readResizeTest :: Int -> Int -> ArrayTester
-readResizeTest size ix arr = fromRead Linear.$ Array.read arr 0
-  where
-    fromRead ::
-      (Array.Array Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
-    fromRead (arr, val) =
-        compInts val (getSnd (Array.read (Array.resize size arr) ix))
+readAllocTest ix val arr = compInts (getSnd (Array.read ix arr)) (move val)
 
 readWrite1 :: Property
 readWrite1 = property $ do
@@ -137,7 +121,7 @@ readWrite1 = property $ do
 
 readWrite1Test :: Int -> Int -> ArrayTester
 readWrite1Test ix val arr =
-  compInts (move val) (getSnd Linear.$ Array.read (Array.write arr ix val) ix)
+  compInts (move val) (getSnd Linear.$ Array.read ix (Array.write ix val arr))
 
 readWrite2 :: Property
 readWrite2 = property $ do
@@ -151,30 +135,14 @@ readWrite2 = property $ do
   test $ unUnrestricted Linear.$ Array.fromList l tester
 
 readWrite2Test :: Int -> Int -> Int -> ArrayTester
-readWrite2Test ix jx val arr = fromRead (Array.read arr ix)
+readWrite2Test ix jx val arr = fromRead (Array.read ix arr)
   where
     fromRead ::
       (Array.Array Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
     fromRead (arr, val1) =
       compInts
         val1
-        (getSnd Linear.$ Array.read (Array.write arr jx val) ix)
-
-readResizeSeed :: Property
-readResizeSeed = property $ do
-  l <- forAll list
-  let size = length l
-  newSize <- forAll $ Gen.element [size..(size*4)]
-  val <- forAll value
-  ix <- forAll $ Gen.element [0..newSize-1]
-  let tester = readResizeSeedTest newSize val ix
-  test $ unUnrestricted Linear.$ Array.fromList l tester
-
-readResizeSeedTest :: Int -> Int -> Int -> ArrayTester
-readResizeSeedTest newSize val ix arr =
-  compInts
-    (move val)
-    (getSnd Linear.$ Array.read (Array.resizeSeed newSize val arr) ix)
+        (getSnd Linear.$ Array.read ix (Array.write jx val arr))
 
 lenAlloc :: Property
 lenAlloc = property $ do
@@ -184,7 +152,7 @@ lenAlloc = property $ do
 
 lenAllocTest :: Int -> ArrayTester
 lenAllocTest size arr =
-  compInts (move size) (move Linear.$ getSnd Linear.$ Array.length arr)
+  compInts (move size) (getSnd Linear.$ Array.size arr)
 
 lenWrite :: Property
 lenWrite = property $ do
@@ -197,37 +165,64 @@ lenWrite = property $ do
 
 lenWriteTest :: Int -> Int -> Int -> ArrayTester
 lenWriteTest size val ix arr =
-  compInts (move size) 
-    (move Linear.$ getSnd Linear.$ Array.length (Array.write arr ix val))
+  compInts (move size)
+    (getSnd Linear.$ Array.size (Array.write ix val arr))
 
-lenResize :: Property
-lenResize = property $ do
+lenGrowBy :: Property
+lenGrowBy = property $ do
   l <- forAll list
-  let size = length l
-  newSize <- forAll $ Gen.element [size..(size*4)]
-  let tester = lenResizeTest newSize
-  test $ unUnrestricted Linear.$ Array.fromList l tester
+  let initialSize = length l
+  growBy <- forAll $ Gen.element [0..4]
+  test . Linear.forget unUnrestricted . Array.fromList l $ \arr ->
+    arr
+      Linear.& Array.growBy growBy 0
+      Linear.& Array.size
+      Linear.& getSnd
+      Linear.& \(Unrestricted newSize) ->
+        Unrestricted $ newSize === initialSize + growBy
 
-lenResizeTest :: Int -> ArrayTester
-lenResizeTest newSize arr =
-  compInts
-    (move newSize)
-    (move Linear.$ getSnd Linear.$ Array.length (Array.resize newSize arr))
-
-lenResizeSeed :: Property
-lenResizeSeed = property $ do
+lenShrinkTo :: Property
+lenShrinkTo = property $ do
   l <- forAll list
-  let size = length l
-  val <- forAll value
-  newSize <- forAll $ Gen.element [size..(size*4)]
-  let tester = lenResizeSeedTest newSize val
-  test $ unUnrestricted Linear.$ Array.fromList l tester
+  let initialSize = length l
+  targetSize <- forAll $ Gen.int (Range.linear 0 initialSize)
+  test . Linear.forget unUnrestricted . Array.fromList l $ \arr ->
+    arr
+      Linear.& Array.shrinkTo targetSize
+      Linear.& Array.size
+      Linear.& getSnd
+      Linear.& \(Unrestricted newSize) ->
+        Unrestricted $ newSize === targetSize
 
-lenResizeSeedTest :: Int -> Int -> ArrayTester
-lenResizeSeedTest newSize val arr =
-  compInts
-    (move newSize)
-    (move Linear.$ getSnd Linear.$ Array.length (Array.resizeSeed newSize val arr))
+growByReference :: Property
+growByReference = property $ do
+  l <- forAll list
+  growth <- forAll $ Gen.int (Range.linear 0 100)
+
+  let expected = l ++ replicate growth 42
+
+  let Unrestricted actual = Array.fromList l $ \arr ->
+        arr
+          Linear.& Array.growBy growth 42
+          Linear.& Array.toList
+          Linear.& getSnd
+
+  expected ===  actual
+
+shrinkToReference :: Property
+shrinkToReference = property $ do
+  l <- forAll list
+  target <- forAll $ Gen.int (Range.linear 0 (length l))
+
+  let expected = take target l
+
+  let Unrestricted actual = Array.fromList l $ \arr ->
+        arr
+          Linear.& Array.shrinkTo target
+          Linear.& Array.toList
+          Linear.& getSnd
+
+  expected ===  actual
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
@@ -236,8 +231,8 @@ readAndWriteTest = withTests 1 . property $
   where
     test :: Array.Array Char #-> Unrestricted Char
     test arr =
-      Array.read arr 0 Linear.& \(arr', before) ->
-        Array.write arr' 0 'b' Linear.& \arr'' ->
+      Array.read 0 arr Linear.& \(arr', before) ->
+        Array.write 0 'b' arr' Linear.& \arr'' ->
           arr'' `Linear.lseq` before
 
 -- https://github.com/tweag/linear-base/issues/142
@@ -247,6 +242,6 @@ strictnessTest = withTests 1 . property $
   where
     test :: Array.Array () #-> Unrestricted ()
     test arr =
-      Array.write arr 0 (error "this should not be evaluated") Linear.& \arr ->
-      Array.read arr 0 Linear.& \(arr, Unrestricted _) ->
-        arr `Linear.lseq` Unrestricted ()
+      Array.write 0 (error "this should not be evaluated") arr
+        Linear.& Array.read 0
+        Linear.& \(arr, Unrestricted _) -> arr `Linear.lseq` Unrestricted ()

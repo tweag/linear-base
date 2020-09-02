@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTSyntax #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
@@ -43,14 +43,18 @@ module Data.Array.Mutable.Linear
     Array,
     -- * Performing Computations with Arrays
     alloc,
+    allocBeside,
+    empty,
     fromList,
     -- * Mutators
     write,
-    resize,
-    resizeSeed,
+    unsafeWrite,
+    growBy,
+    shrinkTo,
     -- * Accessors
     read,
-    length,
+    unsafeRead,
+    size,
     toList,
   )
 where
@@ -60,31 +64,42 @@ import GHC.Exts hiding (toList, fromList)
 import GHC.Stack
 import qualified Unsafe.Linear as Unsafe
 import qualified Unsafe.MutableArray as Unsafe
-import Prelude.Linear ((&))
-import Prelude hiding (length, read)
+import Prelude.Linear ((&), forget)
+import qualified Control.Monad as Control
+import Prelude hiding (size, read)
 import qualified Prelude
 
 -- # Data types
 -------------------------------------------------------------------------------
 
 data Array a where
-  Array :: Int -> (MutableArray# RealWorld a) -> Array a
+  Array :: MutableArray# RealWorld a -> Array a
 
 -- # Creation
 -------------------------------------------------------------------------------
 
+-- | Creates an empty array.
+empty :: (Array a #-> Unrestricted b) -> Unrestricted b
+empty f = f (Array (Unsafe.emptyMutArray ()))
+
 -- | Allocate a constant array given a size and an initial value
--- The size must be greater than zero, otherwise this errors.
-alloc :: HasCallStack =>
-  Int -> a -> (Array a #-> Unrestricted b) -> Unrestricted b
-alloc size x f
-  | size > 0 = f (Array size (Unsafe.newMutArr size x))
+-- The size must be non-negative, otherwise this errors.
+alloc :: Int -> a -> (Array a #-> Unrestricted b) -> Unrestricted b
+alloc size val f
+  | size >= 0 = f (Array (Unsafe.newMutArr size val))
   | otherwise = error $ "Trying to allocate an array of size " ++ show size
 
--- | Allocate an array from a non-empty list (and error on empty lists)
+-- | Allocate a constant array given a size and an initial value,
+-- using another array as a uniqueness proof.
+allocBeside :: Int -> a -> Array b #-> (Array b, Array a)
+allocBeside size val orig
+  | size >= 0 = (orig, Array (Unsafe.newMutArr size val))
+  | otherwise = orig `lseq` error ("Trying to allocate an array of size " ++ show size)
+
+-- | Allocate an array from a list
 fromList :: HasCallStack =>
   [a] -> (Array a #-> Unrestricted b) -> Unrestricted b
-fromList [] _ = error $ "Trying to allocate from an empty list."
+fromList [] f = empty f
 fromList list@(x:_) (f :: Array a #-> Unrestricted b) =
   alloc (Prelude.length list) x insertThenf
   where
@@ -93,73 +108,90 @@ fromList list@(x:_) (f :: Array a #-> Unrestricted b) =
 
     doWrites :: [(a,Int)] -> Array a #-> Array a
     doWrites [] arr = arr
-    doWrites ((a,ix):xs) arr = doWrites xs (write arr ix a)
+    doWrites ((a,ix):xs) arr = doWrites xs (write ix a arr)
 
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
 
-length :: Array a #-> (Array a, Int)
-length = Unsafe.toLinear unsafeLength
+size :: Array a #-> (Array a, Unrestricted Int)
+size = Unsafe.toLinear unsafeLength
   where
-    unsafeLength :: Array a -> (Array a, Int)
-    unsafeLength v@(Array size _) = (v, size)
+    unsafeLength :: Array a -> (Array a, (Unrestricted Int))
+    unsafeLength v@(Array a) = (v, Unrestricted (Unsafe.sizeMutArr a))
 
-write :: HasCallStack => Array a #-> Int -> a -> Array a
-write = Unsafe.toLinear writeUnsafe
-  where
-    writeUnsafe :: Array a -> Int -> a -> Array a
-    writeUnsafe arr@(Array size mutArr) ix val
-      | indexInRange size ix =
-        case Unsafe.writeMutArr mutArr ix val of
-          () -> arr
-      | otherwise = error "Write index out of bounds."
+-- | Indexes an array. Fails if the index is out-of-bounds.
+read :: HasCallStack => Int -> Array a #-> (Array a, Unrestricted a)
+read ix arr =
+  assertIndexInRange ix arr & unsafeRead ix
 
-read :: HasCallStack => Array a #-> Int -> (Array a, Unrestricted a)
-read = Unsafe.toLinear readUnsafe
-  where
-    readUnsafe :: Array a -> Int -> (Array a, Unrestricted a)
-    readUnsafe arr@(Array size mutArr) ix
-      | indexInRange size ix =
-          let !(# a #) = Unsafe.readMutArr mutArr ix
-          in  (arr, Unrestricted a)
-      | otherwise = error "Read index out of bounds."
+-- | Writes to the given array index. Fails if the index is out-of-bounds.
+write :: HasCallStack => Int -> a -> Array a #-> Array a
+write ix val arr =
+  assertIndexInRange ix arr & unsafeWrite ix val
 
--- | Using first element as seed, resize to a constant array
-resize :: HasCallStack => Int -> Array a #-> Array a
-resize newSize (Array _ mutArr) =
-  let !(# a #) = Unsafe.readMutArr mutArr 0
-  in  Array newSize (Unsafe.newMutArr newSize a)
+-- | Same as 'read', but does not do bounds-checking.
+unsafeRead :: Int -> Array a #-> (Array a, Unrestricted a)
+unsafeRead ix (Array mut) =
+  let !(# a #) = Unsafe.readMutArr mut ix
+  in  (Array mut, Unrestricted a)
 
--- | Resize to a new constant array given a seed value
-resizeSeed :: HasCallStack => Int -> a -> Array a #-> Array a
-resizeSeed newSize seed (Array _ _) =
-  Array newSize (Unsafe.newMutArr newSize seed)
+-- | Same as 'write', but does not do bounds-checking.
+unsafeWrite :: Int -> a -> Array a #-> Array a
+unsafeWrite ix val (Array mut) =
+  case Unsafe.writeMutArr mut ix val of
+    () -> Array mut
 
 -- XXX: Replace with toVec
-toList :: Array a #-> (Array a, [a])
-toList arr = length arr & \case
-  (arr', len) -> move len & \case
-    Unrestricted len' -> toListWalk (len' - 1) arr' []
+-- | Reads all elements of an array.
+toList :: Array a #-> (Array a, Unrestricted [a])
+toList arr = size arr & \case
+  (arr', Unrestricted len) ->
+    toListWalk (len - 1) [] arr'
   where
-  toListWalk :: Int -> Array a #-> [a] -> (Array a, [a])
-  toListWalk ix arr accum
-    | ix < 0 = (arr, accum)
-    | otherwise = read arr ix & \case
-        (arr', Unrestricted x) -> toListWalk (ix - 1) arr' (x:accum)
+  toListWalk :: Int -> [a] -> Array a #-> (Array a, Unrestricted [a])
+  toListWalk ix accum arr
+    | ix < 0 = (arr, Unrestricted accum)
+    | otherwise = read ix arr & \case
+        (arr', Unrestricted x) ->
+          toListWalk (ix - 1) (x:accum) arr'
+
+-- # Resizing
+-------------------------------------------------------------------------------
+
+-- | Grows the array by given number of elements, using a default value.
+growBy :: HasCallStack => Int -> a -> Array a #-> Array a
+growBy count _ arr | count < 0 =
+  arr `lseq` error "growBy: negative input"
+growBy count def (Array arr) =
+  Array (Unsafe.growByMutArr arr count def)
+
+-- | Shrinks the array to contain given number of elements.
+shrinkTo :: HasCallStack => Int -> Array a #-> Array a
+shrinkTo length arr | length < 0 =
+  arr `lseq` error "shrinkTo: negative input"
+shrinkTo length arr =
+  size arr & \(Array mut, Unrestricted s) ->
+    if length >= s
+    then error "shrinkTo: array is already smaller"
+    else Array (Unsafe.shrinkToMutArr mut length)
 
 -- # Instances
 -------------------------------------------------------------------------------
 
 instance Show a => Show (Array a) where
-  show = show . snd . (\x -> toList x)
+  show = show . forget unUnrestricted . snd . (\x -> toList x)
 
 instance Consumable (Array a) where
   consume :: Array a #-> ()
-  consume (Array _ _) = ()
+  consume (Array _) = ()
 
 -- # Internal library
 -------------------------------------------------------------------------------
 type Size = Int
 
-indexInRange :: Size -> Int -> Bool
-indexInRange size ix = 0 <= ix && ix < size
+assertIndexInRange :: Int -> Array a #-> Array a
+assertIndexInRange ix arr =
+  size arr & \(arr', Unrestricted len) ->
+    if 0 <= ix && ix < len
+    then arr'
+    else arr' `lseq` error ("index out of bounds:" ++ show len)

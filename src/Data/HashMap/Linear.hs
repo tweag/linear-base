@@ -39,7 +39,8 @@ module Data.HashMap.Linear
   )
 where
 
-import Data.Array.Mutable.Linear
+import Data.Array.Mutable.Linear (Array)
+import qualified Data.Array.Mutable.Linear as Array
 import Data.Hashable
 import Data.Unrestricted.Linear
 import Prelude.Linear hiding ((+), lookup, read)
@@ -117,7 +118,7 @@ data ProbeResult k where
 empty :: forall k v b.
   Keyed k => Size -> (HashMap k v #-> Unrestricted b) -> Unrestricted b
 empty sz@(Size s) scope =
-  alloc
+  Array.alloc
     s
     ( -1
     , ( error "reading error hashmap key"
@@ -144,13 +145,13 @@ tryInsertAtIndex :: Keyed k =>
   HashMap k v #-> Int -> (k, PSL) -> v -> HashMap k v
 tryInsertAtIndex hmap ix kPSL v = probeFrom kPSL ix hmap & \case
   (HashMap sz ct arr, IndexToUpdate (k',psl') ix') ->
-    HashMap sz ct (write arr ix' (psl', (k',v)))
+    HashMap sz ct (Array.write ix' (psl', (k',v)) arr)
   (HashMap sz (Count c) arr, IndexToInsert (k',psl') ix') ->
-    HashMap sz (Count (c + 1)) (write arr ix' (psl', (k',v)))
-  (HashMap (Size s) ct arr, IndexToSwap (k',psl') ix') -> read arr ix' & \case
+    HashMap sz (Count (c + 1)) (Array.write ix' (psl', (k',v)) arr)
+  (HashMap (Size s) ct arr, IndexToSwap (k',psl') ix') -> Array.read ix' arr & \case
     (arr'', Unrestricted (p_old, (k_old, v_old))) ->
       tryInsertAtIndex
-        (HashMap (Size s) ct (write arr'' ix' (psl', (k',v))))
+        (HashMap (Size s) ct (Array.write ix' (psl', (k',v)) arr''))
         ((ix' + 1) `mod` s)
         (k_old, p_old + 1)
         v_old
@@ -159,9 +160,8 @@ tryInsertAtIndex hmap ix kPSL v = probeFrom kPSL ix hmap & \case
 resizeMap :: Keyed k => HashMap k v #-> HashMap k v
 resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
   (arr', Unrestricted kvs) ->
-    resizeSeed (s*2 + s`div`2) (-1, errKV) arr' & \case
-      arr'' ->
-        insertAll kvs (HashMap (Size (s*2 + s`div`2)) (Count 0) arr'')
+    Array.allocBeside (s*2 + s`div`2) (-1, errKV) arr' & \(old, new) ->
+      old `lseq` insertAll kvs (HashMap (Size (s*2 + s`div`2)) (Count 0) new)
   where
     errKV :: Keyed k => (k,v)
     errKV =
@@ -176,7 +176,7 @@ resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
       RobinArr k v #-> Int -> [(k,v)] -> (RobinArr k v, Unrestricted [(k,v)])
     walk arr ix kvs
       | ix < 0 = (arr, Unrestricted kvs)
-      | otherwise = read arr ix & \case
+      | otherwise = Array.read ix arr & \case
         (arr', Unrestricted (-1, _)) -> walk arr' (ix-1) kvs
         (arr', Unrestricted (_, (!k,!v))) -> walk arr' (ix-1) ((k,v):kvs)
 
@@ -188,7 +188,7 @@ delete (HashMap sz@(Size s) ct@(Count c) arr) k =
     (h, IndexToInsert _ _) -> h
     (h, IndexToSwap _ _) -> h
     (HashMap sz _ arr', IndexToUpdate _ ix) ->
-      write arr' ix (-1, (error "key", error "val")) & \case
+      Array.write ix (-1, (error "key", error "val")) arr' & \case
         arr'' -> shiftSegmentBackward sz arr'' ((ix + 1) `mod` s) & \case
           arr''' -> HashMap sz (Count (c - 1)) arr'''
 
@@ -197,15 +197,15 @@ delete (HashMap sz@(Size s) ct@(Count c) arr) k =
 -- their PSLs.
 shiftSegmentBackward :: Keyed k =>
   Size -> RobinArr k v #-> Int -> RobinArr k v
-shiftSegmentBackward (Size s) arr ix = read arr ix & \case
+shiftSegmentBackward (Size s) arr ix = Array.read ix arr & \case
   (arr', Unrestricted (psl, kv)) ->
     case psl <= 0 of
       True -> arr'
-      False -> write arr' ix (-1, (error "key", error "val")) & \case
+      False -> Array.write ix (-1, (error "key", error "val")) arr' & \case
         arr'' ->
           shiftSegmentBackward
             (Size s)
-            (write arr'' ((ix+s-1) `mod` s) (psl + (-1),kv))
+            (Array.write ((ix+s-1) `mod` s) (psl + (-1),kv) arr'')
             ((ix+1) `mod` s)
 
 -- | 'insert' (in the provided order) a list of key-value pairs
@@ -219,7 +219,7 @@ insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k)
-probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = read arr ix & \case
+probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = Array.read ix arr & \case
   (arr', Unrestricted (PSL (-1), _)) ->
     (HashMap sz ct arr', IndexToInsert (k, p) ix)
   (arr', Unrestricted (psl,(k',_))) -> case k == k' of
@@ -246,7 +246,7 @@ member (HashMap (Size s) ct arr) k =
 lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Unrestricted (Maybe v))
 lookup (HashMap (Size s) ct arr) k =
   probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
-    (HashMap sz ct arr, IndexToUpdate _ ix) -> read arr ix & \case
+    (HashMap sz ct arr, IndexToUpdate _ ix) -> Array.read ix arr & \case
       (arr', Unrestricted (_,(_,v))) ->
         (HashMap sz ct arr', Unrestricted (Just v))
     (h, IndexToInsert _ _) -> (h, Unrestricted Nothing)
@@ -262,8 +262,8 @@ instance Consumable (HashMap k v) where
 
 -- # This is provided for debugging only.
 instance (Show k, Show v) => Show (HashMap k v) where
-  show (HashMap _ _ robinArr) = toList robinArr & \case
-    (arr, xs) -> display (lseq arr xs)
+  show (HashMap _ _ robinArr) = Array.toList robinArr & \case
+    (arr, Unrestricted xs) -> display (lseq arr xs)
 
 display :: (Show k, Show v) => [RobinVal k v] #-> String
 display = Unsafe.toLinear wrapper

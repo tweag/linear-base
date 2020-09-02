@@ -15,15 +15,16 @@
 module Unsafe.MutableArray
   ( -- * Unsafe Wrappers around @MutableArray#@
     MutArr#,
-    -- * Mutators and Constructors
     newMutArr,
-    writeMutArr,
-    resizeMutArr,
-    resizeMutArrSeed,
-    copyIntoMutArr,
-    -- * Accessors
+    emptyMutArray,
+    -- * Basic operations
     readMutArr,
-    sizeMutArr
+    writeMutArr,
+    sizeMutArr,
+    -- * Resizing an array
+    growByMutArr,
+    shrinkToMutArr,
+    sliceMutArr
   )
 where
 
@@ -40,13 +41,17 @@ sizeMutArr :: MutArr# a -> Int
 sizeMutArr arr  = I# (sizeofMutableArray# arr)
 
 -- | Given a size, try to allocate a mutable array
--- of this size. The size should be greater than zero.
+-- of this size. The size should be non-negative.
 newMutArr :: Int -> a -> MutArr# a
 newMutArr (I# size) x =
   case newArray of
     (# _, array #) -> array
   where
     newArray = runRW# $ \stateRW -> newArray# size x stateRW
+
+emptyMutArray :: () -> MutArr# a
+emptyMutArray () = newMutArr 0 undefined
+{-# NOINLINE emptyMutArray #-}
 
 -- | Write to a given mutable array arr, given an
 -- index in [0, size(arr)-1] , and a value
@@ -68,29 +73,51 @@ readMutArr mutArr (I# ix) =
   where
     doRead = runRW# $ \stateRW -> readArray# mutArr ix stateRW
 
--- | Grow a mutable array. This is given an array, a given larger size,
--- and it returns a larger array of the given size using the first value
--- to fill in the new cells and copying over all the unchanged cells. This
--- fails for a size smaller than the size of the given array.
-resizeMutArr :: MutArr# a -> Int -> MutArr# a
-resizeMutArr mutArr newSize =
-  let !(# a #) = readMutArr mutArr 0
-  in  resizeMutArrSeed mutArr a newSize
+-- | Return a shrunk mutable array to given size.
+--
+-- Precondition: Given length should be less than or equal to the original
+-- arrays length.
+--
+-- @
+--   shrinkMutArr arr len = sliceMutArr arr 0 len
+-- @
+shrinkToMutArr :: MutArr# a -> Int -> MutArr# a
+shrinkToMutArr arr len = sliceMutArr arr 0 len
 
--- | Grow a mutable array. This is given an array, a given larger size,
--- and it returns a larger array of the given size using the seed value
--- to fill in the new cells and copying over all the unchanged cells. This
--- fails for a size smaller than the size of the given array.
-resizeMutArrSeed :: MutArr# a -> a -> Int -> MutArr# a
-resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
-  newArr -> case copyIntoMutArr mutArr newArr of
-    () -> newArr
+-- | Given an array, a starting index and a number of elements to copy,
+-- return a new array containing the elements from the original.
+--
+-- Preconditions:
+--   * start >= 0, count >= 0
+--   * start + count <= original_length
+sliceMutArr
+  :: MutArr# a
+  -> Int -- ^ First index to include
+  -> Int -- ^ Number of elements to copy
+  -> MutArr# a
+sliceMutArr src (I# start#) (I# count#) =
+  let I# z# = 0
+      res = runRW# $ \s ->
+        let (# s', newArr #) = newArray# count# undefined s
+            !_ = copyMutableArray# src start# newArr z# count# s'
+         in newArr
+   in res
 
--- | Copy the first mutable array into the second, larger mutable array.
--- This fails if the second array is smaller than the first.
-copyIntoMutArr :: MutArr# a -> MutArr# a -> ()
-copyIntoMutArr src dest = case doCopy of _ -> ()
-  where
-    doCopy = runRW# $ \stateRW -> copyMutableArray# src z dest z src_len stateRW
-    (I# z) = 0 :: Int
-    src_len = sizeofMutableArray# src
+-- | Grow the array by given number of elements using a default value.
+--
+-- Precondition: Number should be positive.
+growByMutArr
+  :: MutArr# a
+  -> Int -- ^ Number of elements to grow
+  -> a   -- ^ Default value
+  -> MutArr# a
+growByMutArr src count def =
+  let I# z# = 0
+      srcSize# = sizeofMutableArray# src
+      I# targetSize# = I# srcSize# + count
+      res = runRW# $ \s ->
+        let (# s', newArr #) = newArray# targetSize# def s
+            !_ = copyMutableArray# src z# newArr z# srcSize# s'
+         in newArr
+   in res
+

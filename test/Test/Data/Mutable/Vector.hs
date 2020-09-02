@@ -69,8 +69,8 @@ compInts ::
 compInts (Unrestricted x) (Unrestricted y) = Unrestricted (x === y)
 
 -- XXX: This is a terrible name
-getSnd :: (Consumable a, Movable b) => (a, b) #-> Unrestricted b
-getSnd (a, b) = lseq a (move b)
+getSnd :: (Consumable a) => (a, b) #-> b
+getSnd (a, b) = lseq a b
 
 
 -- # Tests
@@ -85,7 +85,7 @@ readConst = property $ do
   test $ unUnrestricted Linear.$ Vector.constant size v (readConstTest ix v)
 
 readConstTest :: Int -> Int -> VectorTester
-readConstTest ix val vec = compInts (getSnd (Vector.read vec ix)) (move val)
+readConstTest ix val vec = compInts (getSnd (Vector.read ix vec)) (move val)
 
 readWrite1 :: Property
 readWrite1 = property $ do
@@ -98,7 +98,7 @@ readWrite1 = property $ do
 
 readWrite1Test :: Int -> Int -> VectorTester
 readWrite1Test ix val vec =
-  compInts (move val) (getSnd Linear.$ Vector.read (Vector.write vec ix val) ix)
+  compInts (move val) (getSnd Linear.$ Vector.read ix (Vector.write ix val vec))
 
 readWrite2 :: Property
 readWrite2 = property $ do
@@ -112,13 +112,13 @@ readWrite2 = property $ do
   test $ unUnrestricted Linear.$ Vector.fromList l tester
 
 readWrite2Test :: Int -> Int -> Int -> VectorTester
-readWrite2Test ix jx val vec = fromRead (Vector.read vec ix)
+readWrite2Test ix jx val vec = fromRead (Vector.read ix vec)
   where
-    fromRead :: (Vector.Vector Int, Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Vector.Vector Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
     fromRead (vec, val1) =
       compInts
-        (move val1)
-        (getSnd Linear.$ Vector.read (Vector.write vec jx val) ix)
+        val1
+        (getSnd Linear.$ Vector.read ix (Vector.write jx val vec))
 
 readSnoc1 :: Property
 readSnoc1 = property $ do
@@ -130,31 +130,27 @@ readSnoc1 = property $ do
   test $ unUnrestricted Linear.$ Vector.fromList l tester
 
 readSnoc1Test :: Int -> Int -> VectorTester
-readSnoc1Test val ix vec = fromRead (Vector.read vec ix)
+readSnoc1Test val ix vec = fromRead (Vector.read ix vec)
   where
-    fromRead :: (Vector.Vector Int, Int) #-> Unrestricted (TestT IO ())
-    fromRead (vec,val') =
-      compInts (getSnd (Vector.read (Vector.snoc vec val) ix)) (move val')
+    fromRead :: (Vector.Vector Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
+    fromRead (vec, val') =
+      compInts
+        (getSnd (Vector.read ix (Vector.snoc val vec)))
+        val'
 
 
 readSnoc2 :: Property
 readSnoc2 = property $ do
   l <- forAll list
-  v <- forAll val
-  let tester = readSnoc2Test v
-  test $ unUnrestricted Linear.$ Vector.fromList l tester
-
-readSnoc2Test :: Int -> VectorTester
-readSnoc2Test val vec = fromLen (Vector.length vec)
-  where
-    fromLen :: (Vector.Vector Int, Int) #-> Unrestricted (TestT IO ())
-    fromLen (vec,len) = fromLen' (vec, move len)
-
-    fromLen' ::
-      (Vector.Vector Int, Unrestricted Int) #->
-      Unrestricted (TestT IO ())
-    fromLen' (vec, Unrestricted len) =
-      compInts (getSnd (Vector.read (Vector.snoc vec val) len)) (move val)
+  test . Linear.forget unUnrestricted
+    $ Vector.fromList l
+    $ \vec ->
+      vec
+        Linear.& Vector.length
+        Linear.& \(vec, Unrestricted len) -> Vector.snoc 42 vec
+        Linear.& Vector.read (length l)
+        Linear.& getSnd
+        Linear.& compInts (Unrestricted 42)
 
 lenConst :: Property
 lenConst = property $ do
@@ -179,23 +175,20 @@ lenWriteTest :: Int -> Int -> Int -> VectorTester
 lenWriteTest size val ix vec =
   compInts
     (move size)
-    (getSnd Linear.$ Vector.length (Vector.write vec ix val))
+    (getSnd Linear.$ Vector.length (Vector.write ix val vec))
 
 lenSnoc :: Property
 lenSnoc = property $ do
- l <- forAll list
- v <- forAll val
- let tester = lenSnocTest v
- test $ unUnrestricted Linear.$ Vector.fromList l tester
-
-lenSnocTest :: Int -> VectorTester
-lenSnocTest val vec = fromLen Linear.$ Linear.fmap move (Vector.length vec)
-  where
-    fromLen ::
-      (Vector.Vector Int, Unrestricted Int) #->
-      Unrestricted (TestT IO ())
-    fromLen (vec, Unrestricted len) =
-      compInts (move (len+1)) (getSnd (Vector.length (Vector.snoc vec val)))
+  l <- forAll list
+  test . Linear.forget unUnrestricted
+    $ Vector.fromList l
+    $ \vec ->
+      vec
+        Linear.& Vector.length
+        Linear.& \(vec, Unrestricted oldLength) -> Vector.snoc 42 vec
+        Linear.& Vector.length
+        Linear.& getSnd
+        Linear.& \(Unrestricted newLength) -> Unrestricted $ newLength === oldLength + 1
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
@@ -204,6 +197,6 @@ readAndWriteTest = withTests 1 . property $
   where
     test :: Vector.Vector Char #-> Unrestricted Char
     test vec =
-      Vector.read vec 0 Linear.& \(vec', before) ->
-        Vector.write vec' 0 'b' Linear.& \vec'' ->
-          vec'' `Linear.lseq` move before
+      Vector.read 0 vec Linear.& \(vec', before) ->
+        Vector.write 0 'b' vec' Linear.& \vec'' ->
+          vec'' `Linear.lseq` before
