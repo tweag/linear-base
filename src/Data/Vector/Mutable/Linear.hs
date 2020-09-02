@@ -134,7 +134,7 @@ read ix vec =
 -- | Same as 'read', but does not do bounds-checking.
 unsafeRead :: Int -> Vector a #-> (Vector a, Unrestricted a)
 unsafeRead ix (Vec len arr) =
-  Array.read ix arr & \(arr', val) ->
+  Array.unsafeRead ix arr & \(arr', val) ->
     (Vec len arr', val)
 
 -- | Writes to the given array index. Fails if the index is out-of-bounds.
@@ -146,7 +146,7 @@ write ix val vec =
 -- | Same as 'write', but does not do bounds-checking.
 unsafeWrite :: HasCallStack => Int -> a -> Vector a #-> Vector a
 unsafeWrite ix val (Vec len arr) =
-  Vec len (Array.write ix val arr)
+  Vec len (Array.unsafeWrite ix val arr)
 
 -- # Instances
 -------------------------------------------------------------------------------
