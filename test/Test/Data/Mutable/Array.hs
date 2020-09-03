@@ -225,11 +225,10 @@ resizeRef = property $ do
   x <- forAll value
   let expected = take n $ l ++ repeat x
       actual =
-        Linear.forget unUnrestricted . Array.fromList l $ \arr ->
+        unUnrestricted Linear.. Array.fromList l Linear.$ \arr ->
           Array.resize n x arr
             Linear.& Array.toList
             Linear.& getSnd
-            Linear.& move
   actual === expected
 
 -- https://github.com/tweag/linear-base/pull/135
