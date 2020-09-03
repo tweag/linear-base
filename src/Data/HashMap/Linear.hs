@@ -159,9 +159,10 @@ tryInsertAtIndex hmap ix kPSL v = probeFrom kPSL ix hmap & \case
 resizeMap :: Keyed k => HashMap k v #-> HashMap k v
 resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
   (arr', Unrestricted kvs) ->
-    resizeSeed (s*2 + s`div`2) (-1, errKV) arr' & \case
-      arr'' ->
-        insertAll kvs (HashMap (Size (s*2 + s`div`2)) (Count 0) arr'')
+    allocBeside (s*2 + s`div`2) (-1, errKV) arr' & \case
+      (oldArr, arr'') ->
+        oldArr `lseq`
+          insertAll kvs (HashMap (Size (s*2 + s`div`2)) (Count 0) arr'')
   where
     errKV :: Keyed k => (k,v)
     errKV =
