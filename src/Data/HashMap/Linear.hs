@@ -260,7 +260,7 @@ instance Consumable (HashMap k v) where
 -- # This is provided for debugging only.
 instance (Show k, Show v) => Show (HashMap k v) where
   show (HashMap _ _ robinArr) = toList robinArr & \case
-    (arr, xs) -> display (lseq arr xs)
+    (arr, Unrestricted xs) -> display (lseq arr xs)
 
 display :: (Show k, Show v) => [RobinVal k v] #-> String
 display = Unsafe.toLinear wrapper

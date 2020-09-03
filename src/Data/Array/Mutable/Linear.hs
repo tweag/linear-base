@@ -58,9 +58,10 @@ where
 import Data.Unrestricted.Linear
 import GHC.Exts hiding (toList, fromList)
 import GHC.Stack
+import qualified Data.Functor.Linear as Control
 import qualified Unsafe.Linear as Unsafe
 import qualified Unsafe.MutableArray as Unsafe
-import Prelude.Linear ((&))
+import Prelude.Linear ((&), forget)
 import Prelude hiding (length, read)
 import qualified Prelude
 
@@ -140,22 +141,22 @@ resizeSeed newSize seed (Array _ _) =
   Array newSize (Unsafe.newMutArr newSize seed)
 
 -- XXX: Replace with toVec
-toList :: Array a #-> (Array a, [a])
+toList :: Array a #-> (Array a, Unrestricted [a])
 toList arr = length arr & \case
   (arr', len) -> move len & \case
-    Unrestricted len' -> toListWalk (len' - 1) arr' []
+    Unrestricted len' -> toListWalk (len' - 1) arr' (Unrestricted [])
   where
-  toListWalk :: Int -> Array a #-> [a] -> (Array a, [a])
+  toListWalk :: Int -> Array a #-> Unrestricted [a] -> (Array a, Unrestricted [a])
   toListWalk ix arr accum
     | ix < 0 = (arr, accum)
     | otherwise = read arr ix & \case
-        (arr', Unrestricted x) -> toListWalk (ix - 1) arr' (x:accum)
+        (arr', Unrestricted x) -> toListWalk (ix - 1) arr' ((x:) Control.<$> accum)
 
 -- # Instances
 -------------------------------------------------------------------------------
 
 instance Show a => Show (Array a) where
-  show = show . snd . (\x -> toList x)
+  show = show . forget unUnrestricted . snd . (\x -> toList x)
 
 instance Consumable (Array a) where
   consume :: Array a #-> ()
