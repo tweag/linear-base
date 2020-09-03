@@ -73,6 +73,8 @@ module Streaming.Process
   , cons
   , slidingWindow
   , wrapEffect
+  -- ** Internal
+  , destroyExposed
   ) where
 
 import Streaming.Type

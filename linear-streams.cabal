@@ -17,6 +17,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Streaming.Prelude
+    Streaming
   other-modules:
     Streaming.Consume
     Streaming.Interop
