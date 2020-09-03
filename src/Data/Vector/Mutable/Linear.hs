@@ -94,10 +94,10 @@ fromList xs@(x:_) (f :: Vector a #-> Unrestricted b) =
   constant
     (Prelude.length xs)
     x
-    (\vec -> f (build vec))
+    (\vec -> f (build' vec))
   where
-    build :: Vector a #-> Vector a
-    build = doWrites (zip xs [0..])
+    build' :: Vector a #-> Vector a
+    build' = doWrites (zip xs [0..])
 
     doWrites :: [(a,Int)] -> Vector a #-> Vector a
     doWrites [] vec = vec
