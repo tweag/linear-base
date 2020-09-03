@@ -115,7 +115,7 @@ data ProbeResult k where
 
 -- | Run a computation given an empty hashmap
 empty :: forall k v b.
-  Keyed k => Size -> (HashMap k v #-> Unrestricted b) -> Unrestricted b
+  Keyed k => Size -> (HashMap k v #-> Unrestricted b) #-> Unrestricted b
 empty sz@(Size s) scope =
   alloc
     s
@@ -124,10 +124,7 @@ empty sz@(Size s) scope =
       , error "reading error hashmap val"
       )
     )
-    scope'
-  where
-    scope' :: RobinArr k v #-> Unrestricted b
-    scope' arr = scope $ HashMap sz (Count 0) arr
+    (\arr -> scope (HashMap sz (Count 0) arr))
 
 -- | If the key is present, this update the value.
 -- If not, if there's enough space, insert a new pair.

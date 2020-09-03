@@ -77,20 +77,27 @@ data Vector a where
 -- | Allocate a constant vector of a given non-zero size (and error on a bad
 -- size)
 constant :: HasCallStack =>
-  Int -> a -> (Vector a #-> Unrestricted b) -> Unrestricted b
+  Int -> a -> (Vector a #-> Unrestricted b) #-> Unrestricted b
 constant size x f
-  | size <= 0 = error ("Trying to construct a vector of size " ++ show size)
-  | otherwise = f $ Vec (size, size) (Unsafe.newMutArr size x)
+  | size <= 0 =
+      (error ("Trying to construct a vector of size " ++ show size) :: x #-> x)
+      (f undefined)
+  | otherwise = f (Vec (size, size) (Unsafe.newMutArr size x))
 
 -- XXX: long line below
 -- | Allocator from a non-empty list (and error on empty lists)
-fromList :: HasCallStack => [a] -> (Vector a #-> Unrestricted b) -> Unrestricted b
-fromList [] _ = error "Trying to allocate a vector from an empty list"
+fromList :: HasCallStack => [a] -> (Vector a #-> Unrestricted b) #-> Unrestricted b
+fromList [] f =
+  (error "Trying to allocate a vector from an empty list" :: x #-> x)
+  (f undefined)
 fromList xs@(x:_) (f :: Vector a #-> Unrestricted b) =
-  constant (Prelude.length xs) x buildThenRun
+  constant
+    (Prelude.length xs)
+    x
+    (\vec -> f (build vec))
   where
-    buildThenRun :: Vector a #-> Unrestricted b
-    buildThenRun vec = f $ doWrites (zip xs [0..]) vec
+    build :: Vector a #-> Vector a
+    build = doWrites (zip xs [0..])
 
     doWrites :: [(a,Int)] -> Vector a #-> Vector a
     doWrites [] vec = vec

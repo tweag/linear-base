@@ -76,20 +76,24 @@ data Array a where
 -- | Allocate a constant array given a size and an initial value
 -- The size must be greater than zero, otherwise this errors.
 alloc :: HasCallStack =>
-  Int -> a -> (Array a #-> Unrestricted b) -> Unrestricted b
+  Int -> a -> (Array a #-> Unrestricted b) #-> Unrestricted b
 alloc size x f
   | size > 0 = f (Array size (Unsafe.newMutArr size x))
-  | otherwise = error $ "Trying to allocate an array of size " ++ show size
+  | otherwise =
+    (error ("Trying to allocate an array of size " ++ show size) :: x #-> x)
+    (f undefined)
 
 -- | Allocate an array from a non-empty list (and error on empty lists)
 fromList :: HasCallStack =>
-  [a] -> (Array a #-> Unrestricted b) -> Unrestricted b
-fromList [] _ = error $ "Trying to allocate from an empty list."
+  [a] -> (Array a #-> Unrestricted b) #-> Unrestricted b
+fromList [] f =
+  (error "Trying to allocate from an empty list." :: x #-> x)
+  (f undefined)
 fromList list@(x:_) (f :: Array a #-> Unrestricted b) =
-  alloc (Prelude.length list) x insertThenf
+  alloc (Prelude.length list) x (\arr -> f (insert arr))
   where
-    insertThenf :: Array a #-> Unrestricted b
-    insertThenf arr = f (doWrites (zip list [0..]) arr)
+    insert :: Array a #-> Array a
+    insert = doWrites (zip list [0..])
 
     doWrites :: [(a,Int)] -> Array a #-> Array a
     doWrites [] arr = arr

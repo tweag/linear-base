@@ -40,13 +40,11 @@ type Keyed a = Linear.Keyed a
 -- # Constructors and Mutators
 -------------------------------------------------------------------------------
 
-empty :: Keyed a => Int -> (Set a #-> Unrestricted b) -> Unrestricted b
-empty s (f :: Set a #-> Unrestricted b) = Linear.empty (Linear.Size s) f'
-  where
-    f' :: Linear.HashMap a () #-> Unrestricted b
-    f' hmap = f (Set hmap)
+empty :: Keyed a => Int -> (Set a #-> Unrestricted b) #-> Unrestricted b
+empty s (f :: Set a #-> Unrestricted b) =
+  Linear.empty (Linear.Size s) (\hm -> f (Set hm))
 
-fromList :: (HasCallStack, Keyed a) => [a] -> (Set a #-> Unrestricted b) -> Unrestricted b
+fromList :: (HasCallStack, Keyed a) => [a] -> (Set a #-> Unrestricted b) #-> Unrestricted b
 fromList xs f = empty ((length xs) * 2 + 1) (f Linear.. insertAll xs)
   where
     insertAll :: Keyed a => [a] -> Set a #-> Set a
