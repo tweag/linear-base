@@ -85,6 +85,8 @@ resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
 
 -- | Same as 'resizeMutArraySeed', but using the first index of the initial
 -- array as the seed value.
+--
+-- Given array should be non-empty, and given size should be positive.
 resizeMutArr :: MutArr# a -> Int -> MutArr# a
 resizeMutArr mutArr newSize =
   let !(# a #) = readMutArr mutArr 0
