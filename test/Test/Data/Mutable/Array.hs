@@ -236,8 +236,8 @@ resizeRef :: Property
 resizeRef = property $ do
   l <- forAll list
   n <- forAll $ Gen.int (Range.linear 0 (length l * 2))
-  let x = 42
-      expected = take n $ l ++ repeat x
+  x <- forAll value
+  let expected = take n $ l ++ repeat x
       actual =
         Linear.forget unUnrestricted . Array.fromList l $ \arr ->
           Array.resize n x arr
