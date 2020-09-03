@@ -121,14 +121,14 @@ write = Unsafe.toLinear writeUnsafe
 
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..length-1@).
-read :: HasCallStack => Vector a #-> Int -> (Vector a, a)
+read :: HasCallStack => Vector a #-> Int -> (Vector a, Unrestricted a)
 read = Unsafe.toLinear readUnsafe
   where
-    readUnsafe :: Vector a -> Int -> (Vector a, a)
+    readUnsafe :: Vector a -> Int -> (Vector a, Unrestricted a)
     readUnsafe v@(Vec (len, _) mutArr) ix
       | indexInRange len ix =
           let !(# a #) = Unsafe.readMutArr mutArr ix
-          in  (v, a)
+          in  (v, Unrestricted a)
       | otherwise = error "Read index not in range."
 
 -- # Instances
