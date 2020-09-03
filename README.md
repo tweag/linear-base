@@ -110,7 +110,7 @@ making pull requests.
 
 ## Licence
 
-See our [Licence](https://github.com/tweag/linear-base/blob/doc-overview/LICENSE).
+See our [Licence](https://github.com/tweag/linear-base/blob/master/LICENSE).
 
 Copyright © Tweag I/O
 
