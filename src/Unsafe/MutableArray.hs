@@ -28,6 +28,7 @@ module Unsafe.MutableArray
 where
 
 import GHC.Exts
+import GHC.Stack
 
 -- # Unsafe wrappers
 ----------------------------
@@ -41,7 +42,7 @@ sizeMutArr arr  = I# (sizeofMutableArray# arr)
 
 -- | Given a size, try to allocate a mutable array
 -- of this size. The size should be greater than zero.
-newMutArr :: Int -> a -> MutArr# a
+newMutArr :: HasCallStack => Int -> a -> MutArr# a
 newMutArr (I# size) x =
   case newArray of
     (# _, array #) -> array
@@ -50,7 +51,7 @@ newMutArr (I# size) x =
 
 -- | Write to a given mutable array arr, given an
 -- index in [0, size(arr)-1] , and a value
-writeMutArr :: MutArr# a -> Int -> a -> ()
+writeMutArr :: HasCallStack => MutArr# a -> Int -> a -> ()
 writeMutArr mutArr (I# ix) val =
   case doWrite of _ -> ()
   where
@@ -62,7 +63,7 @@ writeMutArr mutArr (I# ix) val =
 -- This returns an unboxed tuple to give the callee the
 -- ability to evaluate the function call without evaluating
 -- the final result.
-readMutArr :: MutArr# a -> Int -> (# a #)
+readMutArr :: HasCallStack => MutArr# a -> Int -> (# a #)
 readMutArr mutArr (I# ix) =
   case doRead of (# _, a #) -> (# a #)
   where
@@ -80,7 +81,7 @@ readMutArr mutArr (I# ix) =
 --   and b[i] = a[i] for i < length a,
 --   and b[i] = x for length a <= i < n.
 -- @
-resizeMutArrSeed :: MutArr# a -> a -> Int -> MutArr# a
+resizeMutArrSeed :: HasCallStack => MutArr# a -> a -> Int -> MutArr# a
 resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
   newArr -> case copyIntoMutArr mutArr newArr of
     () -> newArr
@@ -89,7 +90,7 @@ resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
 -- array as the seed value.
 --
 -- Given array should be non-empty, and given size should be positive.
-resizeMutArr :: MutArr# a -> Int -> MutArr# a
+resizeMutArr :: HasCallStack => MutArr# a -> Int -> MutArr# a
 resizeMutArr mutArr newSize =
   let !(# a #) = readMutArr mutArr 0
   in  resizeMutArrSeed mutArr a newSize
