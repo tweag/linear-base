@@ -200,22 +200,8 @@ lenWrite = property $ do
 
 lenWriteTest :: Int -> Int -> Int -> ArrayTester
 lenWriteTest size val ix arr =
-  compInts (move size) 
+  compInts (move size)
     (move Linear.$ getSnd Linear.$ Array.length (Array.write arr ix val))
-
-lenResize :: Property
-lenResize = property $ do
-  l <- forAll list
-  let size = length l
-  newSize <- forAll $ Gen.element [size..(size*4)]
-  let tester = lenResizeTest newSize
-  test $ unUnrestricted Linear.$ Array.fromList l tester
-
-lenResizeTest :: Int -> ArrayTester
-lenResizeTest newSize arr =
-  compInts
-    (move newSize)
-    (move Linear.$ getSnd Linear.$ Array.length (Array.resize newSize 42 arr))
 
 lenResizeSeed :: Property
 lenResizeSeed = property $ do
