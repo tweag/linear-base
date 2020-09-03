@@ -135,10 +135,12 @@ read = Unsafe.toLinear readUnsafe
 -- value; resize the array to the given size using the seed value to fill
 -- in the new cells when necessary and copying over all the unchanged cells.
 --
+-- @
 -- let b = resize n x a,
 --   then length b = n,
 --   and b[i] = a[i] for i < length a,
 --   and b[i] = x for length a <= i < n.
+-- @
 resize :: HasCallStack => Int -> a -> Array a #-> Array a
 resize newSize seed (Array _ mut) =
   Array newSize (Unsafe.resizeMutArrSeed mut seed newSize)

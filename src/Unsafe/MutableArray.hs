@@ -74,10 +74,12 @@ readMutArr mutArr (I# ix) =
 --
 -- The size should be positive.
 --
+-- @
 -- let b = resize a x n,
 --   then length b = n,
 --   and b[i] = a[i] for i < length a,
 --   and b[i] = x for length a <= i < n.
+-- @
 resizeMutArrSeed :: MutArr# a -> a -> Int -> MutArr# a
 resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
   newArr -> case copyIntoMutArr mutArr newArr of
