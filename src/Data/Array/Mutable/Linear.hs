@@ -75,11 +75,11 @@ data Array a where
 -------------------------------------------------------------------------------
 
 -- | Allocate a constant array given a size and an initial value
--- The size must be greater than zero, otherwise this errors.
+-- The size must be non-negative, otherwise this errors.
 alloc :: HasCallStack =>
   Int -> a -> (Array a #-> Unrestricted b) #-> Unrestricted b
 alloc size x f
-  | size > 0 = f (Array size (Unsafe.newMutArr size x))
+  | size >= 0 = f (Array size (Unsafe.newMutArr size x))
   | otherwise =
     (error ("Trying to allocate an array of size " ++ show size) :: x #-> x)
     (f undefined)
@@ -88,17 +88,17 @@ alloc size x f
 -- using another array as a uniqueness proof.
 allocBeside :: Int -> a -> Array b #-> (Array b, Array a)
 allocBeside size val orig
-  | size > 0 = (orig, Array size (Unsafe.newMutArr size val))
+  | size >= 0 = (orig, Array size (Unsafe.newMutArr size val))
   | otherwise = orig `lseq` error ("Trying to allocate an array of size " ++ show size)
 
--- | Allocate an array from a non-empty list (and error on empty lists)
+-- | Allocate an array from a list
 fromList :: HasCallStack =>
   [a] -> (Array a #-> Unrestricted b) #-> Unrestricted b
-fromList [] f =
-  (error "Trying to allocate from an empty list." :: x #-> x)
-  (f undefined)
-fromList list@(x:_) (f :: Array a #-> Unrestricted b) =
-  alloc (Prelude.length list) x (\arr -> f (insert arr))
+fromList list (f :: Array a #-> Unrestricted b) =
+  alloc
+    (Prelude.length list)
+    (error "invariant violation: unintialized array position")
+    (\arr -> f (insert arr))
   where
     insert :: Array a #-> Array a
     insert = doWrites (zip list [0..])
@@ -140,6 +140,8 @@ read = Unsafe.toLinear readUnsafe
 -- value; resize the array to the given size using the seed value to fill
 -- in the new cells when necessary and copying over all the unchanged cells.
 --
+-- Target size should be non-negative.
+--
 -- @
 -- let b = resize n x a,
 --   then length b = n,
@@ -147,8 +149,11 @@ read = Unsafe.toLinear readUnsafe
 --   and b[i] = x for length a <= i < n.
 -- @
 resize :: HasCallStack => Int -> a -> Array a #-> Array a
-resize newSize seed (Array _ mut) =
-  Array newSize (Unsafe.resizeMutArrSeed mut seed newSize)
+resize newSize seed (Array _ mut)
+  | newSize < 0 =
+      error "Trying to resize to a negative size."
+  | otherwise =
+      Array newSize (Unsafe.resizeMutArr mut seed newSize)
 
 -- XXX: Replace with toVec
 toList :: Array a #-> (Array a, Unrestricted [a])

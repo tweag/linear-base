@@ -44,6 +44,7 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,x. len (snoc a x) = 1 + len a" lenSnoc
   -- Regression tests
+  , testProperty "snoc on an empty vector should succeed" snocOnEmptyVector
   , testProperty "do not reorder reads and writes" readAndWriteTest
   ]
 
@@ -52,12 +53,11 @@ group =
 
 type VectorTester = Vector.Vector Int #-> Unrestricted (TestT IO ())
 
--- | Given a size, make a random list of that lenght
+nonEmptyList :: Gen [Int]
+nonEmptyList = Gen.list (Range.linear 1 1000) val
+
 list :: Gen [Int]
-list = do
-  size <- Gen.int $ Range.linearFrom 1 1 1000
-  let size' = Range.singleton size
-  Gen.list size' $ Gen.int $ Range.linearFrom 0 (-1000) 1000
+list = Gen.list (Range.linear 0 1000) val
 
 val :: Gen Int
 val = Gen.int (Range.linear (-1000) 1000)
@@ -76,10 +76,19 @@ getSnd (a, b) = lseq a b
 -- # Tests
 --------------------------------------------------------------------------------
 
+snocOnEmptyVector :: Property
+snocOnEmptyVector = withTests 1 . property $ do
+  let Unrestricted actual =
+        Vector.empty
+          Linear.$ \vec -> Vector.snoc vec (42 :: Int)
+          Linear.& \vec -> Vector.read vec 0
+          Linear.& getSnd
+  actual === 42
+
 -- | Constant should give us a constant vector.
 readConst :: Property
 readConst = property $ do
-  size <- forAll $ Gen.int $ Range.linearFrom 1 1 1000
+  size <- forAll $ Gen.int $ Range.linear 1 1000
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]
   test $ unUnrestricted Linear.$ Vector.constant size v (readConstTest ix v)
@@ -89,7 +98,7 @@ readConstTest ix val vec = compInts (getSnd (Vector.read vec ix)) (move val)
 
 readWrite1 :: Property
 readWrite1 = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   ix <- forAll $ Gen.element [0..size-1]
   v <- forAll val
@@ -122,7 +131,7 @@ readWrite2Test ix jx val vec = fromRead (Vector.read vec ix)
 
 readSnoc1 :: Property
 readSnoc1 = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]
@@ -158,7 +167,7 @@ readSnoc2Test val vec = fromLen (Vector.length vec)
 
 lenConst :: Property
 lenConst = property $ do
-  size <- forAll $ Gen.int $ Range.linearFrom 1 1 1000
+  size <- forAll $ Gen.int $ Range.linear 1 1000
   v <- forAll val
   test $ unUnrestricted Linear.$ Vector.constant size v (lenConstTest size)
 
@@ -168,7 +177,7 @@ lenConstTest size vec =
 
 lenWrite :: Property
 lenWrite = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]

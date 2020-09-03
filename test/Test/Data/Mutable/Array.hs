@@ -75,12 +75,11 @@ group =
 
 type ArrayTester = Array.Array Int #-> Unrestricted (TestT IO ())
 
--- | A random list
+nonEmptyList :: Gen [Int]
+nonEmptyList = Gen.list (Range.linear 1 1000) value
+
 list :: Gen [Int]
-list = do
-  size <- Gen.int $ Range.linearFrom 1 1 1000
-  let size' = Range.singleton size
-  Gen.list size' $ Gen.int $ Range.linearFrom 0 (-1000) 1000
+list = Gen.list (Range.linear 0 1000) value
 
 -- | A random value
 value :: Gen Int
@@ -102,7 +101,7 @@ getSnd (a, b) = lseq a b
 
 readAlloc :: Property
 readAlloc = property $ do
-  size <- forAll $ Gen.int $ Range.linearFrom 1 1 1000
+  size <- forAll $ Gen.int $ Range.linear 1 1000
   val <- forAll value
   ix <- forAll $ Gen.element [0..size-1]
   test $ unUnrestricted Linear.$ Array.alloc size val (readAllocTest ix val)
@@ -112,7 +111,7 @@ readAllocTest ix val arr = compInts (getSnd (Array.read arr ix)) (move val)
 
 readResize :: Property
 readResize = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   newSize <- forAll $ Gen.element [1..(size*4)]
   ix <- forAll $ Gen.element [0..(min size newSize)-1]
@@ -129,7 +128,7 @@ readResizeTest size ix arr =
 
 readWrite1 :: Property
 readWrite1 = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   ix <- forAll $ Gen.element [0..size-1]
   val <- forAll value
@@ -163,7 +162,7 @@ readWrite2Test ix jx val arr = fromRead (Array.read arr ix)
 
 allocBeside :: Property
 allocBeside = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   newSize <- forAll $ Gen.element [size..(size*4)]
   val <- forAll value
@@ -181,7 +180,7 @@ allocBesideTest newSize val ix arr =
 
 lenAlloc :: Property
 lenAlloc = property $ do
-  size <- forAll $ Gen.int $ Range.linearFrom 1 1 1000
+  size <- forAll $ Gen.int $ Range.linear 0 1000
   val <- forAll value
   test $ unUnrestricted Linear.$ Array.alloc size val (lenAllocTest size)
 
@@ -191,7 +190,7 @@ lenAllocTest size arr =
 
 lenWrite :: Property
 lenWrite = property $ do
-  l <- forAll list
+  l <- forAll nonEmptyList
   let size = length l
   val <- forAll value
   ix <- forAll $ Gen.element [0..size-1]
