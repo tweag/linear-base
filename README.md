@@ -64,7 +64,7 @@ There are plenty of excellent resources and examples to help you.
     * [Predictable performance](https://www.tweag.io/posts/2017-03-13-linear-types.html) (the first blog post from Tweag on this)
     * [IO State Transitions](https://www.tweag.io/posts/2017-08-03-linear-typestates.html)
     * [Streaming](https://www.tweag.io/posts/2018-06-21-linear-streams.html)
-    * See [here](https://www.tweag.io/tag/linear-types.html) for all of Tweag's blog posts on linear types.
+    * See [here](https://www.tweag.io/blog/tags/linear-types/) for all of Tweag's blog posts on linear types.
   * [Here is the paper](https://arxiv.org/pdf/1710.09756.pdf) behind `-XLinearTypes`.
 
 ### Talks
