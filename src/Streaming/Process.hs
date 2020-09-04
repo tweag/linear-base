@@ -32,10 +32,10 @@ module Streaming.Process
   , sumToEither
   , sumToCompose
   , composeToSum
-  -- * Partitions
+  -- ** Partitions
   , partitionEithers
   , partition
-  -- * Maybes
+  -- ** Maybes
   , catMaybes
   , mapMaybe
   , mapMaybeM
