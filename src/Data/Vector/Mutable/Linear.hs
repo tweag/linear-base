@@ -43,6 +43,7 @@ module Data.Vector.Mutable.Linear
   ( -- * A mutable vector
     Vector,
     -- * Run a computation with a vector
+    empty,
     constant,
     fromList,
     -- * Mutators
@@ -74,26 +75,26 @@ data Vector a where
 -- # API: Construction, Mutation, Queries
 -------------------------------------------------------------------------------
 
--- | Allocate a constant vector of a given non-zero size (and error on a bad
--- size)
+-- Allocate an empty vector
+empty :: (Vector a #-> Unrestricted b) #-> Unrestricted b
+empty f = f (Vec (0, 0) (Unsafe.newMutArr 0 undefined))
+
+-- | Allocate a constant vector of a given non-negative size (and error on a
+-- bad size)
 constant :: HasCallStack =>
   Int -> a -> (Vector a #-> Unrestricted b) #-> Unrestricted b
 constant size x f
-  | size <= 0 =
+  | size < 0 =
       (error ("Trying to construct a vector of size " ++ show size) :: x #-> x)
       (f undefined)
   | otherwise = f (Vec (size, size) (Unsafe.newMutArr size x))
 
--- XXX: long line below
--- | Allocator from a non-empty list (and error on empty lists)
+-- | Allocator from a list
 fromList :: HasCallStack => [a] -> (Vector a #-> Unrestricted b) #-> Unrestricted b
-fromList [] f =
-  (error "Trying to allocate a vector from an empty list" :: x #-> x)
-  (f undefined)
-fromList xs@(x:_) (f :: Vector a #-> Unrestricted b) =
+fromList xs (f :: Vector a #-> Unrestricted b) =
   constant
     (Prelude.length xs)
-    x
+    (error "invariant violation: uninitialized vector position")
     (\vec -> f (build' vec))
   where
     build' :: Vector a #-> Vector a
@@ -114,7 +115,7 @@ length = Unsafe.toLinear unsafeLength
 snoc :: HasCallStack => Vector a #-> a -> Vector a
 snoc (Vec (len, size) ma) x
   | len < size = write (Vec (len + 1, size) ma) len x
-  | otherwise = write (unsafeResize (size * 2) (Vec (len + 1, size) ma)) len x
+  | otherwise = write (unsafeResize (max size 1 * 2) (Vec (len + 1, size) ma)) len x
 
 -- | Write to an element already written to before.  Note: this will not write
 -- to elements beyond the current length of the array and will error instead.
@@ -150,7 +151,13 @@ instance Consumable (Vector a) where
 -- | Resize the vector with larger non-negative size
 unsafeResize :: HasCallStack => Int -> Vector a -> Vector a
 unsafeResize newSize (Vec (len, _) ma) =
-  Vec (len, newSize) (Unsafe.resizeMutArr ma newSize)
+  Vec
+    (len, newSize)
+    (Unsafe.resizeMutArr
+      ma
+      (error "access to uninitialized vector index")
+      newSize
+    )
 
 -- | Argument order: indexInRange len ix
 indexInRange :: Int -> Int -> Bool

@@ -19,7 +19,6 @@ module Unsafe.MutableArray
     newMutArr,
     writeMutArr,
     resizeMutArr,
-    resizeMutArrSeed,
     copyIntoMutArr,
     -- * Accessors
     readMutArr,
@@ -41,7 +40,7 @@ sizeMutArr :: MutArr# a -> Int
 sizeMutArr arr  = I# (sizeofMutableArray# arr)
 
 -- | Given a size, try to allocate a mutable array
--- of this size. The size should be greater than zero.
+-- of this size. The size should be non-negative.
 newMutArr :: HasCallStack => Int -> a -> MutArr# a
 newMutArr (I# size) x =
   case newArray of
@@ -49,8 +48,8 @@ newMutArr (I# size) x =
   where
     newArray = runRW# $ \stateRW -> newArray# size x stateRW
 
--- | Write to a given mutable array arr, given an
--- index in [0, size(arr)-1] , and a value
+-- | Write to a given mutable array arr; given an
+-- index in [0, size(arr)-1], and a value.
 writeMutArr :: HasCallStack => MutArr# a -> Int -> a -> ()
 writeMutArr mutArr (I# ix) val =
   case doWrite of _ -> ()
@@ -73,7 +72,7 @@ readMutArr mutArr (I# ix) =
 -- a new array of the given size using the seed value to fill in the new
 -- cells when necessary and copying over all the unchanged cells.
 --
--- The size should be positive.
+-- The size should be non-negative.
 --
 -- @
 -- let b = resize a x n,
@@ -81,19 +80,10 @@ readMutArr mutArr (I# ix) =
 --   and b[i] = a[i] for i < length a,
 --   and b[i] = x for length a <= i < n.
 -- @
-resizeMutArrSeed :: HasCallStack => MutArr# a -> a -> Int -> MutArr# a
-resizeMutArrSeed mutArr x newSize = case newMutArr newSize x of
+resizeMutArr :: HasCallStack => MutArr# a -> a -> Int -> MutArr# a
+resizeMutArr mutArr x newSize = case newMutArr newSize x of
   newArr -> case copyIntoMutArr mutArr newArr of
     () -> newArr
-
--- | Same as 'resizeMutArraySeed', but using the first index of the initial
--- array as the seed value.
---
--- Given array should be non-empty, and given size should be positive.
-resizeMutArr :: HasCallStack => MutArr# a -> Int -> MutArr# a
-resizeMutArr mutArr newSize =
-  let !(# a #) = readMutArr mutArr 0
-  in  resizeMutArrSeed mutArr a newSize
 
 -- | Copy the first mutable array into the second mutable array.
 -- Copies fewer elements if the second array is smaller than the first.
