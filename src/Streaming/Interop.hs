@@ -6,7 +6,8 @@
 -- | This module contains functions for interoperating with other
 -- streaming libraries.
 module Streaming.Interop
-  ( reread
+  ( -- * Interoperating with other streaming libraries
+    reread
   ) where
 
 import Streaming.Type
@@ -25,11 +26,16 @@ import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 -}
 reread :: Control.Monad m =>
   (s -> m (Unrestricted (Maybe a))) -> s -> Stream (Of a) m ()
-reread f s = Effect $ do
-  Unrestricted maybeA <- f s
-  case maybeA of
-    Nothing -> return $ Return ()
-    Just a -> return $ (yield a >> reread f s)
+reread f s = reread' f s
   where
     Builder{..} = monadBuilder
+
+    reread' :: Control.Monad m =>
+      (s -> m (Unrestricted (Maybe a))) -> s -> Stream (Of a) m ()
+    reread' f s = Effect $ do
+      Unrestricted maybeA <- f s
+      case maybeA of
+        Nothing -> return $ Return ()
+        Just a -> return $ (yield a >> reread f s)
+{-# INLINABLE reread #-}
 

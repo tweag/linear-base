@@ -8,7 +8,7 @@
 -- | This module provides all functions that take input streams
 -- but do not return output streams.
 module Streaming.Consume
-  ( -- * Consuming streams of elements
+  ( -- * Consuming 'Stream's of elements
   -- ** IO Consumers
     stdoutLn
   , stdoutLn'
