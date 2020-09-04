@@ -1,16 +1,14 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
--- |
--- This module defines all the facilities you need when writing linear code. As
--- an analog to the original 'Prelude', it has the basic tools any haskell
--- program using @-XLinearHaskell@ will probably need.
---
--- This module is designed to be imported unqualifed.
+-- | This module provides a replacement for 'Prelude' with
+-- support for linear programming via linear versions of
+-- standard data types, functions and type classes.
 --
 -- A simple example:
 --
 -- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE NoImplicitPrelude #-}
 -- > import Prelude.Linear
 -- >
 -- > makeInt :: Either Int Bool #-> Int
@@ -20,7 +18,8 @@
 -- > boolToInt False = 0
 -- > boolToInt True = 1
 --
---
+-- This module is designed to be imported unqualifed.
+
 
 module Prelude.Linear
   ( -- * Standard Types, Classes and Related Functions
@@ -38,7 +37,7 @@ module Prelude.Linear
   , forget
   , Semigroup(..)
   , Monoid(..)
-    -- * Using 'Unrestricted' values in linear Code
+    -- * Using 'Unrestricted' values in linear code
     -- $ unrestricted
   , Unrestricted(..)
   , unUnrestricted
@@ -98,7 +97,7 @@ import Prelude.Linear.Internal
 -- non-linear arrow would allow a linear arrow passed, so this would be
 -- redundant
 -- | Convenience operator when a higher-order function expects a non-linear
--- arrow but we have a linear arrow
+-- arrow but we have a linear arrow.
 forget :: (a #-> b) #-> a -> b
 forget f x = f x
 
