@@ -47,9 +47,11 @@ module Data.Array.Mutable.Linear
     fromList,
     -- * Mutators
     write,
+    unsafeWrite,
     resize,
     -- * Accessors
     read,
+    unsafeRead,
     length,
     toList,
   )
@@ -116,25 +118,40 @@ length = Unsafe.toLinear unsafeLength
     unsafeLength :: Array a -> (Array a, Int)
     unsafeLength v@(Array size _) = (v, size)
 
+-- | Writes a value to an index of an Array. The index should be less than the
+-- arrays size, otherwise this errors.
 write :: HasCallStack => Array a #-> Int -> a -> Array a
 write = Unsafe.toLinear writeUnsafe
   where
     writeUnsafe :: Array a -> Int -> a -> Array a
-    writeUnsafe arr@(Array size mutArr) ix val
-      | indexInRange size ix =
-        case Unsafe.writeMutArr mutArr ix val of
-          () -> arr
+    writeUnsafe arr@(Array size _) ix val
+      | indexInRange size ix = unsafeWrite arr ix val
       | otherwise = error "Write index out of bounds."
 
+-- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
+-- if an out-of-bounds index is provided.
+unsafeWrite :: Array a #-> Int -> a -> Array a
+unsafeWrite (Array size arr) ix val =
+  case Unsafe.writeMutArr arr ix val of
+    () -> Array size arr
+
+
+-- | Read an index from an Array. The index should be less than the arrays size,
+-- otherwise this errors.
 read :: HasCallStack => Array a #-> Int -> (Array a, Unrestricted a)
 read = Unsafe.toLinear readUnsafe
   where
     readUnsafe :: Array a -> Int -> (Array a, Unrestricted a)
-    readUnsafe arr@(Array size mutArr) ix
-      | indexInRange size ix =
-          let !(# a #) = Unsafe.readMutArr mutArr ix
-          in  (arr, Unrestricted a)
+    readUnsafe arr@(Array size _) ix
+      | indexInRange size ix = unsafeRead arr ix
       | otherwise = error "Read index out of bounds."
+
+-- | Same as read, but does not do bounds-checking. The behaviour is undefined
+-- if an out-of-bounds index is provided.
+unsafeRead :: Array a #-> Int -> (Array a, Unrestricted a)
+unsafeRead (Array size arr) ix =
+  let !(# a #) = Unsafe.readMutArr arr ix
+  in  (Array size arr, Unrestricted a)
 
 -- | Resize an array. That is, given an array, a target size, and a seed
 -- value; resize the array to the given size using the seed value to fill
