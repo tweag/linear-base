@@ -135,7 +135,6 @@ unsafeWrite (Array size arr) ix val =
   case Unsafe.writeMutArr arr ix val of
     () -> Array size arr
 
-
 -- | Read an index from an Array. The index should be less than the arrays size,
 -- otherwise this errors.
 read :: HasCallStack => Array a #-> Int -> (Array a, Unrestricted a)
