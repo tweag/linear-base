@@ -180,17 +180,18 @@ uncons  stream = loop stream
 >  splitAt :: Control.Monad m => Int -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
 
 -}
-splitAt :: (HasCallStack, Control.Monad m, Control.Functor f) =>
+splitAt :: forall f m r. (Control.Monad m, Control.Functor f) =>
   Int -> Stream f m r #-> Stream f m (Stream f m r)
-splitAt n stream = Prelude.compare n 0 & \case
-  LT -> Prelude.error "splitAt called with negative integer" $ stream
-  EQ -> Return stream
-  GT -> stream & \case
-    Return r -> Prelude.error "splitAt called with too large index" $ r
-    Effect m -> Effect $ m >>= (return . splitAt n)
-    Step f -> Step $ Control.fmap (splitAt (n-1)) f
-  where
-    Builder{..} = monadBuilder
+splitAt n stream = loop n stream where
+  Builder{..} = monadBuilder
+  loop :: Int -> Stream f m r #-> Stream f m (Stream f m r)
+  loop n stream = case Prelude.compare n 0 of
+    GT -> stream & \case
+      Return r -> Return (Return r)
+      Effect m -> Effect $ m >>= (return . splitAt n)
+      Step f -> Step $ Control.fmap (splitAt (n-1)) f
+    _ -> Return stream
+{-# INLINABLE splitAt #-}
 
 {-| Split a stream of elements wherever a given element arises.
     The action is like that of 'Prelude.words'.

@@ -322,6 +322,29 @@ mapsMPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
 mapsMPost = Stream.mapsMPost
 {-# INLINE mapsMPost #-}
 
+{- | Map layers of one functor to another with a transformation involving the base monad.
+     This could be trivial, e.g.
+
+> let noteBeginning text x = (fromSystemIO (System.putStrLn text)) Control.>> (Control.return x)
+
+     this is completely functor-general
+
+     @maps@ and @mapped@ obey these rules:
+
+> maps id              = id
+> mapped return        = id
+> maps f . maps g      = maps (f . g)
+> mapped f . mapped g  = mapped (f <=< g)
+> maps f . mapped g    = mapped (fmap f . g)
+> mapped f . maps g    = mapped (f <=< fmap g)
+
+     @maps@ is more fundamental than @mapped@, which is best understood as a convenience
+     for effecting this frequent composition:
+
+> mapped phi = decompose . maps (Compose . phi)
+
+
+-}
 mapped :: forall f g m r . (Control.Monad m, Control.Functor f) =>
   (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
 mapped = mapsM
@@ -337,16 +360,30 @@ mappedPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
 mappedPost = mapsMPost
 {-# INLINE mappedPost #-}
 
-hoistUnexposed :: forall f m n r . (Control.Monad m, Control.Functor f) =>
-  (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
-hoistUnexposed hoist = loop
-  where
-    loop :: Stream f m r #-> Stream f n r
-    loop stream = stream & \case
-      Return r -> Return r
-      Step f -> Step $ Control.fmap loop f
-      Effect m -> Effect $ hoist $ Control.fmap loop m
+-- | A less-efficient version of 'hoist' that works properly even when its
+-- argument is not a monad morphism.
+hoistUnexposed :: forall f m n r. (Control.Monad m, Control.Functor f)
+               => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
+hoistUnexposed trans = loop where
+  Builder{..} = monadBuilder
+  loop :: Stream f m r #-> Stream f n r
+  loop = Effect
+    . trans
+    . inspectC (return . Return) (return . Step . Control.fmap loop)
 {-# INLINABLE hoistUnexposed #-}
+
+-- A version of 'inspect' that takes explicit continuations.
+-- Note that due to the linear constructors of 'Stream', these continuations
+-- are linear.
+inspectC :: forall f m r a. Control.Monad m =>
+  (r #-> m a) -> (f (Stream f m r) #-> m a) -> Stream f m r #-> m a
+inspectC f g = loop where
+  Builder{..} = monadBuilder
+  loop :: Stream f m r #-> m a
+  loop (Return r) = f r
+  loop (Step x)   = g x
+  loop (Effect m) = m >>= loop
+{-# INLINE inspectC #-}
 
 {-| Group layers in an alternating stream into adjoining sub-streams
     of one type or another.

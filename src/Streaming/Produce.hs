@@ -125,6 +125,13 @@ replicate n a
 
 {-| Repeat an action several times, streaming its results.
 
+>>> import qualified Unsafe.Linear as Unsafe
+>>> import qualified Data.Time as Time
+>>> let getCurrentTime = fromSystemIO (Unsafe.coerce Time.getCurrentTime)
+>>> S.print $ S.replicateM 2 getCurrentTime
+2015-08-18 00:57:36.124508 UTC
+2015-08-18 00:57:36.124785 UTC
+
 -}
 replicateM :: Control.Monad m =>
   Int -> m (Unrestricted a) -> Stream (Of a) m ()
