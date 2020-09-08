@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
@@ -7,7 +8,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Streaming.Type
+module Streaming.Internal.Type
   ( -- * The 'Stream' and 'Of' types
     -- $stream
     Stream (..)

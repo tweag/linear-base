@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RebindableSyntax #-}
@@ -5,13 +6,13 @@
 
 -- | This module contains functions for interoperating with other
 -- streaming libraries.
-module Streaming.Interop
+module Streaming.Internal.Interop
   ( -- * Interoperating with other streaming libraries
     reread
   ) where
 
-import Streaming.Type
-import Streaming.Produce
+import Streaming.Internal.Type
+import Streaming.Internal.Produce
 import Data.Unrestricted.Linear
 import Prelude.Linear (($), (&))
 import Prelude (Maybe(..))

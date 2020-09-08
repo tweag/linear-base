@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -7,7 +8,7 @@
 
 -- | This module provides all functions that take input streams
 -- but do not return output streams.
-module Streaming.Consume
+module Streaming.Internal.Consume
   ( -- * Consuming 'Stream's of elements
   -- ** IO Consumers
     stdoutLn
@@ -55,8 +56,8 @@ module Streaming.Consume
   , foldrT
   ) where
 
-import Streaming.Type
-import Streaming.Process
+import Streaming.Internal.Type
+import Streaming.Internal.Process
 import System.IO.Linear
 import System.IO.Resource
 import qualified Data.Bool.Linear as Linear
