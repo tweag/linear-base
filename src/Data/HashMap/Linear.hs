@@ -83,11 +83,18 @@ newtype Count = Count Int
   deriving (Prelude.Num)
 
 -- | An array of Robin values
-type RobinArr k v = Array (RobinVal k v)
+type RobinArr k v = Array (Maybe (RobinVal k v))
 
 -- | Robin values are triples of the key, value and PSL
 -- (the probe sequence length).
-type RobinVal k v = (PSL, (k, v))
+data RobinVal k v = RobinVal {-# UNPACK #-} !PSL k v
+  deriving (Show)
+
+incRobinValPSL :: RobinVal k v -> RobinVal k v
+incRobinValPSL (RobinVal (PSL p) k v) = RobinVal (PSL (p+1)) k v
+
+decRobinValPSL :: RobinVal k v -> RobinVal k v
+decRobinValPSL (RobinVal (PSL p) k v) = RobinVal (PSL (p-1)) k v
 
 -- | A probe sequence length
 newtype PSL = PSL Int
@@ -117,11 +124,7 @@ empty :: forall k v b.
 empty sz@(Size s) scope =
   alloc
     s
-    ( -1
-    , ( error "reading error hashmap key"
-      , error "reading error hashmap val"
-      )
-    )
+    Nothing
     (\arr -> scope (HashMap sz (Count 0) arr))
 
 -- | If the key is present, this update the value.
@@ -131,38 +134,37 @@ insert :: (Keyed k, HasCallStack) => HashMap k v #-> k -> v -> HashMap k v
 insert (HashMap sz@(Size s) ct@(Count c) arr) k v = case c < s of
   False -> resizeMap (HashMap sz ct arr) & \case
     !hmap' -> insert hmap' k v
-  True -> tryInsertAtIndex (HashMap sz ct arr) ((hash k) `mod` s) (k,0) v
+  True ->
+    tryInsertAtIndex
+      (HashMap sz ct arr)
+      ((hash k) `mod` s)
+      (RobinVal (PSL 0) k v)
 
 -- | Try to insert at a given index with a given PSL. So the
 -- probing starts from the given index (with the given PSL).
 tryInsertAtIndex :: Keyed k =>
-  HashMap k v #-> Int -> (k, PSL) -> v -> HashMap k v
-tryInsertAtIndex hmap ix kPSL@(k, _) v = probeFrom kPSL ix hmap & \case
-  (HashMap sz ct arr, IndexToUpdate _ psl' ix') ->
-    HashMap sz ct (write arr ix' (psl', (k, v)))
-  (HashMap sz (Count c) arr, IndexToInsert psl' ix') ->
-    HashMap sz (Count (c + 1)) (write arr ix' (psl', (k, v)))
-  (HashMap (Size s) ct arr, IndexToSwap (oldPsl, (oldKey, oldVal)) psl ix') ->
-    tryInsertAtIndex
-      (HashMap (Size s) ct (write arr ix' (psl, (k, v))))
-      ((ix' + 1) `mod` s)
-      (oldKey, oldPsl + 1)
-      oldVal
+  HashMap k v #-> Int -> RobinVal k v -> HashMap k v
+tryInsertAtIndex hmap ix (RobinVal psl key val) =
+  probeFrom (key, psl) ix hmap & \case
+    (HashMap sz ct arr, IndexToUpdate _ psl' ix') ->
+      HashMap sz ct (write arr ix' (Just $ RobinVal psl' key val))
+    (HashMap sz (Count c) arr, IndexToInsert psl' ix') ->
+      HashMap sz (Count (c + 1)) (write arr ix' (Just $ RobinVal psl' key val))
+    (HashMap (Size s) ct arr, IndexToSwap oldVal psl' ix') ->
+      tryInsertAtIndex
+        (HashMap (Size s) ct (write arr ix' (Just $ RobinVal psl' key val)))
+        ((ix' + 1) `mod` s)
+        (incRobinValPSL oldVal)
 
 -- | Resizes the hashmap to be about 2.5 times the previous size
 resizeMap :: Keyed k => HashMap k v #-> HashMap k v
 resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
   (arr', Ur kvs) ->
-    allocBeside (s*2 + s`div`2) (-1, errKV) arr' & \case
+    allocBeside (s*2 + s`div`2) Nothing arr' & \case
       (oldArr, arr'') ->
         oldArr `lseq`
           insertAll kvs (HashMap (Size (s*2 + s`div`2)) (Count 0) arr'')
   where
-    errKV :: Keyed k => (k,v)
-    errKV =
-      ( error "reading error hashmap key"
-      , error "reading error hashmap val"
-      )
     extractPairs :: Keyed k =>
       RobinArr k v #-> (RobinArr k v, Ur [(k,v)])
     extractPairs arr = walk arr (s - 1) []
@@ -172,8 +174,10 @@ resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
     walk arr ix kvs
       | ix < 0 = (arr, Ur kvs)
       | otherwise = read arr ix & \case
-        (arr', Ur (-1, _)) -> walk arr' (ix-1) kvs
-        (arr', Ur (_, (!k,!v))) -> walk arr' (ix-1) ((k,v):kvs)
+        (arr', Ur Nothing) ->
+          walk arr' (ix-1) kvs
+        (arr', Ur (Just (RobinVal _ k v))) ->
+          walk arr' (ix-1) ((k,v):kvs)
 
 -- | 'delete h k' deletes key k and its value if it is present.
 -- If it's not present, this does nothing.
@@ -183,7 +187,7 @@ delete (HashMap sz@(Size s) ct@(Count c) arr) k =
     (h, IndexToInsert _ _) -> h
     (h, IndexToSwap _ _ _) -> h
     (HashMap sz _ arr', IndexToUpdate _ _ ix) ->
-      write arr' ix (-1, (error "key", error "val")) & \case
+      write arr' ix Nothing & \case
         arr'' -> shiftSegmentBackward sz arr'' ((ix + 1) `mod` s) & \case
           arr''' -> HashMap sz (Count (c - 1)) arr'''
 
@@ -193,15 +197,14 @@ delete (HashMap sz@(Size s) ct@(Count c) arr) k =
 shiftSegmentBackward :: Keyed k =>
   Size -> RobinArr k v #-> Int -> RobinArr k v
 shiftSegmentBackward (Size s) arr ix = read arr ix & \case
-  (arr', Ur (psl, kv)) ->
-    case psl <= 0 of
-      True -> arr'
-      False -> write arr' ix (-1, (error "key", error "val")) & \case
-        arr'' ->
-          shiftSegmentBackward
-            (Size s)
-            (write arr'' ((ix+s-1) `mod` s) (psl + (-1),kv))
-            ((ix+1) `mod` s)
+  (arr', Ur Nothing) -> arr'
+  (arr', Ur (Just (RobinVal 0 _ _))) -> arr'
+  (arr', Ur (Just val)) ->
+    write arr' ix Nothing & \arr'' ->
+      shiftSegmentBackward
+        (Size s)
+        (write arr'' ((ix-1) `mod` s) (Just $ decRobinValPSL val))
+        ((ix+1) `mod` s)
 
 -- | 'insert' (in the provided order) a list of key-value pairs
 -- to a given hashmap.
@@ -215,15 +218,15 @@ insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k v)
 probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = read arr ix & \case
-  (arr', Ur (PSL (-1), _)) ->
+  (arr', Ur Nothing) ->
     (HashMap sz ct arr', IndexToInsert p ix)
-  (arr', Ur robinVal'@(psl,(k', v'))) -> case k == k' of
-    -- Note: in the True case, we must have p == psl
-    True -> (HashMap sz ct arr', IndexToUpdate v' psl ix)
-    False -> case psl < p of
-      True -> (HashMap sz ct arr', IndexToSwap robinVal' p ix)
-      False -> probeFrom (k, p+1) ((ix+1)`mod` s) (HashMap sz ct arr')
-
+  (arr', Ur (Just robinVal'@(RobinVal psl k' v'))) ->
+    case k == k' of
+      -- Note: in the True case, we must have p == psl
+      True -> (HashMap sz ct arr', IndexToUpdate v' psl ix)
+      False -> case psl < p of
+        True -> (HashMap sz ct arr', IndexToSwap robinVal' p ix)
+        False -> probeFrom (k, p+1) ((ix+1)`mod` s) (HashMap sz ct arr')
 
 -- # Querying
 --------------------------------------------------
@@ -248,10 +251,14 @@ lookup (HashMap (Size s) ct arr) k =
     (h, IndexToSwap _ _ _) ->
       (h, Ur Nothing)
 
-
 -- # Instances
 --------------------------------------------------
 
 instance Consumable (HashMap k v) where
   consume :: HashMap k v #-> ()
   consume (HashMap _ _ arr) = consume arr
+
+_debugShow :: (Show k, Show v) => HashMap k v #-> String
+_debugShow (HashMap _ _ robinArr) =
+  toList robinArr & \(arr, Ur xs) ->
+    arr `lseq` show xs
