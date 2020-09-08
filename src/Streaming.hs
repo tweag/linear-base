@@ -611,8 +611,8 @@ unseparate str = destroyExposed
   since @maps@ and @hoist@ are the really fundamental operations that preserve the
   shape of the stream:
 
-> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x -> g x) -> Stream f m r #-> Stream g m r
-> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a -> n a) -> Stream f m r #-> Stream f n r
+> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x #-> g x) -> Stream f m r #-> Stream g m r
+> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
 
 -}
 decompose :: forall f m r . (Control.Monad m, Control.Functor f) =>
