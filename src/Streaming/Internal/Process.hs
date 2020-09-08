@@ -9,7 +9,7 @@
 -- | This module provides functions that take one input
 -- stream and produce one output stream. These are functions that
 -- process a single stream.
-module Streaming.Process
+module Streaming.Internal.Process
   (
   -- * Stream processors
   -- ** Splitting and inspecting streams of elements
@@ -78,7 +78,7 @@ module Streaming.Process
   , destroyExposed
   ) where
 
-import Streaming.Type
+import Streaming.Internal.Type
 import Prelude.Linear ((&), ($), (.))
 import qualified Prelude.Linear as Linear
 import Prelude (Maybe(..), Either(..), Bool(..), Int, fromInteger,

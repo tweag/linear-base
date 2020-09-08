@@ -7,7 +7,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Streaming.Type
+module Streaming.Internal.Type
   ( -- * The 'Stream' and 'Of' types
     -- $stream
     Stream (..)
