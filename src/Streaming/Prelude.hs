@@ -48,19 +48,19 @@
 >
 -}
 module Streaming.Prelude
-  ( module Streaming.Consume
-  , module Streaming.Interop
-  , module Streaming.Many
-  , module Streaming.Process
-  , module Streaming.Produce
-  , module Streaming.Type
+  ( module Streaming.Internal.Type
+  , module Streaming.Internal.Consume
+  , module Streaming.Internal.Interop
+  , module Streaming.Internal.Many
+  , module Streaming.Internal.Process
+  , module Streaming.Internal.Produce
   ) where
 
-import Streaming.Consume
-import Streaming.Interop
-import Streaming.Many
-import Streaming.Process
-import Streaming.Produce
-import Streaming.Type
+import Streaming.Internal.Type
+import Streaming.Internal.Consume
+import Streaming.Internal.Interop
+import Streaming.Internal.Many
+import Streaming.Internal.Process
+import Streaming.Internal.Produce
 
 

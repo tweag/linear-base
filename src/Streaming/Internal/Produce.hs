@@ -7,7 +7,7 @@
 
 -- | This module provides all functions which produce a
 -- 'Stream (Of a) m r' from some given non-stream inputs.
-module Streaming.Produce
+module Streaming.Internal.Produce
   ( -- * Constructing 'Stream's
     yield
   , each'
@@ -19,8 +19,8 @@ module Streaming.Produce
   , untilRight
   ) where
 
-import Streaming.Type
-import Streaming.Process
+import Streaming.Internal.Type
+import Streaming.Internal.Process
 import Prelude.Linear (($), (&))
 import Prelude (Either(..), Read, Bool(..), FilePath,
                Num(..), Int, otherwise, Eq(..), Ord(..), (.))

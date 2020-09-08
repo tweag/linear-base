@@ -19,12 +19,12 @@ library
     Streaming.Prelude
     Streaming
   other-modules:
-    Streaming.Consume
-    Streaming.Interop
-    Streaming.Many
-    Streaming.Process
-    Streaming.Produce
-    Streaming.Type
+    Streaming.Internal.Consume
+    Streaming.Internal.Interop
+    Streaming.Internal.Many
+    Streaming.Internal.Process
+    Streaming.Internal.Produce
+    Streaming.Internal.Type
   build-depends:
     base >= 4.7 && < 5,
     linear-base,

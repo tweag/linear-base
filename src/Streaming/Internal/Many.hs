@@ -7,7 +7,7 @@
 -- | This module contains all functions that do something with
 -- multiple streams as input or output. This includes combining
 -- streams, splitting a stream, etc.
-module Streaming.Many
+module Streaming.Internal.Many
   (
   -- * Operations that use or return multiple 'Stream's
   -- ** Unzip
@@ -18,8 +18,8 @@ module Streaming.Many
   , mergeBy
   ) where
 
-import Streaming.Type
-import Streaming.Consume
+import Streaming.Internal.Type
+import Streaming.Internal.Consume
 import Prelude (undefined, Bool(..), Either(..), Ord(..), Ordering(..), (.))
 import Prelude.Linear (($), (&))
 import qualified Prelude.Linear
