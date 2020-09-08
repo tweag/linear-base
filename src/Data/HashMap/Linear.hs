@@ -98,16 +98,15 @@ newtype PSL = PSL Int
 type Keyed k = (Eq k, Hashable k)
 
 -- | The results of searching for where to insert a key
-data ProbeResult k where
-  -- | A key, PSL pair to insert at an index, that has not
-  -- yet been touched. Invariant: the PSL must be -1 at that index.
-  IndexToInsert :: (k, PSL) -> Int -> ProbeResult k
-  -- A key, PSL pair to update the value at an index.
-  IndexToUpdate :: (k, PSL) -> Int -> ProbeResult k
-  -- | A key, PSL pair for a swap at an index.
-  -- The swapped-out pair will then need to be inserted downstream.
-  IndexToSwap :: (k, PSL) -> Int -> ProbeResult k
-
+data ProbeResult k v where
+  -- | An empty cell at index to insert a new element with PSL.
+  IndexToInsert :: !PSL -> !Int -> ProbeResult k v
+  -- | A matching cell at index with a PSL and a value to update.
+  IndexToUpdate :: v -> !PSL -> !Int -> ProbeResult k v
+  -- | An occupied, richer, cell which should be evicted when inserting
+  -- the new element. The swapped-out cell will then need to be inserted
+  -- with a higher PSL.
+  IndexToSwap :: RobinVal k v -> !PSL -> !Int -> ProbeResult k v
 
 -- # Construction and Modification
 --------------------------------------------------
@@ -138,18 +137,17 @@ insert (HashMap sz@(Size s) ct@(Count c) arr) k v = case c < s of
 -- probing starts from the given index (with the given PSL).
 tryInsertAtIndex :: Keyed k =>
   HashMap k v #-> Int -> (k, PSL) -> v -> HashMap k v
-tryInsertAtIndex hmap ix kPSL v = probeFrom kPSL ix hmap & \case
-  (HashMap sz ct arr, IndexToUpdate (k',psl') ix') ->
-    HashMap sz ct (write arr ix' (psl', (k',v)))
-  (HashMap sz (Count c) arr, IndexToInsert (k',psl') ix') ->
-    HashMap sz (Count (c + 1)) (write arr ix' (psl', (k',v)))
-  (HashMap (Size s) ct arr, IndexToSwap (k',psl') ix') -> read arr ix' & \case
-    (arr'', Ur (p_old, (k_old, v_old))) ->
-      tryInsertAtIndex
-        (HashMap (Size s) ct (write arr'' ix' (psl', (k',v))))
-        ((ix' + 1) `mod` s)
-        (k_old, p_old + 1)
-        v_old
+tryInsertAtIndex hmap ix kPSL@(k, _) v = probeFrom kPSL ix hmap & \case
+  (HashMap sz ct arr, IndexToUpdate _ psl' ix') ->
+    HashMap sz ct (write arr ix' (psl', (k, v)))
+  (HashMap sz (Count c) arr, IndexToInsert psl' ix') ->
+    HashMap sz (Count (c + 1)) (write arr ix' (psl', (k, v)))
+  (HashMap (Size s) ct arr, IndexToSwap (oldPsl, (oldKey, oldVal)) psl ix') ->
+    tryInsertAtIndex
+      (HashMap (Size s) ct (write arr ix' (psl, (k, v))))
+      ((ix' + 1) `mod` s)
+      (oldKey, oldPsl + 1)
+      oldVal
 
 -- | Resizes the hashmap to be about 2.5 times the previous size
 resizeMap :: Keyed k => HashMap k v #-> HashMap k v
@@ -183,8 +181,8 @@ delete :: Keyed k => HashMap k v #-> k -> HashMap k v
 delete (HashMap sz@(Size s) ct@(Count c) arr) k =
   probeFrom (k,0) ((hash k) `mod` s) (HashMap sz ct arr) & \case
     (h, IndexToInsert _ _) -> h
-    (h, IndexToSwap _ _) -> h
-    (HashMap sz _ arr', IndexToUpdate _ ix) ->
+    (h, IndexToSwap _ _ _) -> h
+    (HashMap sz _ arr', IndexToUpdate _ _ ix) ->
       write arr' ix (-1, (error "key", error "val")) & \case
         arr'' -> shiftSegmentBackward sz arr'' ((ix + 1) `mod` s) & \case
           arr''' -> HashMap sz (Count (c - 1)) arr'''
@@ -215,15 +213,15 @@ insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
 -- a full hashmap, return a probe result: the place the key already
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
-  (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k)
+  (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k v)
 probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = read arr ix & \case
   (arr', Ur (PSL (-1), _)) ->
-    (HashMap sz ct arr', IndexToInsert (k, p) ix)
-  (arr', Ur (psl,(k',_))) -> case k == k' of
+    (HashMap sz ct arr', IndexToInsert p ix)
+  (arr', Ur robinVal'@(psl,(k', v'))) -> case k == k' of
     -- Note: in the True case, we must have p == psl
-    True -> (HashMap sz ct arr', IndexToUpdate (k, psl) ix)
+    True -> (HashMap sz ct arr', IndexToUpdate v' psl ix)
     False -> case psl < p of
-      True -> (HashMap sz ct arr', IndexToSwap (k, p) ix)
+      True -> (HashMap sz ct arr', IndexToSwap robinVal' p ix)
       False -> probeFrom (k, p+1) ((ix+1)`mod` s) (HashMap sz ct arr')
 
 
@@ -236,18 +234,19 @@ size (HashMap sz ct@(Count c) arr) = (HashMap sz ct arr, Ur c)
 member :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur Bool)
 member (HashMap (Size s) ct arr) k =
   probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
-    (h, IndexToUpdate _ _) -> (h, Ur True)
+    (h, IndexToUpdate _ _ _) -> (h, Ur True)
     (h, IndexToInsert _ _) -> (h, Ur False)
-    (h, IndexToSwap _ _) -> (h, Ur False)
+    (h, IndexToSwap _ _ _) -> (h, Ur False)
 
 lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur (Maybe v))
 lookup (HashMap (Size s) ct arr) k =
   probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
-    (HashMap sz ct arr, IndexToUpdate _ ix) -> read arr ix & \case
-      (arr', Ur (_,(_,v))) ->
-        (HashMap sz ct arr', Ur (Just v))
-    (h, IndexToInsert _ _) -> (h, Ur Nothing)
-    (h, IndexToSwap _ _) -> (h, Ur Nothing)
+    (HashMap sz ct arr, IndexToUpdate v _ _) ->
+      (HashMap sz ct arr, Ur (Just v))
+    (h, IndexToInsert _ _) ->
+      (h, Ur Nothing)
+    (h, IndexToSwap _ _ _) ->
+      (h, Ur Nothing)
 
 
 -- # Instances
