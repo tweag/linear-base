@@ -25,7 +25,6 @@ module Data.HashMap.Linear
   ( -- * A mutable hashmap
     HashMap,
     Keyed,
-    Size(..),
     -- * Run a computation using a 'HashMap'
     empty,
     -- * Modifiers and Constructors
@@ -39,7 +38,8 @@ module Data.HashMap.Linear
   )
 where
 
-import Data.Array.Mutable.Linear hiding (size)
+import Data.Array.Mutable.Linear (Array)
+import qualified Data.Array.Mutable.Linear as Array
 import Data.Hashable
 import Data.Unrestricted.Linear
 import Prelude.Linear hiding ((+), lookup, read)
@@ -62,21 +62,16 @@ import GHC.Stack
 
 -- | A mutable hashmap with a linear API
 data HashMap k v where
-  -- | HashMap (size,count) array-of-robin-values
-  -- The size is the amount of memory the array takes up.
+  -- |
   -- The count is the number of stored mappings.
-  -- Our sparseness invariant: count*3 <= size.
-  HashMap :: Size -> Count -> RobinArr k v #-> HashMap k v
+  -- Our sparseness invariant: count*3 <= size arr.
+  HashMap :: Count -> RobinArr k v #-> HashMap k v
 
 -- INVARIANTS:
 --   * Cells are empty iff the PSL is -1.
 --   * Each (RobinVal k v) has the correct PSL
 --   * We NEVER evaluate the key-val pair for PSL -1
 --     since it might be (error "some message")
-
--- | The size allocated for the array
-newtype Size = Size Int
-  deriving (Prelude.Num)
 
 -- | The number of pairs stored in the hashmap
 newtype Count = Count Int
@@ -120,25 +115,26 @@ data ProbeResult k v where
 
 -- | Run a computation given an empty hashmap
 empty :: forall k v b.
-  Keyed k => Size -> (HashMap k v #-> Ur b) #-> Ur b
-empty sz@(Size s) scope =
-  alloc
-    s
+  Keyed k => Int -> (HashMap k v #-> Ur b) #-> Ur b
+empty size scope =
+  Array.alloc
+    size
     Nothing
-    (\arr -> scope (HashMap sz (Count 0) arr))
+    (\arr -> scope (HashMap (Count 0) arr))
 
 -- | If the key is present, this update the value.
 -- If not, if there's enough space, insert a new pair.
 -- If there isn't enough space, resize and insert
 insert :: (Keyed k, HasCallStack) => HashMap k v #-> k -> v -> HashMap k v
-insert (HashMap sz@(Size s) ct@(Count c) arr) k v = case c < s of
-  False -> resizeMap (HashMap sz ct arr) & \case
-    !hmap' -> insert hmap' k v
-  True ->
-    tryInsertAtIndex
-      (HashMap sz ct arr)
-      ((hash k) `mod` s)
-      (RobinVal (PSL 0) k v)
+insert hm k v =
+  capacity hm & \(hm', Ur cap) ->
+    size hm' & \(hm'', Ur size) ->
+      case size < cap of
+        False -> resizeMap hm'' & \hm''' ->
+          insert hm''' k v
+        True ->
+          idealIndexForKey k hm'' & \(hm''', Ur idx) ->
+            tryInsertAtIndex hm''' idx (RobinVal (PSL 0) k v)
 
 -- | Try to insert at a given index with a given PSL. So the
 -- probing starts from the given index (with the given PSL).
@@ -146,34 +142,36 @@ tryInsertAtIndex :: Keyed k =>
   HashMap k v #-> Int -> RobinVal k v -> HashMap k v
 tryInsertAtIndex hmap ix (RobinVal psl key val) =
   probeFrom (key, psl) ix hmap & \case
-    (HashMap sz ct arr, IndexToUpdate _ psl' ix') ->
-      HashMap sz ct (write arr ix' (Just $ RobinVal psl' key val))
-    (HashMap sz (Count c) arr, IndexToInsert psl' ix') ->
-      HashMap sz (Count (c + 1)) (write arr ix' (Just $ RobinVal psl' key val))
-    (HashMap (Size s) ct arr, IndexToSwap oldVal psl' ix') ->
-      tryInsertAtIndex
-        (HashMap (Size s) ct (write arr ix' (Just $ RobinVal psl' key val)))
-        ((ix' + 1) `mod` s)
-        (incRobinValPSL oldVal)
+    (HashMap ct arr, IndexToUpdate _ psl' ix') ->
+      HashMap ct (Array.write arr ix' (Just $ RobinVal psl' key val))
+    (HashMap (Count c) arr, IndexToInsert psl' ix') ->
+      HashMap (Count (c + 1)) (Array.write arr ix' (Just $ RobinVal psl' key val))
+    (hm, IndexToSwap oldVal psl' ix') ->
+      capacity hm  & \(HashMap ct arr, Ur cap) ->
+        tryInsertAtIndex
+          (HashMap ct (Array.write arr ix' (Just $ RobinVal psl' key val)))
+          ((ix' + 1) `mod` cap)
+          (incRobinValPSL oldVal)
 
 -- | Resizes the hashmap to be about 2.5 times the previous size
 resizeMap :: Keyed k => HashMap k v #-> HashMap k v
-resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
-  (arr', Ur kvs) ->
-    allocBeside (s*2 + s`div`2) Nothing arr' & \case
-      (oldArr, arr'') ->
-        oldArr `lseq`
-          insertAll kvs (HashMap (Size (s*2 + s`div`2)) (Count 0) arr'')
+resizeMap hm =
+  capacity hm & \(HashMap _ arr, Ur cap) ->
+    extractPairs cap arr & \(arr', Ur kvs) ->
+      let newCap = cap*2 + cap`div`2
+      in Array.allocBeside newCap Nothing arr' & \(oldArr, newArr) ->
+           oldArr `lseq`
+             insertAll kvs (HashMap (Count 0) newArr)
   where
     extractPairs :: Keyed k =>
-      RobinArr k v #-> (RobinArr k v, Ur [(k,v)])
-    extractPairs arr = walk arr (s - 1) []
+      Int -> RobinArr k v #-> (RobinArr k v, Ur [(k,v)])
+    extractPairs size arr = walk arr (size - 1) []
 
     walk :: Keyed k =>
       RobinArr k v #-> Int -> [(k,v)] -> (RobinArr k v, Ur [(k,v)])
     walk arr ix kvs
       | ix < 0 = (arr, Ur kvs)
-      | otherwise = read arr ix & \case
+      | otherwise = Array.read arr ix & \case
         (arr', Ur Nothing) ->
           walk arr' (ix-1) kvs
         (arr', Ur (Just (RobinVal _ k v))) ->
@@ -182,28 +180,29 @@ resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
 -- | 'delete h k' deletes key k and its value if it is present.
 -- If it's not present, this does nothing.
 delete :: Keyed k => HashMap k v #-> k -> HashMap k v
-delete (HashMap sz@(Size s) ct@(Count c) arr) k =
-  probeFrom (k,0) ((hash k) `mod` s) (HashMap sz ct arr) & \case
-    (h, IndexToInsert _ _) -> h
-    (h, IndexToSwap _ _ _) -> h
-    (HashMap sz _ arr', IndexToUpdate _ _ ix) ->
-      write arr' ix Nothing & \case
-        arr'' -> shiftSegmentBackward sz arr'' ((ix + 1) `mod` s) & \case
-          arr''' -> HashMap sz (Count (c - 1)) arr'''
+delete hm k =
+  capacity hm & \(HashMap ct@(Count c) arr, Ur cap) ->
+    probeFrom (k,0) ((hash k) `mod` cap) (HashMap ct arr) & \case
+      (h, IndexToInsert _ _) -> h
+      (h, IndexToSwap _ _ _) -> h
+      (HashMap _ arr', IndexToUpdate _ _ ix) ->
+        Array.write arr' ix Nothing & \arr'' ->
+          shiftSegmentBackward cap arr'' ((ix + 1) `mod` cap) & \arr''' ->
+            HashMap (Count (c - 1)) arr'''
 
 -- | Shift all cells with PSLs > 0 in a continuous segment
 -- following the deleted cell, backwards by one and decrement
 -- their PSLs.
 shiftSegmentBackward :: Keyed k =>
-  Size -> RobinArr k v #-> Int -> RobinArr k v
-shiftSegmentBackward (Size s) arr ix = read arr ix & \case
+  Int -> RobinArr k v #-> Int -> RobinArr k v
+shiftSegmentBackward s arr ix = Array.read arr ix & \case
   (arr', Ur Nothing) -> arr'
   (arr', Ur (Just (RobinVal 0 _ _))) -> arr'
   (arr', Ur (Just val)) ->
-    write arr' ix Nothing & \arr'' ->
+    Array.write arr' ix Nothing & \arr'' ->
       shiftSegmentBackward
-        (Size s)
-        (write arr'' ((ix-1) `mod` s) (Just $ decRobinValPSL val))
+        s
+        (Array.write arr'' ((ix-1) `mod` s) (Just $ decRobinValPSL val))
         ((ix+1) `mod` s)
 
 -- | 'insert' (in the provided order) a list of key-value pairs
@@ -217,48 +216,63 @@ insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k v)
-probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = read arr ix & \case
+probeFrom (k, p) ix (HashMap ct arr) = Array.read arr ix & \case
   (arr', Ur Nothing) ->
-    (HashMap sz ct arr', IndexToInsert p ix)
+    (HashMap ct arr', IndexToInsert p ix)
   (arr', Ur (Just robinVal'@(RobinVal psl k' v'))) ->
     case k == k' of
       -- Note: in the True case, we must have p == psl
-      True -> (HashMap sz ct arr', IndexToUpdate v' psl ix)
+      True -> (HashMap ct arr', IndexToUpdate v' psl ix)
       False -> case psl < p of
-        True -> (HashMap sz ct arr', IndexToSwap robinVal' p ix)
-        False -> probeFrom (k, p+1) ((ix+1)`mod` s) (HashMap sz ct arr')
+        True -> (HashMap ct arr', IndexToSwap robinVal' p ix)
+        False ->
+          capacity (HashMap ct arr') & \(HashMap ct' arr'', Ur cap) ->
+            probeFrom (k, p+1) ((ix+1)`mod` cap) (HashMap ct' arr'')
 
 -- # Querying
 --------------------------------------------------
 
 size :: HashMap k v #-> (HashMap k v, Ur Int)
-size (HashMap sz ct@(Count c) arr) = (HashMap sz ct arr, Ur c)
+size (HashMap ct@(Count c) arr) = (HashMap ct arr, Ur c)
+
+capacity :: HashMap k v #-> (HashMap k v, Ur Int)
+capacity (HashMap ct arr) =
+  Array.size arr & \(arr', len) ->
+    (HashMap ct arr', len)
 
 member :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur Bool)
-member (HashMap (Size s) ct arr) k =
-  probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
-    (h, IndexToUpdate _ _ _) -> (h, Ur True)
-    (h, IndexToInsert _ _) -> (h, Ur False)
-    (h, IndexToSwap _ _ _) -> (h, Ur False)
+member hm k =
+  idealIndexForKey k hm & \(hm', Ur idx) ->
+    probeFrom (k, 0) idx hm' & \case
+      (h, IndexToUpdate _ _ _) -> (h, Ur True)
+      (h, IndexToInsert _ _) -> (h, Ur False)
+      (h, IndexToSwap _ _ _) -> (h, Ur False)
 
 lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur (Maybe v))
-lookup (HashMap (Size s) ct arr) k =
-  probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
-    (HashMap sz ct arr, IndexToUpdate v _ _) ->
-      (HashMap sz ct arr, Ur (Just v))
-    (h, IndexToInsert _ _) ->
-      (h, Ur Nothing)
-    (h, IndexToSwap _ _ _) ->
-      (h, Ur Nothing)
+lookup hm k =
+  idealIndexForKey k hm & \(hm', Ur idx) ->
+    probeFrom (k,0) idx hm' & \case
+      (h, IndexToUpdate v _ _) ->
+        (h, Ur (Just v))
+      (h, IndexToInsert _ _) ->
+        (h, Ur Nothing)
+      (h, IndexToSwap _ _ _) ->
+        (h, Ur Nothing)
+
+idealIndexForKey
+  :: Keyed k
+  => k -> HashMap k v #-> (HashMap k v, Ur Int)
+idealIndexForKey k hm =
+  capacity hm & \(hm', Ur cap) ->
+    (hm', Ur (hash k `mod` cap))
 
 -- # Instances
 --------------------------------------------------
 
 instance Consumable (HashMap k v) where
   consume :: HashMap k v #-> ()
-  consume (HashMap _ _ arr) = consume arr
+  consume (HashMap _ arr) = consume arr
 
 _debugShow :: (Show k, Show v) => HashMap k v #-> String
-_debugShow (HashMap _ _ robinArr) =
-  toList robinArr & \(arr, Ur xs) ->
-    arr `lseq` show xs
+_debugShow (HashMap _ robinArr) =
+  Array.toList robinArr & \(Ur xs) -> show xs

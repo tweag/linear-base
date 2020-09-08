@@ -68,7 +68,7 @@ testOnAnyHM propHmtest = property $ do
   hmtest <- propHmtest
   let test = hmtest Linear.. randHM
   let initSize = maxSize `div` 50
-  assert $ unur Linear.$ HashMap.empty (HashMap.Size initSize) test
+  assert $ unur Linear.$ HashMap.empty initSize test
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
