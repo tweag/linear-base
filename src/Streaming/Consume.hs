@@ -308,10 +308,10 @@ length_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r #-> m Int
 length_ = fold_ (\n _ -> n + 1) 0 id
 
 toList :: Control.Monad m => Stream (Of a) m r #-> m (Of [a] r)
-toList = fold (Prelude.flip (:)) [] id
+toList = fold (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
 
 toList_ :: Control.Monad m => Stream (Of a) m () #-> m [a]
-toList_ stream = fold_ (Prelude.flip (:)) [] id stream
+toList_ = fold_ (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
 
 mconcat :: (Control.Monad m, Prelude.Monoid w) => Stream (Of w) m r #-> m (Of w r)
 mconcat = fold (Prelude.<>) Prelude.mempty id
