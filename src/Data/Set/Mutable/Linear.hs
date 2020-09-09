@@ -61,17 +61,13 @@ delete (Set hmap) a = Set (Linear.delete hmap a)
 -- # Accessors
 -------------------------------------------------------------------------------
 
-size :: Keyed a => Set a #-> (Set a, Int)
-size (Set hmap) = fromHashMapSize (Linear.size hmap)
-  where
-    fromHashMapSize :: (Linear.HashMap a (), Int) #-> (Set a, Int)
-    fromHashMapSize (hmap, size) = (Set hmap, size)
+size :: Keyed a => Set a #-> (Set a, Ur Int)
+size (Set hm) =
+  Linear.size hm Linear.& \(hm', s) -> (Set hm', s)
 
-member :: Keyed a => Set a #-> a -> (Set a, Bool)
-member (Set hmap) a = fromHashMapMember (Linear.member hmap a)
-  where
-    fromHashMapMember :: (Linear.HashMap a (), Bool) #-> (Set a, Bool)
-    fromHashMapMember (hmap, bool) = (Set hmap, bool)
+member :: Keyed a => Set a #-> a -> (Set a, Ur Bool)
+member (Set hm) a =
+  Linear.member hm a Linear.& \(hm', b) -> (Set hm', b)
 
 
 -- # Typeclass Instances

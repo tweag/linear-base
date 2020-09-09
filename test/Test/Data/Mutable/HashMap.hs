@@ -79,7 +79,7 @@ testKVPairExists (k, v) hmap =
     fromLookup (Ur (Just v')) = Ur (v' == v)
 
 testKeyMember :: Int -> HMTest
-testKeyMember key hmap = move Linear.$ getSnd Linear.$ HashMap.member hmap key
+testKeyMember key hmap = getSnd Linear.$ HashMap.member hmap key
 
 testKeyNotMember :: Int -> HMTest
 testKeyNotMember key hmap = Linear.fmap Linear.not (testKeyMember key hmap)
@@ -206,10 +206,9 @@ sizeInsert = testOnAnyHM $ do
 checkSizeAfterInsert :: (Int, String) -> HMTest
 checkSizeAfterInsert (k, v) hmap = withSize Linear.$ HashMap.size hmap
   where
-    withSize :: (HMap, Int) #-> Ur Bool
+    withSize :: (HMap, Ur Int) #-> Ur Bool
     withSize (hmap, oldSize) =
-      checkSize (move oldSize)
-        Linear.$ move
+      checkSize oldSize
         Linear.$ getSnd
         Linear.$ HashMap.size
         Linear.$ HashMap.insert hmap k v
@@ -228,10 +227,9 @@ deleteSize = testOnAnyHM $ do
 checkSizeAfterDelete :: Int -> HMTest
 checkSizeAfterDelete key hmap = fromSize (HashMap.size hmap)
   where
-    fromSize :: (HMap, Int) #-> Ur Bool
+    fromSize :: (HMap, Ur Int) #-> Ur Bool
     fromSize (hmap, orgSize) =
-      compSizes (move orgSize)
-        Linear.$ move
+      compSizes orgSize
         Linear.$ getSnd
         Linear.$ HashMap.size (HashMap.delete hmap key)
     compSizes :: Ur Int #-> Ur Int #-> Ur Bool
