@@ -73,7 +73,7 @@ printFirstLineAfterClose fpath = do
 -- * Linear first line printing
 --------------------------------------------
 
-linearGetFirstLine :: FilePath -> RIO (Unrestricted Text)
+linearGetFirstLine :: FilePath -> RIO (Ur Text)
 linearGetFirstLine fp = Control.do
   handle <- Linear.openFile fp System.ReadMode
   (t, handle') <- Linear.hGetLine handle
@@ -119,7 +119,7 @@ type LinHandle = Linear.Handle
 -- Notice the continuation has a non-linear arrow,
 -- i.e., (() -> RIO b). For simplicity, we don't use
 -- a more general type, like the following:
--- (>>==) :: RIO (Unrestricted a) #-> (a -> RIO b) #-> RIO b
+-- (>>==) :: RIO (Ur a) #-> (a -> RIO b) #-> RIO b
 (>>==) :: RIO () #-> (() -> RIO b) #-> RIO b
 (>>==) ma f = ma Control.>>= (\() -> f ())
 
@@ -131,7 +131,7 @@ inject = Control.return
 -- * The explicit example
 -------------------------------------------------
 
-getFirstLineExplicit :: FilePath -> RIO (Unrestricted Text)
+getFirstLineExplicit :: FilePath -> RIO (Ur Text)
 getFirstLineExplicit path =
   (openFileForReading path)
     >>#= readOneLine
@@ -139,10 +139,10 @@ getFirstLineExplicit path =
   where
     openFileForReading :: FilePath -> RIO LinHandle
     openFileForReading fp = Linear.openFile fp System.ReadMode
-    readOneLine :: LinHandle #-> RIO (Unrestricted Text, LinHandle)
+    readOneLine :: LinHandle #-> RIO (Ur Text, LinHandle)
     readOneLine = Linear.hGetLine
     closeAndReturnLine ::
-      (Unrestricted Text, LinHandle) #-> RIO (Unrestricted Text)
+      (Ur Text, LinHandle) #-> RIO (Ur Text)
     closeAndReturnLine (unrText, handle) =
       Linear.hClose handle >>#= (\() -> inject unrText)
 

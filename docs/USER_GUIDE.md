@@ -71,7 +71,7 @@ inlined1 x = x
 useSubfunction :: Array a #-> Array a
 useSubfunction arr = fromRead (read arr 0)
   where
-    fromRead :: (Array a, Unrestricted a) #-> Array a
+    fromRead :: (Array a, Ur a) #-> Array a
     fromRead = undefined
 ```
 
@@ -89,16 +89,16 @@ Moveable`.
 
 ## Design patterns
 
-### `f :: X -> (SomeType #-> Unrestricted b) -> b` functions
+### `f :: X -> (SomeType #-> Ur b) -> b` functions
 
 This function limits the **scope** of using `SomeType` by taking
-a scope function of type `(SomeType #-> Unrestricted b)`
+a scope function of type `(SomeType #-> Ur b)`
 as its second argument and using it with a value of type `SomeType` to
-produce an `Unrestricted b`.
+produce an `Ur b`.
 
 The `SomeType` cannot escape by having it be inside the type `b` 
 in some way. This is because the `SomeType` is bound linearly in the scope
-function and `Unrestricted` holds its value with a non-linear constructor
+function and `Ur` holds its value with a non-linear constructor
 arrow.
 
 Now, if `f` is the only function that can make a `SomeType`,

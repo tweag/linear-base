@@ -14,7 +14,7 @@
 -- mutation.
 --
 -- To use these mutable arrays, create a linear computation of type
--- @Array a #-> Unrestricted b@ and feed it to 'alloc' or 'fromList'.
+-- @Array a #-> Ur b@ and feed it to 'alloc' or 'fromList'.
 --
 -- == A Tiny Example
 --
@@ -25,15 +25,15 @@
 -- > import qualified Data.Array.Mutable.Linear as Array
 -- >
 -- > isTrue :: Bool
--- > isTrue = unUnrestricted $ Array.fromList [0..10] isFirstZero
+-- > isTrue = unur $ Array.fromList [0..10] isFirstZero
 -- >
 -- > isFalse :: Bool
--- > isFalse = unUnrestricted $ Array.fromList [1,2,3] isFirstZero
+-- > isFalse = unur $ Array.fromList [1,2,3] isFirstZero
 -- >
--- > isFirstZero :: Array.Array Int #-> Unrestricted Bool
+-- > isFirstZero :: Array.Array Int #-> Ur Bool
 -- > isFirstZero arr = withReadingFirst (Array.read arr 0)
 -- >   where
--- >     withReadingFirst :: (Array.Array Int, Int) #-> Unrestricted Bool
+-- >     withReadingFirst :: (Array.Array Int, Int) #-> Ur Bool
 -- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
 -- >
 -- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
@@ -78,7 +78,7 @@ data Array a where
 -- | Allocate a constant array given a size and an initial value
 -- The size must be non-negative, otherwise this errors.
 alloc :: HasCallStack =>
-  Int -> a -> (Array a #-> Unrestricted b) #-> Unrestricted b
+  Int -> a -> (Array a #-> Ur b) #-> Ur b
 alloc size' x f
   | size' >= 0 = f (Array size' (Unsafe.newMutArr size' x))
   | otherwise =
@@ -94,8 +94,8 @@ allocBeside size val orig
 
 -- | Allocate an array from a list
 fromList :: HasCallStack =>
-  [a] -> (Array a #-> Unrestricted b) #-> Unrestricted b
-fromList list (f :: Array a #-> Unrestricted b) =
+  [a] -> (Array a #-> Ur b) #-> Ur b
+fromList list (f :: Array a #-> Ur b) =
   alloc
     (Prelude.length list)
     (error "invariant violation: unintialized array position")
@@ -133,20 +133,20 @@ unsafeWrite (Array size' arr) ix val =
 
 -- | Read an index from an Array. The index should be less than the arrays size,
 -- otherwise this errors.
-read :: HasCallStack => Array a #-> Int -> (Array a, Unrestricted a)
+read :: HasCallStack => Array a #-> Int -> (Array a, Ur a)
 read = Unsafe.toLinear readUnsafe
   where
-    readUnsafe :: Array a -> Int -> (Array a, Unrestricted a)
+    readUnsafe :: Array a -> Int -> (Array a, Ur a)
     readUnsafe arr@(Array size _) ix
       | indexInRange size ix = unsafeRead arr ix
       | otherwise = error "Read index out of bounds."
 
 -- | Same as read, but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
-unsafeRead :: Array a #-> Int -> (Array a, Unrestricted a)
+unsafeRead :: Array a #-> Int -> (Array a, Ur a)
 unsafeRead (Array size arr) ix =
   let !(# a #) = Unsafe.readMutArr arr ix
-  in  (Array size arr, Unrestricted a)
+  in  (Array size arr, Ur a)
 
 -- | Resize an array. That is, given an array, a target size, and a seed
 -- value; resize the array to the given size using the seed value to fill
@@ -168,22 +168,22 @@ resize newSize seed (Array _ mut)
       Array newSize (Unsafe.resizeMutArr mut seed newSize)
 
 -- XXX: Replace with toVec
-toList :: Array a #-> (Array a, Unrestricted [a])
+toList :: Array a #-> (Array a, Ur [a])
 toList arr = size arr & \case
   (arr', len) -> move len & \case
-    Unrestricted len' -> toListWalk (len' - 1) arr' (Unrestricted [])
+    Ur len' -> toListWalk (len' - 1) arr' (Ur [])
   where
-  toListWalk :: Int -> Array a #-> Unrestricted [a] -> (Array a, Unrestricted [a])
+  toListWalk :: Int -> Array a #-> Ur [a] -> (Array a, Ur [a])
   toListWalk ix arr accum
     | ix < 0 = (arr, accum)
     | otherwise = read arr ix & \case
-        (arr', Unrestricted x) -> toListWalk (ix - 1) arr' ((x:) Control.<$> accum)
+        (arr', Ur x) -> toListWalk (ix - 1) arr' ((x:) Control.<$> accum)
 
 -- # Instances
 -------------------------------------------------------------------------------
 
 instance Show a => Show (Array a) where
-  show = show . forget unUnrestricted . snd . (\x -> toList x)
+  show = show . forget unur . snd . (\x -> toList x)
 
 instance Consumable (Array a) where
   consume :: Array a #-> ()

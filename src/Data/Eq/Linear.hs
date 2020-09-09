@@ -12,7 +12,7 @@ module Data.Eq.Linear
   where
 
 import Data.Bool.Linear
-import qualified Prelude as Unrestricted
+import qualified Prelude as Ur
 import qualified Unsafe.Linear as Unsafe
 
 -- | Testing equality on values.
@@ -34,5 +34,5 @@ class Eq a where
 
 -- This is sound because we consume all parts of a data type when we inspect
 -- for equality
-instance Unrestricted.Eq a => Eq a where
-  (==) = Unsafe.toLinear2 (Unrestricted.==)
+instance Ur.Eq a => Eq a where
+  (==) = Unsafe.toLinear2 (Ur.==)

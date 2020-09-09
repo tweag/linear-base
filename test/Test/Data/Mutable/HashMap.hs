@@ -54,7 +54,7 @@ group =
 type HMap = HashMap.HashMap Int String
 
 -- | A test checks a boolean property on a hashmap and consumes it
-type HMTest = HMap #-> Unrestricted Bool
+type HMTest = HMap #-> Ur Bool
 
 
 maxSize :: Int
@@ -68,15 +68,15 @@ testOnAnyHM propHmtest = property $ do
   hmtest <- propHmtest
   let test = hmtest Linear.. randHM
   let initSize = maxSize `div` 50
-  assert $ unUnrestricted Linear.$ HashMap.empty (HashMap.Size initSize) test
+  assert $ unur Linear.$ HashMap.empty (HashMap.Size initSize) test
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
   fromLookup Linear.$ getSnd Linear.$ HashMap.lookup hmap k
   where
-    fromLookup :: Unrestricted (Maybe String) #-> Unrestricted Bool
-    fromLookup (Unrestricted Nothing) = Unrestricted False
-    fromLookup (Unrestricted (Just v')) = Unrestricted (v' == v)
+    fromLookup :: Ur (Maybe String) #-> Ur Bool
+    fromLookup (Ur Nothing) = Ur False
+    fromLookup (Ur (Just v')) = Ur (v' == v)
 
 testKeyMember :: Int -> HMTest
 testKeyMember key hmap = move Linear.$ getSnd Linear.$ HashMap.member hmap key
@@ -89,14 +89,14 @@ testKeyMissing :: Int -> HMTest
 testKeyMissing key hmap =
   fromLookup Linear.$ getSnd Linear.$ HashMap.lookup hmap key
   where
-    fromLookup :: Unrestricted (Maybe String) #-> Unrestricted Bool
-    fromLookup (Unrestricted Nothing) = Unrestricted True
-    fromLookup (Unrestricted _) = Unrestricted False
+    fromLookup :: Ur (Maybe String) #-> Ur Bool
+    fromLookup (Ur Nothing) = Ur True
+    fromLookup (Ur _) = Ur False
 
 testLookupUnchanged :: (HMap #-> HMap) -> Int -> HMTest
 testLookupUnchanged f k hmap = fromLookup (HashMap.lookup hmap k)
   where
-    fromLookup :: (HMap, Unrestricted (Maybe String)) #-> Unrestricted Bool
+    fromLookup :: (HMap, Ur (Maybe String)) #-> Ur Bool
     fromLookup (hmap', look1) =
       compareMaybes look1 (getSnd Linear.$ HashMap.lookup (f hmap') k)
 
@@ -111,10 +111,10 @@ getSnd :: (Consumable a) => (a, b) #-> b
 getSnd (a, b) = lseq a b
 
 compareMaybes :: Eq a =>
-  Unrestricted (Maybe a) #->
-  Unrestricted (Maybe a) #->
-  Unrestricted Bool
-compareMaybes (Unrestricted a) (Unrestricted b) = Unrestricted (a == b)
+  Ur (Maybe a) #->
+  Ur (Maybe a) #->
+  Ur Bool
+compareMaybes (Ur a) (Ur b) = Ur (a == b)
 
 -- # Random Generation
 ----------------------------------------
@@ -206,16 +206,16 @@ sizeInsert = testOnAnyHM $ do
 checkSizeAfterInsert :: (Int, String) -> HMTest
 checkSizeAfterInsert (k, v) hmap = withSize Linear.$ HashMap.size hmap
   where
-    withSize :: (HMap, Int) #-> Unrestricted Bool
+    withSize :: (HMap, Int) #-> Ur Bool
     withSize (hmap, oldSize) =
       checkSize (move oldSize)
         Linear.$ move
         Linear.$ getSnd
         Linear.$ HashMap.size
         Linear.$ HashMap.insert hmap k v
-    checkSize :: Unrestricted Int #-> Unrestricted Int #-> Unrestricted Bool
-    checkSize (Unrestricted old) (Unrestricted new) =
-      Unrestricted ((old + 1) == new)
+    checkSize :: Ur Int #-> Ur Int #-> Ur Bool
+    checkSize (Ur old) (Ur new) =
+      Ur ((old + 1) == new)
 
 deleteSize :: Property
 deleteSize = testOnAnyHM $ do
@@ -228,12 +228,12 @@ deleteSize = testOnAnyHM $ do
 checkSizeAfterDelete :: Int -> HMTest
 checkSizeAfterDelete key hmap = fromSize (HashMap.size hmap)
   where
-    fromSize :: (HMap, Int) #-> Unrestricted Bool
+    fromSize :: (HMap, Int) #-> Ur Bool
     fromSize (hmap, orgSize) =
       compSizes (move orgSize)
         Linear.$ move
         Linear.$ getSnd
         Linear.$ HashMap.size (HashMap.delete hmap key)
-    compSizes :: Unrestricted Int #-> Unrestricted Int #-> Unrestricted Bool
-    compSizes (Unrestricted orgSize) (Unrestricted newSize) =
-      Unrestricted ((newSize + 1) == orgSize)
+    compSizes :: Ur Int #-> Ur Int #-> Ur Bool
+    compSizes (Ur orgSize) (Ur newSize) =
+      Ur ((newSize + 1) == orgSize)

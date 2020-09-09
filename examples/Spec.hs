@@ -23,12 +23,12 @@ import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a #-> List a #-> Unrestricted Bool
+eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a #-> List a #-> Ur Bool
 eqList l1 l2 =
     eqUL (move (List.toList l1)) (move (List.toList l2))
   where
-    eqUL :: Unrestricted [a] #-> Unrestricted [a] #-> Unrestricted Bool
-    eqUL (Unrestricted as1) (Unrestricted as2) = Unrestricted (as1 == as2)
+    eqUL :: Ur [a] #-> Ur [a] #-> Ur Bool
+    eqUL (Ur as1) (Ur as2) = Ur (as1 == as2)
 
 data InjectedError = InjectedError
   deriving (Typeable, Show)
@@ -40,18 +40,18 @@ main = hspec P.$ do
   describe "Off-heap lists" P.$ do
     describe "ofList" P.$ do
       it "is invertible" P.$
-        property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
+        property (\(l :: [Int]) -> unur (Manual.withPool $ \pool ->
           let
-            check :: Unrestricted [Int] #-> Unrestricted Bool
-            check (Unrestricted l') = Unrestricted P.$ l' == l
+            check :: Ur [Int] #-> Ur Bool
+            check (Ur l') = Ur P.$ l' == l
           in
             check $ move (List.toList $ List.ofList l pool)))
 
     describe "map" P.$ do
       it "of identity is the identity" P.$
-        property (\(l :: [Int]) -> unUnrestricted (Manual.withPool $ \pool ->
+        property (\(l :: [Int]) -> unur (Manual.withPool $ \pool ->
           let
-            check :: (Pool, Pool, Pool) #-> Unrestricted Bool
+            check :: (Pool, Pool, Pool) #-> Ur Bool
             check (pool1, pool2, pool3) =
               eqList
                 (List.map (\x -> x) (List.ofList l pool1) pool2)

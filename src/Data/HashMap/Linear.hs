@@ -17,7 +17,7 @@
 -- This module provides mutable hashmaps with a linear interface.
 --
 -- To use mutable hashmaps, create a linear computation of type
--- @HashMap k v #-> Unrestricted b@ and feed it to 'empty'.
+-- @HashMap k v #-> Ur b@ and feed it to 'empty'.
 --
 -- This hashmap is implemented with robin hood hashing which has good average
 -- case performance.
@@ -115,7 +115,7 @@ data ProbeResult k where
 
 -- | Run a computation given an empty hashmap
 empty :: forall k v b.
-  Keyed k => Size -> (HashMap k v #-> Unrestricted b) #-> Unrestricted b
+  Keyed k => Size -> (HashMap k v #-> Ur b) #-> Ur b
 empty sz@(Size s) scope =
   alloc
     s
@@ -145,7 +145,7 @@ tryInsertAtIndex hmap ix kPSL v = probeFrom kPSL ix hmap & \case
   (HashMap sz (Count c) arr, IndexToInsert (k',psl') ix') ->
     HashMap sz (Count (c + 1)) (write arr ix' (psl', (k',v)))
   (HashMap (Size s) ct arr, IndexToSwap (k',psl') ix') -> read arr ix' & \case
-    (arr'', Unrestricted (p_old, (k_old, v_old))) ->
+    (arr'', Ur (p_old, (k_old, v_old))) ->
       tryInsertAtIndex
         (HashMap (Size s) ct (write arr'' ix' (psl', (k',v))))
         ((ix' + 1) `mod` s)
@@ -155,7 +155,7 @@ tryInsertAtIndex hmap ix kPSL v = probeFrom kPSL ix hmap & \case
 -- | Resizes the hashmap to be about 2.5 times the previous size
 resizeMap :: Keyed k => HashMap k v #-> HashMap k v
 resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
-  (arr', Unrestricted kvs) ->
+  (arr', Ur kvs) ->
     allocBeside (s*2 + s`div`2) (-1, errKV) arr' & \case
       (oldArr, arr'') ->
         oldArr `lseq`
@@ -167,16 +167,16 @@ resizeMap (HashMap (Size s) _ arr) = extractPairs arr & \case
       , error "reading error hashmap val"
       )
     extractPairs :: Keyed k =>
-      RobinArr k v #-> (RobinArr k v, Unrestricted [(k,v)])
+      RobinArr k v #-> (RobinArr k v, Ur [(k,v)])
     extractPairs arr = walk arr (s - 1) []
 
     walk :: Keyed k =>
-      RobinArr k v #-> Int -> [(k,v)] -> (RobinArr k v, Unrestricted [(k,v)])
+      RobinArr k v #-> Int -> [(k,v)] -> (RobinArr k v, Ur [(k,v)])
     walk arr ix kvs
-      | ix < 0 = (arr, Unrestricted kvs)
+      | ix < 0 = (arr, Ur kvs)
       | otherwise = read arr ix & \case
-        (arr', Unrestricted (-1, _)) -> walk arr' (ix-1) kvs
-        (arr', Unrestricted (_, (!k,!v))) -> walk arr' (ix-1) ((k,v):kvs)
+        (arr', Ur (-1, _)) -> walk arr' (ix-1) kvs
+        (arr', Ur (_, (!k,!v))) -> walk arr' (ix-1) ((k,v):kvs)
 
 -- | 'delete h k' deletes key k and its value if it is present.
 -- If it's not present, this does nothing.
@@ -196,7 +196,7 @@ delete (HashMap sz@(Size s) ct@(Count c) arr) k =
 shiftSegmentBackward :: Keyed k =>
   Size -> RobinArr k v #-> Int -> RobinArr k v
 shiftSegmentBackward (Size s) arr ix = read arr ix & \case
-  (arr', Unrestricted (psl, kv)) ->
+  (arr', Ur (psl, kv)) ->
     case psl <= 0 of
       True -> arr'
       False -> write arr' ix (-1, (error "key", error "val")) & \case
@@ -218,9 +218,9 @@ insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k)
 probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = read arr ix & \case
-  (arr', Unrestricted (PSL (-1), _)) ->
+  (arr', Ur (PSL (-1), _)) ->
     (HashMap sz ct arr', IndexToInsert (k, p) ix)
-  (arr', Unrestricted (psl,(k',_))) -> case k == k' of
+  (arr', Ur (psl,(k',_))) -> case k == k' of
     -- Note: in the True case, we must have p == psl
     True -> (HashMap sz ct arr', IndexToUpdate (k, psl) ix)
     False -> case psl < p of
@@ -241,14 +241,14 @@ member (HashMap (Size s) ct arr) k =
     (h, IndexToInsert _ _) -> (h, False)
     (h, IndexToSwap _ _) -> (h, False)
 
-lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Unrestricted (Maybe v))
+lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur (Maybe v))
 lookup (HashMap (Size s) ct arr) k =
   probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
     (HashMap sz ct arr, IndexToUpdate _ ix) -> read arr ix & \case
-      (arr', Unrestricted (_,(_,v))) ->
-        (HashMap sz ct arr', Unrestricted (Just v))
-    (h, IndexToInsert _ _) -> (h, Unrestricted Nothing)
-    (h, IndexToSwap _ _) -> (h, Unrestricted Nothing)
+      (arr', Ur (_,(_,v))) ->
+        (HashMap sz ct arr', Ur (Just v))
+    (h, IndexToInsert _ _) -> (h, Ur Nothing)
+    (h, IndexToSwap _ _) -> (h, Ur Nothing)
 
 
 -- # Instances
@@ -261,7 +261,7 @@ instance Consumable (HashMap k v) where
 -- # This is provided for debugging only.
 instance (Show k, Show v) => Show (HashMap k v) where
   show (HashMap _ _ robinArr) = toList robinArr & \case
-    (arr, Unrestricted xs) -> display (lseq arr xs)
+    (arr, Ur xs) -> display (lseq arr xs)
 
 display :: (Show k, Show v) => [RobinVal k v] #-> String
 display = Unsafe.toLinear wrapper

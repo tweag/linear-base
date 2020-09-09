@@ -45,8 +45,8 @@ mergeN (Heap k1 a1 h1) (Heap k2 a2 h2) pool =
   where
     --- XXX: this is a good example of why we need a working `case` and/or
     --- `let`.
-    testAndRebuild :: Unrestricted k #-> a #-> Box (List (NEHeap k a)) #-> Unrestricted k #-> a #-> Box (List (NEHeap k a)) #-> Pool #-> NEHeap k a
-    testAndRebuild (Unrestricted k1') a1' h1' (Unrestricted k2') a2' h2' =
+    testAndRebuild :: Ur k #-> a #-> Box (List (NEHeap k a)) #-> Ur k #-> a #-> Box (List (NEHeap k a)) #-> Pool #-> NEHeap k a
+    testAndRebuild (Ur k1') a1' h1' (Ur k2') a2' h2' =
       if k1' <= k2'
         then helper k1' a1' k2' a2' h1' h2'
         else helper k2' a2' k1' a1' h2' h1'
@@ -138,7 +138,7 @@ toList :: (Manual.Representable k, Manual.Representable a, Movable k, Ord k) => 
 toList h pool = foldl (\l k a -> (k,a):l) [] h pool
 
 sort :: forall k a. (Manual.Representable k, Manual.Representable a, Movable k, Ord k, Movable a) => [(k, a)] -> [(k,a)]
-sort l = unUnrestricted $ Manual.withPool (\pool -> move $ sort' l (dup pool))
+sort l = unur $ Manual.withPool (\pool -> move $ sort' l (dup pool))
     -- XXX: can we avoid this call to `move`?
   where
     sort' :: [(k, a)] -> (Pool, Pool) #-> [(k,a)]

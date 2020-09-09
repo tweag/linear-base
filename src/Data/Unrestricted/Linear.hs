@@ -19,11 +19,12 @@
 -- be used in a linear way. Its use is __restricted__ while
 -- an argument in a non-linear function is __unrestricted__.
 --
--- Hence, a linear function with an argument of @Unrestricted a@ can use the
--- @a@ in an unrestricted way. That is, we have the following equivalence:
+-- Hence, a linear function with an argument of @Ur a@ (@Ur@ is short for
+-- /unrestricted/) can use the @a@ in an unrestricted way. That is, we have
+-- the following equivalence:
 --
 -- @
--- (Unrestricted a #-> b) ≌ (a -> b)
+-- (Ur a #-> b) ≌ (a -> b)
 -- @
 --
 -- = Consumable, Dupable, Moveable classes
@@ -56,21 +57,21 @@
 -- >     (&&) :: Bool #-> Bool #-> Bool
 -- >     (&&) = ...
 --
--- If a type is 'Moveable', you can __move__ it inside 'Unrestricted'
+-- If a type is 'Moveable', you can __move__ it inside 'Ur'
 -- and use it in any non-linear way you would like.
 --
 -- > diverge :: Int #-> Bool
 -- > diverge ix = fromMove (move ix)
 -- >   where
--- >     fromMove :: Unrestricted Int #-> Bool
--- >     fromMove (Unrestricted 0) = True
--- >     fromMove (Unrestricted 1) = True
--- >     fromMove (Unrestricted x) = False
+-- >     fromMove :: Ur Int #-> Bool
+-- >     fromMove (Ur 0) = True
+-- >     fromMove (Ur 1) = True
+-- >     fromMove (Ur x) = False
 --
 module Data.Unrestricted.Linear
   ( -- * Unrestricted
-    Unrestricted(..)
-  , unUnrestricted
+    Ur(..)
+  , unur
   , lift
   , lift2
     -- * Performing non-linear actions on linearly bound values
@@ -95,35 +96,35 @@ import qualified Unsafe.Linear as Unsafe
 
 
 
--- | @Unrestricted a@ represents unrestricted values of type @a@ in a linear
+-- | @Ur a@ represents unrestricted values of type @a@ in a linear
 -- context. The key idea is that because the contructor holds @a@ with a
--- regular arrow, a function that uses @Unrestricted a@ linearly can use @a@
+-- regular arrow, a function that uses @Ur a@ linearly can use @a@
 -- however it likes.
--- > someLinear :: Unrestricted a #-> (a,a)
--- > someLinear (Unrestricted a) = (a,a)
-data Unrestricted a where
-  Unrestricted :: a -> Unrestricted a
+-- > someLinear :: Ur a #-> (a,a)
+-- > someLinear (Ur a) = (a,a)
+data Ur a where
+  Ur :: a -> Ur a
 
--- | Get an @a@ out of an @Unrestricted a@. If you call this function on a
--- linearly bound @Unrestricted a@, then the @a@ you get out has to be used
+-- | Get an @a@ out of an @Ur a@. If you call this function on a
+-- linearly bound @Ur a@, then the @a@ you get out has to be used
 -- linearly, for example:
 --
--- > restricted :: Unrestricted a #-> b
--- > restricted x = f (unUnrestricted x)
+-- > restricted :: Ur a #-> b
+-- > restricted x = f (unur x)
 -- >   where
 -- >     -- f __must__ be linear
 -- >     f :: a #-> b
 -- >     f x = ...
-unUnrestricted :: Unrestricted a #-> a
-unUnrestricted (Unrestricted a) = a
+unur :: Ur a #-> a
+unur (Ur a) = a
 
--- | Lifts a function on a linear @Unrestricted a@.
-lift :: (a -> b) -> Unrestricted a #-> Unrestricted b
-lift f (Unrestricted a) = Unrestricted (f a)
+-- | Lifts a function on a linear @Ur a@.
+lift :: (a -> b) -> Ur a #-> Ur b
+lift f (Ur a) = Ur (f a)
 
--- | Lifts a function to work on two linear @Unrestricted a@.
-lift2 :: (a -> b -> c) -> Unrestricted a #-> Unrestricted b #-> Unrestricted c
-lift2 f (Unrestricted a) (Unrestricted b) = Unrestricted (f a b)
+-- | Lifts a function to work on two linear @Ur a@.
+lift2 :: (a -> b -> c) -> Ur a #-> Ur b #-> Ur c
+lift2 f (Ur a) (Ur b) = Ur (f a b)
 
 
 class Consumable a where
@@ -152,11 +153,11 @@ class Consumable a => Dupable a where
 -- | The laws of the @Movable@ class mean that @move@ is compatible with
 -- @consume@ and @dup@.
 --
--- * @case move x of {Unrestricted _ -> ()} = consume x@
--- * @case move x of {Unrestricted x -> x} = x@
--- * @case move x of {Unrestricted x -> (x, x)} = dup2 x@
+-- * @case move x of {Ur _ -> ()} = consume x@
+-- * @case move x of {Ur x -> x} = x@
+-- * @case move x of {Ur x -> (x, x)} = dup2 x@
 class Dupable a => Movable a where
-  move :: a #-> Unrestricted a
+  move :: a #-> Ur a
 
 dup2 :: Dupable a => a #-> (a, a)
 dup2 x = V.elim (dupV @_ @2 x) (,)
@@ -174,7 +175,7 @@ instance Dupable () where
   dupV () = Data.pure ()
 
 instance Movable () where
-  move () = Unrestricted ()
+  move () = Ur ()
 
 instance Consumable Bool where
   consume True = ()
@@ -185,8 +186,8 @@ instance Dupable Bool where
   dupV False = Data.pure False
 
 instance Movable Bool where
-  move True = Unrestricted True
-  move False = Unrestricted False
+  move True = Ur True
+  move False = Ur False
 
 instance Consumable Int where
   -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -207,7 +208,7 @@ instance Movable Int where
   -- linear values hidden in a closure anywhere. Therefore it is safe to call
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Int#' and using it several times. /!\
-  move (I# i) = Unsafe.toLinear (\j -> Unrestricted (I# j)) i
+  move (I# i) = Unsafe.toLinear (\j -> Ur (I# j)) i
 
 instance Consumable Double where
   -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -228,7 +229,7 @@ instance Movable Double where
   -- linear values hidden in a closure anywhere. Therefore it is safe to call
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Double#' and using it several times. /!\
-  move (D# i) = Unsafe.toLinear (\j -> Unrestricted (D# j)) i
+  move (D# i) = Unsafe.toLinear (\j -> Ur (D# j)) i
 
 instance Consumable Char where
   consume (C# c) = Unsafe.toLinear (\_ -> ()) c
@@ -237,7 +238,7 @@ instance Dupable Char where
   dupV (C# c) = Unsafe.toLinear (\x -> Data.pure (C# x)) c
 
 instance Movable Char where
-  move (C# c) = Unsafe.toLinear (\x -> Unrestricted (C# x)) c
+  move (C# c) = Unsafe.toLinear (\x -> Ur (C# x)) c
 
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
@@ -269,7 +270,7 @@ instance Dupable a => Dupable (Prelude.Maybe a) where
   dupV (Prelude.Just x) = Data.fmap Prelude.Just (dupV x)
 
 instance Movable a => Movable (Prelude.Maybe a) where
-  move (Prelude.Nothing) = Unrestricted Prelude.Nothing
+  move (Prelude.Nothing) = Ur Prelude.Nothing
   move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
 
 instance Consumable a => Consumable [a] where
@@ -281,37 +282,37 @@ instance Dupable a => Dupable [a] where
   dupV (a:l) = (:) Data.<$> dupV a Data.<*> dupV l
 
 instance Movable a => Movable [a] where
-  move [] = Unrestricted []
+  move [] = Ur []
   move (a:l) = (:) Data.<$> move a Data.<*> move l
 
-instance Consumable (Unrestricted a) where
-  consume (Unrestricted _) = ()
+instance Consumable (Ur a) where
+  consume (Ur _) = ()
 
-instance Dupable (Unrestricted a) where
-  dupV (Unrestricted a) = Data.pure (Unrestricted a)
+instance Dupable (Ur a) where
+  dupV (Ur a) = Data.pure (Ur a)
 
-instance Movable (Unrestricted a) where
-  move (Unrestricted a) = Unrestricted (Unrestricted a)
+instance Movable (Ur a) where
+  move (Ur a) = Ur (Ur a)
 
-instance Prelude.Functor Unrestricted where
-  fmap f (Unrestricted a) = Unrestricted (f a)
+instance Prelude.Functor Ur where
+  fmap f (Ur a) = Ur (f a)
 
-instance Prelude.Applicative Unrestricted where
-  pure = Unrestricted
-  Unrestricted f <*> Unrestricted x = Unrestricted (f x)
+instance Prelude.Applicative Ur where
+  pure = Ur
+  Ur f <*> Ur x = Ur (f x)
 
-instance Data.Functor Unrestricted where
-  fmap f (Unrestricted a) = Unrestricted (f a)
+instance Data.Functor Ur where
+  fmap f (Ur a) = Ur (f a)
 
-instance Data.Applicative Unrestricted where
-  pure = Unrestricted
-  Unrestricted f <*> Unrestricted x = Unrestricted (f x)
+instance Data.Applicative Ur where
+  pure = Ur
+  Ur f <*> Ur x = Ur (f x)
 
-instance Prelude.Foldable Unrestricted where
-  foldMap f (Unrestricted x) = f x
+instance Prelude.Foldable Ur where
+  foldMap f (Ur x) = f x
 
-instance Prelude.Traversable Unrestricted where
-  sequenceA (Unrestricted x) = Prelude.fmap Unrestricted x
+instance Prelude.Traversable Ur where
+  sequenceA (Ur x) = Prelude.fmap Ur x
 
 -- | Discard a consumable value stored in a data functor.
 void :: (Data.Functor f, Consumable a) => f a #-> f ()
@@ -336,6 +337,6 @@ newtype MovableMonoid a = MovableMonoid a
 
 instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
   MovableMonoid a <> MovableMonoid b = MovableMonoid (combine (move a) (move b))
-    where combine :: Prelude.Semigroup a => Unrestricted a #-> Unrestricted a #-> a
-          combine (Unrestricted x) (Unrestricted y) = x Prelude.<> y
+    where combine :: Prelude.Semigroup a => Ur a #-> Ur a #-> a
+          combine (Ur x) (Ur y) = x Prelude.<> y
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)

@@ -10,7 +10,7 @@ Linear base consists of the following:
 
 * fundamental data structures, functions and classes that arise
   naturally from wanting to do any linear development (e.g.,
-  `Unrestricted` and `Consumable`),
+  `Ur` and `Consumable`),
 * tools ported from [`base`] and from other critical haskell
   libraries, like `lens`,
 * new APIs for using system resources, e.g., file I/O in

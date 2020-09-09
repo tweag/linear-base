@@ -14,7 +14,7 @@
 -- 'snoc'.
 --
 -- To use mutable vectors, create a linear computation of type
--- @Vector a #-> Unrestricted b@ and feed it to 'constant' or 'fromList'.
+-- @Vector a #-> Ur b@ and feed it to 'constant' or 'fromList'.
 --
 -- == Example
 --
@@ -25,15 +25,15 @@
 -- > import qualified Data.Vector.Mutable.Linear as Vector
 -- >
 -- > isTrue :: Bool
--- > isTrue = unUnrestricted $ Vector.fromList [0..10] isFirstZero
+-- > isTrue = unur $ Vector.fromList [0..10] isFirstZero
 -- >
 -- > isFalse :: Bool
--- > isFalse = unUnrestricted $ Vector.fromList [1,2,3] isFirstZero
+-- > isFalse = unur $ Vector.fromList [1,2,3] isFirstZero
 -- >
--- > isFirstZero :: Vector.Vector Int #-> Unrestricted Bool
+-- > isFirstZero :: Vector.Vector Int #-> Ur Bool
 -- > isFirstZero arr = withReadingFirst (Vector.read arr 0)
 -- >   where
--- >     withReadingFirst :: (Vector.Vector Int, Int) #-> Unrestricted Bool
+-- >     withReadingFirst :: (Vector.Vector Int, Int) #-> Ur Bool
 -- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
 -- >
 -- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
@@ -83,16 +83,16 @@ fromArray :: HasCallStack => Array a #-> Vector a
 fromArray arr =
   Array.size arr
     & \(arr', size') -> move size'
-    & \(Unrestricted s) -> Vec s arr'
+    & \(Ur s) -> Vec s arr'
 
 -- Allocate an empty vector
-empty :: (Vector a #-> Unrestricted b) #-> Unrestricted b
+empty :: (Vector a #-> Ur b) #-> Ur b
 empty f = Array.fromList [] (f . fromArray)
 
 -- | Allocate a constant vector of a given non-negative size (and error on a
 -- bad size)
 constant :: HasCallStack =>
-  Int -> a -> (Vector a #-> Unrestricted b) #-> Unrestricted b
+  Int -> a -> (Vector a #-> Ur b) #-> Ur b
 constant size' x f
   | size' < 0 =
       (error ("Trying to construct a vector of size " ++ show size') :: x #-> x)
@@ -100,7 +100,7 @@ constant size' x f
   | otherwise = Array.alloc size' x (f . fromArray)
 
 -- | Allocator from a list
-fromList :: HasCallStack => [a] -> (Vector a #-> Unrestricted b) #-> Unrestricted b
+fromList :: HasCallStack => [a] -> (Vector a #-> Ur b) #-> Ur b
 fromList xs f = Array.fromList xs (f . fromArray)
 
 -- | Number of elements inside the vector
@@ -111,7 +111,7 @@ size (Vec size' arr) = (Vec size' arr, size')
 snoc :: HasCallStack => Vector a #-> a -> Vector a
 snoc (Vec size' arr) x =
   Array.size arr & \(arr', cap') ->
-    move cap' & \(Unrestricted cap) ->
+    move cap' & \(Ur cap) ->
       if size' < cap
       then write (Vec (size' + 1) arr') size' x
       else write (unsafeResize ((max size' 1) * 2) (Vec (size' + 1) arr')) size' x
@@ -125,7 +125,7 @@ write (Vec size' arr) ix val
 
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..size-1@).
-read :: HasCallStack => Vector a #-> Int -> (Vector a, Unrestricted a)
+read :: HasCallStack => Vector a #-> Int -> (Vector a, Ur a)
 read (Vec size' arr) ix
   | indexInRange size' ix =
       Array.unsafeRead arr ix
