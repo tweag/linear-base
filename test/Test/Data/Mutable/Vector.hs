@@ -16,7 +16,6 @@ module Test.Data.Mutable.Vector
 where
 
 import qualified Data.Vector.Mutable.Linear as Vector
-import qualified Data.Functor.Linear as Linear
 import Data.Unrestricted.Linear
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -37,14 +36,18 @@ group =
   [ testProperty "∀ s,i,x. read (constant s x) i = x" readConst
   , testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1
   , testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2
-  , testProperty "∀ a,x,(i < len a). read (snoc a x) i = read a i" readSnoc1
-  , testProperty "∀ a,x. read (snoc a x) (len a) = x" readSnoc2
+  , testProperty "∀ a,x,(i < len a). read (push a x) i = read a i" readSnoc1
+  , testProperty "∀ a,x. read (push a x) (len a) = x" readSnoc2
   -- All tests for exprs of the form (length (const ...))
   , testProperty "∀ s,x. len (constant s x) = s" lenConst
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
-  , testProperty "∀ a,x. len (snoc a x) = 1 + len a" lenSnoc
+  , testProperty "∀ a,x. len (push a x) = 1 + len a" lenSnoc
+  -- Tests against a reference implementation
+  , testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend
+  , testProperty "toList . fromList = id" refToListFromList
+  , testProperty "toListLazy . fromList = id" refToListLazyFromList
   -- Regression tests
-  , testProperty "snoc on an empty vector should succeed" snocOnEmptyVector
+  , testProperty "push on an empty vector should succeed" snocOnEmptyVector
   , testProperty "do not reorder reads and writes" readAndWriteTest
   ]
 
@@ -80,7 +83,7 @@ snocOnEmptyVector :: Property
 snocOnEmptyVector = withTests 1 . property $ do
   let Unrestricted actual =
         Vector.empty
-          Linear.$ \vec -> Vector.snoc vec (42 :: Int)
+          Linear.$ \vec -> Vector.push vec (42 :: Int)
           Linear.& \vec -> Vector.read vec 0
           Linear.& getSnd
   actual === 42
@@ -143,7 +146,7 @@ readSnoc1Test val ix vec = fromRead (Vector.read vec ix)
   where
     fromRead :: (Vector.Vector Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
     fromRead (vec,val') =
-      compInts (getSnd (Vector.read (Vector.snoc vec val) ix)) val'
+      compInts (getSnd (Vector.read (Vector.push vec val) ix)) val'
 
 
 readSnoc2 :: Property
@@ -156,14 +159,11 @@ readSnoc2 = property $ do
 readSnoc2Test :: Int -> VectorTester
 readSnoc2Test val vec = fromLen (Vector.size vec)
   where
-    fromLen :: (Vector.Vector Int, Int) #-> Unrestricted (TestT IO ())
-    fromLen (vec,len) = fromLen' (vec, move len)
-
-    fromLen' ::
+    fromLen ::
       (Vector.Vector Int, Unrestricted Int) #->
       Unrestricted (TestT IO ())
-    fromLen' (vec, Unrestricted len) =
-      compInts (getSnd (Vector.read (Vector.snoc vec val) len)) (move val)
+    fromLen (vec, Unrestricted len) =
+      compInts (getSnd (Vector.read (Vector.push vec val) len)) (move val)
 
 lenConst :: Property
 lenConst = property $ do
@@ -173,7 +173,7 @@ lenConst = property $ do
 
 lenConstTest :: Int -> VectorTester
 lenConstTest size vec =
-  compInts (move size) (move Linear.. getSnd Linear.$ Vector.size vec)
+  compInts (move size) (getSnd Linear.$ Vector.size vec)
 
 lenWrite :: Property
 lenWrite = property $ do
@@ -188,7 +188,7 @@ lenWriteTest :: Int -> Int -> Int -> VectorTester
 lenWriteTest size val ix vec =
   compInts
     (move size)
-    (move Linear.. getSnd Linear.$ Vector.size (Vector.write vec ix val))
+    (getSnd Linear.$ Vector.size (Vector.write vec ix val))
 
 lenSnoc :: Property
 lenSnoc = property $ do
@@ -198,13 +198,40 @@ lenSnoc = property $ do
  test $ unUnrestricted Linear.$ Vector.fromList l tester
 
 lenSnocTest :: Int -> VectorTester
-lenSnocTest val vec = fromLen Linear.$ Linear.fmap move (Vector.size vec)
+lenSnocTest val vec = fromLen (Vector.size vec)
   where
     fromLen ::
       (Vector.Vector Int, Unrestricted Int) #->
       Unrestricted (TestT IO ())
     fromLen (vec, Unrestricted len) =
-      compInts (move (len+1)) (move (getSnd (Vector.size (Vector.snoc vec val))))
+      compInts (move (len+1)) (getSnd (Vector.size (Vector.push vec val)))
+
+refMappend :: Property
+refMappend = property $ do
+  xs <- forAll list
+  ys <- forAll list
+  let expected = xs <> ys
+      Unrestricted actual =
+        Vector.fromList xs Linear.$ \vx ->
+          Vector.fromList ys Linear.$ \vy ->
+            Vector.toListLazy (vx Linear.<> vy)
+  expected === actual
+
+refToListFromList :: Property
+refToListFromList = property $ do
+  xs <- forAll list
+  let Unrestricted actual =
+        Vector.fromList xs Linear.$ \v ->
+          Vector.toList v Linear.& \(v', xs) ->
+            v' `lseq` xs
+  xs === actual
+
+refToListLazyFromList :: Property
+refToListLazyFromList = property $ do
+  xs <- forAll list
+  let Unrestricted actual =
+        Vector.fromList xs Vector.toListLazy
+  xs === actual
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property

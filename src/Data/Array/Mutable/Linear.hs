@@ -54,6 +54,7 @@ module Data.Array.Mutable.Linear
     unsafeRead,
     size,
     toList,
+    toListLazy,
   )
 where
 
@@ -111,8 +112,8 @@ fromList list (f :: Array a #-> Unrestricted b) =
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
 
-size :: Array a #-> (Array a, Int)
-size (Array size' arr) =  (Array size' arr, size')
+size :: Array a #-> (Array a, Unrestricted Int)
+size (Array size' arr) =  (Array size' arr, Unrestricted size')
 
 -- | Writes a value to an index of an Array. The index should be less than the
 -- arrays size, otherwise this errors.
@@ -167,17 +168,39 @@ resize newSize seed (Array _ mut)
   | otherwise =
       Array newSize (Unsafe.resizeMutArr mut seed newSize)
 
--- XXX: Replace with toVec
+-- | Return the array elements as a spine-strict list. This
+-- function is expensive since it has to traverse the whole
+-- array before returning.
 toList :: Array a #-> (Array a, Unrestricted [a])
-toList arr = size arr & \case
-  (arr', len) -> move len & \case
-    Unrestricted len' -> toListWalk (len' - 1) arr' (Unrestricted [])
+toList arr =
+  size arr & \(arr', Unrestricted len) ->
+    toListWalk (len - 1) arr' (Unrestricted [])
   where
   toListWalk :: Int -> Array a #-> Unrestricted [a] -> (Array a, Unrestricted [a])
   toListWalk ix arr accum
     | ix < 0 = (arr, accum)
     | otherwise = read arr ix & \case
         (arr', Unrestricted x) -> toListWalk (ix - 1) arr' ((x:) Control.<$> accum)
+
+-- We implement 'toListLazy' below relying on two things:
+--
+-- * We hold the only reference to the underlying 'MutArr#'.
+-- Otherwise someone else could write to it before the returned
+-- list is evaluated.
+-- * 'Consume' instance of 'Array' is no-op.
+
+-- | Return the array elements as a lazy list. The array
+-- lookups will happen lazily, so this function also consumes
+-- the array.
+toListLazy :: Array a #-> Unrestricted [a]
+toListLazy (Array _ arr) =
+  Unrestricted (go 0 (Unsafe.sizeMutArr arr))
+ where
+  go i len
+    | i == len = []
+    | otherwise =
+        case Unsafe.readMutArr arr i of
+          (# a #) -> a : go (i+1) len
 
 -- # Instances
 -------------------------------------------------------------------------------
