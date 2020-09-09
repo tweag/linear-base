@@ -39,7 +39,7 @@ module Data.HashMap.Linear
   )
 where
 
-import Data.Array.Mutable.Linear
+import Data.Array.Mutable.Linear hiding (size)
 import Data.Hashable
 import Data.Unrestricted.Linear
 import Prelude.Linear hiding ((+), lookup, read)

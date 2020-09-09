@@ -186,7 +186,7 @@ lenAlloc = property $ do
 
 lenAllocTest :: Int -> ArrayTester
 lenAllocTest size arr =
-  compInts (move size) (move Linear.$ getSnd Linear.$ Array.length arr)
+  compInts (move size) (move Linear.$ getSnd Linear.$ Array.size arr)
 
 lenWrite :: Property
 lenWrite = property $ do
@@ -200,7 +200,7 @@ lenWrite = property $ do
 lenWriteTest :: Int -> Int -> Int -> ArrayTester
 lenWriteTest size val ix arr =
   compInts (move size)
-    (move Linear.$ getSnd Linear.$ Array.length (Array.write arr ix val))
+    (move Linear.$ getSnd Linear.$ Array.size (Array.write arr ix val))
 
 lenResizeSeed :: Property
 lenResizeSeed = property $ do
@@ -215,7 +215,7 @@ lenResizeSeedTest :: Int -> Int -> ArrayTester
 lenResizeSeedTest newSize val arr =
   compInts
     (move newSize)
-    (move Linear.$ getSnd Linear.$ Array.length (Array.resize newSize val arr))
+    (move Linear.$ getSnd Linear.$ Array.size (Array.resize newSize val arr))
 
 resizeRef :: Property
 resizeRef = property $ do

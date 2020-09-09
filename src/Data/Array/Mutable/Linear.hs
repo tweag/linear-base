@@ -47,10 +47,12 @@ module Data.Array.Mutable.Linear
     fromList,
     -- * Mutators
     write,
+    unsafeWrite,
     resize,
     -- * Accessors
     read,
-    length,
+    unsafeRead,
+    size,
     toList,
   )
 where
@@ -62,8 +64,7 @@ import qualified Data.Functor.Linear as Control
 import qualified Unsafe.Linear as Unsafe
 import qualified Unsafe.MutableArray as Unsafe
 import Prelude.Linear ((&), forget)
-import Prelude hiding (length, read)
-import qualified Prelude
+import Prelude hiding (read)
 
 -- # Data types
 -------------------------------------------------------------------------------
@@ -78,10 +79,10 @@ data Array a where
 -- The size must be non-negative, otherwise this errors.
 alloc :: HasCallStack =>
   Int -> a -> (Array a #-> Unrestricted b) #-> Unrestricted b
-alloc size x f
-  | size >= 0 = f (Array size (Unsafe.newMutArr size x))
+alloc size' x f
+  | size' >= 0 = f (Array size' (Unsafe.newMutArr size' x))
   | otherwise =
-    (error ("Trying to allocate an array of size " ++ show size) :: x #-> x)
+    (error ("Trying to allocate an array of size " ++ show size') :: x #-> x)
     (f undefined)
 
 -- | Allocate a constant array given a size and an initial value,
@@ -110,31 +111,42 @@ fromList list (f :: Array a #-> Unrestricted b) =
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
 
-length :: Array a #-> (Array a, Int)
-length = Unsafe.toLinear unsafeLength
-  where
-    unsafeLength :: Array a -> (Array a, Int)
-    unsafeLength v@(Array size _) = (v, size)
+size :: Array a #-> (Array a, Int)
+size (Array size' arr) =  (Array size' arr, size')
 
+-- | Writes a value to an index of an Array. The index should be less than the
+-- arrays size, otherwise this errors.
 write :: HasCallStack => Array a #-> Int -> a -> Array a
 write = Unsafe.toLinear writeUnsafe
   where
     writeUnsafe :: Array a -> Int -> a -> Array a
-    writeUnsafe arr@(Array size mutArr) ix val
-      | indexInRange size ix =
-        case Unsafe.writeMutArr mutArr ix val of
-          () -> arr
+    writeUnsafe arr@(Array size' _) ix val
+      | indexInRange size' ix = unsafeWrite arr ix val
       | otherwise = error "Write index out of bounds."
 
+-- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
+-- if an out-of-bounds index is provided.
+unsafeWrite :: Array a #-> Int -> a -> Array a
+unsafeWrite (Array size' arr) ix val =
+  case Unsafe.writeMutArr arr ix val of
+    () -> Array size' arr
+
+-- | Read an index from an Array. The index should be less than the arrays size,
+-- otherwise this errors.
 read :: HasCallStack => Array a #-> Int -> (Array a, Unrestricted a)
 read = Unsafe.toLinear readUnsafe
   where
     readUnsafe :: Array a -> Int -> (Array a, Unrestricted a)
-    readUnsafe arr@(Array size mutArr) ix
-      | indexInRange size ix =
-          let !(# a #) = Unsafe.readMutArr mutArr ix
-          in  (arr, Unrestricted a)
+    readUnsafe arr@(Array size _) ix
+      | indexInRange size ix = unsafeRead arr ix
       | otherwise = error "Read index out of bounds."
+
+-- | Same as read, but does not do bounds-checking. The behaviour is undefined
+-- if an out-of-bounds index is provided.
+unsafeRead :: Array a #-> Int -> (Array a, Unrestricted a)
+unsafeRead (Array size arr) ix =
+  let !(# a #) = Unsafe.readMutArr arr ix
+  in  (Array size arr, Unrestricted a)
 
 -- | Resize an array. That is, given an array, a target size, and a seed
 -- value; resize the array to the given size using the seed value to fill
@@ -144,9 +156,9 @@ read = Unsafe.toLinear readUnsafe
 --
 -- @
 -- let b = resize n x a,
---   then length b = n,
---   and b[i] = a[i] for i < length a,
---   and b[i] = x for length a <= i < n.
+--   then size b = n,
+--   and b[i] = a[i] for i < size a,
+--   and b[i] = x for size a <= i < n.
 -- @
 resize :: HasCallStack => Int -> a -> Array a #-> Array a
 resize newSize seed (Array _ mut)
@@ -157,7 +169,7 @@ resize newSize seed (Array _ mut)
 
 -- XXX: Replace with toVec
 toList :: Array a #-> (Array a, Unrestricted [a])
-toList arr = length arr & \case
+toList arr = size arr & \case
   (arr', len) -> move len & \case
     Unrestricted len' -> toListWalk (len' - 1) arr' (Unrestricted [])
   where
