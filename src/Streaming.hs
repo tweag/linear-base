@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -65,7 +65,6 @@ import qualified Prelude.Linear as Linear
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear
-import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 import Control.Concurrent (threadDelay)
 import GHC.Stack
 
@@ -202,14 +201,13 @@ unfold :: (Control.Monad m, Control.Functor f) =>
   (s #-> m (Either r (f s))) -> s #-> Stream f m r
 unfold step state = unfold' step state
   where
-    Builder{..} = monadBuilder
     unfold' :: (Control.Monad m, Control.Functor f) =>
       (s #-> m (Either r (f s))) -> s #-> Stream f m r
-    unfold' step state = Effect $ do
+    unfold' step state = Effect $ Control.do
       either <- step state
       either & \case
-        Left r -> return $ Return r
-        Right (fs) -> return $ Step $ Control.fmap (unfold step) fs
+        Left r -> Control.return $ Return r
+        Right (fs) -> Control.return $ Step $ Control.fmap (unfold step) fs
 {-# INLINABLE unfold #-}
 
 -- Note. To keep restrictions minimal, we use the `Data.Applicative`
@@ -218,13 +216,12 @@ untilJust :: forall f m r . (Control.Monad m, Data.Applicative f) =>
   m (Maybe r) -> Stream f m r
 untilJust action = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream f m r
-    loop = Effect $ do
+    loop = Effect $ Control.do
       maybeVal  <- action
       maybeVal & \case
-        Nothing -> return $ Step $ Data.pure loop
-        Just r  -> return $ Return r
+        Nothing -> Control.return $ Step $ Data.pure loop
+        Just r  -> Control.return $ Return r
 {-# INLINABLE untilJust #-}
 
 -- Remark. The linear church encoding of streams has linear
@@ -243,12 +240,11 @@ streamBuild = \phi -> phi Return Effect Step
 delays :: forall f r . (Data.Applicative f) => Double -> Stream f IO r
 delays seconds = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream f IO r
-    loop = Effect $ do
+    loop = Effect $ Control.do
       let delay = fromInteger (Prelude.truncate (1000000 * seconds))
       () <- fromSystemIO $ threadDelay delay
-      return $ Step $ Data.pure loop
+      Control.return $ Step $ Data.pure loop
 {-# INLINABLE delays #-}
 
 
@@ -365,11 +361,12 @@ mappedPost = mapsMPost
 hoistUnexposed :: forall f m n r. (Control.Monad m, Control.Functor f)
                => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
 hoistUnexposed trans = loop where
-  Builder{..} = monadBuilder
   loop :: Stream f m r #-> Stream f n r
   loop = Effect
     . trans
-    . inspectC (return . Return) (return . Step . Control.fmap loop)
+    . inspectC
+      (Control.return . Return)
+      (Control.return . Step . Control.fmap loop)
 {-# INLINABLE hoistUnexposed #-}
 
 -- A version of 'inspect' that takes explicit continuations.
@@ -378,11 +375,10 @@ hoistUnexposed trans = loop where
 inspectC :: forall f m r a. Control.Monad m =>
   (r #-> m a) -> (f (Stream f m r) #-> m a) -> Stream f m r #-> m a
 inspectC f g = loop where
-  Builder{..} = monadBuilder
   loop :: Stream f m r #-> m a
   loop (Return r) = f r
   loop (Step x)   = g x
-  loop (Effect m) = m >>= loop
+  loop (Effect m) = m Control.>>= loop
 {-# INLINE inspectC #-}
 
 {-| Group layers in an alternating stream into adjoining sub-streams
@@ -393,12 +389,11 @@ groups :: forall f g m r .
   Stream (Sum f g) m r #-> Stream (Sum (Stream f m) (Stream g m)) m r
 groups = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Sum f g) m r #-> Stream (Sum (Stream f m) (Stream g m)) m r
-    loop str = do
+    loop str = Control.do
       e <- Control.lift $ inspect str
       e & \case
-        Left r -> return r
+        Left r -> Control.return r
         Right ostr -> ostr & \case
           InR gstr -> Step $ InR $ Control.fmap loop $ cleanR (Step (InR gstr))
           InL fstr -> Step $ InL $ Control.fmap loop $ cleanL (Step (InL fstr))
@@ -407,22 +402,22 @@ groups = loop
     cleanL = go
       where
         go :: Stream (Sum f g) m r #-> Stream f m (Stream (Sum f g) m r)
-        go s = do
+        go s = Control.do
          e <- Control.lift $ inspect s
          e & \case
-          Left r -> return $ return r
+          Left r -> Control.return $ Control.return r
           Right (InL fstr) -> Step $ Control.fmap go fstr
-          Right (InR gstr) -> return $ Step (InR gstr)
+          Right (InR gstr) -> Control.return $ Step (InR gstr)
 
     cleanR  :: Stream (Sum f g) m r #-> Stream g m (Stream (Sum f g) m r)
     cleanR = go
       where
         go :: Stream (Sum f g) m r #-> Stream g m (Stream (Sum f g) m r)
-        go s = do
+        go s = Control.do
          e <- Control.lift $ inspect s
          e & \case
-          Left r           -> return $ return r
-          Right (InL fstr) -> return $ Step (InL fstr)
+          Left r           -> Control.return $ Control.return r
+          Right (InL fstr) -> Control.return $ Step (InL fstr)
           Right (InR gstr) -> Step$ Control.fmap go gstr
 {-# INLINABLE groups #-}
 
@@ -441,12 +436,11 @@ inspect :: forall f m r . Control.Monad m =>
      Stream f m r #-> m (Either r (f (Stream f m r)))
 inspect = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream f m r #-> m (Either r (f (Stream f m r)))
     loop stream = stream & \case
-      Return r -> return (Left r)
-      Effect m -> m >>= loop
-      Step fs  -> return (Right fs)
+      Return r -> Control.return (Left r)
+      Effect m -> m Control.>>= loop
+      Step fs  -> Control.return (Right fs)
 {-# INLINABLE inspect #-}
 
 
@@ -481,7 +475,6 @@ splitsAt :: forall f m r .
   Int -> Stream f m r #-> Stream f m (Stream f m r)
 splitsAt n stream = loop n stream
   where
-    Builder{..} = monadBuilder
     loop :: Int -> Stream f m r #-> Stream f m (Stream f m r)
     loop n stream = case compare n 0 of
       LT -> Prelude.error "splitsAt called with negative index" $ stream
@@ -505,7 +498,6 @@ chunksOf :: forall f m r .
   Int -> Stream f m r #-> Stream (Stream f m) m r
 chunksOf n stream = loop n stream
   where
-    Builder{..} = monadBuilder
     loop :: Int -> Stream f m r #-> Stream (Stream f m) m r
     loop n stream = Step $ Control.fmap (loop n) $ splitsAt n stream
 {-# INLINABLE chunksOf #-}
@@ -517,12 +509,11 @@ concats :: forall f m r . (Control.Monad m, Control.Functor f) =>
   Stream (Stream f m) m r #-> Stream f m r
 concats = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Stream f m) m r #-> Stream f m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
-      Step f -> do
+      Step f -> Control.do
         rest <- Control.fmap loop f
         rest
 {-# INLINE concats #-}
@@ -539,22 +530,21 @@ intercalates :: forall t m r x .
   t m x -> Stream (t m) m r #-> t m r
 intercalates sep = go0
   where
-    Builder{..} = monadBuilder
     go0 :: Stream (t m) m r #-> t m r
     go0 f = f & \case
-      Return r -> return r
-      Effect m -> Control.lift m >>= go0
-      Step fstr -> do
+      Return r -> Control.return r
+      Effect m -> Control.lift m Control.>>= go0
+      Step fstr -> Control.do
         f' <- fstr
         go1 f'
 
     go1 :: Stream (t m) m r #-> t m r
     go1 f = f & \case
-      Return r -> return r
-      Effect m -> Control.lift m >>= go1
-      Step fstr -> do
+      Return r -> Control.return r
+      Effect m -> Control.lift m Control.>>= go1
+      Step fstr -> Control.do
         x  <- sep
-        return $ consume x
+        Control.return $ consume x
         f' <- fstr
         go1 f'
 {-# INLINABLE intercalates #-}
@@ -655,14 +645,13 @@ unseparate str = destroyExposed
 decompose :: forall f m r . (Control.Monad m, Control.Functor f) =>
   Stream (Compose m f) m r #-> Stream f m r
 decompose = loop where
-  Builder{..} = monadBuilder
   loop :: Stream (Compose m f) m r #-> Stream f m r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap loop m
-    Step (Compose mfs) -> Effect $ do
+    Step (Compose mfs) -> Effect $ Control.do
       fstream <- mfs
-      return $ Step (Control.fmap loop fstream)
+      Control.return $ Step (Control.fmap loop fstream)
 {-# INLINABLE decompose #-}
 
 -- Note. For 'loop' to recurse over functoral steps, it must be a
@@ -722,12 +711,11 @@ mapsM_ f = run . maps f
 run :: Control.Monad m => Stream m m r #-> m r
 run = loop
   where
-    Builder{..} = monadBuilder
     loop :: Control.Monad m => Stream m m r #-> m r
     loop stream = stream & \case
-      Return r   -> return r
-      Effect  m  -> m >>= loop
-      Step mrest -> mrest >>= loop
+      Return r   -> Control.return r
+      Effect  m  -> m Control.>>= loop
+      Step mrest -> mrest Control.>>= loop
 {-# INLINABLE run #-}
 
 {-| 'streamFold' reorders the arguments of 'destroy' to be more akin
@@ -774,9 +762,7 @@ streamFold done theEffect construct stream =
 -}
 iterT :: (Control.Functor f, Control.Monad m) =>
   (f (m a) #-> m a) -> Stream f m a #-> m a
-iterT out stream = destroyExposed stream out Control.join return
-  where
-    Builder{..} = monadBuilder
+iterT out stream = destroyExposed stream out Control.join Control.return
 {-# INLINE iterT #-}
 
 {-| Specialized fold following the usage of @Control.Monad.Trans.Free@
@@ -789,9 +775,7 @@ iterTM ::
   , Control.MonadTrans t, Control.Monad (t m)) =>
   (f (t m a) #-> t m a) -> Stream f m a #-> t m a
 iterTM out stream =
-  destroyExposed stream out (Control.join . Control.lift) return
-  where
-    Builder{..} = monadBuilder
+  destroyExposed stream out (Control.join . Control.lift) Control.return
 {-# INLINE iterTM #-}
 
 -- Note. 'destroy' needs to use linear functions in its church encoding
@@ -811,11 +795,10 @@ destroy :: forall f m r b . (Control.Functor f, Control.Monad m) =>
      Stream f m r #-> (f b #-> b) -> (m b #-> b) -> (r #-> b) -> b
 destroy stream0 construct theEffect done = theEffect (loop stream0)
   where
-    Builder{..} = monadBuilder
     loop :: Stream f m r #-> m b
     loop stream = stream & \case
-      Return r -> return $ done r
-      Effect m -> m >>= loop
-      Step f -> return $ construct $ Control.fmap (theEffect . loop) f
+      Return r -> Control.return $ done r
+      Effect m -> m Control.>>= loop
+      Step f -> Control.return $ construct $ Control.fmap (theEffect . loop) f
 {-# INLINABLE destroy #-}
 

@@ -1,8 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -87,7 +87,6 @@ import Prelude (Maybe(..), Either(..), Bool(..), Int, fromInteger,
 import qualified Prelude
 import Data.Unrestricted.Linear
 import qualified Control.Monad.Linear as Control
-import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 import System.IO.Linear
 import Data.Functor.Sum
 import Data.Functor.Compose
@@ -111,8 +110,6 @@ consFirstChunk a stream = stream & \case
     Return r -> Step (Step (a :> Return (Return r)))
     Effect m -> Effect $ Control.fmap (consFirstChunk a) m
     Step f -> Step (Step (a :> f))
-  where
-    Builder{..} = monadBuilder
 
 -- This is an internal function used in 'seperate' from the original source.
 -- It removes functoral and monadic steps and reduces to some type 'b'.
@@ -149,12 +146,11 @@ next :: forall a m r. Control.Monad m =>
   Stream (Of a) m r #-> m (Either r (Unrestricted a, Stream (Of a) m r))
 next stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> m (Either r (Unrestricted a, Stream (Of a) m r))
     loop stream = stream & \case
-      Return r -> return $ Left r
-      Effect ms -> ms >>= next
-      Step (a :> as) -> return $ Right (Unrestricted a, as)
+      Return r -> Control.return $ Left r
+      Effect ms -> ms Control.>>= next
+      Step (a :> as) -> Control.return $ Right (Unrestricted a, as)
 {-# INLINABLE next #-}
 
 {-| Inspect the first item in a stream of elements, without a return value.
@@ -164,12 +160,11 @@ uncons :: forall a m r. (Consumable r, Control.Monad m) =>
   Stream (Of a) m r #-> m (Maybe (a, Stream (Of a) m r))
 uncons  stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> m (Maybe (a, Stream (Of a) m r))
     loop stream = stream & \case
-      Return r -> lseq r $ return Nothing
-      Effect ms -> ms >>= uncons
-      Step (a :> as) -> return $ Just (a, as)
+      Return r -> lseq r $ Control.return Nothing
+      Effect ms -> ms Control.>>= uncons
+      Step (a :> as) -> Control.return $ Just (a, as)
 {-# INLINABLE uncons #-}
 
 {-| Split a succession of layers after some number, returning a streaming or
@@ -183,12 +178,11 @@ uncons  stream = loop stream
 splitAt :: forall f m r. (Control.Monad m, Control.Functor f) =>
   Int -> Stream f m r #-> Stream f m (Stream f m r)
 splitAt n stream = loop n stream where
-  Builder{..} = monadBuilder
   loop :: Int -> Stream f m r #-> Stream f m (Stream f m r)
   loop n stream = case Prelude.compare n 0 of
     GT -> stream & \case
       Return r -> Return (Return r)
-      Effect m -> Effect $ m >>= (return . splitAt n)
+      Effect m -> Effect $ m Control.>>= (Control.return . splitAt n)
       Step f -> Step $ Control.fmap (splitAt (n-1)) f
     _ -> Return stream
 {-# INLINABLE splitAt #-}
@@ -205,11 +199,10 @@ split :: forall a m r. (Eq a, Control.Monad m) =>
   a -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
 split x stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
     loop stream = stream & \case
       Return r -> Return r
-      Effect m -> Effect $ m >>= (return . split x)
+      Effect m -> Effect $ m Control.>>= (Control.return . split x)
       Step (a :> as) -> case a == x of
         True -> split x as
         False -> consFirstChunk a (split x as)
@@ -230,7 +223,6 @@ break :: forall a m r. Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
 break f stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
     loop stream = stream & \case
       Return r -> Return (Return r)
@@ -254,9 +246,8 @@ break f stream = loop stream
 -}
 breaks :: forall a m r. Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
-breaks f stream = loop stream 
+breaks f stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
     loop stream = stream & \case
       Return r -> Return r
@@ -331,17 +322,19 @@ groupBy :: forall a m r. Control.Monad m =>
   (a -> a -> Bool) -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
 groupBy equals stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (groupBy equals) m
       Step (a :> as) -> as & \case
         Return r -> Step (Step (a :> Return (Return r)))
-        Effect m -> Effect $ m >>= (\s -> return $ groupBy equals (Step (a :> s)))
+        Effect m -> Effect $
+          m Control.>>= (\s -> Control.return $ groupBy equals (Step (a :> s)))
         Step (a' :> as') -> case equals a a' of
-          False -> Step $ Step $ a :> (Return $ groupBy equals (Step (a' :> as')))
-          True -> Step $ Step $ a :> (Step $ a' :> (Return $ groupBy equals as'))
+          False ->
+            Step $ Step $ a :> (Return $ groupBy equals (Step (a' :> as')))
+          True ->
+            Step $ Step $ a :> (Step $ a' :> (Return $ groupBy equals as'))
 {-# INLINABLE groupBy #-}
 
 {-| Group successive equal items together
@@ -454,9 +447,7 @@ separate stream = destroyExposed stream fromSum (Effect . Control.lift) Return
 unseparate :: (Control.Monad m, Control.Functor f, Control.Functor g) =>
   Stream f (Stream g m) r -> Stream (Sum f g) m r
 unseparate stream =
-  destroyExposed stream (Step . InL) (Control.join . maps InR) return
- where
-    Builder{..} = monadBuilder
+  destroyExposed stream (Step . InL) (Control.join . maps InR) Control.return
 {-# INLINABLE unseparate #-}
 
 -- # Partitions
@@ -470,7 +461,6 @@ partition :: forall a m r. Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
 partition pred = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
     loop stream = stream & \case
       Return r -> Return r
@@ -492,7 +482,6 @@ partitionEithers :: Control.Monad m =>
   Stream (Of (Either a b)) m r #-> Stream (Of a) (Stream (Of b) m) r
 partitionEithers = loop
   where
-    Builder{..} = monadBuilder
     loop :: Control.Monad m =>
       Stream (Of (Either a b)) m r #-> Stream (Of a) (Stream (Of b) m) r
     loop stream = stream & \case
@@ -512,7 +501,6 @@ partitionEithers = loop
 catMaybes :: Control.Monad m => Stream (Of (Maybe a)) m r #-> Stream (Of a) m r
 catMaybes stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Control.Monad m => Stream (Of (Maybe a)) m r #-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
@@ -531,11 +519,10 @@ mapMaybe :: forall a b m r. Control.Monad m =>
   (a -> Maybe b) -> Stream (Of a) m r #-> Stream (Of b) m r
 mapMaybe f stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of b) m r
     loop stream = stream & \case
       Return r -> Return r
-      Effect ms -> Effect $ ms >>= (return . mapMaybe f)
+      Effect ms -> Effect $ ms Control.>>= (Control.return . mapMaybe f)
       Step (a :> s) -> case f a of
         Just b -> Step $ b :> (mapMaybe f s)
         Nothing -> mapMaybe f s
@@ -551,16 +538,15 @@ mapMaybeM :: forall a m b r. Control.Monad m =>
   (a -> m (Maybe (Unrestricted b))) -> Stream (Of a) m r #-> Stream (Of b) m r
 mapMaybeM f stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of b) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (mapMaybeM f) m
-      Step (a :> as) -> Effect $ do
+      Step (a :> as) -> Effect $ Control.do
         mb <- f a
         mb & \case
-          Nothing -> return $ mapMaybeM f as
-          Just (Unrestricted b) -> return $ Step (b :> mapMaybeM f as)
+          Nothing -> Control.return $ mapMaybeM f as
+          Just (Unrestricted b) -> Control.return $ Step (b :> mapMaybeM f as)
 {-# INLINABLE mapMaybeM #-}
 
 -- # Direct Transformations
@@ -641,15 +627,14 @@ mapM :: Control.Monad m =>
   (a -> m (Unrestricted b)) -> Stream (Of a) m r #-> Stream (Of b) m r
 mapM f s = loop f s
   where
-    Builder{..} = monadBuilder
     loop :: Control.Monad m =>
       (a -> m (Unrestricted b)) -> Stream (Of a) m r #-> Stream (Of b) m r
     loop f stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (loop f) m
-      Step (a :> as) -> Effect $ do
+      Step (a :> as) -> Effect $ Control.do
         Unrestricted b <- f a
-        return $ Step (b :> (loop f as))
+        Control.return $ Step (b :> (loop f as))
 {-# INLINABLE mapM #-}
 
 {- | Map layers of one functor to another with a transformation. Compare
@@ -770,12 +755,11 @@ for :: forall f m r a x . (Control.Monad m, Control.Functor f, Consumable x) =>
   Stream (Of a) m r #-> (a -> Stream f m x) -> Stream f m r
 for stream expand = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream f m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
-      Step (a :> as) -> do
+      Step (a :> as) -> Control.do
          x <- expand a
          lseq x $ loop as
 {-# INLINABLE for #-}
@@ -909,9 +893,8 @@ If 'Of' were an instance of 'Control.Comonad.Comonad', then one could write
 -}
 copy :: forall a m r . Control.Monad m =>
      Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
-copy = Effect . return . loop
+copy = Effect . Control.return . loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
     loop stream = stream & \case
       Return r -> Return r
@@ -1026,14 +1009,13 @@ chain :: forall a m r y . (Control.Monad m, Consumable y) =>
   (a -> m y) -> Stream (Of a) m r #-> Stream (Of a) m r
 chain f = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m  -> Effect $ Control.fmap loop m
-      Step (a :> as) -> Effect $ do
+      Step (a :> as) -> Effect $ Control.do
         y <- f a
-        return $ lseq y $ Step (a :> loop as)
+        Control.return $ lseq y $ Step (a :> loop as)
 {-# INLINABLE chain #-}
 
 -- Note: since the value of type 'a' is inside a control monad but
@@ -1052,14 +1034,13 @@ sequence :: forall a m r . Control.Monad m =>
   Stream (Of (m (Unrestricted a))) m r #-> Stream (Of a) m r
 sequence = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of (m (Unrestricted a))) m r #-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
-      Step (ma :> mas) -> Effect $ do
+      Step (ma :> mas) -> Effect $ Control.do
         Unrestricted a <- ma
-        return $ Step (a :> loop mas)
+        Control.return $ Step (a :> loop mas)
 {-# INLINABLE sequence #-}
 
 {-| Remove repeated elements from a Stream. 'nubOrd' of course accumulates a 'Data.Set.Set' of
@@ -1105,7 +1086,6 @@ filter  :: forall a m r . Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m r
 filter pred = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
@@ -1120,16 +1100,15 @@ filterM  :: forall a m r . Control.Monad m =>
   (a -> m Bool) -> Stream (Of a) m r #-> Stream (Of a) m r
 filterM pred = loop
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m-> Effect $ Control.fmap loop m
-      Step (a :> as) -> Effect $ do
+      Step (a :> as) -> Effect $ Control.do
         bool <- pred a
         bool & \case
-          True -> return $ Step (a :> loop as)
-          False -> return $ loop as
+          True -> Control.return $ Step (a :> loop as)
+          False -> Control.return $ loop as
 {-# INLINE filterM #-}
 
 {-| Intersperse given value between each element of the stream.
@@ -1270,18 +1249,17 @@ scanM :: forall a x b m r . Control.Monad m =>
   Stream (Of b) m r
 scanM step mx done stream = loop stream
   where
-    Builder{..} = monadBuilder
     loop :: Stream (Of a) m r #-> Stream (Of b) m r
     loop stream = stream & \case
-      Return r -> Effect $ do
+      Return r -> Effect $ Control.do
         Unrestricted x <- mx
         Unrestricted b <- done x
-        return $ Step $ b :> Return r
+        Control.return $ Step $ b :> Return r
       Effect m -> Effect $ Control.fmap (scanM step mx done) m
-      Step (a :> as) -> Effect $ do
+      Step (a :> as) -> Effect $ Control.do
         Unrestricted x <- mx
         Unrestricted b <- done x
-        return $ Step $ b :> (scanM step (step x a) done as)
+        Control.return $ Step $ b :> (scanM step (step x a) done as)
 {-# INLINABLE scanM #-}
 
 {-| Label each element in a stream with a value accumulated according to a fold.
@@ -1301,12 +1279,11 @@ scanned :: forall a x b m r . Control.Monad m =>
   (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> Stream (Of (a,b)) m r
 scanned step begin done = loop begin
   where
-    Builder{..} = monadBuilder
     loop :: x -> Stream (Of a) m r #-> Stream (Of (a,b)) m r
     loop !x stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (loop x) m
-      Step (a :> as) -> do
+      Step (a :> as) -> Control.do
         let !acc = done (step x a)
         Step $ (a, acc) :> Return () -- same as yield
         loop (step x a) as
@@ -1335,14 +1312,13 @@ read = mapMaybe readMaybe
 delay :: forall a r. Double -> Stream (Of a) IO r #-> Stream (Of a) IO r
 delay seconds = loop
   where
-    Builder{..} = monadBuilder
     pico = Prelude.truncate (seconds * 1000000)
     loop :: Stream (Of a) IO r #-> Stream (Of a) IO r
-    loop stream = do
+    loop stream = Control.do
       e <- Control.lift $ next stream
       e & \case
         Left r -> Return r
-        Right (Unrestricted a,rest) -> do
+        Right (Unrestricted a,rest) -> Control.do
           Step (a :> Return ()) -- same as yield
           Control.lift $ fromSystemIO $ threadDelay pico
           loop rest
@@ -1381,16 +1357,14 @@ wrapEffect :: (Control.Monad m, Control.Functor f, Consumable y) =>
   m a -> (a #-> m y) -> Stream f m r #-> Stream f m r
 wrapEffect ma action stream = stream & \case
   Return r -> Return r
-  Effect m -> Effect $ do
+  Effect m -> Effect $ Control.do
     a <- ma
     y <- action a
     lseq y $ m
-  Step f -> Effect $ do
+  Step f -> Effect $ Control.do
     a <- ma
     y <- action a
-    return $ lseq y $ Step f
-  where
-    Builder{..} = monadBuilder
+    Control.return $ lseq y $ Step f
 
 {-| 'slidingWindow' accumulates the first @n@ elements of a stream,
      update thereafter to form a sliding window of length @n@.
@@ -1407,29 +1381,28 @@ slidingWindow :: forall a b m. Control.Monad m => Int -> Stream (Of a) m b
               #-> Stream (Of (Seq.Seq a)) m b
 slidingWindow n = setup (max 1 n :: Int) Seq.empty
   where
-    Builder{..} = monadBuilder
     -- Given the current sliding window, yield it and then recurse with
     -- updated sliding window
     window :: Seq.Seq a -> Stream (Of a) m b #-> Stream (Of (Seq.Seq a)) m b
-    window !sequ str = do
+    window !sequ str = Control.do
       e <- Control.lift (next str)
       e & \case
-        Left r -> return r
-        Right (Unrestricted a,rest) -> do
+        Left r -> Control.return r
+        Right (Unrestricted a,rest) -> Control.do
           Step $ (sequ Seq.|> a) :> Return () -- same as yield
           window (Seq.drop 1 sequ Seq.|> a) rest
     -- Collect the first n elements in a sequence and call 'window'
     setup ::
       Int -> Seq.Seq a -> Stream (Of a) m b #-> Stream (Of (Seq.Seq a)) m b
-    setup 0 !sequ str = do
+    setup 0 !sequ str = Control.do
        Step (sequ :> Return ()) -- same as yield
        window (Seq.drop 1 sequ) str
-    setup n' sequ str = do
+    setup n' sequ str = Control.do
       e <- Control.lift $ next str
       e & \case
-        Left r -> do
+        Left r -> Control.do
           Step (sequ :> Return ()) -- same as yield
-          return r
+          Control.return r
         Right (Unrestricted x,rest) -> setup (n'-1) (sequ Seq.|> x) rest
 {-# INLINABLE slidingWindow #-}
 
