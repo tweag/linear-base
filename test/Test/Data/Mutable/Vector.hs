@@ -154,7 +154,7 @@ readSnoc2 = property $ do
   test $ unUnrestricted Linear.$ Vector.fromList l tester
 
 readSnoc2Test :: Int -> VectorTester
-readSnoc2Test val vec = fromLen (Vector.length vec)
+readSnoc2Test val vec = fromLen (Vector.size vec)
   where
     fromLen :: (Vector.Vector Int, Int) #-> Unrestricted (TestT IO ())
     fromLen (vec,len) = fromLen' (vec, move len)
@@ -173,7 +173,7 @@ lenConst = property $ do
 
 lenConstTest :: Int -> VectorTester
 lenConstTest size vec =
-  compInts (move size) (move Linear.. getSnd Linear.$ Vector.length vec)
+  compInts (move size) (move Linear.. getSnd Linear.$ Vector.size vec)
 
 lenWrite :: Property
 lenWrite = property $ do
@@ -188,7 +188,7 @@ lenWriteTest :: Int -> Int -> Int -> VectorTester
 lenWriteTest size val ix vec =
   compInts
     (move size)
-    (move Linear.. getSnd Linear.$ Vector.length (Vector.write vec ix val))
+    (move Linear.. getSnd Linear.$ Vector.size (Vector.write vec ix val))
 
 lenSnoc :: Property
 lenSnoc = property $ do
@@ -198,13 +198,13 @@ lenSnoc = property $ do
  test $ unUnrestricted Linear.$ Vector.fromList l tester
 
 lenSnocTest :: Int -> VectorTester
-lenSnocTest val vec = fromLen Linear.$ Linear.fmap move (Vector.length vec)
+lenSnocTest val vec = fromLen Linear.$ Linear.fmap move (Vector.size vec)
   where
     fromLen ::
       (Vector.Vector Int, Unrestricted Int) #->
       Unrestricted (TestT IO ())
     fromLen (vec, Unrestricted len) =
-      compInts (move (len+1)) (move (getSnd (Vector.length (Vector.snoc vec val))))
+      compInts (move (len+1)) (move (getSnd (Vector.size (Vector.snoc vec val))))
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
