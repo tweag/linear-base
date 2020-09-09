@@ -1,6 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | This module contains functions for interoperating with other
@@ -28,14 +28,12 @@ reread :: Control.Monad m =>
   (s -> m (Unrestricted (Maybe a))) -> s -> Stream (Of a) m ()
 reread f s = reread' f s
   where
-    Builder{..} = monadBuilder
-
     reread' :: Control.Monad m =>
       (s -> m (Unrestricted (Maybe a))) -> s -> Stream (Of a) m ()
-    reread' f s = Effect $ do
+    reread' f s = Effect $ Control.do
       Unrestricted maybeA <- f s
       case maybeA of
-        Nothing -> return $ Return ()
-        Just a -> return $ (yield a >> reread f s)
+        Nothing -> Control.return $ Return ()
+        Just a -> Control.return $ (yield a Control.>> reread f s)
 {-# INLINABLE reread #-}
 
