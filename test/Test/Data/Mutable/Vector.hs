@@ -21,6 +21,7 @@ import Data.Unrestricted.Linear
 import qualified Data.Functor.Linear as Data
 import Hedgehog
 import Data.Ord.Linear as Linear
+import Data.Maybe (mapMaybe)
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
@@ -54,6 +55,8 @@ group =
   , testProperty "fromList can be implemented with repeated pushes" refFromListViaPush
   , testProperty "toList works with extra capacity" refToListWithExtraCapacity
   , testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend
+  , testProperty "mapMaybe f (fromList xs) = fromList (mapMaybe f xs)" refMapMaybe
+  , testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter
   , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
   -- Regression tests
   , testProperty "push on an empty vector should succeed" snocOnEmptyVector
@@ -312,6 +315,32 @@ refFmap = property $ do
       Ur actual =
         Vector.fromList xs Linear.$ \vec ->
           Vector.toList (f Data.<$> vec)
+  expected === actual
+
+refMapMaybe :: Property
+refMapMaybe = property $ do
+  xs <- forAll list
+  let -- An arbitrary function
+      f :: Int -> Maybe Bool
+      f = (\a -> if a Prelude.< 0 then Nothing else Just (a `mod` 2 == 0))
+      expected = mapMaybe f xs
+      Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.mapMaybe vec f
+            Linear.& Vector.toList
+  expected === actual
+
+refFilter :: Property
+refFilter = property $ do
+  xs <- forAll list
+  let -- An arbitrary function
+      f :: Int -> Bool
+      f = (Prelude.< 0)
+      expected = filter f xs
+      Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.filter vec f
+            Linear.& Vector.toList
   expected === actual
 
 -- https://github.com/tweag/linear-base/pull/135

@@ -52,10 +52,12 @@ module Data.Vector.Mutable.Linear
     -- * Mutators
     write,
     unsafeWrite,
-    push,
-    pop,
     modify,
     modify_,
+    push,
+    pop,
+    filter,
+    mapMaybe,
     slice,
     shrinkToFit,
     -- * Accessors
@@ -68,7 +70,7 @@ module Data.Vector.Mutable.Linear
 where
 
 import GHC.Stack
-import Prelude.Linear hiding (read)
+import Prelude.Linear hiding (read, filter, mapMaybe)
 import Data.Array.Mutable.Linear (Array)
 import qualified Prelude
 import Data.Monoid.Linear
@@ -212,6 +214,40 @@ toList (Vec s arr) =
   Array.toList arr & \(Ur xs) ->
     Ur (take s xs)
 
+-- | Filters the vector in-place. It does not deallocate unused capacity,
+-- use 'shrinkToFit' for that if necessary.
+filter :: Vector a #-> (a -> Bool) -> Vector a
+filter v f = mapMaybe v (\a -> if f a then Just a else Nothing)
+-- TODO A slightly more efficient version exists, where we skip the writes
+-- until the first time the predicate fails. However that requires duplicating
+-- most of the logic at `mapMaybe`, so lets not until we have benchmarks to
+-- see the advantage.
+
+-- | A version of 'fmap' which can throw out elements.
+mapMaybe :: Vector a #-> (a -> Maybe b) -> Vector b
+mapMaybe vec (f :: a -> Maybe b) =
+  size vec & \(vec', Ur s) -> go 0 0 s vec'
+ where
+  go :: Int -- ^ read cursor
+     -> Int -- ^ write cursor
+     -> Int -- ^ input size
+     -> Vector a #-> Vector b
+  go r w s vec'
+    -- If we processed all elements, set the capacity after the last written
+    -- index and coerce the result to the correct type.
+    | r == s =
+        vec' & \(Vec _ arr) ->
+          Vec w (Unsafe.coerce arr)
+    -- Otherwise, read an element, write if the predicate is true and advance
+    -- the write cursor; otherwise keep the write cursor skipping the element.
+    | otherwise =
+        unsafeRead vec' r & \case
+          (vec'', Ur a)
+            | Just b <- f a ->
+                go (r+1) (w+1) s (unsafeWrite vec'' w (Unsafe.coerce b))
+            | otherwise ->
+                go (r+1) w s vec''
+
 -- | Resize the vector to not have any wasted memory (size == capacity). This
 -- returns a semantically identical vector.
 shrinkToFit :: Vector a #-> Vector a
@@ -264,19 +300,7 @@ instance Semigroup (Vector a) where
          & go xs
 
 instance Data.Functor Vector where
-  fmap (f :: a #-> b) vec =
-    size vec & \(vec', Ur s) -> go 0 s vec'
-   where
-    -- When we're mapping a vector, we first insert `b`'s
-    -- inside a `Vector a` by unsafeCoerce'ing, and then we
-    -- unsafeCoerce the result to a `Vector b`.
-    go :: Int -> Int -> Vector a #-> Vector b
-    go i s vec'
-      | i == s =
-          Unsafe.coerce vec'
-      | otherwise =
-          unsafeModify vec' (\a -> (Unsafe.coerce (f a), ())) i
-            & \(vec'', Ur ()) -> go (i+1) s vec''
+  fmap f vec = mapMaybe vec (\a -> Just (f a))
 
 -- # Internal library
 -------------------------------------------------------------------------------
