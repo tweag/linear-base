@@ -65,6 +65,7 @@ group =
   , testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed
   -- Tests against a reference implementation
   , testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef
+  , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
   , testProperty "toList . fromList = id" refToListFromList
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
@@ -235,6 +236,19 @@ refToListFromList = property $ do
   xs <- forAll list
   let Ur actual = Array.fromList xs Array.toList
   xs === actual
+
+sliceRef :: Property
+sliceRef = property $ do
+  xs <- forAll list
+  s <- forAll $ Gen.int (Range.linear 0 (length xs))
+  n <- forAll $ Gen.int (Range.linear 0 (length xs - s))
+  let expected = take n . drop s $ xs
+      Ur actual =
+        Array.fromList xs Linear.$ \arr ->
+          Array.slice s n arr
+            Linear.& \(old, new) ->
+                       old `lseq` Array.toList new
+  expected === actual
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property

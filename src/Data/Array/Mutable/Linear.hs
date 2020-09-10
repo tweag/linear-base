@@ -53,6 +53,7 @@ module Data.Array.Mutable.Linear
     read,
     unsafeRead,
     size,
+    slice,
     toList,
   )
 where
@@ -167,7 +168,7 @@ resize newSize seed (Array arr :: Array a)
       doCopy (Unlifted.allocBeside newSize seed arr)
      where
       doCopy :: (# Array# a, Array# a #) #-> Array a
-      doCopy (# src, dest #) = wrap (Unlifted.copyInto src dest)
+      doCopy (# src, dest #) = wrap (Unlifted.copyInto 0 src dest)
 
       wrap :: (# Array# a, Array# a #) #-> Array a
       wrap (# old, new #) = old `Unlifted.lseq` Array new
@@ -176,6 +177,42 @@ resize newSize seed (Array arr :: Array a)
 -- | Return the array elements as a lazy list.
 toList :: Array a #-> Ur [a]
 toList (Array arr) = Unlifted.toList arr
+
+-- | Copy a slice of the array, starting from given offset and copying given
+-- number of elements.
+--
+-- Start offset + target size should be within the input array, and both should
+-- be non-negative.
+--
+-- @
+-- let b = slice i n a,
+--   then size b = n,
+--   and b[j] = a[i+j] for 0 <= j < n
+-- @
+slice
+  :: HasCallStack
+  => Int -- ^ Start offset
+  -> Int -- ^ Target size
+  -> Array a #-> (Array a, Array a)
+slice from targetSize arr =
+  size arr & \case
+    (Array old, Ur s)
+      | s < from + targetSize ->
+          Unlifted.lseq
+            old
+            (error "Slice index out of bounds.")
+      | otherwise ->
+          doCopy
+            (Unlifted.allocBeside
+               targetSize
+               (error "invariant violation: uninitialized array index")
+               old)
+  where
+    doCopy :: (# Array# a, Array# a #) #-> (Array a, Array a)
+    doCopy (# old, new #) = wrap (Unlifted.copyInto from old new)
+
+    wrap :: (# Array# a, Array# a  #) #-> (Array a, Array a)
+    wrap (# old, new #) = (Array old, Array new)
 
 -- # Instances
 -------------------------------------------------------------------------------

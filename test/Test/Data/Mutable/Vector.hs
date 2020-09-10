@@ -1,6 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 -- |
@@ -36,17 +37,22 @@ group =
   [ testProperty "∀ s,i,x. read (constant s x) i = x" readConst
   , testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1
   , testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2
-  , testProperty "∀ a,x,(i < len a). read (snoc a x) i = read a i" readSnoc1
-  , testProperty "∀ a,x. read (snoc a x) (len a) = x" readSnoc2
+  , testProperty "∀ a,x,(i < len a). read (push a x) i = read a i" readPush1
+  , testProperty "∀ a,x. read (push a x) (len a) = x" readPush2
   -- All tests for exprs of the form (length (const ...))
   , testProperty "∀ s,x. len (constant s x) = s" lenConst
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
-  , testProperty "∀ a,x. len (snoc a x) = 1 + len a" lenSnoc
+  , testProperty "∀ a,x. len (push a x) = 1 + len a" lenPush
   -- Tests against a reference implementation
+  , testProperty "pop . push _ = id" refPopPush
+  , testProperty "push . pop = id" refPushPop
+  , testProperty "slice s n = take s . drop n" refSlice
   , testProperty "toList . fromList = id" refToListFromList
+  , testProperty "toList can be implemented with repeated pops" refToListViaPop
+  , testProperty "fromList can be implemented with repeated pushes" refFromListViaPush
   , testProperty "toList works with extra capacity" refToListWithExtraCapacity
   -- Regression tests
-  , testProperty "snoc on an empty vector should succeed" snocOnEmptyVector
+  , testProperty "push on an empty vector should succeed" snocOnEmptyVector
   , testProperty "do not reorder reads and writes" readAndWriteTest
   ]
 
@@ -82,7 +88,7 @@ snocOnEmptyVector :: Property
 snocOnEmptyVector = withTests 1 . property $ do
   let Ur actual =
         Vector.empty
-          Linear.$ \vec -> Vector.snoc vec (42 :: Int)
+          Linear.$ \vec -> Vector.push vec (42 :: Int)
           Linear.& \vec -> Vector.read vec 0
           Linear.& getSnd
   actual === 42
@@ -131,38 +137,38 @@ readWrite2Test ix jx val vec = fromRead (Vector.read vec ix)
         val1
         (getSnd Linear.$ Vector.read (Vector.write vec jx val) ix)
 
-readSnoc1 :: Property
-readSnoc1 = property $ do
+readPush1 :: Property
+readPush1 = property $ do
   l <- forAll nonEmptyList
   let size = length l
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]
-  let tester = readSnoc1Test v ix
+  let tester = readPush1Test v ix
   test $ unur Linear.$ Vector.fromList l tester
 
-readSnoc1Test :: Int -> Int -> VectorTester
-readSnoc1Test val ix vec = fromRead (Vector.read vec ix)
+readPush1Test :: Int -> Int -> VectorTester
+readPush1Test val ix vec = fromRead (Vector.read vec ix)
   where
     fromRead :: (Vector.Vector Int, Ur Int) #-> Ur (TestT IO ())
     fromRead (vec,val') =
-      compInts (getSnd (Vector.read (Vector.snoc vec val) ix)) val'
+      compInts (getSnd (Vector.read (Vector.push vec val) ix)) val'
 
 
-readSnoc2 :: Property
-readSnoc2 = property $ do
+readPush2 :: Property
+readPush2 = property $ do
   l <- forAll list
   v <- forAll val
-  let tester = readSnoc2Test v
+  let tester = readPush2Test v
   test $ unur Linear.$ Vector.fromList l tester
 
-readSnoc2Test :: Int -> VectorTester
-readSnoc2Test val vec = fromLen (Vector.size vec)
+readPush2Test :: Int -> VectorTester
+readPush2Test val vec = fromLen (Vector.size vec)
   where
     fromLen ::
       (Vector.Vector Int, Ur Int) #->
       Ur (TestT IO ())
     fromLen (vec, Ur len) =
-      compInts (getSnd (Vector.read (Vector.snoc vec val) len)) (move val)
+      compInts (getSnd (Vector.read (Vector.push vec val) len)) (move val)
 
 lenConst :: Property
 lenConst = property $ do
@@ -189,21 +195,21 @@ lenWriteTest size val ix vec =
     (move size)
     (getSnd Linear.$ Vector.size (Vector.write vec ix val))
 
-lenSnoc :: Property
-lenSnoc = property $ do
+lenPush :: Property
+lenPush = property $ do
  l <- forAll list
  v <- forAll val
- let tester = lenSnocTest v
+ let tester = lenPushTest v
  test $ unur Linear.$ Vector.fromList l tester
 
-lenSnocTest :: Int -> VectorTester
-lenSnocTest val vec = fromLen Linear.$ Vector.size vec
+lenPushTest :: Int -> VectorTester
+lenPushTest val vec = fromLen Linear.$ Vector.size vec
   where
     fromLen ::
       (Vector.Vector Int, Ur Int) #->
       Ur (TestT IO ())
     fromLen (vec, Ur len) =
-      compInts (move (len+1)) (getSnd (Vector.size (Vector.snoc vec val)))
+      compInts (move (len+1)) (getSnd (Vector.size (Vector.push vec val)))
 
 refToListFromList :: Property
 refToListFromList = property $ do
@@ -218,7 +224,66 @@ refToListWithExtraCapacity = property $ do
       expected = xs ++ [val]
       Ur actual =
         Vector.fromList xs Linear.$ \vec ->
-          Vector.snoc vec val -- This will cause the vector to grow.
+          Vector.push vec val -- This will cause the vector to grow.
+            Linear.& Vector.toList
+  expected === actual
+
+refPopPush :: Property
+refPopPush = property $ do
+  xs <- forAll list
+  let Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.push vec (error "not used")
+            Linear.& Vector.pop
+            Linear.& \(vec, Ur _) ->
+                        Vector.toList vec
+  xs === actual
+
+refPushPop :: Property
+refPushPop = property $ do
+  xs <- forAll nonEmptyList
+  let Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.pop vec
+            Linear.& \(vec, Ur (Just a)) ->
+                        Vector.push vec a
+            Linear.& Vector.toList
+  xs === actual
+
+refToListViaPop :: Property
+refToListViaPop = property $ do
+  xs <- forAll list
+  let Ur actual =
+        Vector.fromList xs (popAll [])
+  xs === actual
+ where
+   popAll :: [a] -> Vector.Vector a #-> Ur [a]
+   popAll acc vec =
+     Vector.pop vec Linear.& \case
+       (vec', Ur Nothing) -> vec' `lseq` Ur acc
+       (vec', Ur (Just x)) -> popAll (x:acc) vec'
+
+refFromListViaPush :: Property
+refFromListViaPush = property $ do
+  xs <- forAll list
+  let Ur actual =
+        Vector.empty Linear.$
+          Vector.toList Linear.. pushAll xs
+  xs === actual
+ where
+   pushAll :: [a] -> Vector.Vector a #-> Vector.Vector a
+   pushAll [] vec = vec
+   pushAll (x:xs) vec = Vector.push vec x Linear.& pushAll xs
+
+refSlice :: Property
+refSlice = property $ do
+  xs <- forAll list
+  s <- forAll $ Gen.int (Range.linear 0 (length xs))
+  n <- forAll $ Gen.int (Range.linear 0 (length xs - s))
+  let expected = take n . drop s $ xs
+      Ur actual =
+        Vector.fromList xs Linear.$ \arr ->
+          Vector.slice s n arr
             Linear.& Vector.toList
   expected === actual
 

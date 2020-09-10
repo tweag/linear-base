@@ -101,18 +101,25 @@ write (GHC.I# i) (a :: a) = Unsafe.toLinear go
         _ -> Array# arr
 {-# NOINLINE write #-}  -- prevents the runRW# effect from being reordered
 
--- | Copy the first mutable array into the second mutable array.
--- This function is safe, it copies fewer elements if the second
--- array is smaller than the first.
-copyInto :: Array# a #-> Array# a #-> (# Array# a, Array# a #)
-copyInto = Unsafe.toLinear2 go
+-- | Copy the first mutable array into the second mutable array, starting
+-- from the given index of the source array.
+--
+-- It copies fewer elements if the second array is smaller than the
+-- first. 'n' should be within [0..size src).
+--
+-- @
+--  copyInto n src dest:
+--   dest[i] = src[n+i] for i < size dest, i < size src + n
+-- @
+copyInto :: Int -> Array# a #-> Array# a #-> (# Array# a, Array# a #)
+copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
   where
     go :: Array# a -> Array# a -> (# Array# a, Array# a #)
     go (Array# src) (Array# dst) =
       let !(GHC.I# len#) = Prelude.min
-            (GHC.I# (GHC.sizeofMutableArray# src))
+            (GHC.I# (GHC.sizeofMutableArray# src) Prelude.- start)
             (GHC.I# (GHC.sizeofMutableArray# dst))
-      in  case GHC.runRW# (GHC.copyMutableArray# src 0# dst 0# len#) of
+      in  case GHC.runRW# (GHC.copyMutableArray# src start# dst 0# len#) of
             _ -> (# Array# src, Array# dst #)
 {-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
 
