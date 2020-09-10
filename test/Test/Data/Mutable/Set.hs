@@ -42,7 +42,7 @@ group =
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type SetTester = Set.Set Int #-> Unrestricted (TestT IO ())
+type SetTester = Set.Set Int #-> Ur (TestT IO ())
 
 -- | A random list
 nonemptyList :: Gen [Int]
@@ -56,13 +56,13 @@ value :: Gen Int
 value = Gen.int (Range.linear (-100) 100)
 
 testEqual :: (Show a, Eq a) =>
-  Unrestricted a #->
-  Unrestricted a #->
-  Unrestricted (TestT IO ())
-testEqual (Unrestricted x) (Unrestricted y) = Unrestricted (x === y)
+  Ur a #->
+  Ur a #->
+  Ur (TestT IO ())
+testEqual (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getSnd :: (Consumable a, Movable b) => (a, b) #-> Unrestricted b
+getSnd :: (Consumable a, Movable b) => (a, b) #-> Ur b
 getSnd (a, b) = lseq a (move b)
 
 -- # Tests
@@ -73,12 +73,12 @@ memberInsert1 = property $ do
   val <- forAll value
   l <- forAll nonemptyList
   let tester = memberInsert1Test val
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 memberInsert1Test :: Int -> SetTester
 memberInsert1Test val set =
   testEqual
-    (Unrestricted True)
+    (Ur True)
     (getSnd (Set.member (Set.insert set val) val))
 
 memberInsert2 :: Property
@@ -87,12 +87,12 @@ memberInsert2 = property $ do
   val2 <- forAll $ Gen.filter (/= val1) value
   l <- forAll nonemptyList
   let tester = memberInsert2Test val1 val2
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 memberInsert2Test :: Int -> Int -> SetTester
 memberInsert2Test val1 val2 set = fromRead (Set.member set val2)
   where
-    fromRead :: (Set.Set Int, Bool) #-> Unrestricted (TestT IO ())
+    fromRead :: (Set.Set Int, Bool) #-> Ur (TestT IO ())
     fromRead (set, memberVal2) =
       testEqual
         (move memberVal2)
@@ -103,12 +103,12 @@ memberDelete1 = property $ do
   val <- forAll value
   l <- forAll nonemptyList
   let tester = memberDelete1Test val
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 memberDelete1Test :: Int -> SetTester
 memberDelete1Test val set =
   testEqual
-    (Unrestricted False)
+    (Ur False)
     (getSnd (Set.member (Set.delete set val) val))
 
 memberDelete2 :: Property
@@ -117,12 +117,12 @@ memberDelete2 = property $ do
   val2 <- forAll $ Gen.filter (/= val1) value
   l <- forAll nonemptyList
   let tester = memberDelete2Test val1 val2
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 memberDelete2Test :: Int -> Int -> SetTester
 memberDelete2Test val1 val2 set = fromRead (Set.member set val2)
   where
-    fromRead :: (Set.Set Int, Bool) #-> Unrestricted (TestT IO ())
+    fromRead :: (Set.Set Int, Bool) #-> Ur (TestT IO ())
     fromRead (set, memberVal2) =
       testEqual
         (move memberVal2)
@@ -133,12 +133,12 @@ sizeInsert1 = property $ do
   l <- forAll nonemptyList
   val <- forAll $ Gen.filter (`elem` l) value
   let tester = sizeInsert1Test val
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 sizeInsert1Test :: Int -> SetTester
 sizeInsert1Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Set.Set Int, Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Set.Set Int, Int) #-> Ur (TestT IO ())
     fromRead (set, sizeOriginal) =
       testEqual
         (move sizeOriginal)
@@ -149,12 +149,12 @@ sizeInsert2 = property $ do
   l <- forAll nonemptyList
   val <- forAll $ Gen.filter (not . (`elem` l)) value
   let tester = sizeInsert2Test val
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 sizeInsert2Test :: Int -> SetTester
 sizeInsert2Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Set.Set Int, Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Set.Set Int, Int) #-> Ur (TestT IO ())
     fromRead (set, sizeOriginal) =
       testEqual
         (move (sizeOriginal Linear.+ 1))
@@ -165,12 +165,12 @@ sizeDelete1 = property $ do
   l <- forAll nonemptyList
   val <- forAll $ Gen.filter (`elem` l) value
   let tester = sizeDelete1Test val
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 sizeDelete1Test :: Int -> SetTester
 sizeDelete1Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Set.Set Int, Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Set.Set Int, Int) #-> Ur (TestT IO ())
     fromRead (set, sizeOriginal) =
       testEqual
         (move (sizeOriginal Linear.- 1))
@@ -181,12 +181,12 @@ sizeDelete2 = property $ do
   l <- forAll nonemptyList
   val <- forAll $ Gen.filter (not . (`elem` l)) value
   let tester = sizeDelete2Test val
-  test $ unUnrestricted Linear.$ Set.fromList l tester
+  test $ unur Linear.$ Set.fromList l tester
 
 sizeDelete2Test :: Int -> SetTester
 sizeDelete2Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Set.Set Int, Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Set.Set Int, Int) #-> Ur (TestT IO ())
     fromRead (set, sizeOriginal) =
       testEqual
         (move sizeOriginal)

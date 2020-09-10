@@ -51,7 +51,7 @@ group =
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type VectorTester = Vector.Vector Int #-> Unrestricted (TestT IO ())
+type VectorTester = Vector.Vector Int #-> Ur (TestT IO ())
 
 nonEmptyList :: Gen [Int]
 nonEmptyList = Gen.list (Range.linear 1 1000) val
@@ -63,10 +63,10 @@ val :: Gen Int
 val = Gen.int (Range.linear (-1000) 1000)
 
 compInts ::
-  Unrestricted Int #->
-  Unrestricted Int #->
-  Unrestricted (TestT IO ())
-compInts (Unrestricted x) (Unrestricted y) = Unrestricted (x === y)
+  Ur Int #->
+  Ur Int #->
+  Ur (TestT IO ())
+compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
 getSnd :: Consumable a => (a, b) #-> b
@@ -78,7 +78,7 @@ getSnd (a, b) = lseq a b
 
 snocOnEmptyVector :: Property
 snocOnEmptyVector = withTests 1 . property $ do
-  let Unrestricted actual =
+  let Ur actual =
         Vector.empty
           Linear.$ \vec -> Vector.snoc vec (42 :: Int)
           Linear.& \vec -> Vector.read vec 0
@@ -91,7 +91,7 @@ readConst = property $ do
   size <- forAll $ Gen.int $ Range.linear 1 1000
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]
-  test $ unUnrestricted Linear.$ Vector.constant size v (readConstTest ix v)
+  test $ unur Linear.$ Vector.constant size v (readConstTest ix v)
 
 readConstTest :: Int -> Int -> VectorTester
 readConstTest ix val vec = compInts (getSnd (Vector.read vec ix)) (move val)
@@ -103,7 +103,7 @@ readWrite1 = property $ do
   ix <- forAll $ Gen.element [0..size-1]
   v <- forAll val
   let tester = readWrite1Test ix v
-  test $ unUnrestricted Linear.$ Vector.fromList l tester
+  test $ unur Linear.$ Vector.fromList l tester
 
 readWrite1Test :: Int -> Int -> VectorTester
 readWrite1Test ix val vec =
@@ -118,12 +118,12 @@ readWrite2 = property $ do
   jx <- forAll $ Gen.element [ z | z <- [0..size-1], z /= ix ]
   v <- forAll val
   let tester = readWrite2Test ix jx v
-  test $ unUnrestricted Linear.$ Vector.fromList l tester
+  test $ unur Linear.$ Vector.fromList l tester
 
 readWrite2Test :: Int -> Int -> Int -> VectorTester
 readWrite2Test ix jx val vec = fromRead (Vector.read vec ix)
   where
-    fromRead :: (Vector.Vector Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Vector.Vector Int, Ur Int) #-> Ur (TestT IO ())
     fromRead (vec, val1) =
       compInts
         val1
@@ -136,12 +136,12 @@ readSnoc1 = property $ do
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]
   let tester = readSnoc1Test v ix
-  test $ unUnrestricted Linear.$ Vector.fromList l tester
+  test $ unur Linear.$ Vector.fromList l tester
 
 readSnoc1Test :: Int -> Int -> VectorTester
 readSnoc1Test val ix vec = fromRead (Vector.read vec ix)
   where
-    fromRead :: (Vector.Vector Int, Unrestricted Int) #-> Unrestricted (TestT IO ())
+    fromRead :: (Vector.Vector Int, Ur Int) #-> Ur (TestT IO ())
     fromRead (vec,val') =
       compInts (getSnd (Vector.read (Vector.snoc vec val) ix)) val'
 
@@ -151,25 +151,25 @@ readSnoc2 = property $ do
   l <- forAll list
   v <- forAll val
   let tester = readSnoc2Test v
-  test $ unUnrestricted Linear.$ Vector.fromList l tester
+  test $ unur Linear.$ Vector.fromList l tester
 
 readSnoc2Test :: Int -> VectorTester
 readSnoc2Test val vec = fromLen (Vector.size vec)
   where
-    fromLen :: (Vector.Vector Int, Int) #-> Unrestricted (TestT IO ())
+    fromLen :: (Vector.Vector Int, Int) #-> Ur (TestT IO ())
     fromLen (vec,len) = fromLen' (vec, move len)
 
     fromLen' ::
-      (Vector.Vector Int, Unrestricted Int) #->
-      Unrestricted (TestT IO ())
-    fromLen' (vec, Unrestricted len) =
+      (Vector.Vector Int, Ur Int) #->
+      Ur (TestT IO ())
+    fromLen' (vec, Ur len) =
       compInts (getSnd (Vector.read (Vector.snoc vec val) len)) (move val)
 
 lenConst :: Property
 lenConst = property $ do
   size <- forAll $ Gen.int $ Range.linear 1 1000
   v <- forAll val
-  test $ unUnrestricted Linear.$ Vector.constant size v (lenConstTest size)
+  test $ unur Linear.$ Vector.constant size v (lenConstTest size)
 
 lenConstTest :: Int -> VectorTester
 lenConstTest size vec =
@@ -182,7 +182,7 @@ lenWrite = property $ do
   v <- forAll val
   ix <- forAll $ Gen.element [0..size-1]
   let tester = lenWriteTest size v ix
-  test $ unUnrestricted Linear.$ Vector.fromList l tester
+  test $ unur Linear.$ Vector.fromList l tester
 
 lenWriteTest :: Int -> Int -> Int -> VectorTester
 lenWriteTest size val ix vec =
@@ -195,23 +195,23 @@ lenSnoc = property $ do
  l <- forAll list
  v <- forAll val
  let tester = lenSnocTest v
- test $ unUnrestricted Linear.$ Vector.fromList l tester
+ test $ unur Linear.$ Vector.fromList l tester
 
 lenSnocTest :: Int -> VectorTester
 lenSnocTest val vec = fromLen Linear.$ Linear.fmap move (Vector.size vec)
   where
     fromLen ::
-      (Vector.Vector Int, Unrestricted Int) #->
-      Unrestricted (TestT IO ())
-    fromLen (vec, Unrestricted len) =
+      (Vector.Vector Int, Ur Int) #->
+      Ur (TestT IO ())
+    fromLen (vec, Ur len) =
       compInts (move (len+1)) (move (getSnd (Vector.size (Vector.snoc vec val))))
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
 readAndWriteTest = withTests 1 . property $
-  unUnrestricted (Vector.fromList "a" test) === 'a'
+  unur (Vector.fromList "a" test) === 'a'
   where
-    test :: Vector.Vector Char #-> Unrestricted Char
+    test :: Vector.Vector Char #-> Ur Char
     test vec =
       Vector.read vec 0 Linear.& \(vec', before) ->
         Vector.write vec' 0 'b' Linear.& \vec'' ->

@@ -37,10 +37,10 @@ module Prelude.Linear
   , forget
   , Semigroup(..)
   , Monoid(..)
-    -- * Using 'Unrestricted' values in linear code
+    -- * Using 'Ur' values in linear code
     -- $ unrestricted
-  , Unrestricted(..)
-  , unUnrestricted
+  , Ur(..)
+  , unur
     -- * Doing non-linear operations inside linear functions
     -- $ comonoid
   , Consumable(..)

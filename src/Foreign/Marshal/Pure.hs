@@ -30,7 +30,7 @@
 -- == The Interface
 --
 -- Run a computation that uses heap memory by passing a continuation to
--- 'withPool' of type @Pool #-> Unrestricted b@. Allocate and free with
+-- 'withPool' of type @Pool #-> Ur b@. Allocate and free with
 -- 'alloc' and 'deconstruct'. Make as many or as few pools you need, by
 -- using the 'Dupable' and 'Consumable' instances of  'Pool'.
 --
@@ -41,9 +41,9 @@
 -- > import qualified Foreign.Marshal.Pure as Manual
 -- >
 -- > three :: Int
--- > three = unUnrestricted (Manual.withPool nothingWith3)
+-- > three = unur (Manual.withPool nothingWith3)
 -- >
--- > nothingWith3 :: Pool #-> Unrestricted Int
+-- > nothingWith3 :: Pool #-> Ur Int
 -- > nothingWith3 pool = move (Manual.deconstruct (Manual.alloc 3 pool))
 --
 -- === What are 'Pool's?
@@ -138,14 +138,14 @@ instance
     case (storable @a, storable @b, storable @c) of
       (Dict, Dict, Dict) -> Dict
 
--- TODO: move to the definition of Unrestricted
-instance Storable a => Storable (Unrestricted a) where
+-- TODO: move to the definition of Ur
+instance Storable a => Storable (Ur a) where
   sizeOf _ = sizeOf (undefined :: a)
   alignment _ = alignment (undefined :: a)
-  peek ptr = Unrestricted <$> peek (castPtr ptr :: Ptr a)
-  poke ptr (Unrestricted a) = poke (castPtr ptr :: Ptr a) a
+  peek ptr = Ur <$> peek (castPtr ptr :: Ptr a)
+  poke ptr (Ur a) = poke (castPtr ptr :: Ptr a) a
 
-instance KnownRepresentable a => KnownRepresentable (Unrestricted a) where
+instance KnownRepresentable a => KnownRepresentable (Ur a) where
   storable | Dict <- storable @a = Dict
 
 -- Below is a KnownRepresentable instance for Maybe. The Storable instance is
@@ -334,11 +334,11 @@ freeAll start end = do
 -- TODO: document individual functions
 
 -- | Given a linear computation that manages memory, run that computation.
-withPool :: (Pool #-> Unrestricted b) #-> Unrestricted b
+withPool :: (Pool #-> Ur b) #-> Ur b
 withPool scope = Unsafe.toLinear performScope scope
     -- XXX: do ^ without `toLinear` by using linear IO
   where
-    performScope :: (Pool #-> Unrestricted b) -> Unrestricted b
+    performScope :: (Pool #-> Ur b) -> Ur b
     performScope scope' = unsafeDupablePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc

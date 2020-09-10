@@ -101,10 +101,10 @@ fromSystemIO = Unsafe.coerce
 
 -- | Coerces a standard IO action to a linear IO action, allowing you to use
 -- the result of type @a@ in a non-linear manner by wrapping it inside
--- 'Unrestricted'.
-fromSystemIOU :: System.IO a -> IO (Unrestricted a)
+-- 'Ur'.
+fromSystemIOU :: System.IO a -> IO (Ur a)
 fromSystemIOU action =
-  fromSystemIO (Unrestricted <$> action)
+  fromSystemIO (Ur <$> action)
 
 -- | Convert a linear IO action to a "System.IO" action.
 toSystemIO :: IO a #-> System.IO a
@@ -117,8 +117,8 @@ toSystemIO = Unsafe.coerce -- basically just subtyping
 -- main :: IO ()
 -- main = Linear.withLinearIO $ do ...
 -- @
-withLinearIO :: IO (Unrestricted a) -> System.IO a
-withLinearIO action = (\x -> unUnrestricted x) <$> (toSystemIO action)
+withLinearIO :: IO (Ur a) -> System.IO a
+withLinearIO action = (\x -> unur x) <$> (toSystemIO action)
 
 -- * Monadic interface
 
@@ -162,10 +162,10 @@ instance Control.Monad IO where
 -- linear values can make linear values escape their scope and be used
 -- non-linearly.
 
-newIORef :: a -> IO (Unrestricted (IORef a))
+newIORef :: a -> IO (Ur (IORef a))
 newIORef a = fromSystemIOU (System.newIORef a)
 
-readIORef :: IORef a -> IO (Unrestricted a)
+readIORef :: IORef a -> IO (Ur a)
 readIORef r = fromSystemIOU (System.readIORef r)
 
 writeIORef :: IORef a -> a -> IO ()
@@ -183,7 +183,7 @@ throwIO e = fromSystemIO $ System.throwIO e
 
 catch
   :: Exception e
-  => IO (Unrestricted a) -> (e -> IO (Unrestricted a)) -> IO (Unrestricted a)
+  => IO (Ur a) -> (e -> IO (Ur a)) -> IO (Ur a)
 catch body handler =
   fromSystemIO $ System.catch (toSystemIO body) (\e -> toSystemIO (handler e))
 

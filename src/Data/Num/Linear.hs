@@ -138,13 +138,13 @@ instance (Movable a, Prelude.Num a) => Num (MovableNum a) where
 
 liftU :: (Movable a) => (a -> b) #-> (a #-> b)
 liftU f x = lifted f (move x)
-  where lifted :: (a -> b) #-> (Unrestricted a #-> b)
-        lifted g (Unrestricted a) = g a
+  where lifted :: (a -> b) #-> (Ur a #-> b)
+        lifted g (Ur a) = g a
 
 liftU2 :: (Movable a, Movable b) => (a -> b -> c) #-> (a #-> b #-> c)
 liftU2 f x y = lifted f (move x) (move y)
-  where lifted :: (a -> b -> c) #-> (Unrestricted a #-> Unrestricted b #-> c)
-        lifted g (Unrestricted a) (Unrestricted b) = g a b
+  where lifted :: (a -> b -> c) #-> (Ur a #-> Ur b #-> c)
+        lifted g (Ur a) (Ur b) = g a b
 
 -- A newtype wrapper to give the underlying monoid for an additive structure.
 newtype Adding a = Adding a

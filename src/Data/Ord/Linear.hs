@@ -13,7 +13,7 @@ module Data.Ord.Linear
   where
 
 import Data.Eq.Linear
-import qualified Prelude as Unrestricted
+import qualified Prelude as Ur
 import Prelude (Bool(..))
 import Data.Ord (Ordering(..))
 import Data.Bool.Linear ( not )
@@ -80,23 +80,23 @@ class Eq a => Ord a where
 -- hence we unsafely coerce).
 
 -- | @max x y@ returns the largest input
-max :: (Dupable a, Unrestricted.Ord a) =>  a #-> a #-> a
-max = Unsafe.toLinear2 (Unrestricted.max)
+max :: (Dupable a, Ur.Ord a) =>  a #-> a #-> a
+max = Unsafe.toLinear2 (Ur.max)
 
 -- | @min x y@ returs the smallest input
-min :: (Dupable a, Unrestricted.Ord a) => a #-> a #-> a
-min = Unsafe.toLinear2 (Unrestricted.min)
+min :: (Dupable a, Ur.Ord a) => a #-> a #-> a
+min = Unsafe.toLinear2 (Ur.min)
 
 -- | @compare x y@ returns an @Ordering@ which is
 -- one of @GT@ (greater than), @EQ@ (equal), or @LT@ (less than)
 -- which should be understood as \"x is @(compare x y)@ y\".
-compare :: (Dupable a, Unrestricted.Ord a) => a #-> a #-> Ordering
-compare = Unsafe.toLinear2 Unrestricted.compare
+compare :: (Dupable a, Ur.Ord a) => a #-> a #-> Ordering
+compare = Unsafe.toLinear2 Ur.compare
 
 -- Note: the reason we coerce the unrestricted implementation
 -- is because it's optimized for many base types
-instance (Dupable a, Unrestricted.Ord a) => Ord a where
-  (<) = Unsafe.toLinear2 (Unrestricted.<)
-  (>) = Unsafe.toLinear2 (Unrestricted.>)
-  (>=) = Unsafe.toLinear2 (Unrestricted.>=)
-  (<=) = Unsafe.toLinear2 (Unrestricted.<=)
+instance (Dupable a, Ur.Ord a) => Ord a where
+  (<) = Unsafe.toLinear2 (Ur.<)
+  (>) = Unsafe.toLinear2 (Ur.>)
+  (>=) = Unsafe.toLinear2 (Ur.>=)
+  (<=) = Unsafe.toLinear2 (Ur.<=)

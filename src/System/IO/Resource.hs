@@ -36,7 +36,7 @@
 -- >   handle1 <- Linear.openFile "/home/user/test.txt" WriteMode
 -- >   handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
 -- >   () <- Linear.hClose handle2
--- >   Control.return (Unrestricted ())
+-- >   Control.return (Ur ())
 --
 -- To enable do notation, `QualifiedDo` extension is used. But since QualifiedDo
 -- only modifies the desugaring of binds, we still need to qualify `Control.return`.
@@ -67,7 +67,7 @@ module System.IO.Resource
   ) where
 
 import Control.Exception (onException, mask, finally)
-import qualified Control.Monad as Unrestricted (fmap)
+import qualified Control.Monad as Ur (fmap)
 import qualified Data.Functor.Linear as Data
 import qualified Control.Monad.Linear as Control
 import Data.Coerce
@@ -97,7 +97,7 @@ unRIO (RIO action) = action
 
 -- | Take a @RIO@ computation with a value @a@ that is not linearly bound and
 -- make it a "System.IO" computation.
-run :: RIO (Unrestricted a) -> System.IO a
+run :: RIO (Ur a) -> System.IO a
 run (RIO action) = do
     rrm <- System.newIORef (ReleaseMap IntMap.empty)
     mask (\restore ->
@@ -105,7 +105,7 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease P.$ Unrestricted.fmap snd P.$ IntMap.toList releaseMap))
+           safeRelease P.$ Ur.fmap snd P.$ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
@@ -115,7 +115,7 @@ run (RIO action) = do
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
-    moveLinearIO :: Movable a => Linear.IO a #-> Linear.IO (Unrestricted a)
+    moveLinearIO :: Movable a => Linear.IO a #-> Linear.IO (Ur a)
     moveLinearIO action' = Control.do
         result <- action'
         Control.return $ move result
@@ -163,7 +163,7 @@ openFile path mode = Control.do
 hClose :: Handle #-> RIO ()
 hClose (Handle h) = unsafeRelease h
 
-hGetChar :: Handle #-> RIO (Unrestricted Char, Handle)
+hGetChar :: Handle #-> RIO (Ur Char, Handle)
 hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)
 
 hPutChar :: Handle #-> Char -> RIO Handle
@@ -173,7 +173,7 @@ hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
     flipHPutChar c =
       coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
 
-hGetLine :: Handle #-> RIO (Unrestricted Text, Handle)
+hGetLine :: Handle #-> RIO (Ur Text, Handle)
 hGetLine = coerce (unsafeFromSystemIOResource Text.hGetLine)
 
 hPutStr :: Handle #-> Text -> RIO Handle
@@ -204,7 +204,7 @@ unsafeRelease :: UnsafeResource a #-> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
     releaseWith key rrm = Control.do
-        Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
+        Ur (ReleaseMap releaseMap) <- Linear.readIORef rrm
         () <- releaseMap IntMap.! key
         Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
 
@@ -214,12 +214,12 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
 -- would be done with @fromSystemIO hClose@. Because this release function
 -- is an input, and could be wrong, this function is unsafe.
 unsafeAcquire
-  :: Linear.IO (Unrestricted a)
+  :: Linear.IO (Ur a)
   -> (a -> Linear.IO ())
   -> RIO (UnsafeResource a)
 unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (Control.do
-    Unrestricted resource <- acquire
-    Unrestricted (ReleaseMap releaseMap) <- Linear.readIORef rrm
+    Ur resource <- acquire
+    Ur (ReleaseMap releaseMap) <- Linear.readIORef rrm
     () <-
       Linear.writeIORef
         rrm
@@ -235,21 +235,21 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (Control.do
 -- | Given a "System.IO" computation on an unsafe resource,
 -- lift it to @RIO@ computaton on the acquired resource.
 -- That is function of type @a -> IO b@ turns into a function of type
--- @UnsafeResource a #-> RIO (Unrestricted b)@ 
+-- @UnsafeResource a #-> RIO (Ur b)@ 
 -- along with threading the @UnsafeResource a@.
 --
 -- Note that the result @b@ can be used non-linearly.
 unsafeFromSystemIOResource
   :: (a -> System.IO b)
-  -> (UnsafeResource a #-> RIO (Unrestricted b, UnsafeResource a))
+  -> (UnsafeResource a #-> RIO (Ur b, UnsafeResource a))
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
-      P.return (Unrestricted c, UnsafeResource key resource))
+      P.return (Ur c, UnsafeResource key resource))
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
   -> (UnsafeResource a #-> RIO (UnsafeResource a))
 unsafeFromSystemIOResource_ action resource = Control.do
-    (Unrestricted _, resource) <- unsafeFromSystemIOResource action resource
+    (Ur _, resource) <- unsafeFromSystemIOResource action resource
     Control.return resource
