@@ -45,7 +45,6 @@ import Data.Unrestricted.Linear
 import Prelude.Linear hiding ((+), lookup, read)
 import Prelude ((+))
 import qualified Prelude
-import qualified Unsafe.Linear as Unsafe
 import GHC.Stack
 
 -- # Implementation Notes
@@ -257,21 +256,3 @@ lookup (HashMap (Size s) ct arr) k =
 instance Consumable (HashMap k v) where
   consume :: HashMap k v #-> ()
   consume (HashMap _ _ arr) = consume arr
-
--- # This is provided for debugging only.
-instance (Show k, Show v) => Show (HashMap k v) where
-  show (HashMap _ _ robinArr) = toList robinArr & \case
-    (arr, Ur xs) -> display (lseq arr xs)
-
-display :: (Show k, Show v) => [RobinVal k v] #-> String
-display = Unsafe.toLinear wrapper
-  where
-    wrapper :: (Show k, Show v) => [RobinVal k v] -> String
-    wrapper xs = "[" ++ display' xs ++ "]"
-
-    display' :: (Show k, Show v) => [RobinVal k v] -> String
-    display' [] = ""
-    display' ((p,kv):xs) = p == (-1) & \case
-      True -> ("(" ++ show p ++ ", null)") ++ ", " ++ display' xs
-      False -> show (p,kv) ++ ", " ++ display' xs
-

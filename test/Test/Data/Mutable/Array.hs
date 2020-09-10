@@ -65,6 +65,7 @@ group =
   , testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed
   -- Tests against a reference implementation
   , testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef
+  , testProperty "toList . fromList = id" refToListFromList
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
   , testProperty "do not evaluate values unnecesesarily" strictnessTest
@@ -227,8 +228,13 @@ resizeRef = property $ do
         unur Linear.. Array.fromList l Linear.$ \arr ->
           Array.resize n x arr
             Linear.& Array.toList
-            Linear.& getSnd
   actual === expected
+
+refToListFromList :: Property
+refToListFromList = property $ do
+  xs <- forAll list
+  let Ur actual = Array.fromList xs Array.toList
+  xs === actual
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property

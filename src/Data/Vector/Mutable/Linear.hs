@@ -49,14 +49,16 @@ module Data.Vector.Mutable.Linear
     fromList,
     -- * Mutators
     write,
+    unsafeWrite,
     snoc,
     -- * Accessors
     read,
+    unsafeRead,
     size,
+    toList,
   )
 where
 
-import GHC.Exts hiding (fromList)
 import GHC.Stack
 import Prelude.Linear hiding (read)
 import Data.Array.Mutable.Linear (Array)
@@ -114,12 +116,18 @@ snoc (Vec size' arr) x =
     then write (Vec (size' + 1) arr') size' x
     else write (unsafeResize ((max size' 1) * 2) (Vec (size' + 1) arr')) size' x
 
--- | Write to an element already written to before.  Note: this will not write
--- to elements beyond the current size of the array and will error instead.
+-- | Write to an element . Note: this will not write to elements beyond the
+-- current size of the vector and will error instead.
 write :: HasCallStack => Vector a #-> Int -> a -> Vector a
 write (Vec size' arr) ix val
   | indexInRange size' ix = Vec size' (Array.unsafeWrite arr ix val)
   | otherwise = arr `lseq` error "Write index not in range."
+
+-- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
+-- when passed an invalid index.
+unsafeWrite :: HasCallStack => Vector a #-> Int -> a -> Vector a
+unsafeWrite (Vec size' arr) ix val =
+  Vec size' (Array.unsafeWrite arr ix val)
 
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..size-1@).
@@ -129,6 +137,21 @@ read (Vec size' arr) ix
       Array.unsafeRead arr ix
         & \(arr', val) -> (Vec size' arr', val)
   | otherwise = arr `lseq` error "Read index not in range."
+
+-- | Same as 'read', but does not do bounds-checking. The behaviour is undefined
+-- when passed an invalid index.
+unsafeRead :: HasCallStack => Vector a #-> Int -> (Vector a, Ur a)
+unsafeRead (Vec size' arr) ix =
+  Array.unsafeRead arr ix
+    & \(arr', val) -> (Vec size' arr', val)
+
+-- See the note at Array.toListLazy
+
+-- | Return the vector elements as a lazy list.
+toList :: Vector a #-> Ur [a]
+toList (Vec s arr) =
+  Array.toList arr & \(Ur xs) ->
+    Ur (take s xs)
 
 -- # Instances
 -------------------------------------------------------------------------------
