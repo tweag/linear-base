@@ -1,8 +1,8 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -71,7 +71,6 @@ import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Data.Functor.Identity
 import qualified System.IO as System
-import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 import qualified Control.Monad.Linear as Control
 
 
@@ -95,12 +94,11 @@ stdoutLn stream = stdoutLn' stream
 -- | Like stdoutLn but with an arbitrary return value
 stdoutLn' :: forall r. Stream (Of Text) IO r #-> IO r
 stdoutLn' stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of Text) IO r #-> IO r
   loop stream = stream & \case
-    Return r -> return r
-    Effect ms -> ms >>= stdoutLn'
-    Step (str :> stream) -> do
+    Return r -> Control.return r
+    Effect ms -> ms Control.>>= stdoutLn'
+    Step (str :> stream) -> Control.do
       fromSystemIO $ Text.putStrLn str
       stdoutLn' stream
 {-# INLINABLE stdoutLn' #-}
@@ -114,25 +112,22 @@ print = stdoutLn' . map (Text.pack Prelude.. Prelude.show)
 -- | Write a stream to a handle and return the handle.
 toHandle :: Handle #-> Stream (Of Text) RIO r #-> RIO (r, Handle)
 toHandle handle stream = loop handle stream where
-  Builder{..} = monadBuilder
   loop :: Handle #-> Stream (Of Text) RIO r #-> RIO (r, Handle)
   loop handle stream = stream & \case
-    Return r -> return (r, handle)
-    Effect ms -> ms >>= toHandle handle
-    Step (text :> stream') -> do
+    Return r -> Control.return (r, handle)
+    Effect ms -> ms Control.>>= toHandle handle
+    Step (text :> stream') -> Control.do
       handle' <- hPutStrLn handle text
       toHandle handle' stream'
 {-# INLINABLE toHandle #-}
 
 -- | Write a stream of text as lines as lines to a file
 writeFile :: FilePath -> Stream (Of Text) RIO r #-> RIO r
-writeFile filepath stream = do
+writeFile filepath stream = Control.do
   handle <- openFile filepath System.WriteMode
   (r,handle') <- toHandle handle stream
   hClose handle'
-  return r
-  where
-    Builder{..} = monadBuilder
+  Control.return r
 
 
 -- #  Basic Pure Consumers
@@ -156,11 +151,10 @@ writeFile filepath stream = do
 -}
 effects :: forall a m r. Control.Monad m => Stream (Of a) m r #-> m r
 effects stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m r
   loop stream = stream & \case
-    Return r -> return r
-    Effect ms -> ms >>= effects
+    Return r -> Control.return r
+    Effect ms -> ms Control.>>= effects
     Step (_ :> stream') -> effects stream'
 {-# INLINABLE effects #-}
 
@@ -168,12 +162,11 @@ effects stream = loop stream where
 -}
 erase :: forall a m r. Control.Monad m => Stream (Of a) m r #-> Stream Identity m r
 erase stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> Stream Identity m r
   loop stream = stream & \case
     Return r -> Return r
     Step (_ :> stream') -> Step $ Identity (erase stream')
-    Effect ms -> Effect $ ms >>= (return . erase)
+    Effect ms -> Effect $ ms Control.>>= (Control.return . erase)
 {-# INLINABLE erase #-}
 
 {-| Where a transformer returns a stream, run the effects of the stream, keeping
@@ -220,14 +213,13 @@ drained = Control.join . Control.fmap (Control.lift . effects)
 mapM_ :: forall a m b r. (Consumable b, Control.Monad m) =>
   (a -> m b) -> Stream (Of a) m r #-> m r
 mapM_  f stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m r
   loop stream = stream & \case
-    Return r -> return r
-    Effect ms -> ms >>= mapM_ f
-    Step (a :> stream') -> do
+    Return r -> Control.return r
+    Effect ms -> ms Control.>>= mapM_ f
+    Step (a :> stream') -> Control.do
       b <- f a
-      return $ consume b
+      Control.return $ consume b
       mapM_ f stream'
 {-# INLINABLE mapM_ #-}
 
@@ -271,11 +263,10 @@ mapM_  f stream = loop stream where
 fold :: forall x a b m r. Control.Monad m =>
   (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> m (Of b r)
 fold f x g stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m (Of b r)
   loop stream = stream & \case
-    Return r -> return $ g x :> r
-    Effect ms -> ms >>= fold f x g
+    Return r -> Control.return $ g x :> r
+    Effect ms -> ms Control.>>= fold f x g
     Step (a :> stream') -> fold f (f x a) g stream'
 {-# INLINABLE fold #-}
 
@@ -297,11 +288,10 @@ fold f x g stream = loop stream where
 fold_ :: forall x a b m r. (Control.Monad m, Consumable r) =>
   (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> m b
 fold_ f x g stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m b
   loop stream = stream & \case
-    Return r -> lseq r $ return $ g x
-    Effect ms -> ms >>= fold_ f x g
+    Return r -> lseq r $ Control.return $ g x
+    Effect ms -> ms Control.>>= fold_ f x g
     Step (a :> stream') -> fold_ f (f x a) g stream'
 {-# INLINABLE fold_ #-}
 
@@ -324,12 +314,11 @@ fold_ f x g stream = loop stream where
 foldM :: forall x a m b r. Control.Monad m =>
   (x #-> a -> m x) -> m x -> (x #-> m b) -> Stream (Of a) m r #-> m (b,r)
 foldM f mx g stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m (b,r)
   loop stream = stream & \case
-    Return r -> mx >>= g >>= (\b -> return (b,r))
-    Effect ms -> ms >>= foldM f mx g
-    Step (a :> stream') -> foldM f (mx >>= \x -> f x a) g stream'
+    Return r -> mx Control.>>= g Control.>>= (\b -> Control.return (b,r))
+    Effect ms -> ms Control.>>= foldM f mx g
+    Step (a :> stream') -> foldM f (mx Control.>>= \x -> f x a) g stream'
 {-# INLINABLE foldM #-}
 
 {-| Strict, monadic fold of the elements of a @Stream (Of a)@
@@ -339,12 +328,11 @@ foldM f mx g stream = loop stream where
 foldM_ :: forall a m x b r. (Control.Monad m, Consumable r) =>
   (x #-> a -> m x) -> m x -> (x #-> m b) -> Stream (Of a) m r #-> m b
 foldM_ f mx g stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m b
   loop stream = stream & \case
-    Return r  -> lseq r $ mx >>= g
-    Effect ms -> ms >>= foldM_ f mx g
-    Step (a :> stream') -> foldM_ f (mx >>= \x -> f x a) g stream'
+    Return r  -> lseq r $ mx Control.>>= g
+    Effect ms -> ms Control.>>= foldM_ f mx g
+    Step (a :> stream') -> foldM_ f (mx Control.>>= \x -> f x a) g stream'
 {-# INLINABLE foldM_ #-}
 
 -- | Note: does not short circuit
@@ -414,34 +402,30 @@ product_ stream = fold_ (*) 1 id stream
 -- first element, performing all monadic effects via 'effects'
 head :: Control.Monad m => Stream (Of a) m r #-> m (Of (Maybe a) r)
 head str = str & \case
-  Return r -> return (Nothing :> r)
-  Effect m -> m >>= head
+  Return r -> Control.return (Nothing :> r)
+  Effect m -> m Control.>>= head
   Step (a :> rest) ->
-    effects rest >>= \r -> return (Just a :> r)
-  where
-    Builder{..} = monadBuilder
+    effects rest Control.>>= \r -> Control.return (Just a :> r)
 {-# INLINABLE head #-}
 
 -- | Note that 'head' exhausts the rest of the stream following the
 -- first element, performing all monadic effects via 'effects'
 head_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r #-> m (Maybe a)
 head_ str = str & \case
-  Return r -> lseq r $ return Nothing
-  Effect m -> m >>= head_
+  Return r -> lseq r $ Control.return Nothing
+  Effect m -> m Control.>>= head_
   Step (a :> rest) ->
-    effects rest >>= \r -> lseq r $ return  (Just a)
-  where
-    Builder{..} = monadBuilder
+    effects rest Control.>>= \r -> lseq r $ Control.return  (Just a)
 {-# INLINABLE head_ #-}
 
 last :: Control.Monad m => Stream (Of a) m r #-> m (Of (Maybe a) r)
 last = loop Nothing where
-  loop :: Control.Monad m => Maybe a -> Stream (Of a) m r #-> m (Of (Maybe a) r)
+  loop :: Control.Monad m =>
+    Maybe a -> Stream (Of a) m r #-> m (Of (Maybe a) r)
   loop m s = s & \case
-    Return r  -> return (m :> r)
-    Effect m -> m >>= last
+    Return r  -> Control.return (m :> r)
+    Effect m -> m Control.>>= last
     Step (a :> rest) -> loop (Just a) rest
-  Builder{..} = monadBuilder
 {-# INLINABLE last #-}
 
 last_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r #-> m (Maybe a)
@@ -449,35 +433,32 @@ last_ = loop Nothing where
   loop :: (Consumable r, Control.Monad m) =>
     Maybe a -> Stream (Of a) m r #-> m (Maybe a)
   loop m s = s & \case
-    Return r  -> lseq r $ return m
-    Effect m -> m >>= last_
+    Return r  -> lseq r $ Control.return m
+    Effect m -> m Control.>>= last_
     Step (a :> rest) -> loop (Just a) rest
-  Builder{..} = monadBuilder
 {-# INLINABLE last_ #-}
 
 elem :: forall a m r. (Control.Monad m, Eq a) =>
   a -> Stream (Of a) m r #-> m (Of Bool r)
 elem a stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m (Of Bool r)
   loop stream = stream & \case
-    Return r -> return $ False :> r
-    Effect ms -> ms >>= elem a
+    Return r -> Control.return $ False :> r
+    Effect ms -> ms Control.>>= elem a
     Step (a' :> stream') -> case a == a' of
-      True -> effects stream' >>= (\r -> return $ True :> r)
+      True -> effects stream' Control.>>= (\r -> Control.return $ True :> r)
       False -> elem a stream'
 {-# INLINABLE elem #-}
 
 elem_ :: forall a m r. (Consumable r, Control.Monad m, Eq a) =>
   a -> Stream (Of a) m r #-> m Bool
 elem_ a stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m Bool
   loop stream = stream & \case
-    Return r -> lseq r $ return False
-    Effect ms -> ms >>= elem_ a
+    Return r -> lseq r $ Control.return False
+    Effect ms -> ms Control.>>= elem_ a
     Step (a' :> stream') -> case a == a' of
-      True -> effects stream' >>= \r -> lseq r $ return True
+      True -> effects stream' Control.>>= \r -> lseq r $ Control.return True
       False -> elem_ a stream'
 {-# INLINABLE elem_ #-}
 
@@ -603,11 +584,10 @@ mCompare comp (Just x) (Just y) = Just $ comp x y
 foldrM :: forall a m r. Control.Monad m
        => (a -> m r #-> m r) -> Stream (Of a) m r #-> m r
 foldrM step stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> m r
   loop stream = stream & \case
-    Return r -> return r
-    Effect m -> m >>= foldrM step
+    Return r -> Control.return r
+    Effect m -> m Control.>>= foldrM step
     Step (a :> as) -> step a (foldrM step as)
 {-# INLINABLE foldrM #-}
 
@@ -622,11 +602,10 @@ foldrT :: forall a t m r.
   (Control.Monad m, Control.MonadTrans t, Control.Monad (t m)) =>
   (a -> t m r #-> t m r) -> Stream (Of a) m r #-> t m r
 foldrT step stream = loop stream where
-  Builder{..} = monadBuilder
   loop :: Stream (Of a) m r #-> t m r
   loop stream = stream & \case
-    Return r -> return r
-    Effect ms -> (Control.lift ms) >>= foldrT step
+    Return r -> Control.return r
+    Effect ms -> (Control.lift ms) Control.>>= foldrT step
     Step (a :> as) -> step a (foldrT step as)
 {-# INLINABLE foldrT #-}
 

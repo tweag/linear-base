@@ -1,9 +1,9 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 -- | This module provides all functions which produce a
@@ -27,7 +27,6 @@ import Prelude (Either(..), Read, Bool(..), FilePath,
                Num(..), Int, otherwise, Eq(..), Ord(..), (.))
 import qualified Prelude
 import qualified Control.Monad.Linear as Control
-import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 import Data.Unrestricted.Linear
 import System.IO.Linear
 import System.IO.Resource
@@ -75,12 +74,12 @@ unfoldr :: Control.Monad m =>
   (s #-> m (Either r (Unrestricted a, s))) -> s #-> Stream (Of a) m r
 unfoldr step s = unfoldr' step s
   where
-    Builder{..} = monadBuilder
     unfoldr' :: Control.Monad m =>
       (s #-> m (Either r (Unrestricted a, s))) -> s #-> Stream (Of a) m r
     unfoldr' step s = Effect $ step s Control.>>= \case
-      Left r -> return $ Return r
-      Right (Unrestricted a,s') -> return $ Step $ a :> unfoldr step s'
+      Left r -> Control.return $ Return r
+      Right (Unrestricted a,s') ->
+        Control.return $ Step $ a :> unfoldr step s'
 {-# INLINABLE unfoldr #-}
 
 -- Note: we use the RIO monad from linear base to enforce
@@ -88,15 +87,14 @@ unfoldr step s = unfoldr' step s
 fromHandle :: Handle #-> Stream (Of Text) RIO ()
 fromHandle h = loop h
   where
-    Builder{..} = monadBuilder
     loop :: Handle #-> Stream (Of Text) RIO ()
-    loop h = do
+    loop h = Control.do
       (Unrestricted isEOF, h') <- Control.lift $ hIsEOF h
       case isEOF of
-        True -> do
+        True -> Control.do
           Control.lift $ hClose h'
-          return ()
-        False -> do
+          Control.return ()
+        False -> Control.do
           (Unrestricted text, h'') <- Control.lift $ hGetLine h'
           yield text
           fromHandle h''
@@ -106,11 +104,9 @@ fromHandle h = loop h
 
 -}
 readFile :: FilePath -> Stream (Of Text) RIO ()
-readFile path = do
+readFile path = Control.do
   handle <- Control.lift $ openFile path System.ReadMode
   fromHandle handle
-  where
-    Builder{..} = monadBuilder
 
 -- | Repeat an element several times.
 replicate :: (HasCallStack, Control.Monad m) => Int -> a -> Stream (Of a) m ()
@@ -143,23 +139,20 @@ replicateM n ma
       loop :: Control.Monad m => Int -> m (Unrestricted a) -> Stream (Of a) m ()
       loop n ma
         | n == 0 = Return ()
-        | otherwise = Effect $ do
+        | otherwise = Effect $ Control.do
           Unrestricted a <- ma
-          return $ Step $ a :> (replicateM (n-1) ma)
-          where
-            Builder{..} = monadBuilder
+          Control.return $ Step $ a :> (replicateM (n-1) ma)
 
 untilRight :: forall m a r . Control.Monad m =>
   m (Either (Unrestricted a) r) -> Stream (Of a) m r
 untilRight mEither = Effect loop
   where
-    Builder{..} = monadBuilder
     loop :: m (Stream (Of a) m r)
-    loop = do
+    loop = Control.do
       either <- mEither
       either & \case
         Left (Unrestricted a) ->
-          return $ Step $ a :> (untilRight mEither)
-        Right r -> return $ Return r
+          Control.return $ Step $ a :> (untilRight mEither)
+        Right r -> Control.return $ Return r
 {-# INLINABLE untilRight #-}
 
