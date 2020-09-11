@@ -18,7 +18,6 @@ library
   exposed-modules:
     Streaming.Prelude
     Streaming
-  other-modules:
     Streaming.Internal.Consume
     Streaming.Internal.Interop
     Streaming.Internal.Many
