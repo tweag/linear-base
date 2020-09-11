@@ -11,20 +11,11 @@ module Streaming.Produce
   ( yield
   , each'
   , unfoldr
-  , stdinLn
-  , readLn
   , fromHandle
   , readFile
-  , iterate
-  , iterateM
-  , repeat
-  , repeatM
   , replicate
   , replicateM
   , untilRight
-  , cycle
-  , enumFrom
-  , enumFromThen
   ) where
 
 import Streaming.Type
@@ -63,19 +54,6 @@ unfoldr step s = Effect $ step s Control.>>= \case
   where
     Builder{..} = monadBuilder
 
--- Note: we use System.IO.Linear.IO since our IO needs to
--- have a Control.Monad instance
-stdinLn :: Stream (Of Text) IO ()
-stdinLn = do
-  Unrestricted line <- Control.lift $ fromSystemIOU Text.getLine
-  yield line
-  stdinLn
-  where
-    Builder{..} = monadBuilder
-
-readLn :: Read a => Stream (Of a) IO ()
-readLn = mapMaybe (readMaybe . Text.unpack) stdinLn
-
 -- Note: we use the RIO monad from linear base to enforce
 -- the protocol of file handles and file I/O
 fromHandle :: Handle #-> Stream (Of Text) RIO ()
@@ -96,29 +74,6 @@ readFile :: FilePath -> Stream (Of Text) RIO ()
 readFile path = do
   handle <- Control.lift $ openFile path System.ReadMode
   fromHandle handle
-  where
-    Builder{..} = monadBuilder
-
-iterate :: Control.Monad m => (a -> a) -> a -> Stream (Of a) m r
-iterate step x = Effect $ return $ Step $ x :> iterate step (step x)
-  where
-    Builder{..} = monadBuilder
-
-iterateM :: Control.Monad m =>
-  (a -> m (Unrestricted a)) -> m (Unrestricted a) #-> Stream (Of a) m r
-iterateM stepM mx = Effect $ do
-  Unrestricted x <- mx
-  return $ Step $ x :> iterateM stepM (stepM x)
-  where
-    Builder{..} = monadBuilder
-
-repeat :: Control.Monad m => a -> Stream (Of a) m r
-repeat = iterate Prelude.id
-
-repeatM :: Control.Monad m => m (Unrestricted a) -> Stream (Of a) m r
-repeatM ma = Effect $ do
-  Unrestricted a <- ma
-  return $ Step $ a :> repeatM ma
   where
     Builder{..} = monadBuilder
 
@@ -149,25 +104,4 @@ untilRight mEither = Effect $ do
     Right r -> return $ Return r
   where
     Builder{..} = monadBuilder
-
--- | 'cycle' repeats a linear stream by running through it
--- from start to end indefinitely. To do so, it must use an
--- unrestricted arrow following the stream argument.
-cycle :: (Control.Monad m, Control.Functor f, Consumable r) =>
-  Stream f m r -> Stream f m r
-cycle s = do
-  r <- s
-  lseq r $ cycle s
-  where
-  Builder{..} = monadBuilder
-
-enumFrom :: (Control.Monad m, Prelude.Enum n) => n -> Stream (Of n) m r
-enumFrom x = iterate Prelude.succ x
-
-enumFromThen ::
-  (Control.Monad m, Prelude.Enum a) => a -> a -> Stream (Of a) m r
-enumFromThen first second =
-  map Prelude.toEnum $ iterate (+ diff) (Prelude.fromEnum first)
-  where
-    diff = Prelude.fromEnum first - Prelude.fromEnum second
 

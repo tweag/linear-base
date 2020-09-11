@@ -14,10 +14,7 @@ module Streaming
   , effect
   , wrap
   , replicates
-  , repeats
-  , repeatsM
   , unfold
-  , never
   , untilJust
   , streamBuild
   , delays
@@ -99,24 +96,6 @@ replicates n f = case compare n 0 of
   EQ -> Return ()
   GT -> Step $ Control.fmap (\() -> replicates (n-1) f) f
 
-repeats :: forall f m r . (Control.Monad m, Control.Functor f) =>
-  f () -> Stream f m r
-repeats f = loop
-  where
-    Builder{..} = monadBuilder
-    loop :: Stream f m r
-    loop = Effect $ return (Step (Control.fmap (\() -> loop) f))
-
-repeatsM :: forall f m r . (Control.Monad m, Control.Functor f) =>
-  m (f ()) -> Stream f m r
-repeatsM mf = loop
-  where
-    Builder{..} = monadBuilder
-    loop :: Stream f m r
-    loop = Effect $ do
-      f <- mf
-      return $ Step (Control.fmap (\() -> loop) f)
-
 unfold :: (Control.Monad m, Control.Functor f) =>
   (s #-> m (Either r (f s))) -> s #-> Stream f m r
 unfold step state = Effect $ do
@@ -124,17 +103,6 @@ unfold step state = Effect $ do
   either & \case
     Left r -> return $ Return r
     Right (fs) -> return $ Step $ Control.fmap (unfold step) fs
-  where
-    Builder{..} = monadBuilder
-
--- Note. We use a `Control.Applicative` instance instead of a
--- `Prelude.Applicative` instance because we'd want to use 'never'
--- as the `empty` of the alternative instance of linear streams.
--- The alternative instance of linear streams is
--- `Control.Alternative` which implies `Control.Applicative`. Hence,
--- our choice is natural.
-never :: (Control.Monad m, Control.Applicative f) => Stream f m r
-never =  Step $ Control.pure (Effect (return never))
   where
     Builder{..} = monadBuilder
 
