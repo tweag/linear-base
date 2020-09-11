@@ -46,7 +46,7 @@ maybeFlip i j (x,y) =  i < j & \case
 
 The `(&)` operator is like `($)` with the argument order flipped.
 
-### `let` and `where` bindings don't work
+### `let` and `where` bindings are not linear
 
 The following will **fail** to type check:
 
