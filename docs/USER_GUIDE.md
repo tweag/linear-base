@@ -46,7 +46,7 @@ maybeFlip i j (x,y) =  i < j & \case
 
 The `(&)` operator is like `($)` with the argument order flipped.
 
-### `let` and `where` bindings don't work
+### `let` and `where` bindings are not linear
 
 The following will **fail** to type check:
 
@@ -89,7 +89,7 @@ Moveable`.
 
 ## Design patterns
 
-### `f :: X -> (SomeType #-> Ur b) -> b` functions
+### `f :: X -> (SomeType #-> Ur b) #-> Ur b` functions
 
 This function limits the **scope** of using `SomeType` by taking
 a scope function of type `(SomeType #-> Ur b)`
