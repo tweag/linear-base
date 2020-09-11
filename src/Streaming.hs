@@ -9,7 +9,7 @@
 module Streaming
   (
   -- $stream
-   module Streaming.Type
+   module Streaming.Internal.Type
   -- * Constructing a 'Stream' on a given functor
   , yields
   , effect
@@ -51,8 +51,8 @@ module Streaming
   , destroy
   ) where
 
-import Streaming.Type
-import Streaming.Process (destroyExposed)
+import Streaming.Internal.Type
+import Streaming.Internal.Process (destroyExposed)
 import Data.Functor.Sum
 import Data.Functor.Compose
 import qualified Streaming.Prelude as Stream
