@@ -499,6 +499,7 @@ chunksOf :: forall f m r .
 chunksOf n stream = loop n stream
   where
     loop :: Int -> Stream f m r #-> Stream (Stream f m) m r
+    loop n (Return r) = Return r
     loop n stream = Step $ Control.fmap (loop n) $ splitsAt n stream
 {-# INLINABLE chunksOf #-}
 

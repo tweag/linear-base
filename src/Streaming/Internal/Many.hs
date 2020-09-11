@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE QualifiedDo #-}
@@ -13,6 +14,7 @@ module Streaming.Internal.Many
   -- ** Unzip
     unzip
   -- ** Merging
+  -- $ merging
   , merge
   , mergeOn
   , mergeBy
