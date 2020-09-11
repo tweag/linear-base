@@ -40,6 +40,7 @@ module Streaming.Process
   , mapMaybe
   , mapMaybeM
   -- ** Direct Transformations
+  , hoist
   , map
   , mapM
   , maps
@@ -563,6 +564,25 @@ mapMaybeM f stream = loop stream
 
 -- # Direct Transformations
 -------------------------------------------------------------------------------
+
+{-| Change the effects of one monad to another with a transformation.
+    This is one of the fundamental transformations on streams.
+    Compare with 'maps':
+
+> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x #-> g x) -> Stream f m r #-> Stream g m r
+> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
+
+-}
+hoist :: forall f m n r. (Control.Monad m, Control.Functor f) =>
+  (forall a. m a #-> n a) ->
+  Stream f m r #-> Stream f n r
+hoist f stream = loop stream where
+  loop :: Stream f m r #-> Stream f n r
+  loop stream = stream & \case
+    Return r -> Return r
+    Effect m -> Effect $ f $ Control.fmap loop m
+    Step f -> Step $ Control.fmap loop f
+{-# INLINABLE hoist #-}
 
 {-| Standard map on the elements of a stream.
 
