@@ -89,7 +89,7 @@ Moveable`.
 
 ## Design patterns
 
-### `f :: X -> (SomeType #-> Ur b) -> b` functions
+### `f :: X -> (SomeType #-> Ur b) #-> Ur b` functions
 
 This function limits the **scope** of using `SomeType` by taking
 a scope function of type `(SomeType #-> Ur b)`
