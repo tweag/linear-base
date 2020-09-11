@@ -13,6 +13,7 @@ module Streaming.Many
   -- ** Unzip
     unzip
   -- ** Merging
+  -- $ merging
   , merge
   , mergeOn
   , mergeBy

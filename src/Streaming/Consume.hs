@@ -539,7 +539,8 @@ v<Enter>
 ["u","v"]
 -}
 toList :: Control.Monad m => Stream (Of a) m r #-> m (Of [a] r)
-toList = fold (Prelude.flip (:)) [] id
+toList = fold (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
+{-# INLINE toList #-}
 
 {-| Convert an effectful @Stream (Of a)@ into a list of @as@
 
@@ -550,11 +551,10 @@ toList = fold (Prelude.flip (:)) [] id
 
 -}
 toList_ :: Control.Monad m => Stream (Of a) m () #-> m [a]
-toList_ stream = fold_ (Prelude.flip (:)) [] id stream
-{-# INLINE toList #-}
+toList_ = fold_ (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
+{-# INLINE toList_ #-}
 
 {-| Fold streamed items into their monoidal sum
-
  -}
 mconcat :: (Control.Monad m, Prelude.Monoid w) => Stream (Of w) m r #-> m (Of w r)
 mconcat = fold (Prelude.<>) Prelude.mempty id
