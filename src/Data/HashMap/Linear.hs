@@ -231,15 +231,15 @@ probeFrom (k, p) ix (HashMap sz@(Size s) ct arr) = read arr ix & \case
 -- # Querying
 --------------------------------------------------
 
-size :: HashMap k v #-> (HashMap k v, Int)
-size (HashMap sz ct@(Count c) arr) = (HashMap sz ct arr, c)
+size :: HashMap k v #-> (HashMap k v, Ur Int)
+size (HashMap sz ct@(Count c) arr) = (HashMap sz ct arr, Ur c)
 
-member :: Keyed k => HashMap k v #-> k -> (HashMap k v, Bool)
+member :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur Bool)
 member (HashMap (Size s) ct arr) k =
   probeFrom (k,0) ((hash k) `mod` s) (HashMap (Size s) ct arr) & \case
-    (h, IndexToUpdate _ _) -> (h, True)
-    (h, IndexToInsert _ _) -> (h, False)
-    (h, IndexToSwap _ _) -> (h, False)
+    (h, IndexToUpdate _ _) -> (h, Ur True)
+    (h, IndexToInsert _ _) -> (h, Ur False)
+    (h, IndexToSwap _ _) -> (h, Ur False)
 
 lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur (Maybe v))
 lookup (HashMap (Size s) ct arr) k =

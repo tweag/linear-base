@@ -82,8 +82,7 @@ data Vector a where
 fromArray :: HasCallStack => Array a #-> Vector a
 fromArray arr =
   Array.size arr
-    & \(arr', size') -> move size'
-    & \(Ur s) -> Vec s arr'
+    & \(arr', Ur size') -> Vec size' arr'
 
 -- Allocate an empty vector
 empty :: (Vector a #-> Ur b) #-> Ur b
@@ -104,17 +103,16 @@ fromList :: HasCallStack => [a] -> (Vector a #-> Ur b) #-> Ur b
 fromList xs f = Array.fromList xs (f . fromArray)
 
 -- | Number of elements inside the vector
-size :: Vector a #-> (Vector a, Int)
-size (Vec size' arr) = (Vec size' arr, size')
+size :: Vector a #-> (Vector a, Ur Int)
+size (Vec size' arr) = (Vec size' arr, Ur size')
 
 -- | Insert at the end of the vector
 snoc :: HasCallStack => Vector a #-> a -> Vector a
 snoc (Vec size' arr) x =
-  Array.size arr & \(arr', cap') ->
-    move cap' & \(Ur cap) ->
-      if size' < cap
-      then write (Vec (size' + 1) arr') size' x
-      else write (unsafeResize ((max size' 1) * 2) (Vec (size' + 1) arr')) size' x
+  Array.size arr & \(arr', Ur cap) ->
+    if size' < cap
+    then write (Vec (size' + 1) arr') size' x
+    else write (unsafeResize ((max size' 1) * 2) (Vec (size' + 1) arr')) size' x
 
 -- | Write to an element already written to before.  Note: this will not write
 -- to elements beyond the current size of the array and will error instead.

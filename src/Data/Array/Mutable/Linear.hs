@@ -111,8 +111,8 @@ fromList list (f :: Array a #-> Ur b) =
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
 
-size :: Array a #-> (Array a, Int)
-size (Array size' arr) =  (Array size' arr, size')
+size :: Array a #-> (Array a, Ur Int)
+size (Array size' arr) =  (Array size' arr, Ur size')
 
 -- | Writes a value to an index of an Array. The index should be less than the
 -- arrays size, otherwise this errors.
@@ -170,8 +170,8 @@ resize newSize seed (Array _ mut)
 -- XXX: Replace with toVec
 toList :: Array a #-> (Array a, Ur [a])
 toList arr = size arr & \case
-  (arr', len) -> move len & \case
-    Ur len' -> toListWalk (len' - 1) arr' (Ur [])
+  (arr', Ur len) ->
+    toListWalk (len - 1) arr' (Ur [])
   where
   toListWalk :: Int -> Array a #-> Ur [a] -> (Array a, Ur [a])
   toListWalk ix arr accum
