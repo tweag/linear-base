@@ -7,11 +7,12 @@
 {-# LANGUAGE UnliftedNewtypes #-}
 
 -- |
--- This module defines a linear wrapper around 'GHC.MutableArray#'
--- which can be manipulated in pure contexts.
+-- This module provides an unlifted mutable array with a pure
+-- interface. Though the array itself is unlifted, it's elements are
+-- lifted types. This is made possible by using linear types to make
+-- sure array references are single threaded through reads and writes.
 --
--- It ensures that effects happen in order. However, access to
--- out-of-bounds indices causes undefined behaviour.
+-- Accessing out-of-bounds indices causes undefined behaviour.
 --
 -- This module is meant to be imported qualified.
 module Data.Array.Mutable.Unlifted.Linear
@@ -35,8 +36,8 @@ import qualified GHC.Exts as GHC
 -- | A mutable array holding @a@s
 newtype Array# a = Array# (GHC.MutableArray# GHC.RealWorld a)
 
--- | Run an unsafe computation using the underlying MutableArray,
--- consuming the 'Array#' in process.
+-- | Extract the underlying 'GHC.MutableArray#', consuming the 'Array#'
+-- in process.
 unArray# :: (GHC.MutableArray# GHC.RealWorld a -> b) -> Array# a #-> Ur b
 unArray# f = Unsafe.toLinear (\(Array# a) -> Ur (f a))
 
@@ -52,7 +53,7 @@ lseq = Unsafe.toLinear2 (\_ b -> b)
 -- The size should be non-negative.
 alloc :: Int -> a -> (Array# a #-> Ur b) #-> Ur b
 alloc (GHC.I# s) a f =
-  let !new = GHC.runRW# Prelude.$ \st ->
+  let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in f new
@@ -63,7 +64,7 @@ alloc (GHC.I# s) a f =
 -- The size should be non-negative.
 allocBeside :: Int -> a -> Array# b #-> (# Array# b, Array# a #)
 allocBeside (GHC.I# s) a orig =
-  let !new = GHC.runRW# Prelude.$ \st ->
+  let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in (# orig, new #)

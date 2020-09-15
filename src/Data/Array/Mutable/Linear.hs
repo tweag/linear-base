@@ -130,11 +130,8 @@ write arr i x = unsafeWrite (assertIndexInRange i arr) i x
 -- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
 unsafeWrite :: Array a #-> Int -> a -> Array a
-unsafeWrite arr ix val =
-  withUnlifted
-    (\arr -> (# Unlifted.write ix val arr, () #))
-    arr
-    & \(a, ()) -> a
+unsafeWrite (Array arr) ix val =
+  Array (Unlifted.write ix val arr)
 
 -- | Read an index from an Array. The index should be less than the arrays size,
 -- otherwise this errors.
@@ -144,7 +141,10 @@ read arr i = unsafeRead (assertIndexInRange i arr) i
 -- | Same as read, but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
 unsafeRead :: Array a #-> Int -> (Array a, Ur a)
-unsafeRead arr ix = withUnlifted (Unlifted.read ix) arr
+unsafeRead (Array arr) ix = wrap (Unlifted.read ix arr)
+ where
+  wrap :: (# Array# a, Ur a #) #-> (Array a, Ur a)
+  wrap (# arr, ret #) = (Array arr, ret)
 
 -- | Resize an array. That is, given an array, a target size, and a seed
 -- value; resize the array to the given size using the seed value to fill
@@ -194,13 +194,6 @@ instance Consumable (Array a) where
 
 -- # Internal library
 -------------------------------------------------------------------------------
-
--- | Run a computation with the underlying unlifted array.
-withUnlifted :: (Array# a #-> (# Array# a, b #)) #-> Array a #-> (Array a, b)
-withUnlifted f (Array arr) = unwrap (f arr)
- where
-  unwrap :: (# Array# a, b #) #-> (Array a, b)
-  unwrap (# a, b #) = (Array a, b)
 
 -- | Check if given index is within the Array, otherwise panic.
 assertIndexInRange :: HasCallStack => Int -> Array a #-> Array a
