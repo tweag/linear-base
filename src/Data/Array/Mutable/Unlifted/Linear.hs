@@ -57,6 +57,10 @@ alloc (GHC.I# s) a f =
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in f new
+{-# NOINLINE alloc #-}
+
+-- For the reasoning behind these NOINLINE pragmas, see the discussion at:
+-- https://github.com/tweag/linear-base/pull/187#pullrequestreview-489183531
 
 -- | Allocate a mutable array of given size using a default value,
 -- using another 'Array#' as a uniqueness proof.
@@ -68,6 +72,7 @@ allocBeside (GHC.I# s) a orig =
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in (# orig, new #)
+{-# NOINLINE allocBeside #-}
 
 size :: Array# a #-> (# Array# a, Ur Int #)
 size = Unsafe.toLinear go
@@ -84,6 +89,7 @@ read (GHC.I# i) = Unsafe.toLinear go
     go (Array# arr) =
       case GHC.runRW# (GHC.readArray# arr i) of
         (# _, ret #) -> (# Array# arr, Ur ret #)
+{-# NOINLINE read #-}
 
 write :: Int -> a -> Array# a #-> Array# a
 write (GHC.I# i) (a :: a) = Unsafe.toLinear go
@@ -92,6 +98,7 @@ write (GHC.I# i) (a :: a) = Unsafe.toLinear go
     go (Array# arr) =
       case GHC.runRW# (GHC.writeArray# arr i a) of
         _ -> Array# arr
+{-# NOINLINE write #-}
 
 -- | Copy the first mutable array into the second mutable array.
 -- This function is safe, it copies fewer elements if the second
@@ -106,3 +113,4 @@ copyInto = Unsafe.toLinear2 go
             (GHC.I# (GHC.sizeofMutableArray# dst))
       in  case GHC.runRW# (GHC.copyMutableArray# src 0# dst 0# len#) of
             _ -> (# Array# src, Array# dst #)
+{-# NOINLINE copyInto #-}
