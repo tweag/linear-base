@@ -61,8 +61,8 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.Array.Polarized.Pull.Internal
+    Data.Array.Mutable.Unlifted.Linear
     Prelude.Linear.Internal
-    Unsafe.MutableArray
 
 test-suite test
   type: exitcode-stdio-1.0

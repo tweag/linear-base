@@ -58,19 +58,17 @@ module Data.Array.Mutable.Linear
 where
 
 import Data.Unrestricted.Linear
-import GHC.Exts hiding (toList, fromList)
 import GHC.Stack
 import qualified Data.Functor.Linear as Control
-import qualified Unsafe.Linear as Unsafe
-import qualified Unsafe.MutableArray as Unsafe
-import Prelude.Linear ((&), forget)
+import Data.Array.Mutable.Unlifted.Linear (Array#)
+import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
+import Prelude.Linear ((&))
 import Prelude hiding (read)
 
 -- # Data types
 -------------------------------------------------------------------------------
 
-data Array a where
-  Array :: Int -> (MutableArray# RealWorld a) -> Array a
+data Array a = Array (Array# a)
 
 -- # Creation
 -------------------------------------------------------------------------------
@@ -79,18 +77,25 @@ data Array a where
 -- The size must be non-negative, otherwise this errors.
 alloc :: HasCallStack =>
   Int -> a -> (Array a #-> Ur b) #-> Ur b
-alloc size' x f
-  | size' >= 0 = f (Array size' (Unsafe.newMutArr size' x))
-  | otherwise =
-    (error ("Trying to allocate an array of size " ++ show size') :: x #-> x)
+alloc s x f
+  | s < 0 =
+    (error ("Array.alloc: negative size: " ++ show s) :: x #-> x)
     (f undefined)
+  | otherwise = Unlifted.alloc s x (\arr -> f (Array arr))
 
 -- | Allocate a constant array given a size and an initial value,
 -- using another array as a uniqueness proof.
 allocBeside :: Int -> a -> Array b #-> (Array b, Array a)
-allocBeside size val orig
-  | size >= 0 = (orig, Array size (Unsafe.newMutArr size val))
-  | otherwise = orig `lseq` error ("Trying to allocate an array of size " ++ show size)
+allocBeside s x (Array orig)
+  | s < 0 =
+     Unlifted.lseq
+       orig
+       (error ("Array.allocBeside: negative size: " ++ show s))
+  | otherwise =
+      wrap (Unlifted.allocBeside s x orig)
+     where
+      wrap :: (# Array# b, Array# a #) #-> (Array b, Array a)
+      wrap (# orig, new #) = (Array orig, Array new)
 
 -- | Allocate an array from a list
 fromList :: HasCallStack =>
@@ -100,53 +105,46 @@ fromList list (f :: Array a #-> Ur b) =
     (Prelude.length list)
     (error "invariant violation: unintialized array position")
     (\arr -> f (insert arr))
-  where
-    insert :: Array a #-> Array a
-    insert = doWrites (zip list [0..])
+ where
+  insert :: Array a #-> Array a
+  insert = doWrites (zip list [0..])
 
-    doWrites :: [(a,Int)] -> Array a #-> Array a
-    doWrites [] arr = arr
-    doWrites ((a,ix):xs) arr = doWrites xs (write arr ix a)
+  doWrites :: [(a,Int)] -> Array a #-> Array a
+  doWrites [] arr = arr
+  doWrites ((a,ix):xs) arr = doWrites xs (unsafeWrite arr ix a)
 
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
 
 size :: Array a #-> (Array a, Ur Int)
-size (Array size' arr) =  (Array size' arr, Ur size')
+size (Array arr) = f (Unlifted.size arr)
+ where
+  f :: (# Array# a, Ur Int #) #-> (Array a, Ur Int)
+  f (# arr, s #) = (Array arr, s)
 
 -- | Writes a value to an index of an Array. The index should be less than the
 -- arrays size, otherwise this errors.
 write :: HasCallStack => Array a #-> Int -> a -> Array a
-write = Unsafe.toLinear writeUnsafe
-  where
-    writeUnsafe :: Array a -> Int -> a -> Array a
-    writeUnsafe arr@(Array size' _) ix val
-      | indexInRange size' ix = unsafeWrite arr ix val
-      | otherwise = error "Write index out of bounds."
+write arr i x = unsafeWrite (assertIndexInRange i arr) i x
 
 -- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
 unsafeWrite :: Array a #-> Int -> a -> Array a
-unsafeWrite (Array size' arr) ix val =
-  case Unsafe.writeMutArr arr ix val of
-    () -> Array size' arr
+unsafeWrite (Array arr) ix val =
+  Array (Unlifted.write ix val arr)
 
 -- | Read an index from an Array. The index should be less than the arrays size,
 -- otherwise this errors.
 read :: HasCallStack => Array a #-> Int -> (Array a, Ur a)
-read = Unsafe.toLinear readUnsafe
-  where
-    readUnsafe :: Array a -> Int -> (Array a, Ur a)
-    readUnsafe arr@(Array size _) ix
-      | indexInRange size ix = unsafeRead arr ix
-      | otherwise = error "Read index out of bounds."
+read arr i = unsafeRead (assertIndexInRange i arr) i
 
 -- | Same as read, but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
 unsafeRead :: Array a #-> Int -> (Array a, Ur a)
-unsafeRead (Array size arr) ix =
-  let !(# a #) = Unsafe.readMutArr arr ix
-  in  (Array size arr, Ur a)
+unsafeRead (Array arr) ix = wrap (Unlifted.read ix arr)
+ where
+  wrap :: (# Array# a, Ur a #) #-> (Array a, Ur a)
+  wrap (# arr, ret #) = (Array arr, ret)
 
 -- | Resize an array. That is, given an array, a target size, and a seed
 -- value; resize the array to the given size using the seed value to fill
@@ -161,17 +159,25 @@ unsafeRead (Array size arr) ix =
 --   and b[i] = x for size a <= i < n.
 -- @
 resize :: HasCallStack => Int -> a -> Array a #-> Array a
-resize newSize seed (Array _ mut)
+resize newSize seed (Array arr :: Array a)
   | newSize < 0 =
-      error "Trying to resize to a negative size."
+      Unlifted.lseq
+        arr
+        (error "Trying to resize to a negative size.")
   | otherwise =
-      Array newSize (Unsafe.resizeMutArr mut seed newSize)
+      doCopy (Unlifted.allocBeside newSize seed arr)
+     where
+      doCopy :: (# Array# a, Array# a #) #-> Array a
+      doCopy (# src, dest #) = wrap (Unlifted.copyInto src dest)
+
+      wrap :: (# Array# a, Array# a #) #-> Array a
+      wrap (# old, new #) = old `Unlifted.lseq` Array new
+
 
 -- XXX: Replace with toVec
 toList :: Array a #-> (Array a, Ur [a])
 toList arr = size arr & \case
-  (arr', Ur len) ->
-    toListWalk (len - 1) arr' (Ur [])
+  (arr', Ur len) -> toListWalk (len - 1) arr' (Ur [])
   where
   toListWalk :: Int -> Array a #-> Ur [a] -> (Array a, Ur [a])
   toListWalk ix arr accum
@@ -182,16 +188,17 @@ toList arr = size arr & \case
 -- # Instances
 -------------------------------------------------------------------------------
 
-instance Show a => Show (Array a) where
-  show = show . forget unur . snd . (\x -> toList x)
-
 instance Consumable (Array a) where
   consume :: Array a #-> ()
-  consume (Array _ _) = ()
+  consume (Array arr) = arr `Unlifted.lseq` ()
 
 -- # Internal library
 -------------------------------------------------------------------------------
-type Size = Int
 
-indexInRange :: Size -> Int -> Bool
-indexInRange size ix = 0 <= ix && ix < size
+-- | Check if given index is within the Array, otherwise panic.
+assertIndexInRange :: HasCallStack => Int -> Array a #-> Array a
+assertIndexInRange i arr =
+  size arr & \(arr', Ur s) ->
+    if 0 <= i && i < s
+    then arr'
+    else arr' `lseq` error "Array: index out of bounds"
