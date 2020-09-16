@@ -57,7 +57,7 @@ alloc (GHC.I# s) a f =
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in f new
-{-# NOINLINE alloc #-}
+{-# NOINLINE alloc #-}  -- prevents runRW# from floating outwards
 
 -- For the reasoning behind these NOINLINE pragmas, see the discussion at:
 -- https://github.com/tweag/linear-base/pull/187#pullrequestreview-489183531
