@@ -72,7 +72,7 @@ allocBeside (GHC.I# s) a orig =
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in (# orig, new #)
-{-# NOINLINE allocBeside #-}
+{-# NOINLINE allocBeside #-}  -- prevents runRW# from floating outwards
 
 size :: Array# a #-> (# Array# a, Ur Int #)
 size = Unsafe.toLinear go
@@ -89,7 +89,7 @@ read (GHC.I# i) = Unsafe.toLinear go
     go (Array# arr) =
       case GHC.runRW# (GHC.readArray# arr i) of
         (# _, ret #) -> (# Array# arr, Ur ret #)
-{-# NOINLINE read #-}
+{-# NOINLINE read #-}  -- prevents the runRW# effect from being reordered
 
 write :: Int -> a -> Array# a #-> Array# a
 write (GHC.I# i) (a :: a) = Unsafe.toLinear go
@@ -98,7 +98,7 @@ write (GHC.I# i) (a :: a) = Unsafe.toLinear go
     go (Array# arr) =
       case GHC.runRW# (GHC.writeArray# arr i a) of
         _ -> Array# arr
-{-# NOINLINE write #-}
+{-# NOINLINE write #-}  -- prevents the runRW# effect from being reordered
 
 -- | Copy the first mutable array into the second mutable array.
 -- This function is safe, it copies fewer elements if the second
@@ -113,4 +113,4 @@ copyInto = Unsafe.toLinear2 go
             (GHC.I# (GHC.sizeofMutableArray# dst))
       in  case GHC.runRW# (GHC.copyMutableArray# src 0# dst 0# len#) of
             _ -> (# Array# src, Array# dst #)
-{-# NOINLINE copyInto #-}
+{-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
