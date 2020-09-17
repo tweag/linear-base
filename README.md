@@ -54,6 +54,52 @@ This change requires the `f` to have a `Control.Monad.Linear.Functor` instance
 and a `Control.Monad` instance for any `Stream f m` with appropriate `m` and `f`.
 In general, all changes are necessarily implied from just changing the `m`.
 
+### Replacing infinite streams like `stdinLn`
+
+We can't have functions like `stdinLn` that produce infinite streams.
+Any function that linearly consumes a `Stream (Of a) m r` where the `m`
+is a control monad, would have to consume the entire stream. Hence,
+for some `f :: Stream (Of a) m r #-> B`, `f stdinLn` would never terminate.
+Hence, we need workarounds for the original API.
+
+The infinite stream API in the original library consisted of
+`repeats`, `repeatsM`, `stdinLn`, `readLn`, `cycle`, `enumFrom`, `enumFromThen`.
+
+The size-delimited replacements of `repeats` and `repeatsM` are just `replicates` and
+`replicatesM` from the `Streaming` module.
+
+The rest of the API are constructors that produce an infinite streams `Of` elements
+possibly from some simple arguments. From combing the examples in the Haddock and linked
+to by the haddock, three common use cases emerge:
+
+ 1. Taking some finite amount:
+
+ `stdoutLn$ doSomething $ take 3 $ stdinLn`
+
+ 2. Taking until a condition is met:
+
+ `highLowGame n = void $ S.break (== n) (readLn :: Stream (Of Int) m ())`
+
+ 3. Zipping with a finite stream:
+
+  `doSomething $ zip (each' ["first name: ", "last name: ", "nickname: "]) stdinLn`
+
+ 4. Some combination of the above.
+
+We can avoid/replace these cases by having these variants of infinite
+streams like `stdinLn`:
+
+`stdinLnN :: Int -> Stream (Of Text) IO ()`
+`stdinLnUntil :: (Text -> Bool) -> Stream (Of Text) IO ()`
+`stdinLnUntilM :: (Text -> IO Bool) -> Stream (Of Text) IO ()`
+`stdinLnZip :: (Stream (Of a) m ()) #-> Stream (Of (a, Text)) IO ()`
+
+This approach is adopted for the rest of the API and the postfixes
+`N`, `Until`, `UntilM` and `Zip` are followed. We don't need `Until*` functions
+for `replicate`, `cycle`, `enumFrom` and `enumFromThen` since these streams are simple
+enough that a test function doesn't make sense; we can predict each element so there's no
+cause to test until a condition is met.
+
 ### Terminology
 
  * If the monad of the stream is a normal monad, we call the stream an

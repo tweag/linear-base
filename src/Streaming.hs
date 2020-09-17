@@ -15,6 +15,7 @@ module Streaming
   , effect
   , wrap
   , replicates
+  , replicatesM
   , unfold
   , untilJust
   , streamBuild
@@ -183,7 +184,6 @@ wrap = Step
 
 {- | Repeat a functorial layer, command or instruction a fixed number of times.
 
-> replicates n = takes n . repeats
 -}
 replicates :: (HasCallStack, Control.Monad m, Control.Functor f) =>
   Int -> f () -> Stream f m ()
@@ -196,6 +196,19 @@ replicates n f = replicates' n f
       EQ -> Return ()
       GT -> Step $ Control.fmap (\() -> replicates (n-1) f) f
 {-# INLINE replicates #-}
+
+-- | @replicatesM n@ repeats an effect containing a functorial layer, command
+-- or instruction @n@ times.
+replicatesM :: forall f m . (Control.Monad m, Control.Functor f) =>
+  Int -> m (f ()) -> Stream f m ()
+replicatesM = loop
+  where
+    loop :: Int -> m (f ()) -> Stream f m ()
+    loop n mfstep
+      | n <= 0 = Return ()
+      | Prelude.otherwise = Effect $
+          Control.fmap (Step . Control.fmap (\() -> loop (n-1) mfstep)) mfstep
+{-# INLINABLE replicatesM #-}
 
 unfold :: (Control.Monad m, Control.Functor f) =>
   (s #-> m (Either r (f s))) -> s #-> Stream f m r
