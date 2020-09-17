@@ -59,4 +59,4 @@ f . g = \x -> f (g x)
 -- | Convenience operator when a higher-order function expects a non-linear
 -- arrow but we have a linear arrow.
 forget :: (a #-> b) #-> a -> b
-forget f x = f x
+forget f a = f a
