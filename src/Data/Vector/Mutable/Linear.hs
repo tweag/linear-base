@@ -122,6 +122,9 @@ fromList :: HasCallStack => [a] -> (Vector a #-> Ur b) #-> Ur b
 fromList xs f = Array.fromList xs (f . fromArray)
 
 -- | Number of elements inside the vector.
+--
+-- This might be different than how much actual memory the vector is using.
+-- For that, see: 'capacity'.
 size :: Vector a #-> (Vector a, Ur Int)
 size (Vec size' arr) = (Vec size' arr, Ur size')
 
@@ -154,9 +157,8 @@ pop vec =
 -- | Write to an element . Note: this will not write to elements beyond the
 -- current size of the vector and will error instead.
 write :: HasCallStack => Vector a #-> Int -> a -> Vector a
-write (Vec size' arr) ix val
-  | indexInRange size' ix = Vec size' (Array.unsafeWrite arr ix val)
-  | otherwise = arr `lseq` error "Write index not in range."
+write vec ix val =
+  unsafeWrite (assertIndexInRange ix vec) ix val
 
 -- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
@@ -167,11 +169,8 @@ unsafeWrite (Vec size' arr) ix val =
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..size-1@).
 read :: HasCallStack => Vector a #-> Int -> (Vector a, Ur a)
-read (Vec size' arr) ix
-  | indexInRange size' ix =
-      Array.unsafeRead arr ix
-        & \(arr', val) -> (Vec size' arr', val)
-  | otherwise = arr `lseq` error "Read index not in range."
+read vec ix =
+  unsafeRead (assertIndexInRange ix vec) ix
 
 -- | Same as 'read', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
@@ -235,7 +234,7 @@ growToFit n vec =
         let -- Calculate the closest power of growth factor
             -- larger than required size.
             newSize =
-              constGrowthFactor
+              constGrowthFactor -- This constant is defined above.
                 ^ (ceiling :: Double -> Int)
                     (logBase
                       (fromIntegral constGrowthFactor)
@@ -258,7 +257,10 @@ unsafeResize newSize (Vec size' ma) =
       ma
     )
 
--- | Argument order: indexInRange size ix
-indexInRange :: Int -> Int -> Bool
-indexInRange size' ix = 0 <= ix && ix < size'
-
+-- | Check if given index is within the Vector, otherwise panic.
+assertIndexInRange :: HasCallStack => Int -> Vector a #-> Vector a
+assertIndexInRange i vec =
+  size vec & \(vec', Ur s) ->
+    if 0 <= i && i < s
+    then vec'
+    else vec' `lseq` error "Vector: index out of bounds"

@@ -179,7 +179,7 @@ toList :: Array a #-> Ur [a]
 toList (Array arr) = Unlifted.toList arr
 
 -- | Copy a slice of the array, starting from given offset and copying given
--- number of elements.
+-- number of elements. Returns the pair (oldArray, slice).
 --
 -- Start offset + target size should be within the input array, and both should
 -- be non-negative.
