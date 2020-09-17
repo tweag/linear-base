@@ -59,7 +59,6 @@ where
 
 import Data.Unrestricted.Linear
 import GHC.Stack
-import qualified Data.Functor.Linear as Control
 import Data.Array.Mutable.Unlifted.Linear (Array#)
 import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
 import Prelude.Linear ((&))
@@ -174,16 +173,9 @@ resize newSize seed (Array arr :: Array a)
       wrap (# old, new #) = old `Unlifted.lseq` Array new
 
 
--- XXX: Replace with toVec
-toList :: Array a #-> (Array a, Ur [a])
-toList arr = size arr & \case
-  (arr', Ur len) -> toListWalk (len - 1) arr' (Ur [])
-  where
-  toListWalk :: Int -> Array a #-> Ur [a] -> (Array a, Ur [a])
-  toListWalk ix arr accum
-    | ix < 0 = (arr, accum)
-    | otherwise = read arr ix & \case
-        (arr', Ur x) -> toListWalk (ix - 1) arr' ((x:) Control.<$> accum)
+-- | Return the array elements as a lazy list.
+toList :: Array a #-> Ur [a]
+toList (Array arr) = Unlifted.toList arr
 
 -- # Instances
 -------------------------------------------------------------------------------

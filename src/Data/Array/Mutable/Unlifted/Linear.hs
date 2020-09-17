@@ -25,6 +25,7 @@ module Data.Array.Mutable.Unlifted.Linear
   , read
   , write
   , copyInto
+  , toList
   ) where
 
 import Data.Unrestricted.Linear hiding (lseq)
@@ -114,3 +115,17 @@ copyInto = Unsafe.toLinear2 go
       in  case GHC.runRW# (GHC.copyMutableArray# src 0# dst 0# len#) of
             _ -> (# Array# src, Array# dst #)
 {-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
+
+-- | Return the array elements as a lazy list.
+toList :: Array# a #-> Ur [a]
+toList = unArray# Prelude.$ \arr ->
+  go
+    0
+    (GHC.I# (GHC.sizeofMutableArray# arr))
+    arr
+ where
+  go i len arr
+    | i Prelude.== len = []
+    | GHC.I# i# <- i =
+        case GHC.runRW# (GHC.readArray# arr i#) of
+          (# _, ret #) -> ret : go (i Prelude.+ 1) len arr

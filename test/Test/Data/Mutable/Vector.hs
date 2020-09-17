@@ -42,6 +42,9 @@ group =
   , testProperty "∀ s,x. len (constant s x) = s" lenConst
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,x. len (snoc a x) = 1 + len a" lenSnoc
+  -- Tests against a reference implementation
+  , testProperty "toList . fromList = id" refToListFromList
+  , testProperty "toList works with extra capacity" refToListWithExtraCapacity
   -- Regression tests
   , testProperty "snoc on an empty vector should succeed" snocOnEmptyVector
   , testProperty "do not reorder reads and writes" readAndWriteTest
@@ -201,6 +204,23 @@ lenSnocTest val vec = fromLen Linear.$ Vector.size vec
       Ur (TestT IO ())
     fromLen (vec, Ur len) =
       compInts (move (len+1)) (getSnd (Vector.size (Vector.snoc vec val)))
+
+refToListFromList :: Property
+refToListFromList = property $ do
+  xs <- forAll list
+  let Ur actual = Vector.fromList xs Vector.toList
+  xs === actual
+
+refToListWithExtraCapacity :: Property
+refToListWithExtraCapacity = property $ do
+  xs <- forAll list
+  let val = 12
+      expected = xs ++ [val]
+      Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.snoc vec val -- This will cause the vector to grow.
+            Linear.& Vector.toList
+  expected === actual
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
