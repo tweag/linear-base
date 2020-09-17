@@ -1,4 +1,5 @@
 {-# OPTIONS_HADDOCK hide #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE QualifiedDo #-}
@@ -11,8 +12,19 @@
 module Streaming.Internal.Many
   (
   -- * Operations that use or return multiple 'Stream's
-  -- ** Unzip
+  -- ** Zips and Unzip
     unzip
+  , ZipResidual
+  , ZipResidual3
+  , zip
+  , zipR
+  , zipWith
+  , zipWithR
+  , zip3
+  , zip3R
+  , zipWith3
+  , zipWith3R
+  , Either3 (..)
   -- ** Merging
   -- $ merging
   , merge
@@ -29,7 +41,7 @@ import qualified Prelude.Linear as Linear
 import qualified Control.Monad.Linear as Control
 
 
--- # Unzip
+-- # Zips and Unzip
 -------------------------------------------------------------------------------
 
 {-| The type
@@ -96,6 +108,184 @@ unzip = loop
     Effect m -> Effect $ Control.fmap loop $ Control.lift m
     Step ((a,b):> rest) -> Step (a :> Effect (Step (b :> Return (loop rest))))
 {-# INLINABLE unzip #-}
+
+
+{- Remarks on the design of zip functions
+
+Zip functions have two design choices:
+(1) What do we do with the end-of-stream values of both streams?
+(2) If the streams are of different length, do we keep or throw out the
+remainder of the longer stream?
+
+* We are assuming not to take infinite streams as input and instead deal with
+reasonably small finite streams.
+* To avoid making choices for the user, we keep both end-of-stream payloads
+* The default zips (ones without a prime in the name) use @effects@ to consume
+the remainder stream after zipping. We include zip function variants that
+return no remainder (for equal length streams), or the remainder of the
+longer stream.
+
+-}
+
+data Either3 a b c where
+  Left3 :: a #-> Either3 a b c
+  Middle3 :: b #-> Either3 a b c
+  Right3 :: c #-> Either3 a b c
+
+-- | The remainder of zipping two streams
+type ZipResidual a b m r1 r2 =
+  Either3
+    (r1, r2)
+    (r1, Stream (Of b) m r2)
+    (Stream (Of a) m r1, r2)
+
+-- | @zipWithR@ zips two streams applying a function along the way,
+-- keeping the remainder of zipping if there is one.  Note. If two streams have
+-- the same length, but one needs to perform some effects to obtain the
+-- end-of-stream result, that stream is treated as a residual.
+zipWithR :: Control.Monad m =>
+  (a -> b -> c) ->
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of c) m (ZipResidual a b m r1 r2)
+zipWithR = loop
+  where
+  loop :: Control.Monad m =>
+    (a -> b -> c) ->
+    Stream (Of a) m r1 #->
+    Stream (Of b) m r2 #->
+    Stream (Of c) m (ZipResidual a b m r1 r2)
+  loop f st1 st2 = st1 & \case
+    Effect ms -> Effect $ Control.fmap (\s -> loop f s st2) ms
+    Return r1 -> st2 & \case
+      Return r2 -> Return $ Left3 (r1,r2)
+      st2' -> Return $ Middle3 (r1,st2')
+    Step (a :> as) -> st2 & \case
+      Effect ms ->
+        Effect $ Control.fmap (\s -> loop f (Step (a :> as)) s) ms
+      Return r2 -> Return $ Right3 (Step (a :> as), r2)
+      Step (b :> bs) -> Step $ (f a b) :> loop f as bs
+{-# INLINABLE zipWithR #-}
+
+zipWith :: Control.Monad m =>
+  (a -> b -> c) ->
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of c) m (r1,r2)
+zipWith f s1 s2 = Control.do
+  result <- zipWithR f s1 s2
+  result & \case
+    Left3 rets -> Control.return rets
+    Middle3 (r1, s2') -> Control.do
+      r2 <- Control.lift $ effects s2'
+      Control.return (r1, r2)
+    Right3 (s1', r2) -> Control.do
+      r1 <- Control.lift $ effects s1'
+      Control.return (r1, r2)
+{-# INLINABLE zipWith #-}
+
+-- | @zip@ zips two streams exhausing the remainder of the longer
+-- stream and consuming its effects.
+zip :: Control.Monad m =>
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of (a,b)) m (r1, r2)
+zip = zipWith (,)
+{-# INLINE zip #-}
+
+-- | @zipR@ zips two streams keeping the remainder if there is one.
+zipR :: Control.Monad m =>
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of (a,b)) m (ZipResidual a b m r1 r2)
+zipR = zipWithR (,)
+{-# INLINE zipR #-}
+
+-- Remark. For simplicity, we do not create an @Either7@ which is the
+-- proper remainder type for 'zip3R'. Our type simply has one impossible
+-- case which is when all three streams have a remainder.
+
+-- | The (liberal) remainder of zipping three streams.
+-- This has the downside that the possibility of three remainders
+-- is allowed, though it will never occur.
+type ZipResidual3 a b c m r1 r2 r3 =
+  ( Either r1 (Stream (Of a) m r1)
+  , Either r2 (Stream (Of b) m r2)
+  , Either r3 (Stream (Of c) m r3)
+  )
+
+-- | Like @zipWithR@ but with three streams.
+zipWith3R :: Control.Monad m =>
+  (a -> b -> c -> d) ->
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of c) m r3 #->
+  Stream (Of d) m (ZipResidual3 a b c m r1 r2 r3)
+zipWith3R = loop
+  where
+  loop :: Control.Monad m =>
+    (a -> b -> c -> d) ->
+    Stream (Of a) m r1 #->
+    Stream (Of b) m r2 #->
+    Stream (Of c) m r3 #->
+    Stream (Of d) m (ZipResidual3 a b c m r1 r2 r3)
+  loop f s1 s2 s3 = s1 & \case
+    Effect ms -> Effect $ Control.fmap (\s -> loop f s s2 s3) ms
+    Return r1 -> (s2, s3) & \case
+      (Return r2, Return r3) -> Return (Left r1, Left r2, Left r3)
+      (s2', s3') -> Return (Left r1, Right s2', Right s3')
+    Step (a :> as) -> s2 & \case
+      Effect ms -> Effect $
+        Control.fmap (\s -> loop f (Step $ a :> as) s s3) ms
+      Return r2 -> Return (Right (Step $ a :> as), Left r2, Right s3)
+      Step (b :> bs) -> s3 & \case
+        Effect ms -> Effect $
+          Control.fmap (\s -> loop f (Step $ a :> as) (Step $ b :> bs) s) ms
+        Return r3 ->
+          Return (Right (Step $ a :> as), Right (Step $ b :> bs), Left r3)
+        Step (c :> cs) -> Step $ (f a b c) :> loop f as bs cs
+{-# INLINABLE zipWith3R #-}
+
+-- | Like @zipWith@ but with three streams
+zipWith3 :: Control.Monad m =>
+  (a -> b -> c -> d) ->
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of c) m r3 #->
+  Stream (Of d) m (r1, r2, r3)
+zipWith3 f s1 s2 s3 = Control.do
+  result <- zipWith3R f s1 s2 s3
+  result & \case
+    (res1, res2, res3) -> Control.do
+      r1 <- Control.lift $ extractResult res1
+      r2 <- Control.lift $ extractResult res2
+      r3 <- Control.lift $ extractResult res3
+      Control.return (r1, r2, r3)
+{-# INLINABLE zipWith3 #-}
+
+-- | Like @zipR@ but with three streams.
+zip3 :: Control.Monad m =>
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of c) m r3 #->
+  Stream (Of (a,b,c)) m (r1, r2, r3)
+zip3 = zipWith3 (,,)
+{-# INLINABLE zip3 #-}
+
+-- | Like @zipR@ but with three streams.
+zip3R :: Control.Monad m =>
+  Stream (Of a) m r1 #->
+  Stream (Of b) m r2 #->
+  Stream (Of c) m r3 #->
+  Stream (Of (a,b,c)) m (ZipResidual3 a b c m r1 r2 r3)
+zip3R = zipWith3R (,,)
+{-# INLINABLE zip3R #-}
+
+-- | Internal function to consume a stream remainder to
+-- get the payload
+extractResult :: Control.Monad m => Either r (Stream (Of a) m r) #-> m r
+extractResult (Left r) = Control.return r
+extractResult (Right s) = effects s
 
 
 -- # Merging
