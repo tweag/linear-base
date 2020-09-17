@@ -29,6 +29,7 @@ library
     Data.Eq.Linear
     Data.Functor.Linear
     Data.HashMap.Linear
+    Data.List.Linear
     Data.Maybe.Linear
     Data.Monoid.Linear
     Data.Num.Linear

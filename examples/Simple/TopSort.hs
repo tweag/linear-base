@@ -62,24 +62,23 @@ postOrderHM nodes dag = findSources nodes (computeInDeg nodes dag) & \case
  where
    -- O(V + N)
   computeInDeg :: [Node] -> InDegGraph #-> InDegGraph
-  computeInDeg nodes dag = Linear.foldl incChildren dag nodes
+  computeInDeg nodes dag = Linear.foldl incChildren dag (map Ur nodes)
 
   -- Increment in-degree of all neighbors
-  incChildren :: InDegGraph #-> Node -> InDegGraph
-  incChildren dag node = HMap.lookup dag node & \case
+  incChildren :: InDegGraph #-> Ur Node #-> InDegGraph
+  incChildren dag (Ur node) = HMap.lookup dag node & \case
      (dag, Ur Nothing) -> dag
      (dag, Ur (Just (xs,i))) -> incNodes (move xs) dag
     where
       incNodes :: Ur [Node] #-> InDegGraph #-> InDegGraph
-      incNodes (Ur ns) dag = Linear.foldl incNode dag ns
+      incNodes (Ur ns) dag = Linear.foldl incNode dag (map Ur ns)
 
-      incNode :: InDegGraph #-> Node -> InDegGraph
-      incNode dag node = HMap.lookup dag node & \case
+      incNode :: InDegGraph #-> Ur Node #-> InDegGraph
+      incNode dag (Ur node) = HMap.lookup dag node & \case
         (dag', Ur Nothing) -> dag'
         (dag', Ur (Just (n,d))) ->
           HMap.insert dag' node (n,d+1)
         --HMap.alter dag (\(Just (n,d)) -> Just (n,d+1)) node
-
 
 -- pluckSources sources postOrdSoFar dag
 pluckSources :: [Node] -> [Node] -> InDegGraph #-> Ur [Node]

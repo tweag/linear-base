@@ -91,6 +91,7 @@ import qualified Data.Vector.Linear as V
 import GHC.TypeLits
 import GHC.Types hiding (Any)
 import Data.Monoid.Linear
+import Data.List.NonEmpty
 import qualified Prelude
 import qualified Unsafe.Linear as Unsafe
 
@@ -273,6 +274,18 @@ instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
   move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
 
+instance (Consumable a, Consumable b) => Consumable (Prelude.Either a b) where
+  consume (Prelude.Left a) = consume a
+  consume (Prelude.Right b) = consume b
+
+instance (Dupable a, Dupable b) => Dupable (Prelude.Either a b) where
+  dupV (Prelude.Left a) = Data.fmap Prelude.Left (dupV a)
+  dupV (Prelude.Right b) = Data.fmap Prelude.Right (dupV b)
+
+instance (Movable a, Movable b) => Movable (Prelude.Either a b) where
+  move (Prelude.Left a) = Data.fmap Prelude.Left (move a)
+  move (Prelude.Right b) = Data.fmap Prelude.Right (move b)
+
 instance Consumable a => Consumable [a] where
   consume [] = ()
   consume (a:l) = consume a `lseq` consume l
@@ -284,6 +297,15 @@ instance Dupable a => Dupable [a] where
 instance Movable a => Movable [a] where
   move [] = Ur []
   move (a:l) = (:) Data.<$> move a Data.<*> move l
+
+instance Consumable a => Consumable (NonEmpty a) where
+  consume (x :| xs) = consume x `lseq` consume xs
+
+instance Dupable a => Dupable (NonEmpty a) where
+  dupV (x :| xs) = (:|) Data.<$> dupV x Data.<*> dupV xs
+
+instance Movable a => Movable (NonEmpty a) where
+  move (x :| xs) = (:|) Data.<$> move x Data.<*> move xs
 
 instance Consumable (Ur a) where
   consume (Ur _) = ()

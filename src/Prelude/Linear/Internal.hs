@@ -53,13 +53,10 @@ uncurry f (x,y) = f x y
 (.) :: (b #-> c) #-> (a #-> b) #-> a #-> c
 f . g = \x -> f (g x)
 
--- | Linearly typed replacement for the standard 'Prelude.foldr' function,
--- to allow linear consumption of a list.
-foldr :: (a #-> b #-> b) -> b #-> [a] #-> b
-foldr f z = \case
-  [] -> z
-  x:xs -> f x (foldr f z xs)
-
-foldl :: (b #-> a -> b) -> b #-> [a] -> b
-foldl _ b [] = b
-foldl f b (x:xs) = foldl f (f b x) xs
+-- XXX: temporary: with multiplicity polymorphism functions expecting a
+-- non-linear arrow would allow a linear arrow passed, so this would be
+-- redundant
+-- | Convenience operator when a higher-order function expects a non-linear
+-- arrow but we have a linear arrow.
+forget :: (a #-> b) #-> a -> b
+forget f x = f x
