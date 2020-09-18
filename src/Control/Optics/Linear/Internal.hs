@@ -23,11 +23,11 @@ module Control.Optics.Linear.Internal
   , _Just, _Nothing
   , traversed
     -- * Using optics
-  , get, set, gets
+  , get, set, gets, setSwap
   , match, build
   , over, over'
   , traverseOf, traverseOf'
-  , lengthOf
+  , toListOf, lengthOf
   , withIso, withPrism
     -- * Constructing optics
   , iso, prism
@@ -38,6 +38,7 @@ import qualified Control.Arrow as NonLinear
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Profunctor.Linear
+import Data.Functor.Compose hiding (getCompose)
 import Data.Functor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
 import Data.Void
@@ -97,6 +98,9 @@ over (Optical l) f = getLA (l (LA f))
 traverseOf :: Optic_ (Linear.Kleisli f) a b s t -> (a #-> f b) -> s #-> f t
 traverseOf (Optical l) f = Linear.runKleisli (l (Linear.Kleisli f))
 
+toListOf :: Optic_ (NonLinear.Kleisli (Const [a])) a b s t -> s -> [a]
+toListOf l = gets l (\a -> [a])
+
 get :: Optic_ (NonLinear.Kleisli (Const a)) a b s t -> s -> a
 get l = gets l P.id
 
@@ -105,6 +109,12 @@ gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Co
 
 set :: Optic_ (->) a b s t -> b -> s -> t
 set (Optical l) x = l (const x)
+
+setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) a b s t -> s #-> b #-> (a, t)
+setSwap (Optical l) s = getLA (getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (LA (\b -> (a,b)))))) s))
+  where
+    getCompose :: Compose f g a #-> f (g a)
+    getCompose (Compose x) = x
 
 match :: Optic_ (Market a b) a b s t -> s #-> Either t a
 match (Optical l) = snd (runMarket (l (Market id Right)))
