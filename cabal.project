@@ -5,10 +5,10 @@ allow-newer: all
 -- If you update below, make sure to also update stack.yaml too
 
 source-repository-package
-  -- https://github.com/nick8325/quickcheck/pull/311
+  -- https://github.com/nick8325/quickcheck/pull/314
   type: git
-  location: https://github.com/phadej/quickcheck.git
-  tag: d659a5e44b3304e7599321d506bf48d2e88389d0
+  location: https://github.com/buggymcbugfix/quickcheck.git
+  tag: f24fbd0d0f7a03da76c46b31d6fba9678ff5e71c
 
 source-repository-package
   -- https://github.com/hedgehogqa/haskell-hedgehog/pull/392

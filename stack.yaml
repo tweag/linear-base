@@ -1,5 +1,5 @@
 # See https://hub.docker.com/r/tweag/linear-types/
-resolver: lts-16.8
+resolver: lts-16.15
 compiler: ghc-8.11
 allow-newer: true
 system-ghc: true
@@ -9,9 +9,9 @@ packages:
 
 # If you update the extra-deps, make sure to also update cabal.project
 extra-deps:
-# https://github.com/nick8325/quickcheck/pull/311
-- git: https://github.com/phadej/quickcheck.git
-  commit: d659a5e44b3304e7599321d506bf48d2e88389d0
+# https://github.com/nick8325/quickcheck/pull/314
+- git: https://github.com/buggymcbugfix/quickcheck.git
+  commit: f24fbd0d0f7a03da76c46b31d6fba9678ff5e71c
 # https://github.com/hedgehogqa/haskell-hedgehog/pull/392
 - git: https://github.com/utdemir/haskell-hedgehog.git
   commit: c98aa9e33bf6871098d6f4ac94eeaac10383d696
