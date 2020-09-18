@@ -1,6 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -25,6 +27,7 @@ module Data.Array.Mutable.Unlifted.Linear
   , read
   , write
   , copyInto
+  , map
   , toList
   ) where
 
@@ -123,6 +126,24 @@ copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
             _ -> (# Array# src, Array# dst #)
 {-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
 
+map :: (a #-> b) -> Array# a #-> Array# b
+map (f :: a #-> b) arr =
+  size arr
+    `chain2` \(# arr', Ur s #) -> go 0 s arr'
+ where
+  -- When we're mapping an array, we first insert `b`'s
+  -- inside an `Array# a` by unsafeCoerce'ing, and then we
+  -- unsafeCoerce the result to an `Array# b`.
+  go :: Int -> Int -> Array# a #-> Array# b
+  go i s arr'
+    | i Prelude.== s =
+        Unsafe.toLinear GHC.unsafeCoerce# arr'
+    | Prelude.otherwise =
+        read i arr'
+          `chain2` \(# arr'', Ur a #) -> write i (Unsafe.coerce (f a)) arr''
+          `chain` \arr''' -> go (i Prelude.+ 1) s arr'''
+{-# NOINLINE map #-}
+
 -- | Return the array elements as a lazy list.
 toList :: Array# a #-> Ur [a]
 toList = unArray# Prelude.$ \arr ->
@@ -136,3 +157,20 @@ toList = unArray# Prelude.$ \arr ->
     | GHC.I# i# <- i =
         case GHC.runRW# (GHC.readArray# arr i#) of
           (# _, ret #) -> ret : go (i Prelude.+ 1) len arr
+
+-- * Internal library
+
+-- Below two are variants of (&) specialized for taking commonly used
+-- unlifted values and returning a levity-polymorphic result.
+--
+-- They are not polymorphic on their first parameter since levity-polymorphism
+-- disallows binding to levity-polymorphic values.
+
+chain :: forall (r :: GHC.RuntimeRep) a (b :: GHC.TYPE r).
+        Array# a #-> (Array# a #-> b) #-> b
+chain a f = f a
+
+chain2 :: forall (r :: GHC.RuntimeRep) a b (c :: GHC.TYPE r).
+        (# Array# a, b #) #-> ((# Array# a, b #) #-> c) #-> c
+chain2 a f = f a
+infixl 1 `chain`, `chain2`

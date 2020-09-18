@@ -63,7 +63,6 @@ import GHC.Stack
 import Data.Array.Mutable.Unlifted.Linear (Array#)
 import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
 import qualified Data.Functor.Linear as Data
-import qualified Unsafe.Linear as Unsafe
 import Prelude.Linear ((&))
 import Prelude hiding (read)
 
@@ -224,21 +223,7 @@ instance Consumable (Array a) where
   consume (Array arr) = arr `Unlifted.lseq` ()
 
 instance Data.Functor Array where
-  fmap (f :: a #-> b) arr =
-    size arr & \(arr', Ur s) -> go 0 s arr'
-   where
-    -- When we're mapping  an array, we first insert `b`'s
-    -- inside an `Array b` by unsafeCoerce'ing, and then we
-    -- unsafeCoerce the result to an `Array b`.
-    go :: Int -> Int -> Array a #-> Array b
-    go i s arr
-      | i == s =
-          Unsafe.coerce arr
-      | otherwise =
-          unsafeRead arr i
-            & \(arr', Ur a) ->
-                unsafeWrite arr' i (Unsafe.coerce (f a))
-            & \arr'' -> go (i+1) s arr''
+  fmap f (Array arr) = Array (Unlifted.map f arr)
 
 -- # Internal library
 -------------------------------------------------------------------------------
