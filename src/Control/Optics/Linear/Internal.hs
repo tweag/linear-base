@@ -28,9 +28,9 @@ module Control.Optics.Linear.Internal
   , over, over'
   , traverseOf, traverseOf'
   , toListOf, lengthOf
-  , withIso, withPrism
+  , withIso, withLens, withPrism
     -- * Constructing optics
-  , iso, prism
+  , iso, lens, prism
   )
   where
 
@@ -42,6 +42,8 @@ import Data.Functor.Compose hiding (getCompose)
 import Data.Functor.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
 import Data.Void
+import GHC.Exts (FUN)
+import GHC.Types
 import Prelude.Linear
 import qualified Prelude as P
 
@@ -67,6 +69,10 @@ assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 
 (.>) :: Optic_ arr a b s t -> Optic_ arr x y a b -> Optic_ arr x y s t
 Optical f .> Optical g = Optical (f P.. g)
+
+
+lens :: (s #-> (a, b #-> t)) -> Lens a b s t
+lens k = Optical $ \f -> dimap k (\(x,g) -> g $ x) (first f)
 
 prism :: (b #-> t) -> (s #-> Either t a) -> Prism a b s t
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
@@ -112,9 +118,6 @@ set (Optical l) x = l (const x)
 
 setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) a b s t -> s #-> b #-> (a, t)
 setSwap (Optical l) s = getLA (getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (LA (\b -> (a,b)))))) s))
-  where
-    getCompose :: Compose f g a #-> f (g a)
-    getCompose (Compose x) = x
 
 match :: Optic_ (Market a b) a b s t -> s #-> Either t a
 match (Optical l) = snd (runMarket (l (Market id Right)))
@@ -149,3 +152,10 @@ withIso (Optical l) f = f fro to
 withPrism :: Optic_ (Market a b) a b s t -> ((b #-> t) -> (s #-> Either t a) -> r) -> r
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)
+
+withLens :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) a b s t -> s #-> (a, b #-> t)
+withLens (Optical l) s = getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (a, id)))) s)
+
+-- linear variant of getCompose
+getCompose :: Compose f g a #-> f (g a)
+getCompose (Compose x) = x
