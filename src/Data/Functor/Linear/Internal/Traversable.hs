@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
