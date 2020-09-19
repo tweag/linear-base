@@ -42,7 +42,7 @@ type Keyed a = Linear.Keyed a
 
 empty :: Keyed a => Int -> (Set a #-> Ur b) #-> Ur b
 empty s (f :: Set a #-> Ur b) =
-  Linear.empty (Linear.Size s) (\hm -> f (Set hm))
+  Linear.empty s (\hm -> f (Set hm))
 
 fromList :: (HasCallStack, Keyed a) => [a] -> (Set a #-> Ur b) #-> Ur b
 fromList xs f = empty ((length xs) * 2 + 1) (f Linear.. insertAll xs)

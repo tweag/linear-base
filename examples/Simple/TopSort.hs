@@ -52,7 +52,7 @@ topsort = reverse . postOrder . fmap (  \(n,nbrs) -> (n,(nbrs,0))  )
     postOrder :: [(Node, ([Node], Int))] -> [Node]
     postOrder [] = []
     postOrder (xs) = let nodes = map fst xs in
-      unur Linear.$ HMap.empty (HMap.Size (length xs * 2)) Linear.$
+      unur Linear.$ HMap.empty (length xs * 2) Linear.$
         \hm -> postOrderHM nodes (HMap.insertAll xs hm)
 
 
