@@ -62,6 +62,7 @@ import Data.Unrestricted.Linear
 import GHC.Stack
 import Data.Array.Mutable.Unlifted.Linear (Array#)
 import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
+import qualified Data.Functor.Linear as Data
 import Prelude.Linear ((&))
 import Prelude hiding (read)
 
@@ -220,6 +221,9 @@ slice from targetSize arr =
 instance Consumable (Array a) where
   consume :: Array a #-> ()
   consume (Array arr) = arr `Unlifted.lseq` ()
+
+instance Data.Functor Array where
+  fmap f (Array arr) = Array (Unlifted.map f arr)
 
 -- # Internal library
 -------------------------------------------------------------------------------

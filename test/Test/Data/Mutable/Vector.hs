@@ -18,10 +18,13 @@ where
 
 import qualified Data.Vector.Mutable.Linear as Vector
 import Data.Unrestricted.Linear
+import qualified Data.Functor.Linear as Data
 import Hedgehog
+import Data.Ord.Linear as Linear
+import Data.Maybe (mapMaybe)
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import qualified Prelude.Linear as Linear
+import qualified Prelude.Linear as Linear hiding ((>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -51,6 +54,10 @@ group =
   , testProperty "toList can be implemented with repeated pops" refToListViaPop
   , testProperty "fromList can be implemented with repeated pushes" refFromListViaPush
   , testProperty "toList works with extra capacity" refToListWithExtraCapacity
+  , testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend
+  , testProperty "mapMaybe f (fromList xs) = fromList (mapMaybe f xs)" refMapMaybe
+  , testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter
+  , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
   -- Regression tests
   , testProperty "push on an empty vector should succeed" snocOnEmptyVector
   , testProperty "do not reorder reads and writes" readAndWriteTest
@@ -284,6 +291,55 @@ refSlice = property $ do
       Ur actual =
         Vector.fromList xs Linear.$ \arr ->
           Vector.slice s n arr
+            Linear.& Vector.toList
+  expected === actual
+
+refMappend :: Property
+refMappend = property $ do
+  xs <- forAll list
+  ys <- forAll list
+  let expected = xs <> ys
+      Ur actual =
+        Vector.fromList xs Linear.$ \vx ->
+          Vector.fromList ys Linear.$ \vy ->
+            Vector.toList (vx Linear.<> vy)
+  expected === actual
+
+refFmap :: Property
+refFmap = property $ do
+  xs <- forAll list
+  let -- An arbitrary function
+      f :: Int #-> Bool
+      f = (Linear.> 0)
+      expected = map (Linear.forget f) xs
+      Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.toList (f Data.<$> vec)
+  expected === actual
+
+refMapMaybe :: Property
+refMapMaybe = property $ do
+  xs <- forAll list
+  let -- An arbitrary function
+      f :: Int -> Maybe Bool
+      f = (\a -> if a Prelude.< 0 then Nothing else Just (a `mod` 2 == 0))
+      expected = mapMaybe f xs
+      Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.mapMaybe vec f
+            Linear.& Vector.toList
+  expected === actual
+
+refFilter :: Property
+refFilter = property $ do
+  xs <- forAll list
+  let -- An arbitrary function
+      f :: Int -> Bool
+      f = (Prelude.< 0)
+      expected = filter f xs
+      Ur actual =
+        Vector.fromList xs Linear.$ \vec ->
+          Vector.filter vec f
             Linear.& Vector.toList
   expected === actual
 

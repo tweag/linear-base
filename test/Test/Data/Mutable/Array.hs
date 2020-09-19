@@ -38,10 +38,12 @@ where
 
 import qualified Data.Array.Mutable.Linear as Array
 import Data.Unrestricted.Linear
+import qualified Data.Functor.Linear as Data
+import qualified Data.Ord.Linear as Linear
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import qualified Prelude.Linear as Linear
+import qualified Prelude.Linear as Linear hiding ((>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -66,6 +68,7 @@ group =
   -- Tests against a reference implementation
   , testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef
   , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
+  , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
   , testProperty "toList . fromList = id" refToListFromList
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
@@ -248,6 +251,18 @@ sliceRef = property $ do
           Array.slice s n arr
             Linear.& \(old, new) ->
                        old `lseq` Array.toList new
+  expected === actual
+
+refFmap :: Property
+refFmap = property $ do
+  xs <- forAll list
+  let -- An arbitrary function
+      f :: Int #-> Bool
+      f = (Linear.> 0)
+      expected = map (Linear.forget f) xs
+      Ur actual =
+        Array.fromList xs Linear.$ \arr ->
+          Array.toList (f Data.<$> arr)
   expected === actual
 
 -- https://github.com/tweag/linear-base/pull/135

@@ -22,7 +22,7 @@
 --
 -- > {-# LANGUAGE LinearTypes #-}
 -- > import Prelude.Linear
--- > import Data.Unrestricted.Linear
+-- > import Data.Ur.Linear
 -- > import qualified Unsafe.Linear as Unsafe
 -- > import qualified Data.Vector.Mutable.Linear as Vector
 -- >
@@ -52,8 +52,12 @@ module Data.Vector.Mutable.Linear
     -- * Mutators
     write,
     unsafeWrite,
+    modify,
+    modify_,
     push,
     pop,
+    filter,
+    mapMaybe,
     slice,
     shrinkToFit,
     -- * Accessors
@@ -66,9 +70,13 @@ module Data.Vector.Mutable.Linear
 where
 
 import GHC.Stack
-import Prelude.Linear hiding (read)
+import Prelude.Linear hiding (read, filter, mapMaybe)
 import Data.Array.Mutable.Linear (Array)
+import qualified Prelude
+import Data.Monoid.Linear
 import qualified Data.Array.Mutable.Linear as Array
+import qualified Data.Functor.Linear as Data
+import qualified Unsafe.Linear as Unsafe
 
 -- # Constants
 -------------------------------------------------------------------------------
@@ -179,13 +187,66 @@ unsafeRead (Vec size' arr) ix =
   Array.unsafeRead arr ix
     & \(arr', val) -> (Vec size' arr', val)
 
--- See the note at Array.toListLazy
+-- | Same as 'modify', but does not do bounds-checking.
+unsafeModify :: HasCallStack => Vector a #-> (a -> (a, b)) -> Int
+             -> (Vector a, Ur b)
+unsafeModify (Vec size' arr) f ix =
+  Array.unsafeRead arr ix & \(arr', Ur old) ->
+    case f old of
+      (a, b) -> Array.unsafeWrite arr' ix a & \arr'' ->
+        (Vec size' arr'', Ur b)
+
+-- | Modify a value inside a vector, with an ability to return an extra
+-- information. Errors if the index is out of bounds.
+modify :: HasCallStack => Vector a #-> (a -> (a, b)) -> Int
+       -> (Vector a, Ur b)
+modify vec f ix = unsafeModify (assertIndexInRange ix vec) f ix
+
+-- | Same as 'modify', but without the ability to return extra information.
+modify_ :: HasCallStack => Vector a #-> (a -> a) -> Int -> Vector a
+modify_ vec f ix =
+  modify vec (\a -> (f a, ())) ix
+    & \(vec', Ur ()) -> vec'
 
 -- | Return the vector elements as a lazy list.
 toList :: Vector a #-> Ur [a]
 toList (Vec s arr) =
   Array.toList arr & \(Ur xs) ->
     Ur (take s xs)
+
+-- | Filters the vector in-place. It does not deallocate unused capacity,
+-- use 'shrinkToFit' for that if necessary.
+filter :: Vector a #-> (a -> Bool) -> Vector a
+filter v f = mapMaybe v (\a -> if f a then Just a else Nothing)
+-- TODO A slightly more efficient version exists, where we skip the writes
+-- until the first time the predicate fails. However that requires duplicating
+-- most of the logic at `mapMaybe`, so lets not until we have benchmarks to
+-- see the advantage.
+
+-- | A version of 'fmap' which can throw out elements.
+mapMaybe :: Vector a #-> (a -> Maybe b) -> Vector b
+mapMaybe vec (f :: a -> Maybe b) =
+  size vec & \(vec', Ur s) -> go 0 0 s vec'
+ where
+  go :: Int -- ^ read cursor
+     -> Int -- ^ write cursor
+     -> Int -- ^ input size
+     -> Vector a #-> Vector b
+  go r w s vec'
+    -- If we processed all elements, set the capacity after the last written
+    -- index and coerce the result to the correct type.
+    | r == s =
+        vec' & \(Vec _ arr) ->
+          Vec w (Unsafe.coerce arr)
+    -- Otherwise, read an element, write if the predicate is true and advance
+    -- the write cursor; otherwise keep the write cursor skipping the element.
+    | otherwise =
+        unsafeRead vec' r & \case
+          (vec'', Ur a)
+            | Just b <- f a ->
+                go (r+1) (w+1) s (unsafeWrite vec'' w (Unsafe.coerce b))
+            | otherwise ->
+                go (r+1) w s vec''
 
 -- | Resize the vector to not have any wasted memory (size == capacity). This
 -- returns a semantically identical vector.
@@ -218,6 +279,28 @@ slice from newSize (Vec oldSize arr) =
 
 instance Consumable (Vector a) where
   consume (Vec _ arr) = consume arr
+
+-- There is no way to get an unrestricted vector. So the below instance
+-- is just to satisfy the linear Semigroup's constraint.
+instance Prelude.Semigroup (Vector a) where
+  v1 <> v2 = v1 Data.Monoid.Linear.<> v2
+
+instance Semigroup (Vector a) where
+  -- This operation tries to use the existing capacity of v1 when possible.
+  v1 <> v2 =
+    size v2 & \(v2', Ur s2) ->
+      growToFit s2 v1 & \v1' ->
+        toList v2' & \(Ur xs) ->
+          go xs v1'
+   where
+     go :: [a] -> Vector a #-> Vector a
+     go [] vec = vec
+     go (x:xs) (Vec sz arr) =
+       unsafeWrite (Vec (sz+1) arr) sz x
+         & go xs
+
+instance Data.Functor Vector where
+  fmap f vec = mapMaybe vec (\a -> Just (f a))
 
 -- # Internal library
 -------------------------------------------------------------------------------
