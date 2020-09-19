@@ -78,6 +78,9 @@ newtype Count = Count Int
   deriving (Prelude.Num)
 
 -- | An array of Robin values
+--
+-- Each cell is Nothing if empty and is a RobinVal with the correct
+-- PSL otherwise.
 type RobinArr k v = Array (Maybe (RobinVal k v))
 
 -- | Robin values are triples of the key, value and PSL
@@ -99,7 +102,11 @@ newtype PSL = PSL Int
 -- and identifiable keys
 type Keyed k = (Eq k, Hashable k)
 
--- | The results of searching for where to insert a key
+-- | The results of searching for where to insert a key.
+--
+-- PSL's on the constructors are the probes spent from the query, this
+-- might be different than PSL's of the cell at the returned index
+-- (in case of `IndexToSwap` constructor).
 data ProbeResult k v where
   -- | An empty cell at index to insert a new element with PSL.
   IndexToInsert :: !PSL -> !Int -> ProbeResult k v
@@ -158,7 +165,7 @@ resizeMap :: Keyed k => HashMap k v #-> HashMap k v
 resizeMap hm =
   capacity hm & \(HashMap _ arr, Ur cap) ->
     extractPairs cap arr & \(arr', Ur kvs) ->
-      let newCap = cap*2 + cap`div`2
+      let newCap = (cap * 2) + (cap `div` 2)
       in Array.allocBeside newCap Nothing arr' & \(oldArr, newArr) ->
            oldArr `lseq`
              insertAll kvs (HashMap (Count 0) newArr)
@@ -264,7 +271,7 @@ idealIndexForKey
   => k -> HashMap k v #-> (HashMap k v, Ur Int)
 idealIndexForKey k hm =
   capacity hm & \(hm', Ur cap) ->
-    (hm', Ur (hash k `mod` cap))
+    (hm', Ur (mod (hash k) cap))
 
 -- # Instances
 --------------------------------------------------
