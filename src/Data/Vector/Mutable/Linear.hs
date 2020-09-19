@@ -295,8 +295,8 @@ instance Semigroup (Vector a) where
    where
      go :: [a] -> Vector a #-> Vector a
      go [] vec = vec
-     go (x:xs) (Vec cap arr) =
-       unsafeWrite (Vec (cap+1) arr) cap x
+     go (x:xs) (Vec sz arr) =
+       unsafeWrite (Vec (sz+1) arr) sz x
          & go xs
 
 instance Data.Functor Vector where
