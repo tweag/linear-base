@@ -80,6 +80,10 @@ instance Strong Either Void LinearArrow where
   first  (LA f) = LA $ either (Left . f) Right
   second (LA g) = LA $ either Left (Right . g)
 
+instance Monoidal (,) () LinearArrow where
+  LA f *** LA g = LA $ \(a,x) -> (f a, g x)
+  unit = LA id
+
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))
 instance Strong (,) () (->) where
@@ -87,6 +91,9 @@ instance Strong (,) () (->) where
 instance Strong Either Void (->) where
   first f (Left x) = Left (f x)
   first _ (Right y) = Right y
+instance Monoidal (,) () (->) where
+  (f *** g) (a,x) = (f a, g x)
+  unit () = ()
 
 data Exchange a b s t = Exchange (s #-> a) (b #-> t)
 instance Profunctor (Exchange a b) where
@@ -103,6 +110,10 @@ instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
   first  (Kleisli f) = Kleisli $ \case
                                    Left  x -> Prelude.fmap Left (f x)
                                    Right y -> Prelude.pure (Right y)
+
+instance Prelude.Applicative f => Monoidal (,) () (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli (\(x,y) -> (,) Prelude.<$> f x Prelude.<*> g y)
+  unit = Kleisli Prelude.pure
 
 data Market a b s t = Market (b #-> t) (s #-> Either t a)
 runMarket :: Market a b s t #-> (b #-> t, s #-> Either t a)
