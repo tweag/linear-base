@@ -1,6 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData #-}
@@ -8,6 +10,10 @@
 
 -- |
 -- This module defines linear mutable sets.
+--
+-- The underlying implementation uses 'Data.HashMap.Linear', so it inherits
+-- the time and memory characteristics of it.
+--
 -- Please import this module qualified to avoid name clashes.
 module Data.Set.Mutable.Linear
   ( -- * Mutable Sets
@@ -15,17 +21,22 @@ module Data.Set.Mutable.Linear
     empty,
     insert,
     delete,
+    union,
+    intersection,
     size,
     member,
     fromList,
+    toList,
     Keyed,
   )
 where
 
 import qualified Data.HashMap.Linear as Linear
-import Data.Unrestricted.Linear
 import qualified Prelude.Linear as Linear
-import GHC.Stack
+import Prelude (Int, Bool)
+import qualified Prelude
+import Data.Monoid.Linear
+import Data.Unrestricted.Linear
 
 
 -- # Data Definitions
@@ -44,12 +55,10 @@ empty :: Keyed a => Int -> (Set a #-> Ur b) #-> Ur b
 empty s (f :: Set a #-> Ur b) =
   Linear.empty s (\hm -> f (Set hm))
 
-fromList :: (HasCallStack, Keyed a) => [a] -> (Set a #-> Ur b) #-> Ur b
-fromList xs f = empty ((length xs) * 2 + 1) (f Linear.. insertAll xs)
-  where
-    insertAll :: Keyed a => [a] -> Set a #-> Set a
-    insertAll [] set = set
-    insertAll (x':xs') set = insertAll xs' (insert set x')
+toList :: Keyed a => Set a #-> Ur [a]
+toList (Set hm) =
+  Linear.toList hm
+    Linear.& \(Ur xs) -> Ur (Prelude.map Prelude.fst xs)
 
 insert :: Keyed a => Set a #-> a -> Set a
 insert (Set hmap) a = Set (Linear.insert hmap a ())
@@ -57,6 +66,13 @@ insert (Set hmap) a = Set (Linear.insert hmap a ())
 delete :: Keyed a => Set a #-> a -> Set a
 delete (Set hmap) a = Set (Linear.delete hmap a)
 
+union :: Keyed a => Set a #-> Set a #-> Set a
+union (Set hm1) (Set hm2) =
+  Set (Linear.unionWith (\_ _ -> ()) hm1 hm2)
+
+intersection :: Keyed a => Set a #-> Set a #-> Set a
+intersection (Set hm1) (Set hm2) =
+  Set (Linear.intersectionWith (\_ _ -> ()) hm1 hm2)
 
 -- # Accessors
 -------------------------------------------------------------------------------
@@ -69,9 +85,18 @@ member :: Keyed a => Set a #-> a -> (Set a, Ur Bool)
 member (Set hm) a =
   Linear.member hm a Linear.& \(hm', b) -> (Set hm', b)
 
+fromList :: Keyed a => [a] -> (Set a #-> Ur b) #-> Ur b
+fromList xs f =
+  Linear.fromList (Prelude.map (,()) xs) (\hm -> f (Set hm))
 
 -- # Typeclass Instances
 -------------------------------------------------------------------------------
+
+instance Prelude.Semigroup (Set a) where
+  (<>) = Prelude.error "Prelude.(<>): invariant violation, unrestricted Set"
+
+instance Keyed a => Semigroup (Set a) where
+  (<>) = union
 
 instance Consumable (Set a) where
   consume (Set hmap) = consume hmap
