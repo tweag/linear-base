@@ -6,6 +6,6 @@ steps:
     key: "install-linear-ghc"
   - label: "Run tests (cabal-install)"
     command: |
-      nix-shell --pure --run 'cabal test'
+      nix-shell --pure --run 'cabal update; cabal test'
     timeout: 30
     depends_on: "install-linear-ghc"
