@@ -4,8 +4,8 @@ steps:
       nix-shell --command ''
     timeout: 120
     key: "install-linear-ghc"
-  - label: "Run tests (Stack)"
+  - label: "Run tests (cabal-install)"
     command: |
-      nix-shell --pure --run 'stack --nix build --pedantic --test --bench --no-run-benchmarks'
+      nix-shell --pure --run 'cabal update; cabal test'
     timeout: 30
     depends_on: "install-linear-ghc"

@@ -2,6 +2,9 @@ packages: *.cabal
 
 allow-newer: all
 
+package linear-base
+  ghc-options: -Wall -Werror
+
 -- If you update below, make sure to also update stack.yaml too
 
 source-repository-package
