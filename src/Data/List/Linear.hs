@@ -12,20 +12,32 @@ original "Data.List" module for more detailed information.
 -}
 module Data.List.Linear
   ( -- * Basic functions
-    map
+    (++)
+  , map
   , filter
+  , head
   , uncons
+  , tail
+  , last
+  , init
   , reverse
   , length
   , splitAt
   , span
+  , partition
+  , takeWhile
+  , dropWhile
+  , find
   , intersperse
   , intercalate
   , transpose
   -- * Folds
-  , foldr
   , foldl
   , foldl'
+  , foldl1
+  , foldl1'
+  , foldr
+  , foldr1
   , foldMap
   , foldMap'
   -- * Special folds
@@ -35,9 +47,17 @@ module Data.List.Linear
   , or
   , any
   , all
+  , sum
+  , product
   -- * Building lists
   , scanl
+  , scanl1
+  , scanr
+  , scanr1
+  , repeat
   , replicate
+  , cycle
+  , iterate
   , unfoldr
   -- * Zipping lists
   , zip
@@ -51,17 +71,21 @@ module Data.List.Linear
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude as Prelude
 import Prelude (Maybe(..), Either(..), Int, otherwise)
-import Data.Num.Linear
 import Prelude.Linear.Internal
 import Data.Bool.Linear
 import Data.Unrestricted.Linear
 import Data.Functor.Linear
 import Data.Monoid.Linear
+import Data.Num.Linear
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import GHC.Stack
 import qualified Data.List as NonLinear
 
 -- # Basic functions
 --------------------------------------------------
+
+(++) :: [a] #-> [a] #-> [a]
+(++) = Unsafe.toLinear2 (NonLinear.++)
 
 map :: (a #-> b) -> [a] #-> [b]
 map = fmap
@@ -78,9 +102,29 @@ filter p (x:xs) =
       then x'' : filter p xs
       else x'' `lseq` filter p xs
 
+-- | __NOTE__: This does not short-circuit and always traverses the
+-- entire array to consume the rest of the elements.
+head :: (HasCallStack, Consumable a) => [a] #-> a
+head [] = Prelude.error "head: empty list"
+head (x:xs) = xs `lseq` x
+
 uncons :: [a] #-> Maybe (a, [a])
 uncons [] = Nothing
 uncons (x:xs) = Just (x, xs)
+
+tail :: (HasCallStack, Consumable a) => [a] #-> [a]
+tail [] = Prelude.error "tail: empty list"
+tail (x:xs) = x `lseq` xs
+
+last :: (HasCallStack, Consumable a) => [a] #-> a
+last [] = Prelude.error "last: empty list"
+last [x] = x
+last (x:xs) = x `lseq` last xs
+
+init :: (HasCallStack, Consumable a) => [a] #-> [a]
+init [] = Prelude.error "init: empty list"
+init [x] = x `lseq` []
+init (x:xs) = x : init xs
 
 reverse :: [a] #-> [a]
 reverse = Unsafe.toLinear NonLinear.reverse
@@ -91,6 +135,16 @@ length = Unsafe.toLinear $ \xs ->
   (xs, Ur (NonLinear.length xs))
 -- We can only do this because of the fact that 'NonLinear.length'
 -- does not inspect the elements.
+
+-- | __NOTE__: This does not short-circuit and always traverses the
+-- entire array to consume the rest of the elements.
+find :: Dupable a => (a #-> Bool) -> [a] #-> Maybe a
+find _ [] = Nothing
+find p (x:xs) =
+  dup x & \(x', x'') ->
+    if p x'
+    then xs `lseq` Just x''
+    else x'' `lseq` find p xs
 
 --  'splitAt' @n xs@ returns a tuple where first element is @xs@ prefix of
 -- length @n@ and second element is the remainder of the list.
@@ -107,6 +161,37 @@ span f (x:xs) = dup x & \case
     if f x'
     then span f xs & \case (ts, fs) -> (x'':ts, fs)
     else ([x''], xs)
+
+-- The partition function takes a predicate a list and returns the
+-- pair of lists of elements which do and do not satisfy the predicate,
+-- respectively.
+partition :: Dupable a => (a #-> Bool) -> [a] #-> ([a], [a])
+partition p (xs :: [a]) = foldr select ([], []) xs
+ where
+  select :: a #-> ([a], [a]) #-> ([a], [a])
+  select x (ts, fs) =
+    dup2 x & \(x', x'') ->
+      if p x'
+      then (x'':ts, fs)
+      else (ts, x'':fs)
+
+-- | __NOTE__: This does not short-circuit and always traverses the
+-- entire array to consume the rest of the elements.
+takeWhile :: Dupable a => (a #-> Bool) -> [a] #-> [a]
+takeWhile _ [] = []
+takeWhile p (x:xs) =
+  dup2 x & \(x', x'') ->
+    if p x'
+    then x'' : takeWhile p xs
+    else (x'', xs) `lseq` []
+
+dropWhile :: Dupable a => (a #-> Bool) -> [a] #-> [a]
+dropWhile _ [] = []
+dropWhile p (x:xs) =
+  dup2 x & \(x', x'') ->
+    if p x'
+    then x'' `lseq` dropWhile p xs
+    else x'' : xs
 
 -- | The intersperse function takes an element and a list and
 -- `intersperses' that element between the elements of the list.
@@ -129,11 +214,20 @@ transpose = Unsafe.toLinear NonLinear.transpose
 foldr :: (a #-> b #-> b) -> b #-> [a] #-> b
 foldr f = Unsafe.toLinear2 (NonLinear.foldr (\a b -> f a b))
 
+foldr1 :: HasCallStack => (a #-> a #-> a) -> [a] #-> a
+foldr1 f = Unsafe.toLinear (NonLinear.foldr1 (\a b -> f a b))
+
 foldl :: (b #-> a #-> b) -> b #-> [a] #-> b
 foldl f = Unsafe.toLinear2 (NonLinear.foldl (\b a -> f b a))
 
 foldl' :: (b #-> a #-> b) -> b #-> [a] #-> b
 foldl' f = Unsafe.toLinear2 (NonLinear.foldl' (\b a -> f b a))
+
+foldl1 :: HasCallStack => (a #-> a #-> a) -> [a] #-> a
+foldl1 f = Unsafe.toLinear (NonLinear.foldl1 (\a b -> f a b))
+
+foldl1' :: HasCallStack => (a #-> a #-> a) -> [a] #-> a
+foldl1' f = Unsafe.toLinear (NonLinear.foldl1' (\a b -> f a b))
 
 -- | Map each element of the structure to a monoid,
 -- and combine the results.
@@ -149,6 +243,12 @@ concat = Unsafe.toLinear NonLinear.concat
 
 concatMap :: (a #-> [b]) -> [a] #-> [b]
 concatMap f = Unsafe.toLinear (NonLinear.concatMap (forget f))
+
+sum :: AddIdentity a => [a] #-> a
+sum = foldl' (+) zero
+
+product :: MultIdentity a => [a] #-> a
+product = foldl' (*) one
 
 -- | __NOTE:__ This does not short-circuit, and always consumes the
 -- entire container.
@@ -173,9 +273,39 @@ or = foldl' (||) False
 -- # Building Lists
 --------------------------------------------------
 
+iterate :: Dupable a => (a #-> a) -> a #-> [a]
+iterate f a = dup2 a & \(a', a'') ->
+  a' : iterate f (f a'')
+
+repeat :: Dupable a => a #-> [a]
+repeat = iterate id
+
+cycle :: (HasCallStack, Dupable a) => [a] #-> [a]
+cycle [] = Prelude.error "cycle: empty list"
+cycle xs = dup2 xs & \(xs', xs'') -> xs' ++ cycle xs''
+
 scanl :: Dupable b => (b #-> a #-> b) -> b #-> [a] #-> [b]
 scanl _ b [] = [b]
 scanl f b (x:xs) = dup2 b & \(b', b'') -> b' : scanl f (f b'' x) xs
+
+scanl1 :: Dupable a => (a #-> a #-> a) -> [a] #-> [a]
+scanl1 _ [] = []
+scanl1 f (x:xs) = scanl f x xs
+
+scanr :: Dupable b => (a #-> b #-> b) -> b #-> [a] #-> [b]
+scanr _ b [] =  [b]
+scanr f b (a:as) =
+  scanr f b as & \(b':bs') ->
+    dup2 b' & \(b'', b''') ->
+      f a b'' : b''' : bs'
+
+scanr1 :: Dupable a => (a #-> a #-> a) -> [a] #-> [a]
+scanr1 _ [] =  []
+scanr1 _ [a] =  [a]
+scanr1 f (a:as) =
+  scanr1 f as & \(a':as') ->
+    dup2 a' & \(a'', a''') ->
+      f a a'' : a''' : as'
 
 replicate :: Dupable a => Int -> a #-> [a]
 replicate i a
