@@ -12,7 +12,9 @@ import Prelude.Linear.Internal
 import Prelude (String)
 import qualified Control.Monad as NonLinear ()
 import Data.Functor.Identity
-import Data.Monoid.Linear
+import Data.Functor.Sum
+import Data.Functor.Compose
+import Data.Monoid.Linear hiding (Sum)
 import qualified Data.Functor.Linear.Internal as Data
 import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as NonLinear
@@ -161,6 +163,13 @@ instance Monad Identity where
 -- XXX: Temporary, until newtype record projections are linear.
 runIdentity' :: Identity a #-> a
 runIdentity' (Identity x) = x
+
+instance (Functor f, Functor g) => Functor (Sum f g) where
+  fmap f (InL fa) = InL (fmap f fa)
+  fmap f (InR ga) = InR (fmap f ga)
+
+instance (Functor f, Functor g) => Functor (Compose f g) where
+  fmap f (Compose fga) = Compose $ fmap (fmap f) fga
 
 ------------------------------------------------
 -- Instances for nonlinear monad transformers --

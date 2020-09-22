@@ -5,9 +5,10 @@ module Data.Functor.Linear.Internal where
 
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
-import Data.Functor.Compose
 import Data.Functor.Const
-import Data.Monoid.Linear
+import Data.Functor.Sum
+import Data.Functor.Compose
+import Data.Monoid.Linear hiding (Sum)
 import Data.Functor.Identity
 import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.Cont as NonLinear
@@ -97,6 +98,10 @@ instance Functor Identity where
 instance Applicative Identity where
   pure = Identity
   Identity f <*> Identity x = Identity (f x)
+
+instance (Functor f, Functor g) => Functor (Sum f g) where
+  fmap f (InL fa) = InL (fmap f fa)
+  fmap f (InR ga) = InR (fmap f ga)
 
 instance (Functor f, Functor g) => Functor (Compose f g) where
   fmap f (Compose x) = Compose (fmap (fmap f) x)
