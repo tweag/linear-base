@@ -52,6 +52,7 @@ module System.IO.Resource
   , openFile 
     -- ** Working with Handles
   , hClose
+  , hIsEOF
   , hGetChar
   , hPutChar
   , hGetLine
@@ -162,6 +163,9 @@ openFile path mode = Control.do
 
 hClose :: Handle #-> RIO ()
 hClose (Handle h) = unsafeRelease h
+
+hIsEOF :: Handle #-> RIO (Ur Bool, Handle)
+hIsEOF = coerce (unsafeFromSystemIOResource System.hIsEOF)
 
 hGetChar :: Handle #-> RIO (Ur Char, Handle)
 hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)

@@ -43,6 +43,14 @@ library
     Debug.Trace.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
+    Streaming.Streaming
+    Streaming.Prelude
+    Streaming.Internal.Consume
+    Streaming.Internal.Interop
+    Streaming.Internal.Many
+    Streaming.Internal.Process
+    Streaming.Internal.Produce
+    Streaming.Internal.Type
     System.IO.Linear
     System.IO.Resource
     Unsafe.Linear
