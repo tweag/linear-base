@@ -2,10 +2,10 @@ packages: *.cabal
 
 allow-newer: all
 
--- If you update below, make sure to also update stack.yaml too
-
 package linear-base
   ghc-options: -Wall -Werror
+
+-- If you update below, make sure to also update stack.yaml too
 
 source-repository-package
   -- https://github.com/nick8325/quickcheck/pull/314
