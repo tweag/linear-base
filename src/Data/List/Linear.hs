@@ -15,19 +15,20 @@ module Data.List.Linear
     (++)
   , map
   , filter
-  , head
+  , NonLinear.head
   , uncons
-  , tail
-  , last
-  , init
+  , NonLinear.tail
+  , NonLinear.last
+  , NonLinear.init
   , reverse
   , length
+  , NonLinear.null
   , splitAt
   , span
   , partition
   , takeWhile
   , dropWhile
-  , find
+  , NonLinear.find
   , intersperse
   , intercalate
   , transpose
@@ -102,29 +103,9 @@ filter p (x:xs) =
       then x'' : filter p xs
       else x'' `lseq` filter p xs
 
--- | __NOTE__: This does not short-circuit and always traverses the
--- entire array to consume the rest of the elements.
-head :: (HasCallStack, Consumable a) => [a] #-> a
-head [] = Prelude.error "head: empty list"
-head (x:xs) = xs `lseq` x
-
 uncons :: [a] #-> Maybe (a, [a])
 uncons [] = Nothing
 uncons (x:xs) = Just (x, xs)
-
-tail :: (HasCallStack, Consumable a) => [a] #-> [a]
-tail [] = Prelude.error "tail: empty list"
-tail (x:xs) = x `lseq` xs
-
-last :: (HasCallStack, Consumable a) => [a] #-> a
-last [] = Prelude.error "last: empty list"
-last [x] = x
-last (x:xs) = x `lseq` last xs
-
-init :: (HasCallStack, Consumable a) => [a] #-> [a]
-init [] = Prelude.error "init: empty list"
-init [x] = x `lseq` []
-init (x:xs) = x : init xs
 
 reverse :: [a] #-> [a]
 reverse = Unsafe.toLinear NonLinear.reverse
@@ -135,16 +116,6 @@ length = Unsafe.toLinear $ \xs ->
   (xs, Ur (NonLinear.length xs))
 -- We can only do this because of the fact that 'NonLinear.length'
 -- does not inspect the elements.
-
--- | __NOTE__: This does not short-circuit and always traverses the
--- entire array to consume the rest of the elements.
-find :: Dupable a => (a #-> Bool) -> [a] #-> Maybe a
-find _ [] = Nothing
-find p (x:xs) =
-  dup x & \(x', x'') ->
-    if p x'
-    then xs `lseq` Just x''
-    else x'' `lseq` find p xs
 
 --  'splitAt' @n xs@ returns a tuple where first element is @xs@ prefix of
 -- length @n@ and second element is the remainder of the list.
