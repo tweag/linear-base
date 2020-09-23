@@ -49,7 +49,6 @@ module Prelude.Linear
   , void
   , lseq
   , dup
-  , dup2
   , dup3
   , module Data.Num.Linear
   , module Data.Either.Linear
