@@ -25,6 +25,7 @@ import Data.Maybe (mapMaybe)
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
+import qualified Data.Vector as ImmutableVector
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -58,6 +59,7 @@ group =
   , testProperty "mapMaybe f (fromList xs) = fromList (mapMaybe f xs)" refMapMaybe
   , testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter
   , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
+  , testProperty "toList . freeze . fromList = id" refFreeze
   -- Regression tests
   , testProperty "push on an empty vector should succeed" snocOnEmptyVector
   , testProperty "do not reorder reads and writes" readAndWriteTest
@@ -342,6 +344,27 @@ refFilter = property $ do
           Vector.filter vec f
             Linear.& Vector.toList
   expected === actual
+
+refFreeze :: Property
+refFreeze = property $ do
+  xs <- forAll list
+
+  -- Add a new element at the end of the vector
+  -- to force resizing, to test the case where
+  -- sz < cap.
+  shouldAppend <- forAll Gen.bool
+
+  let expected =
+        if shouldAppend
+        then xs ++ [12]
+        else xs
+
+      Ur actual = Vector.fromList xs Linear.$ \vec ->
+           (if shouldAppend
+            then Vector.push vec 12
+            else vec
+           ) Linear.& Vector.freeze
+  expected === ImmutableVector.toList actual
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property

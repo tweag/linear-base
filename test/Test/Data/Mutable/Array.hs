@@ -44,6 +44,7 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
+import qualified Data.Vector as Vector
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -70,6 +71,7 @@ group =
   , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
   , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
   , testProperty "toList . fromList = id" refToListFromList
+  , testProperty "toList . freeze . fromList = id" refFreeze
   , testProperty "dup2 produces identical arrays" refDupable
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
@@ -265,6 +267,12 @@ refFmap = property $ do
         Array.fromList xs Linear.$ \arr ->
           Array.toList (f Data.<$> arr)
   expected === actual
+
+refFreeze :: Property
+refFreeze = property $ do
+  xs <- forAll list
+  let Ur vec = Array.fromList xs Array.freeze
+  xs === Vector.toList vec
 
 refDupable :: Property
 refDupable = property $ do

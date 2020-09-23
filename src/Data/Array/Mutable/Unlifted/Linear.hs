@@ -29,6 +29,7 @@ module Data.Array.Mutable.Unlifted.Linear
   , copyInto
   , map
   , toList
+  , freeze
   , dup2
   ) where
 
@@ -37,6 +38,10 @@ import Prelude (Int)
 import qualified Prelude as Prelude
 import qualified Unsafe.Linear as Unsafe
 import qualified GHC.Exts as GHC
+import qualified Data.Vector as Vector
+import qualified Data.Vector.Mutable as MVector
+import qualified Data.Primitive.Array as Prim
+import System.IO.Unsafe (unsafeDupablePerformIO)
 
 -- | A mutable array holding @a@s
 newtype Array# a = Array# (GHC.MutableArray# GHC.RealWorld a)
@@ -158,6 +163,16 @@ toList = unArray# Prelude.$ \arr ->
     | GHC.I# i# <- i =
         case GHC.runRW# (GHC.readArray# arr i#) of
           (# _, ret #) -> ret : go (i Prelude.+ 1) len arr
+
+-- | /O(1)/ Convert an 'Array#' to an immutable 'Vector' (from 'vector' package).
+freeze :: forall a. Array# a #-> Ur (Vector.Vector a)
+freeze = unArray# go
+ where
+  go arr =
+    let sz = GHC.I# (GHC.sizeofMutableArray# arr)
+        prim = Prim.MutableArray arr
+    in unsafeDupablePerformIO
+         (Vector.unsafeFreeze (MVector.MVector 0 sz prim))
 
 -- | Clone an array.
 dup2 :: Array# a #-> (# Array# a, Array# a #)

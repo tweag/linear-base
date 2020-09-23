@@ -55,6 +55,7 @@ module Data.Array.Mutable.Linear
     size,
     slice,
     toList,
+    freeze,
   )
 where
 
@@ -63,6 +64,7 @@ import GHC.Stack
 import Data.Array.Mutable.Unlifted.Linear (Array#)
 import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
 import qualified Data.Functor.Linear as Data
+import Data.Vector (Vector)
 import Prelude.Linear ((&))
 import Prelude hiding (read)
 
@@ -214,6 +216,10 @@ slice from targetSize arr =
 
     wrap :: (# Array# a, Array# a  #) #-> (Array a, Array a)
     wrap (# old, new #) = (Array old, Array new)
+
+-- | /O(1)/ Convert an 'Array' to an immutable 'Vector' (from 'vector' package).
+freeze :: Array a #-> Ur (Vector a)
+freeze (Array arr) = Unlifted.freeze arr
 
 -- # Instances
 -------------------------------------------------------------------------------
