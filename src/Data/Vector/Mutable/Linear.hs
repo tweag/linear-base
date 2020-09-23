@@ -280,6 +280,10 @@ slice from newSize (Vec oldSize arr) =
 instance Consumable (Vector a) where
   consume (Vec _ arr) = consume arr
 
+instance Dupable (Vector a) where
+  dup2 (Vec i arr) = dup2 arr & \(a1, a2) ->
+    (Vec i a1, Vec i a2)
+
 -- There is no way to get an unrestricted vector. So the below instance
 -- is just to satisfy the linear Semigroup's constraint.
 instance Prelude.Semigroup (Vector a) where

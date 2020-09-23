@@ -222,6 +222,13 @@ instance Consumable (Array a) where
   consume :: Array a #-> ()
   consume (Array arr) = arr `Unlifted.lseq` ()
 
+instance Dupable (Array a) where
+  dup2 :: Array a #-> (Array a, Array a)
+  dup2 (Array arr) = wrap (Unlifted.dup2 arr)
+   where
+     wrap :: (# Array# a, Array# a #) #-> (Array a, Array a)
+     wrap (# a1, a2 #) = (Array a1, Array a2)
+
 instance Data.Functor Array where
   fmap f (Array arr) = Array (Unlifted.map f arr)
 
