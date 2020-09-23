@@ -276,7 +276,8 @@ slice from newSize (Vec oldSize arr) =
        else Array.slice from newSize arr & \(oldArr, newArr) ->
               oldArr `lseq` fromArray newArr
 
--- | /O(1)/ Convert a 'Vector' to an immutable 'Vector' (from 'vector' package).
+-- | /O(1)/ Convert a 'Vector' to an immutable 'Vector.Vector' (from
+-- 'vector' package).
 freeze :: Vector a #-> Ur (Vector.Vector a)
 freeze (Vec sz arr) =
   Array.freeze arr
