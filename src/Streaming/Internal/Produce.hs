@@ -194,7 +194,7 @@ untilRight mEither = Effect loop
 -- a possibly terminating step function of type @(x #-> m (Either (f x) r))@,
 -- and a stop-short function @(x #-> m r)@.
 --
--- This mirrors the inverse unfold of a normal stream:
+-- This mirrors the unfold of a normal stream:
 --
 -- > data Stream f m r where
 -- >   Stream :: x #-> (x #-> m (Either (f x) r)) -> Stream f m r
