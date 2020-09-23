@@ -13,7 +13,7 @@ class Linear.Monad m => MonadIO m where
   liftIO :: Linear.IO a #-> m a
   liftSystemIO :: System.IO a -> m a
   liftSystemIO io = liftIO (Linear.fromSystemIO io)
-  liftSystemIOU :: System.IO a -> m (Unrestricted a)
+  liftSystemIOU :: System.IO a -> m (Ur a)
   liftSystemIOU io = liftIO (Linear.fromSystemIOU io)
 
 instance MonadIO Linear.IO where
