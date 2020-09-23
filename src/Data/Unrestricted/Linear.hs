@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LinearTypes #-}
@@ -81,12 +82,12 @@ module Data.Unrestricted.Linear
   , void
   , lseq
   , dup
-  , dup2
   , dup3
   ) where
 
 import qualified Data.Functor.Linear.Internal as Data
 import Data.Vector.Linear (V)
+import Data.Type.Equality
 import qualified Data.Vector.Linear as V
 import GHC.TypeLits
 import GHC.Types hiding (Any)
@@ -147,8 +148,20 @@ lseq a b = seqUnit (consume a) b
 -- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
 --
 -- Where the @(≃)@ sign represents equality up to type isomorphism.
+--
+-- When implementing 'Dupable' instances for composite types, using 'dupV'
+-- should be more convenient since 'V' has a zipping 'Applicative' instance.
 class Consumable a => Dupable a where
-  dupV :: KnownNat n => a #-> V n a
+  {-# MINIMAL dupV | dup2 #-}
+
+  dupV :: forall n. KnownNat n => a #-> V n a
+  dupV a =
+    case V.caseNat @n of
+      Prelude.Left Refl -> a `lseq` V.make @0 @a
+      Prelude.Right Refl -> V.iterate dup2 a
+
+  dup2 :: a #-> (a, a)
+  dup2 a = V.elim (dupV @a @2 a) (,)
 
 -- | The laws of the @Movable@ class mean that @move@ is compatible with
 -- @consume@ and @dup@.
@@ -158,9 +171,6 @@ class Consumable a => Dupable a where
 -- * @case move x of {Ur x -> (x, x)} = dup2 x@
 class Dupable a => Movable a where
   move :: a #-> Ur a
-
-dup2 :: Dupable a => a #-> (a, a)
-dup2 x = V.elim (dupV @_ @2 x) (,)
 
 dup3 :: Dupable a => a #-> (a, a, a)
 dup3 x = V.elim (dupV @_ @3 x) (,,)

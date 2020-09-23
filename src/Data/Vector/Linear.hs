@@ -53,6 +53,9 @@ module Data.Vector.Linear
   , FunN
   , elim
   , make
+  , iterate
+  -- * Type-level utilities
+  , caseNat
   ) where
 
 import qualified Data.Functor.Linear.Internal as Data
@@ -177,3 +180,23 @@ continue = case caseNat @n of
              Right Refl -> \f t -> contractFunN @n @a @c (continueS f (expandFunN @n @a @b t))
                where continueS :: (KnownNat n, 1 <= n) => (b #-> c) #-> (a #-> FunN (n-1) a b) #-> (a #-> FunN (n-1) a c)
                      continueS f' x a = case predNat @n of Dict -> continue @(n-1) @a @b f' (x a)
+
+iterate :: forall n a. (KnownNat n, 1 <= n) => (a #-> (a, a)) -> a #-> V n a
+iterate dup init =
+  go @n init
+ where
+  go :: forall m. (KnownNat m, 1 <= m) => a #-> V m a
+  go a =
+    case predNat @m of
+      Dict -> case caseNat @(m-1) of
+        Prelude.Left Refl ->
+          case pr1 @m Refl of
+            Refl ->
+              (make @m @a :: a #-> V m a) a
+        Prelude.Right Refl ->
+          dup a & \(a', a'') ->
+            a' `cons` go @(m-1) a''
+
+  -- An unsafe cast to prove the simple equality.
+  pr1 :: forall k. 0 :~: (k - 1) -> k :~: 1
+  pr1 Refl = Unsafe.coerce Refl
