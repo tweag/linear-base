@@ -64,8 +64,11 @@ import GHC.Stack
 import Data.Array.Mutable.Unlifted.Linear (Array#)
 import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
 import qualified Data.Functor.Linear as Data
-import Data.Vector (Vector)
+import qualified Data.Vector as Vector
+import qualified Data.Vector.Mutable as MVector
 import Prelude.Linear ((&))
+import qualified Data.Primitive.Array as Prim
+import System.IO.Unsafe (unsafeDupablePerformIO)
 import Prelude hiding (read)
 
 -- # Data types
@@ -217,9 +220,19 @@ slice from targetSize arr =
     wrap :: (# Array# a, Array# a  #) #-> (Array a, Array a)
     wrap (# old, new #) = (Array old, Array new)
 
--- | /O(1)/ Convert an 'Array' to an immutable 'Vector' (from 'vector' package).
-freeze :: Array a #-> Ur (Vector a)
-freeze (Array arr) = Unlifted.freeze arr
+-- | /O(1)/ Convert an 'Array' to an immutable 'Vector.Vector' (from
+-- 'vector' package).
+freeze :: Array a #-> Ur (Vector.Vector a)
+freeze (Array arr) =
+  Unlifted.freeze go arr
+ where
+   go arr = unsafeDupablePerformIO $ do
+     mut <- Prim.unsafeThawArray (Prim.Array arr)
+     let mv = MVector.MVector 0 (Prim.sizeofMutableArray mut) mut
+     Vector.unsafeFreeze mv
+   -- We only need to do above because 'Vector' constructor is hidden.
+   -- Once it is exposed, we should be able to replace it with something
+   -- safer like: `go arr = Vector 0 (sizeof arr) arr`
 
 -- # Instances
 -------------------------------------------------------------------------------
