@@ -280,6 +280,10 @@ instance Consumable (HashMap k v) where
   consume :: HashMap k v #-> ()
   consume (HashMap _ arr) = consume arr
 
+instance Dupable (HashMap k v) where
+  dup2 (HashMap i arr) = dup2 arr & \(a1, a2) ->
+    (HashMap i a1, HashMap i a2)
+
 _debugShow :: (Show k, Show v) => HashMap k v #-> String
 _debugShow (HashMap _ robinArr) =
   Array.toList robinArr & \(Ur xs) -> show xs

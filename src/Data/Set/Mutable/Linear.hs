@@ -76,3 +76,6 @@ member (Set hm) a =
 instance Consumable (Set a) where
   consume (Set hmap) = consume hmap
 
+instance Dupable (Set a) where
+  dup2 (Set hm) = dup2 hm Linear.& \(hm1, hm2) ->
+    (Set hm1, Set hm2)

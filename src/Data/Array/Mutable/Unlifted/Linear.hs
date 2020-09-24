@@ -29,9 +29,10 @@ module Data.Array.Mutable.Unlifted.Linear
   , copyInto
   , map
   , toList
+  , dup2
   ) where
 
-import Data.Unrestricted.Linear hiding (lseq)
+import Data.Unrestricted.Linear hiding (lseq, dup2)
 import Prelude (Int)
 import qualified Prelude as Prelude
 import qualified Unsafe.Linear as Unsafe
@@ -157,6 +158,17 @@ toList = unArray# Prelude.$ \arr ->
     | GHC.I# i# <- i =
         case GHC.runRW# (GHC.readArray# arr i#) of
           (# _, ret #) -> ret : go (i Prelude.+ 1) len arr
+
+-- | Clone an array.
+dup2 :: Array# a #-> (# Array# a, Array# a #)
+dup2 = Unsafe.toLinear go
+ where
+  go :: Array# a -> (# Array# a, Array# a #)
+  go (Array# arr) =
+    case GHC.runRW#
+           (GHC.cloneMutableArray# arr 0# (GHC.sizeofMutableArray# arr)) of
+      (# _, new #) -> (# Array# arr, Array# new #)
+{-# NOINLINE dup2 #-}
 
 -- * Internal library
 

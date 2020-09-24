@@ -70,6 +70,7 @@ group =
   , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
   , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
   , testProperty "toList . fromList = id" refToListFromList
+  , testProperty "dup2 produces identical arrays" refDupable
   -- Regression tests
   , testProperty "do not reorder reads and writes" readAndWriteTest
   , testProperty "do not evaluate values unnecesesarily" strictnessTest
@@ -264,6 +265,18 @@ refFmap = property $ do
         Array.fromList xs Linear.$ \arr ->
           Array.toList (f Data.<$> arr)
   expected === actual
+
+refDupable :: Property
+refDupable = property $ do
+  xs <- forAll list
+  let Ur (r1, r2) =
+        Array.fromList xs Linear.$ \arr ->
+          dup2 arr Linear.& \(arr1, arr2) ->
+            Array.toList arr1 Linear.& \(Ur l1) ->
+              Array.toList arr2 Linear.& \(Ur l2) ->
+                Ur (l1, l2)
+  xs === r1
+  xs === r2
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
