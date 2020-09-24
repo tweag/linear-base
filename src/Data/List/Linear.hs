@@ -23,6 +23,9 @@ module Data.List.Linear
   , reverse
   , length
   , NonLinear.null
+    -- * Extracting sublists
+  , take
+  , drop
   , splitAt
   , span
   , partition
@@ -67,6 +70,8 @@ module Data.List.Linear
   , zipWith
   , zipWith'
   , zipWith3
+  , unzip
+  , unzip3
   ) where
 
 import qualified Unsafe.Linear as Unsafe
@@ -147,7 +152,7 @@ partition p (xs :: [a]) = foldr select ([], []) xs
       else (ts, x'':fs)
 
 -- | __NOTE__: This does not short-circuit and always traverses the
--- entire array to consume the rest of the elements.
+-- entire list to consume the rest of the elements.
 takeWhile :: Dupable a => (a #-> Bool) -> [a] #-> [a]
 takeWhile _ [] = []
 takeWhile p (x:xs) =
@@ -163,6 +168,21 @@ dropWhile p (x:xs) =
     if p x'
     then x'' `lseq` dropWhile p xs
     else x'' : xs
+
+-- | __NOTE__: This does not short-circuit and always traverses the
+-- entire list to consume the rest of the elements.
+take :: Consumable a => Int -> [a] #-> [a]
+take _ [] = []
+take i (x:xs)
+  | i Prelude.< 0 = (x, xs) `lseq` []
+  | otherwise = x : take (i-1) xs
+
+drop :: Consumable a => Int -> [a] #-> [a]
+drop _ [] = []
+drop i (x:xs)
+  | i Prelude.< 0 = x:xs
+  | otherwise = x `lseq` drop (i-1) xs
+
 
 -- | The intersperse function takes an element and a list and
 -- `intersperses' that element between the elements of the list.
@@ -287,7 +307,7 @@ replicate i a
 unfoldr :: (b #-> Maybe (a, b)) -> b #-> [a]
 unfoldr f = Unsafe.toLinear (NonLinear.unfoldr (forget f))
 
--- # Zipping Lists
+-- # Zipping and unzipping lists
 --------------------------------------------------
 
 zip :: (Consumable a, Consumable b) => [a] #-> [b] #-> [(a, b)]
@@ -318,3 +338,9 @@ zipWith3 _ [] ys zs = (ys, zs) `lseq` []
 zipWith3 _ xs [] zs = (xs, zs) `lseq` []
 zipWith3 _ xs ys [] = (xs, ys) `lseq` []
 zipWith3 f (x:xs) (y:ys) (z:zs) = f x y z : zipWith3 f xs ys zs
+
+unzip :: [(a, b)] #-> ([a], [b])
+unzip = Unsafe.toLinear NonLinear.unzip
+
+unzip3 :: [(a, b, c)] #-> ([a], [b], [c])
+unzip3 = Unsafe.toLinear NonLinear.unzip3
