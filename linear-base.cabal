@@ -50,6 +50,14 @@ library
     Foreign.Marshal.Pure
     Prelude.Linear
     Prelude.Linear.Internal
+    Streaming.Linear
+    Streaming.Prelude.Linear
+    Streaming.Internal.Consume
+    Streaming.Internal.Interop
+    Streaming.Internal.Many
+    Streaming.Internal.Process
+    Streaming.Internal.Produce
+    Streaming.Internal.Type
     System.IO.Linear
     System.IO.Resource
     Unsafe.Linear
