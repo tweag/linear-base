@@ -51,7 +51,7 @@ This is the strategy that we've followed so far for developing
    linear types vary and each have unique concepts that are not
    addressed by a general strategy. These should be documented below
    if one of the following is true:
-   
+
    * there is an overarching concept that extends beyond a handful of
      modules. Or,
    * There is an explicit departure away from the direction of `base`.

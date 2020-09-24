@@ -1,8 +1,0 @@
-a b c
-c d
-r
-aa
-b x z
-c d e
-a b b b
-a b b b c

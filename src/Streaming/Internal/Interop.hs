@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
@@ -14,10 +15,9 @@ module Streaming.Internal.Interop
 import Streaming.Internal.Type
 import Streaming.Internal.Produce
 import Data.Unrestricted.Linear
-import Prelude.Linear (($), (&))
+import Prelude.Linear (($))
 import Prelude (Maybe(..))
 import qualified Control.Monad.Linear as Control
-import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 
 {-| Read an @IORef (Maybe a)@ or a similar device until it reads @Nothing@.
     @reread@ provides convenient exit from the @io-streams@ library
@@ -26,13 +26,13 @@ import Control.Monad.Linear.Builder (BuilderType(..), monadBuilder)
 > reread Streams.read :: System.IO.Streams.InputStream a -> Stream (Of a) IO ()
 -}
 reread :: Control.Monad m =>
-  (s -> m (Unrestricted (Maybe a))) -> s -> Stream (Of a) m ()
+  (s -> m (Ur (Maybe a))) -> s -> Stream (Of a) m ()
 reread f s = reread' f s
   where
     reread' :: Control.Monad m =>
-      (s -> m (Unrestricted (Maybe a))) -> s -> Stream (Of a) m ()
+      (s -> m (Ur (Maybe a))) -> s -> Stream (Of a) m ()
     reread' f s = Effect $ Control.do
-      Unrestricted maybeA <- f s
+      Ur maybeA <- f s
       case maybeA of
         Nothing -> Control.return $ Return ()
         Just a -> Control.return $ (yield a Control.>> reread f s)

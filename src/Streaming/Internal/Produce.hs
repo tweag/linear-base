@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -37,7 +38,7 @@ module Streaming.Internal.Produce
   , cycleZip
   , enumFromN
   , enumFromZip
-  , enumFromThen
+  , enumFromThenN
   , enumFromThenZip
   ) where
 
@@ -45,10 +46,8 @@ import Streaming.Internal.Type
 import Streaming.Internal.Process
 import Streaming.Internal.Consume (effects)
 import Prelude.Linear (($), (&))
-import qualified Prelude.Linear as Linear
 import Prelude (Either(..), Read, Bool(..), FilePath, Enum, otherwise,
-               Num(..), Int, otherwise, Eq(..), Ord(..), (.), Maybe(..),
-               fromEnum, toEnum)
+               Num(..), Int, otherwise, Eq(..), Ord(..), fromEnum, toEnum)
 import qualified Prelude
 import qualified Control.Monad.Linear as Control
 import Data.Unrestricted.Linear
@@ -57,7 +56,6 @@ import System.IO.Resource
 import qualified System.IO as System
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Text.IO as Text
 import GHC.Stack
 
 
@@ -94,14 +92,14 @@ each' xs = Prelude.foldr (\a stream -> Step $ a :> stream) (Return ()) xs
 
 -}
 unfoldr :: Control.Monad m =>
-  (s #-> m (Either r (Unrestricted a, s))) -> s #-> Stream (Of a) m r
+  (s #-> m (Either r (Ur a, s))) -> s #-> Stream (Of a) m r
 unfoldr step s = unfoldr' step s
   where
     unfoldr' :: Control.Monad m =>
-      (s #-> m (Either r (Unrestricted a, s))) -> s #-> Stream (Of a) m r
+      (s #-> m (Either r (Ur a, s))) -> s #-> Stream (Of a) m r
     unfoldr' step s = Effect $ step s Control.>>= \case
       Left r -> Control.return $ Return r
-      Right (Unrestricted a,s') ->
+      Right (Ur a,s') ->
         Control.return $ Step $ a :> unfoldr step s'
 {-# INLINABLE unfoldr #-}
 
@@ -112,13 +110,13 @@ fromHandle h = loop h
   where
     loop :: Handle #-> Stream (Of Text) RIO ()
     loop h = Control.do
-      (Unrestricted isEOF, h') <- Control.lift $ hIsEOF h
+      (Ur isEOF, h') <- Control.lift $ hIsEOF h
       case isEOF of
         True -> Control.do
           Control.lift $ hClose h'
           Control.return ()
         False -> Control.do
-          (Unrestricted text, h'') <- Control.lift $ hGetLine h'
+          (Ur text, h'') <- Control.lift $ hGetLine h'
           yield text
           fromHandle h''
 {-# INLINABLE fromHandle #-}
@@ -154,16 +152,16 @@ replicate n a
 
 -}
 replicateM :: Control.Monad m =>
-  Int -> m (Unrestricted a) -> Stream (Of a) m ()
+  Int -> m (Ur a) -> Stream (Of a) m ()
 replicateM n ma
   | n < 0 = Prelude.error "Cannot replicate a stream of negative length"
   | otherwise = loop n ma
     where
-      loop :: Control.Monad m => Int -> m (Unrestricted a) -> Stream (Of a) m ()
+      loop :: Control.Monad m => Int -> m (Ur a) -> Stream (Of a) m ()
       loop n ma
         | n == 0 = Return ()
         | otherwise = Effect $ Control.do
-          Unrestricted a <- ma
+          Ur a <- ma
           Control.return $ Step $ a :> (replicateM (n-1) ma)
 
 -- | Replicate a constant element and zip it with the finite stream which
@@ -174,14 +172,14 @@ replicateZip stream a = map ((,) a) stream
 {-# INLINABLE replicateZip #-}
 
 untilRight :: forall m a r . Control.Monad m =>
-  m (Either (Unrestricted a) r) -> Stream (Of a) m r
+  m (Either (Ur a) r) -> Stream (Of a) m r
 untilRight mEither = Effect loop
   where
     loop :: m (Stream (Of a) m r)
     loop = Control.do
       either <- mEither
       either & \case
-        Left (Unrestricted a) ->
+        Left (Ur a) ->
           Control.return $ Step $ a :> (untilRight mEither)
         Right r -> Control.return $ Return r
 {-# INLINABLE untilRight #-}
@@ -288,7 +286,7 @@ stdinLn :: AffineStream (Of Text) IO ()
 stdinLn = AffineStream () getALine Control.pure where
   getALine :: () #-> IO (Either (Of Text ()) ())
   getALine () = Control.do
-    Unrestricted line <- fromSystemIOU System.getLine
+    Ur line <- fromSystemIOU System.getLine
     Control.return $ Left (Text.pack line :> ())
 
 -- | An affine stream of reading lines, crashing on failed parse.
@@ -296,28 +294,28 @@ readLn :: Read a => AffineStream (Of a) IO ()
 readLn = AffineStream () readALine Control.pure where
   readALine :: Read a => () #-> IO (Either (Of a ()) ())
   readALine () = Control.do
-    Unrestricted line <- fromSystemIOU System.getLine
+    Ur line <- fromSystemIOU System.getLine
     Control.return $ Left (Prelude.read line :> ())
 
 -- | An affine stream iterating an initial state forever.
 iterate :: forall a m.
   Control.Monad m => a -> (a -> a) -> AffineStream (Of a) m ()
 iterate a step =
-  AffineStream (Unrestricted a) stepper (\x -> Control.return $ consume x)
+  AffineStream (Ur a) stepper (\x -> Control.return $ consume x)
   where
-    stepper :: Unrestricted a #-> m (Either (Of a (Unrestricted a)) ())
-    stepper (Unrestricted a) = Control.return $
-      Left $ a :> Unrestricted (step a)
+    stepper :: Ur a #-> m (Either (Of a (Ur a)) ())
+    stepper (Ur a) = Control.return $
+      Left $ a :> Ur (step a)
 
 -- | An affine stream monadically iterating an initial state forever.
 iterateM :: forall a m. Control.Monad m =>
-  m (Unrestricted a) -> (a -> m (Unrestricted a)) -> AffineStream (Of a) m ()
+  m (Ur a) -> (a -> m (Ur a)) -> AffineStream (Of a) m ()
 iterateM ma step =
   AffineStream ma stepper (Control.fmap consume)
   where
-    stepper :: m (Unrestricted a) #-> m (Either (Of a (m (Unrestricted a))) ())
+    stepper :: m (Ur a) #-> m (Either (Of a (m (Ur a))) ())
     stepper ma = Control.do
-      Unrestricted a <- ma
+      Ur a <- ma
       Control.return $ Left $ a :> (step a)
 
 -- Remark. In order to implement the affine break function, which is the third
@@ -329,21 +327,21 @@ cycle :: forall a m r. (Control.Monad m, Consumable r) =>
   Stream (Of a) m r -> AffineStream (Of a) m r
 cycle stream =
   -- Note. The state is (original stream, stream_in_current_cycle)
-  AffineStream (Unrestricted stream, stream) stepStream leftoverEffects
+  AffineStream (Ur stream, stream) stepStream leftoverEffects
   where
     leftoverEffects ::
-      (Unrestricted (Stream (Of a) m r), Stream (Of a) m r) #-> m r
-    leftoverEffects (Unrestricted s, str) = effects str
+      (Ur (Stream (Of a) m r), Stream (Of a) m r) #-> m r
+    leftoverEffects (Ur _, str) = effects str
 
     stepStream :: Control.Functor f =>
-      (Unrestricted (Stream f m r), Stream f m r) #->
-      m (Either (f (Unrestricted (Stream f m r), Stream f m r)) r)
-    stepStream (Unrestricted s, str) = str & \case
-      Return r -> lseq r $ stepStream (Unrestricted s, s)
+      (Ur (Stream f m r), Stream f m r) #->
+      m (Either (f (Ur (Stream f m r), Stream f m r)) r)
+    stepStream (Ur s, str) = str & \case
+      Return r -> lseq r $ stepStream (Ur s, s)
       Effect m ->
-        m Control.>>= (\stream -> stepStream (Unrestricted s, stream))
+        m Control.>>= (\stream -> stepStream (Ur s, stream))
       Step f -> Control.return $
-        Left $ Control.fmap ((,) (Unrestricted s)) f
+        Left $ Control.fmap ((,) (Ur s)) f
 
 -- | An affine stream iterating an enumerated stream forever.
 enumFrom :: (Control.Monad m, Enum e) => e -> AffineStream (Of e) m ()
@@ -418,13 +416,13 @@ iterateZip stream step a =
 -- | Iterate a monadic function from a seed value,
 -- streaming the results forever.
 iterateMN :: Control.Monad m =>
-  Int -> (a -> m (Unrestricted a)) -> m (Unrestricted a) -> Stream (Of a) m ()
+  Int -> (a -> m (Ur a)) -> m (Ur a) -> Stream (Of a) m ()
 iterateMN n step ma = take n $ iterateM ma step
 {-# INLINE iterateMN #-}
 
 iterateMZip :: Control.Monad m =>
   Stream (Of x) m r #->
-  (a -> m (Unrestricted a)) -> m (Unrestricted a) -> Stream (Of (x,a)) m r
+  (a -> m (Ur a)) -> m (Ur a) -> Stream (Of (x,a)) m r
 iterateMZip stream step ma =
   Control.fmap (\(r,()) -> r) $ zip stream $ iterateM ma step
 {-# INLINE iterateMZip #-}

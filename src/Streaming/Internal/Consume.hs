@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
@@ -572,9 +573,9 @@ getMax :: Ord a => Maybe a -> Maybe a -> Maybe a
 getMax = mCompare Prelude.max
 
 mCompare :: Ord a => (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
-mCompare comp Nothing Nothing = Nothing
-mCompare comp (Just a) Nothing = Just a
-mCompare comp Nothing (Just a) = Just a
+mCompare _ Nothing Nothing = Nothing
+mCompare _ (Just a) Nothing = Just a
+mCompare _ Nothing (Just a) = Just a
 mCompare comp (Just x) (Just y) = Just $ comp x y
 
 {-| A natural right fold for consuming a stream of elements.

@@ -47,7 +47,7 @@
 > --------------------------------------------------------------------------------------------------------------------
 >
 -}
-module Streaming.Prelude
+module Streaming.Prelude.Linear
   ( module Streaming.Internal.Type
   , module Streaming.Internal.Consume
   , module Streaming.Internal.Interop

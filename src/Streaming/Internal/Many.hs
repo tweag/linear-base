@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -34,10 +35,8 @@ module Streaming.Internal.Many
 
 import Streaming.Internal.Type
 import Streaming.Internal.Consume
-import Prelude (undefined, Bool(..), Either(..), Ord(..), Ordering(..), (.))
+import Prelude (Either(..), Ord(..), Ordering(..))
 import Prelude.Linear (($), (&))
-import qualified Prelude.Linear
-import qualified Prelude.Linear as Linear
 import qualified Control.Monad.Linear as Control
 
 

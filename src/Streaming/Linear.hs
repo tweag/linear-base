@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE QualifiedDo #-}
@@ -6,7 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 
-module Streaming
+module Streaming.Linear
   (
   -- $stream
    module Streaming.Internal.Type
@@ -56,13 +57,12 @@ import Streaming.Internal.Type
 import Streaming.Internal.Process (destroyExposed)
 import Data.Functor.Sum
 import Data.Functor.Compose
-import qualified Streaming.Prelude as Stream
+import qualified Streaming.Prelude.Linear as Stream
 import System.IO.Linear
 import Prelude.Linear (($), (.), (&))
 import Prelude (Ordering(..), Ord(..), Num(..), Int, Either(..), Double,
                Maybe(..), fromInteger)
 import qualified Prelude
-import qualified Prelude.Linear as Linear
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear
@@ -512,7 +512,7 @@ chunksOf :: forall f m r .
 chunksOf n stream = loop n stream
   where
     loop :: Int -> Stream f m r #-> Stream (Stream f m) m r
-    loop n (Return r) = Return r
+    loop _ (Return r) = Return r
     loop n stream = Step $ Control.fmap (loop n) $ splitsAt n stream
 {-# INLINABLE chunksOf #-}
 

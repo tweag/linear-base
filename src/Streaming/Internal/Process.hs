@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
@@ -21,6 +22,7 @@ module Streaming.Internal.Process
   , breaks
   , break
   , breakWhen
+  , breakWhen'
   , span
   , group
   , groupBy
@@ -81,8 +83,7 @@ module Streaming.Internal.Process
 
 import Streaming.Internal.Type
 import Prelude.Linear ((&), ($), (.))
-import qualified Prelude.Linear as Linear
-import Prelude (Maybe(..), Either(..), Bool(..), Int, fromInteger,
+import Prelude (Maybe(..), Either(..), Bool(..), Int,
                Ordering(..), Num(..), Eq(..), id, Ord(..), Read(..),
                String, Double)
 import qualified Prelude
@@ -132,7 +133,7 @@ destroyExposed stream0 construct theEffect done = loop stream0
 -------------------------------------------------------------------------------
 
 -- Remark. Since the 'a' is not held linearly in the 'Of' pair,
--- we return it inside an 'Unrestricted'.
+-- we return it inside an 'Ur'.
 --
 {-| The standard way of inspecting the first item in a stream of elements, if the
      stream is still \'running\'. The @Right@ case contains a
@@ -144,14 +145,14 @@ destroyExposed stream0 construct theEffect done = loop stream0
 > inspect :: Control.Monad m => Stream (Of a) m r #-> m (Either r (Of a (Stream (Of a) m r)))
 -}
 next :: forall a m r. Control.Monad m =>
-  Stream (Of a) m r #-> m (Either r (Unrestricted a, Stream (Of a) m r))
+  Stream (Of a) m r #-> m (Either r (Ur a, Stream (Of a) m r))
 next stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> m (Either r (Unrestricted a, Stream (Of a) m r))
+    loop :: Stream (Of a) m r #-> m (Either r (Ur a, Stream (Of a) m r))
     loop stream = stream & \case
       Return r -> Control.return $ Left r
       Effect ms -> ms Control.>>= next
-      Step (a :> as) -> Control.return $ Right (Unrestricted a, as)
+      Step (a :> as) -> Control.return $ Right (Ur a, as)
 {-# INLINABLE next #-}
 
 {-| Inspect the first item in a stream of elements, without a return value.
@@ -297,7 +298,7 @@ breakWhen step x end pred stream = loop stream
 -- | Breaks on the first element to satisfy the predicate
 breakWhen' :: Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
-breakWhen' f stream = breakWhen (\x a -> f a) True id id stream
+breakWhen' f stream = breakWhen (\_ a -> f a) True id id stream
 {-# INLINE breakWhen' #-}
 
 -- | Stream elements until one fails the condition, return the rest.
@@ -529,14 +530,14 @@ mapMaybe f stream = loop stream
         Nothing -> mapMaybe f s
 {-# INLINABLE mapMaybe #-}
 
--- Note: the first function needs to wrap the 'b' in an 'Unrestricted'
+-- Note: the first function needs to wrap the 'b' in an 'Ur'
 -- since the control monad is bound and the 'b' ends up in the first
 -- unrestricted spot of 'Of'.
 --
 -- | Map monadically over a stream, producing a new stream
 --   only containing the 'Just' values.
 mapMaybeM :: forall a m b r. Control.Monad m =>
-  (a -> m (Maybe (Unrestricted b))) -> Stream (Of a) m r #-> Stream (Of b) m r
+  (a -> m (Maybe (Ur b))) -> Stream (Of a) m r #-> Stream (Of b) m r
 mapMaybeM f stream = loop stream
   where
     loop :: Stream (Of a) m r #-> Stream (Of b) m r
@@ -547,7 +548,7 @@ mapMaybeM f stream = loop stream
         mb <- f a
         mb & \case
           Nothing -> Control.return $ mapMaybeM f as
-          Just (Unrestricted b) -> Control.return $ Step (b :> mapMaybeM f as)
+          Just (Ur b) -> Control.return $ Step (b :> mapMaybeM f as)
 {-# INLINABLE mapMaybeM #-}
 
 -- # Direct Transformations
@@ -608,7 +609,7 @@ maps phi = loop
 
 -- Remark: Since the mapping function puts its result in a control monad,
 -- it must be used exactly once after the monadic value is bound.
--- As a result the mapping function needs to return an 'Unrestricted b'
+-- As a result the mapping function needs to return an 'Ur b'
 -- so that we can place the 'b' in the first argument of the
 -- 'Of' constructor, which is unrestricted.
 --
@@ -625,16 +626,16 @@ maps phi = loop
 See also 'chain' for a variant of this which ignores the return value of the function and just uses the side effects.
 -}
 mapM :: Control.Monad m =>
-  (a -> m (Unrestricted b)) -> Stream (Of a) m r #-> Stream (Of b) m r
+  (a -> m (Ur b)) -> Stream (Of a) m r #-> Stream (Of b) m r
 mapM f s = loop f s
   where
     loop :: Control.Monad m =>
-      (a -> m (Unrestricted b)) -> Stream (Of a) m r #-> Stream (Of b) m r
+      (a -> m (Ur b)) -> Stream (Of a) m r #-> Stream (Of b) m r
     loop f stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (loop f) m
       Step (a :> as) -> Effect $ Control.do
-        Unrestricted b <- f a
+        Ur b <- f a
         Control.return $ Step (b :> (loop f as))
 {-# INLINABLE mapM #-}
 
@@ -1021,7 +1022,7 @@ chain f = loop
 
 -- Note: since the value of type 'a' is inside a control monad but
 -- needs to be used in an unrestricted position in 'Of', the input stream
--- needs to hold values of type 'm (Unrestricted a)'.
+-- needs to hold values of type 'm (Ur a)'.
 --
 {-| Like the 'Data.List.sequence' but streaming. The result type is a
     stream of a\'s, /but is not accumulated/; the effects of the elements
@@ -1032,15 +1033,15 @@ chain f = loop
 
 -}
 sequence :: forall a m r . Control.Monad m =>
-  Stream (Of (m (Unrestricted a))) m r #-> Stream (Of a) m r
+  Stream (Of (m (Ur a))) m r #-> Stream (Of a) m r
 sequence = loop
   where
-    loop :: Stream (Of (m (Unrestricted a))) m r #-> Stream (Of a) m r
+    loop :: Stream (Of (m (Ur a))) m r #-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
       Step (ma :> mas) -> Effect $ Control.do
-        Unrestricted a <- ma
+        Ur a <- ma
         Control.return $ Step (a :> loop mas)
 {-# INLINABLE sequence #-}
 
@@ -1227,7 +1228,7 @@ scan step begin done stream = Step (done begin :> loop begin stream)
 
 -- Note: since the accumulated value (inside the control monad) is used both in
 -- populating the output stream and in accumulation, it needs to be wrapped in
--- an 'Unrestricted' accross the function
+-- an 'Ur' accross the function
 --
 {-| Strict left scan, accepting a monadic function. It can be used with
     'FoldM's from @Control.Foldl@ using 'impurely'. Here we yield
@@ -1243,9 +1244,9 @@ scan step begin done stream = Step (done begin :> loop begin stream)
 
 -}
 scanM :: forall a x b m r . Control.Monad m =>
-  (x #-> a -> m (Unrestricted x)) ->
-  m (Unrestricted x) ->
-  (x #-> m (Unrestricted b)) ->
+  (x #-> a -> m (Ur x)) ->
+  m (Ur x) ->
+  (x #-> m (Ur b)) ->
   Stream (Of a) m r #->
   Stream (Of b) m r
 scanM step mx done stream = loop stream
@@ -1253,13 +1254,13 @@ scanM step mx done stream = loop stream
     loop :: Stream (Of a) m r #-> Stream (Of b) m r
     loop stream = stream & \case
       Return r -> Effect $ Control.do
-        Unrestricted x <- mx
-        Unrestricted b <- done x
+        Ur x <- mx
+        Ur b <- done x
         Control.return $ Step $ b :> Return r
       Effect m -> Effect $ Control.fmap (scanM step mx done) m
       Step (a :> as) -> Effect $ Control.do
-        Unrestricted x <- mx
-        Unrestricted b <- done x
+        Ur x <- mx
+        Ur b <- done x
         Control.return $ Step $ b :> (scanM step (step x a) done as)
 {-# INLINABLE scanM #-}
 
@@ -1319,7 +1320,7 @@ delay seconds = loop
       e <- Control.lift $ next stream
       e & \case
         Left r -> Return r
-        Right (Unrestricted a,rest) -> Control.do
+        Right (Ur a,rest) -> Control.do
           Step (a :> Return ()) -- same as yield
           Control.lift $ fromSystemIO $ threadDelay pico
           loop rest
@@ -1389,7 +1390,7 @@ slidingWindow n = setup (max 1 n :: Int) Seq.empty
       e <- Control.lift (next str)
       e & \case
         Left r -> Control.return r
-        Right (Unrestricted a,rest) -> Control.do
+        Right (Ur a,rest) -> Control.do
           Step $ (sequ Seq.|> a) :> Return () -- same as yield
           window (Seq.drop 1 sequ Seq.|> a) rest
     -- Collect the first n elements in a sequence and call 'window'
@@ -1404,6 +1405,6 @@ slidingWindow n = setup (max 1 n :: Int) Seq.empty
         Left r -> Control.do
           Step (sequ :> Return ()) -- same as yield
           Control.return r
-        Right (Unrestricted x,rest) -> setup (n'-1) (sequ Seq.|> x) rest
+        Right (Ur x,rest) -> setup (n'-1) (sequ Seq.|> x) rest
 {-# INLINABLE slidingWindow #-}
 
