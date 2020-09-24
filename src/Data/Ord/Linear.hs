@@ -2,6 +2,8 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Data.Ord.Linear
@@ -14,9 +16,9 @@ module Data.Ord.Linear
 
 import Data.Eq.Linear
 import qualified Prelude as Ur
-import Prelude (Bool(..))
+import qualified Prelude
 import Data.Ord (Ordering(..))
-import Data.Bool.Linear ( not )
+import Data.Bool.Linear ( Bool (..), not )
 import Data.Unrestricted.Linear
 import qualified Unsafe.Linear as Unsafe
 
@@ -93,10 +95,34 @@ min = Unsafe.toLinear2 (Ur.min)
 compare :: (Dupable a, Ur.Ord a) => a #-> a #-> Ordering
 compare = Unsafe.toLinear2 Ur.compare
 
--- Note: the reason we coerce the unrestricted implementation
--- is because it's optimized for many base types
-instance (Dupable a, Ur.Ord a) => Ord a where
-  (<) = Unsafe.toLinear2 (Ur.<)
-  (>) = Unsafe.toLinear2 (Ur.>)
-  (>=) = Unsafe.toLinear2 (Ur.>=)
-  (<=) = Unsafe.toLinear2 (Ur.<=)
+deriving via MovableOrd () instance Ord ()
+deriving via MovableOrd Prelude.Int instance Ord Prelude.Int
+deriving via MovableOrd Prelude.Double instance Ord Prelude.Double
+
+newtype MovableOrd a = MovableOrd a
+
+instance (Prelude.Eq a, Movable a) => Eq (MovableOrd a) where
+  MovableOrd ar == MovableOrd br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude.== b
+
+  MovableOrd ar /= MovableOrd br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude./= b
+
+instance (Prelude.Ord a, Movable a) => Ord (MovableOrd a) where
+  MovableOrd ar <= MovableOrd br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude.<= b
+
+  MovableOrd ar < MovableOrd br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude.< b
+
+  MovableOrd ar > MovableOrd br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude.> b
+
+  MovableOrd ar >= MovableOrd br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude.>= b

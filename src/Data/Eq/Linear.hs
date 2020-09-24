@@ -2,18 +2,19 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 -- | This module provides a linear 'Eq' class for testing equality between
 -- values, along with standard instances.
 module Data.Eq.Linear
-  (
-    Eq(..)
+  ( Eq(..)
   )
   where
 
 import Data.Bool.Linear
-import qualified Prelude as Ur
-import qualified Unsafe.Linear as Unsafe
+import qualified Prelude
+import Data.Unrestricted.Linear
 
 -- | Testing equality on values.
 --
@@ -32,7 +33,17 @@ class Eq a where
   (/=) :: a #-> a #-> Bool
   x /= y = not (x == y)
 
--- This is sound because we consume all parts of a data type when we inspect
--- for equality
-instance Ur.Eq a => Eq a where
-  (==) = Unsafe.toLinear2 (Ur.==)
+deriving via MovableEq () instance Eq ()
+deriving via MovableEq Prelude.Int instance Eq Prelude.Int
+deriving via MovableEq Prelude.Double instance Eq Prelude.Double
+
+newtype MovableEq a = MovableEq a
+
+instance (Prelude.Eq a, Movable a) => Eq (MovableEq a) where
+  MovableEq ar == MovableEq br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude.== b
+
+  MovableEq ar /= MovableEq br
+    | Ur a <- move ar , Ur b <- move br
+    = a Prelude./= b
