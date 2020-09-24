@@ -1,0 +1,50 @@
+name: linear-streams
+version: 0.1.0.0
+synopsis: A streaming library that enforces linear stream invariants.
+description: Please see the readme.
+homepage: https://github.com/tweag/linear-streams
+license: MIT
+license-file: LICENSE
+author: Tweag I/O
+maintainer: divesh.otwani@tweag.io
+copyright: (c) EURL Tweag
+category: Data, Pipes, Streaming
+build-type: Simple
+extra-source-files: README.md
+cabal-version: >=1.10
+
+library
+  hs-source-dirs: src
+  exposed-modules:
+    Streaming.Prelude
+    Streaming
+    Streaming.Internal.Consume
+    Streaming.Internal.Interop
+    Streaming.Internal.Many
+    Streaming.Internal.Process
+    Streaming.Internal.Produce
+    Streaming.Internal.Type
+  build-depends:
+    base >= 4.7 && < 5,
+    linear-base,
+    text,
+    containers
+  default-language: Haskell2010
+
+test-suite examples
+  type: exitcode-stdio-1.0
+  hs-source-dirs: examples
+  main-is: Examples.hs
+  other-modules:
+    NonLinear
+    Linear
+  build-depends:
+    base,
+    linear-base,
+    streaming
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-language: Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/tweag/linear-streams
