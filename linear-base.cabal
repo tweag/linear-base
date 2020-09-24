@@ -18,32 +18,38 @@ library
   exposed-modules:
     Control.Monad.IO.Class.Linear
     Control.Monad.Linear
+    Control.Monad.Linear.Internal
     Control.Optics.Linear.Internal
     Data.Array.Destination
     Data.Array.Mutable.Linear
+    Data.Array.Mutable.Unlifted.Linear
     Data.Array.Polarized
     Data.Array.Polarized.Pull
+    Data.Array.Polarized.Pull.Internal
     Data.Array.Polarized.Push
     Data.Bifunctor.Linear
     Data.Bool.Linear
     Data.Either.Linear
     Data.Eq.Linear
     Data.Functor.Linear
+    Data.Functor.Linear.Internal
+    Data.Functor.Linear.Internal.Traversable
     Data.HashMap.Linear
     Data.Maybe.Linear
     Data.Monoid.Linear
     Data.Num.Linear
     Data.Ord.Linear
+    Data.Profunctor.Kleisli.Linear
+    Data.Profunctor.Linear
     Data.Set.Mutable.Linear
     Data.Tuple.Linear
+    Data.Unrestricted.Linear
     Data.Vector.Linear
     Data.Vector.Mutable.Linear
-    Data.Profunctor.Linear
-    Data.Profunctor.Kleisli.Linear
-    Data.Unrestricted.Linear
     Debug.Trace.Linear
     Foreign.Marshal.Pure
     Prelude.Linear
+    Prelude.Linear.Internal
     System.IO.Linear
     System.IO.Resource
     Unsafe.Linear
@@ -57,13 +63,6 @@ library
     transformers,
     vector
   default-language: Haskell2010
-  other-modules:
-    Control.Monad.Linear.Internal
-    Data.Functor.Linear.Internal
-    Data.Functor.Linear.Internal.Traversable
-    Data.Array.Polarized.Pull.Internal
-    Data.Array.Mutable.Unlifted.Linear
-    Prelude.Linear.Internal
 
 test-suite test
   type: exitcode-stdio-1.0

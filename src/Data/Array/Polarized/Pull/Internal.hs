@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GADTs #-}

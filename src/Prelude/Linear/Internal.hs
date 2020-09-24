@@ -1,6 +1,7 @@
 -- | This is a very very simple prelude, which doesn't depend on anything else
 -- in the linear-base library (except possibly "Unsafe.Linear").
 
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
