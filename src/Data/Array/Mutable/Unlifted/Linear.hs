@@ -29,6 +29,7 @@ module Data.Array.Mutable.Unlifted.Linear
   , copyInto
   , map
   , toList
+  , freeze
   , dup2
   ) where
 
@@ -158,6 +159,14 @@ toList = unArray# Prelude.$ \arr ->
     | GHC.I# i# <- i =
         case GHC.runRW# (GHC.readArray# arr i#) of
           (# _, ret #) -> ret : go (i Prelude.+ 1) len arr
+
+-- | /O(1)/ Convert an 'Array#' to an immutable 'GHC.Array#'.
+freeze :: (GHC.Array# a -> b) -> Array# a #-> Ur b
+freeze f = unArray# go
+ where
+  go mut =
+    case GHC.runRW# (GHC.unsafeFreezeArray# mut) of
+      (# _, ret #) -> f ret
 
 -- | Clone an array.
 dup2 :: Array# a #-> (# Array# a, Array# a #)

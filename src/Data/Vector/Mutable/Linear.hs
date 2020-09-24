@@ -66,6 +66,7 @@ module Data.Vector.Mutable.Linear
     size,
     capacity,
     toList,
+    freeze,
   )
 where
 
@@ -77,6 +78,7 @@ import Data.Monoid.Linear
 import qualified Data.Array.Mutable.Linear as Array
 import qualified Data.Functor.Linear as Data
 import qualified Unsafe.Linear as Unsafe
+import qualified Data.Vector as Vector
 
 -- # Constants
 -------------------------------------------------------------------------------
@@ -273,6 +275,13 @@ slice from newSize (Vec oldSize arr) =
        then Vec newSize arr
        else Array.slice from newSize arr & \(oldArr, newArr) ->
               oldArr `lseq` fromArray newArr
+
+-- | /O(1)/ Convert a 'Vector' to an immutable 'Vector.Vector' (from
+-- 'vector' package).
+freeze :: Vector a #-> Ur (Vector.Vector a)
+freeze (Vec sz arr) =
+  Array.freeze arr
+    & \(Ur vec) -> Ur (Vector.take sz vec)
 
 -- # Instances
 -------------------------------------------------------------------------------
