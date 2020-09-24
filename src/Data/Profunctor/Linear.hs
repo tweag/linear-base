@@ -1,3 +1,4 @@
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
@@ -19,6 +20,7 @@ module Data.Profunctor.Linear
 
 import qualified Data.Functor.Linear as Data
 import Data.Bifunctor.Linear hiding (first, second)
+import qualified Data.Bifunctor as Prelude
 import Prelude.Linear
 import Data.Kind (Type)
 import Data.Void
@@ -84,6 +86,10 @@ instance Monoidal (,) () LinearArrow where
   LA f *** LA g = LA $ \(a,x) -> (f a, g x)
   unit = LA id
 
+instance Monoidal Either Void LinearArrow where
+  LA f *** LA g = LA $ bimap f g
+  unit = LA $ \case {}
+
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))
 instance Strong (,) () (->) where
@@ -94,6 +100,9 @@ instance Strong Either Void (->) where
 instance Monoidal (,) () (->) where
   (f *** g) (a,x) = (f a, g x)
   unit () = ()
+instance Monoidal Either Void (->) where
+  f *** g = Prelude.bimap f g
+  unit = \case {}
 
 data Exchange a b s t = Exchange (s #-> a) (b #-> t)
 instance Profunctor (Exchange a b) where
@@ -114,6 +123,12 @@ instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
 instance Prelude.Applicative f => Monoidal (,) () (Kleisli f) where
   Kleisli f *** Kleisli g = Kleisli (\(x,y) -> (,) Prelude.<$> f x Prelude.<*> g y)
   unit = Kleisli Prelude.pure
+
+instance Prelude.Functor f => Monoidal Either Void (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli $ \case
+    Left a -> Left Prelude.<$> f a
+    Right b -> Right Prelude.<$> g b
+  unit = Kleisli $ \case {}
 
 data Market a b s t = Market (b #-> t) (s #-> Either t a)
 runMarket :: Market a b s t #-> (b #-> t, s #-> Either t a)

@@ -1,4 +1,6 @@
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -43,9 +45,15 @@ instance Control.Applicative f => Strong Either Void (Kleisli f) where
   first  (Kleisli f) = Kleisli (either (Data.fmap Left . f) (Control.pure . Right))
   second (Kleisli g) = Kleisli (either (Control.pure . Left) (Data.fmap Right . g))
 
-instance Control.Applicative f => Monoidal (,) () (Kleisli f) where
-  Kleisli f *** Kleisli g = Kleisli $ \(x,y) -> (,) Control.<$> f x Control.<*> g y
-  unit = Kleisli Control.pure
+instance Data.Applicative f => Monoidal (,) () (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli $ \(x,y) -> (,) Data.<$> f x Data.<*> g y
+  unit = Kleisli $ \() -> Data.pure ()
+
+instance Data.Functor f => Monoidal Either Void (Kleisli f) where
+  Kleisli f *** Kleisli g = Kleisli $ \case
+    Left a -> Left Data.<$> f a
+    Right b -> Right Data.<$> g b
+  unit = Kleisli $ \case {}
 
 instance Control.Applicative f => Wandering (Kleisli f) where
   wander (Kleisli f) = Kleisli (Data.traverse f)
