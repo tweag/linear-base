@@ -6,8 +6,8 @@ module Control.Optics.Linear.Traversal
     -- * Common optics
   , traversed
     -- * Using optics
-  , over, over'
-  , traverseOf, traverseOf'
+  , over, overU
+  , traverseOf, traverseOfU
     -- * Constructing optics
   )
   where
