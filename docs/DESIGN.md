@@ -27,6 +27,17 @@ post] for details. This prelude includes:
 * a few pervasive utility definitions when programming with linear
   types.
 
+## Module structure
+
+* `Prelude.Linear` is public facing and meant for users of linear-base
+  whereas `Prelude.Linear.Internal` is meant as an internal prelude for
+  development in linear-base itself. It is down deep in the module
+  hierarchy, used throughout linear-base while `Prelude.Linear` is at the top
+  and no other modules import it.
+* Modules that have `Internal` in the name are not meant to be
+  public and have their functionality used and/or re-exported in
+  public-facing modules.
+
 ## General implementation strategy
 
 This is the strategy that we've followed so far for developing
