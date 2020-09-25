@@ -45,7 +45,7 @@ library
     Data.Set.Mutable.Linear
     Data.Tuple.Linear
     Data.Unrestricted.Linear
-    Data.Vector.Linear
+    Data.V.Linear
     Data.Vector.Mutable.Linear
     Debug.Trace.Linear
     Foreign.Marshal.Pure

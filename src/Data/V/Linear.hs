@@ -29,14 +29,14 @@
 -- > {-# LANGUAGE TypeFamilies #-}
 -- >
 -- > import Prelude.Linear
--- > import qualified Data.Vector.Linear as Vector
+-- > import qualified Data.V.Linear as V
 -- >
 -- > isTrue :: Bool
--- > isTrue = Vector.elim (listMaker 4 9) doSomething
+-- > isTrue = V.elim (listMaker 4 9) doSomething
 -- >   where
 -- >     -- GHC can't figure out this type equality, so this is needed.
--- >     listMaker :: Int #-> Int #-> Vector.V 2 Int
--- >     listMaker = Vector.make @2 @Int
+-- >     listMaker :: Int #-> Int #-> V.V 2 Int
+-- >     listMaker = V.make @2 @Int
 -- >
 -- > doSomething :: Int #-> Int #-> Bool
 -- > doSomething x y = lseq x (lseq y True)
@@ -48,7 +48,7 @@
 -- sense of [linear algebra](https://en.wikipedia.org/wiki/Linear_algebra),
 -- rather than linear types).
 
-module Data.Vector.Linear
+module Data.V.Linear
   ( V
   , FunN
   , elim
