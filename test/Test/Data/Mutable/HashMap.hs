@@ -280,7 +280,7 @@ refMappend = defProperty $ do
           HashMap.fromList ys Linear.$ \hy ->
             HashMap.toList (hx Linear.<> hy)
 
-  expected === actual
+  sort expected === sort actual
 
 refUnionWith :: Property
 refUnionWith = defProperty $ do
