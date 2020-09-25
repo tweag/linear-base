@@ -35,6 +35,7 @@ library
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
     Data.HashMap.Linear
+    Data.List.Linear
     Data.Maybe.Linear
     Data.Monoid.Linear
     Data.Num.Linear
