@@ -49,6 +49,7 @@ module Data.Array.Mutable.Linear
     write,
     unsafeWrite,
     resize,
+    map,
     -- * Accessors
     read,
     unsafeRead,
@@ -66,10 +67,10 @@ import qualified Data.Array.Mutable.Unlifted.Linear as Unlifted
 import qualified Data.Functor.Linear as Data
 import qualified Data.Vector as Vector
 import qualified Data.Vector.Mutable as MVector
-import Prelude.Linear ((&))
+import Prelude.Linear ((&), forget)
 import qualified Data.Primitive.Array as Prim
 import System.IO.Unsafe (unsafeDupablePerformIO)
-import Prelude hiding (read)
+import Prelude hiding (read, map)
 
 -- # Data types
 -------------------------------------------------------------------------------
@@ -234,6 +235,9 @@ freeze (Array arr) =
    -- Once it is exposed, we should be able to replace it with something
    -- safer like: `go arr = Vector 0 (sizeof arr) arr`
 
+map :: (a -> b) -> Array a #-> Array b
+map f (Array arr) = Array (Unlifted.map f arr)
+
 -- # Instances
 -------------------------------------------------------------------------------
 
@@ -249,7 +253,7 @@ instance Dupable (Array a) where
      wrap (# a1, a2 #) = (Array a1, Array a2)
 
 instance Data.Functor Array where
-  fmap f (Array arr) = Array (Unlifted.map f arr)
+  fmap f arr = map (forget f) arr
 
 -- # Internal library
 -------------------------------------------------------------------------------

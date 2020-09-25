@@ -15,10 +15,13 @@ where
 import qualified Data.Functor.Linear as Linear
 import qualified Data.HashMap.Linear as HashMap
 import Data.Unrestricted.Linear
+import Data.Function ((&))
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear
+import qualified Data.Map.Lazy as Map
+import Data.List (sort)
 import Test.Tasty
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -41,7 +44,12 @@ group =
     testProperty "∀ k,v,m. member k (insert m k v) = True" memberInsert,
     testProperty "∀ k,m. member k (delete m k) = False" memberDelete,
     testProperty "∀ k,v,m. size (insert (m-k) k v) = 1+ size (m-k)" sizeInsert,
-    testProperty "∀ k,m with k. size (delete m k) + 1 = size m" deleteSize
+    testProperty "∀ k,m with k. size (delete m k) + 1 = size m" deleteSize,
+    testProperty "toList . fromList = id" refToListFromList,
+    testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter,
+    testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend,
+    testProperty "unionWith reference" refUnionWith,
+    testProperty "intersectionWith reference" refIntersectionWith
   ]
 
 -- # Internal Library
@@ -60,15 +68,16 @@ type HMTest = HMap #-> Ur Bool
 maxSize :: Int
 maxSize = 800
 
+-- HashMap's have lots of corner cases, so we try harder to find them.
+defProperty :: PropertyT IO () -> Property
+defProperty = withTests 1000 . property
+
 -- | Run a test on a random HashMap
 testOnAnyHM :: PropertyT IO HMTest -> Property
-testOnAnyHM propHmtest = property $ do
+testOnAnyHM propHmtest = defProperty $ do
   kvs <- forAll keyVals
-  let randHM = makeHM kvs
   hmtest <- propHmtest
-  let test = hmtest Linear.. randHM
-  let initSize = maxSize `div` 50
-  assert $ unur Linear.$ HashMap.empty initSize test
+  assert $ unur Linear.$ HashMap.fromList kvs hmtest
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
@@ -132,16 +141,11 @@ val = do
 -- | Random pairs
 keyVals :: Gen [(Int, String)]
 keyVals = do
-  size <- Gen.int $ Range.linearFrom 0 maxSize maxSize
+  size <- Gen.int $ Range.linear 0 maxSize
   let sizeGen = Range.singleton size
   keys <- Gen.list sizeGen key
   vals <- Gen.list sizeGen val
   return $ zip keys vals
-
--- | Insert all given pairs in order
-makeHM :: [(Int, String)] -> HMap #-> HMap
-makeHM [] hmap = hmap
-makeHM ((k, v) : xs) hmap = makeHM xs (HashMap.insert hmap k v)
 
 -- # Tests
 --------------------------------------------------------------------------------
@@ -235,3 +239,83 @@ checkSizeAfterDelete key hmap = fromSize (HashMap.size hmap)
     compSizes :: Ur Int #-> Ur Int #-> Ur Bool
     compSizes (Ur orgSize) (Ur newSize) =
       Ur ((newSize + 1) == orgSize)
+
+refToListFromList :: Property
+refToListFromList = defProperty $ do
+  xs <- forAll keyVals
+
+  let expected = Map.fromList xs
+                   & Map.toList
+
+      Ur actual = HashMap.fromList xs HashMap.toList
+
+  sort expected === sort actual
+
+refFilter :: Property
+refFilter = defProperty $ do
+  xs <- forAll keyVals
+
+  let predicate "" = False
+      predicate (i:_) = i < 'h'
+
+      expected = Map.fromList xs
+                   & Map.filter predicate
+                   & Map.toList
+
+      Ur actual = HashMap.fromList xs Linear.$
+        HashMap.toList Linear.. HashMap.filter predicate
+
+  sort expected === sort actual
+
+refMappend :: Property
+refMappend = defProperty $ do
+  xs <- forAll keyVals
+  ys <- forAll keyVals
+
+  let Ur expected =
+        HashMap.fromList (xs <> ys) Linear.$ HashMap.toList
+
+      Ur actual =
+        HashMap.fromList xs Linear.$ \hx ->
+          HashMap.fromList ys Linear.$ \hy ->
+            HashMap.toList (hx Linear.<> hy)
+
+  sort expected === sort actual
+
+refUnionWith :: Property
+refUnionWith = defProperty $ do
+  xs <- forAll keyVals
+  ys <- forAll keyVals
+
+  let combine a b = a ++ "," ++ b
+
+      expected = Map.unionWith combine
+                  (Map.fromList xs)
+                  (Map.fromList ys)
+                  & Map.toList
+
+      Ur actual =
+        HashMap.fromList xs Linear.$ \hx ->
+          HashMap.fromList ys Linear.$ \hy ->
+            HashMap.unionWith combine hx hy
+              Linear.& HashMap.toList
+
+  sort expected === sort actual
+
+refIntersectionWith :: Property
+refIntersectionWith = defProperty $ do
+  xs <- forAll keyVals
+  ys <- forAll keyVals
+
+  let expected = Map.intersectionWith (,)
+                  (Map.fromList xs)
+                  (Map.fromList ys)
+                  & Map.toList
+
+      Ur actual =
+        HashMap.fromList xs Linear.$ \hx ->
+          HashMap.fromList ys Linear.$ \hy ->
+            HashMap.intersectionWith (,) hx hy
+              Linear.& HashMap.toList
+
+  sort expected === sort actual

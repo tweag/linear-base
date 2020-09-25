@@ -128,8 +128,8 @@ copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
             _ -> (# Array# src, Array# dst #)
 {-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
 
-map :: (a #-> b) -> Array# a #-> Array# b
-map (f :: a #-> b) arr =
+map :: (a -> b) -> Array# a #-> Array# b
+map (f :: a -> b) arr =
   size arr
     `chain2` \(# arr', Ur s #) -> go 0 s arr'
  where
