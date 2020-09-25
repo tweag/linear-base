@@ -159,6 +159,12 @@ empty size scope =
     Nothing
     (\arr -> scope (HashMap 0 arr))
 
+-- | Create an empty HashMap, using another as a uniqueness proof.
+allocBeside :: Keyed k => Int -> HashMap k' v' #-> (HashMap k' v', HashMap k v)
+allocBeside size (HashMap s' arr) =
+  Array.allocBeside (max 1 size) Nothing arr & \(arr', arr'') ->
+    (HashMap s' arr', HashMap size arr'')
+
 -- | Run a computation with an 'HashMap' containing given key-value pairs.
 fromList :: forall k v b.
   Keyed k => [(k, v)] -> (HashMap k v #-> Ur b) #-> Ur b
@@ -345,27 +351,23 @@ intersectionWith
   => (a -> b -> c)
   -> HashMap k a #-> HashMap k b #-> HashMap k c
 intersectionWith combine (hm1 :: HashMap k a') hm2 =
-  capacity hm1 & \(hm1', Ur cap1) ->
-    capacity hm2 & \(hm2', Ur cap2) ->
-      if cap1 > cap2
-      then go combine hm1' hm2'
-      else go (\v2 v1 -> combine v1 v2) hm2' hm1'
+  allocBeside 0 hm1 & \(hm1', hmNew) ->
+    capacity hm1' & \(hm1'', Ur cap1) ->
+      capacity hm2 & \(hm2', Ur cap2) ->
+        if cap1 > cap2
+        then go combine hm1'' (toList hm2') hmNew
+        else go (\v2 v1 -> combine v1 v2) hm2' (toList hm1'') hmNew
  where
-   go :: (a -> b -> c) -> HashMap k a #-> HashMap k b #-> HashMap k c
-   go f hm1 hm2 = Unsafe.toLinear (go' f) hm1 hm2
-
-   -- This function is using 'hm1' unsafely, because 'mapMaybeWithKey'
-   -- does not allow passing state between elements. It relies on 'lookup'
-   -- not modifying the HashMap. It is possible to implement it safely
-   -- by inlining parts of 'mapMaybeWithKey', but this one is simpler.
-   go' :: (a -> b -> c) -> HashMap k a -> HashMap k b #-> HashMap k c
-   go' f hm1 hm2 =
-     hm2
-       & mapMaybeWithKey (\k b ->
-         lookup hm1 k & \case
-           (hm', Ur Nothing) -> Unsafe.toLinear (const Nothing) hm'
-           (hm', Ur (Just a)) -> Unsafe.toLinear (const (Just (f a b))) hm'
-         )
+   -- Iterate over the smaller map, while checking for the matches
+   -- on the bigger map; and accumulate results on a third map.
+   go :: (a -> b -> c)
+      -> HashMap k a #-> Ur [(k, b)]
+      #-> HashMap k c #-> HashMap k c
+   go _ hm (Ur []) acc = hm `lseq` acc
+   go f hm (Ur ((k, b):xs)) acc =
+     lookup hm k & \case
+       (hm', Ur Nothing) -> go f hm' (Ur xs) acc
+       (hm', Ur (Just a)) -> go f hm' (Ur xs) (insert acc k (f a b))
 
 -- |
 -- Reduce the 'HashMap' 'capacity' to decrease wasted memory. Returns
