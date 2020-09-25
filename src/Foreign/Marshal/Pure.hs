@@ -87,8 +87,8 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude (($), return, (<*>))
-import Prelude.Linear hiding (($))
+import Prelude (($), return, (<*>), Eq(..), (<$>), (=<<))
+import Prelude.Linear hiding (($), Eq(..))
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
 

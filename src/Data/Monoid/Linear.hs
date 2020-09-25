@@ -2,6 +2,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -14,6 +15,7 @@ module Data.Monoid.Linear
   ( -- * Monoids and related classes
     Semigroup(..)
   , Monoid(..)
+  , mconcat
   -- * Endo
   , Endo(..), appEndo
   , NonLinear(..)
@@ -39,6 +41,13 @@ class (Semigroup a, Prelude.Monoid a) => Monoid a where
   mempty :: a
   mempty = Prelude.mempty
   -- convenience redefine
+
+mconcat :: Monoid a => [a] #-> a
+mconcat (xs' :: [a]) = go mempty xs'
+  where
+    go :: a #-> [a] #-> a
+    go acc [] = acc
+    go acc (x:xs) = go (acc <> x) xs
 
 ---------------
 -- Instances --

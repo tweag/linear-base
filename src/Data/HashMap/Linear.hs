@@ -172,7 +172,7 @@ fromList xs scope =
   Array.alloc
     (max
       1
-      (ceiling @Float @Int (fromIntegral (length xs) / constMaxLoadFactor)))
+      (ceiling @Float @Int (fromIntegral (Prelude.length xs) / constMaxLoadFactor)))
     Nothing
     (\arr -> scope (insertAll xs (HashMap 0 arr)))
 
@@ -380,7 +380,7 @@ shrinkToFit :: Keyed k => HashMap k a #-> HashMap k a
 shrinkToFit hm =
   size hm & \(hm', Ur size) ->
     let targetSize = ceiling
-          (max 1 (fromIntegral size / constMaxLoadFactor))
+          (Prelude.max 1 (fromIntegral size Prelude./ constMaxLoadFactor))
     in  resize targetSize hm'
 
 -- # Querying
@@ -503,7 +503,7 @@ probeFrom (k, p) ix (HashMap ct arr) = Array.read arr ix & \case
     case k == k' of
       -- Note: in the True case, we must have p == psl
       True -> (HashMap ct arr', IndexToUpdate v' psl ix)
-      False -> case psl < p of
+      False -> case psl Prelude.< p of
         True -> (HashMap ct arr', IndexToSwap robinVal' p ix)
         False ->
           capacity (HashMap ct arr') & \(HashMap ct' arr'', Ur cap) ->
@@ -551,7 +551,7 @@ growMapIfNecessary hm =
   capacity hm & \(hm', Ur cap) ->
    size hm' & \(hm'', Ur sz) ->
     let load = fromIntegral sz / fromIntegral cap
-    in if load < constMaxLoadFactor
+    in if load Prelude.< constMaxLoadFactor
        then hm''
        else
          let newCap = max 1 (cap * constGrowthFactor)

@@ -3,6 +3,7 @@
 
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -33,11 +34,17 @@ id x = x
 const :: a #-> b -> a
 const x _ = x
 
+asTypeOf :: a #-> a -> a
+asTypeOf = const
+
 -- | @seq x y@ only forces @x@ to head normal form, therefore is not guaranteed
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
 seq :: a -> b #-> b
 seq x = Unsafe.toLinear (Prelude.seq x)
+
+($!) :: (a #-> b) #-> a #-> b
+($!) f !a = f a
 
 -- | Beware, 'curry' is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.

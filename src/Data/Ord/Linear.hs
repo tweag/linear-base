@@ -8,6 +8,7 @@
 
 module Data.Ord.Linear
   ( Ord(..)
+  , Ordering(..)
   , min
   , max
   , compare
@@ -73,6 +74,8 @@ class Eq a => Ord a where
 
   (>=) :: a #-> a #-> Bool
   x >= y = not (x < y)
+
+  infix 4 <=, <, >, >=
 
 -- NOTE: the unsafe linear coercing in the three functions below makes sense
 -- ONLY because any type satisfying these constraints has a linear ord

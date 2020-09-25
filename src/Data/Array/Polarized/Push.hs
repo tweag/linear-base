@@ -18,7 +18,6 @@ import qualified Data.Functor.Linear as Data
 import Data.Vector (Vector)
 import Prelude.Linear
 import qualified Prelude
-import Data.Monoid.Linear
 
 -- TODO: the below isn't really true yet since no friendly way of constructing
 -- a PushArray directly is given yet (see issue #62), but the spirit holds.

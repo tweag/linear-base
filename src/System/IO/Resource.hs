@@ -106,7 +106,7 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease P.$ Ur.fmap snd P.$ IntMap.toList releaseMap))
+           safeRelease P.$ Ur.fmap P.snd P.$ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.

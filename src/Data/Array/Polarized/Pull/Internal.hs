@@ -13,7 +13,6 @@ import Prelude.Linear
 import qualified Prelude
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
-import Data.Monoid.Linear
 
 import qualified Unsafe.Linear as Unsafe
 
@@ -45,13 +44,13 @@ singleton = Unsafe.toLinear (\x -> fromFunction (\_ -> x) 1)
 -- Zip both pull arrays together.
 zip :: Array a #-> Array b #-> Array (a,b)
 zip (Array g n) (Array h m)
-  | n /= m    = error "Polarized.zip: size mismatch"
+  | n Prelude./= m    = error "Polarized.zip: size mismatch"
   | otherwise = fromFunction (\k -> (g k, h k)) n
 
 -- | Concatenate two pull arrays.
 append :: Array a #-> Array a #-> Array a
 append (Array f m) (Array g n) = Array h (m + n)
-  where h k = if k < m
+  where h k = if k Prelude.< m
                  then f k
                  else g (k-m)
 
@@ -80,8 +79,8 @@ findLength (Array f n) = (n, Array f n)
 fromFunction :: (Int -> a) -> Int -> Array a
 fromFunction f n = Array f' n
   where f' k
-          | k < 0 = error "Pull.Array: negative index"
-          | k >= n = error "Pull.Array: index too large"
+          | k Prelude.< 0 = error "Pull.Array: negative index"
+          | k Prelude.>= n = error "Pull.Array: index too large"
           | otherwise = f k
 -- XXX: this is used internally to ensure out of bounds errors occur, but
 -- is unnecessary if the input function can be assumed to already have bounded
