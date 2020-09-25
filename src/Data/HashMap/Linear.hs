@@ -69,7 +69,8 @@ import qualified Unsafe.Linear as Unsafe
 -- * https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf
 --
 
--- * Constants
+-- # Constants
+--------------------------------------------------
 
 -- | When to trigger a resize.
 --
@@ -261,7 +262,7 @@ mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr') =
   go :: Int -- ^ Current index
      -> Int -- ^ Last index to check
      -> Int -- ^ Size of the array
-     -> Int -- ^ Number of resulting elements
+     -> Int -- ^ Accumulated count of pairs that are present after the map.
      -> RobinArr k v
      #-> (RobinArr k v', Ur Int)
   go curr end sz ret arr =
@@ -464,7 +465,7 @@ _debugShow (HashMap _ robinArr) =
 --
 -- This function finds the number of spillovers. The spillovers can
 -- be determined by the length of the prefix of the array where
--- PSL > index.
+-- PSL > index. This works since they form a contiguous segment.
 numSpillovers :: RobinArr k v #-> (RobinArr k v, Ur Int)
 numSpillovers arr =
   Array.size arr & \(arr', Ur sz) ->
