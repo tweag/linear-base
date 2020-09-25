@@ -19,7 +19,12 @@ library
     Control.Monad.IO.Class.Linear
     Control.Monad.Linear
     Control.Monad.Linear.Internal
+    Control.Optics.Linear
     Control.Optics.Linear.Internal
+    Control.Optics.Linear.Iso
+    Control.Optics.Linear.Lens
+    Control.Optics.Linear.Prism
+    Control.Optics.Linear.Traversal
     Data.Array.Destination
     Data.Array.Mutable.Linear
     Data.Array.Mutable.Unlifted.Linear
