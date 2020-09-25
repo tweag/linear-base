@@ -8,7 +8,7 @@ module Control.Optics.Linear.Lens
     -- * Using optics
   , get, set, gets, setSwap
   , over, over'
-  , withLens
+  , reifyLens, withLens
     -- * Constructing optics
   , lens
   )
