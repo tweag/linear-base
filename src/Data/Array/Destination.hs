@@ -63,7 +63,7 @@ fill = Unsafe.toLinear2 unsafeFill
     -- length function on destination.
   where
     unsafeFill a (DArray ds) =
-      if MVector.length ds Prelude./= 1 then
+      if MVector.length ds /= 1 then
         error "Destination.fill: requires a destination of size 1"
       else
         unsafeDupablePerformIO Prelude.$ MVector.write ds 0 a

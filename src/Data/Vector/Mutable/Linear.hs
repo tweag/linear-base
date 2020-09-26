@@ -122,7 +122,7 @@ empty f = Array.fromList [] (f . fromArray)
 constant :: HasCallStack =>
   Int -> a -> (Vector a #-> Ur b) #-> Ur b
 constant size' x f
-  | size' Prelude.< 0 =
+  | size' < 0 =
       (error ("Trying to construct a vector of size " ++ show size') :: x #-> x)
       (f undefined)
   | otherwise = Array.alloc size' x (f . fromArray)
@@ -237,7 +237,7 @@ mapMaybe vec (f :: a -> Maybe b) =
   go r w s vec'
     -- If we processed all elements, set the capacity after the last written
     -- index and coerce the result to the correct type.
-    | r Prelude.== s =
+    | r == s =
         vec' & \(Vec _ arr) ->
           Vec w (Unsafe.coerce arr)
     -- Otherwise, read an element, write if the predicate is true and advance
@@ -256,7 +256,7 @@ shrinkToFit :: Vector a #-> Vector a
 shrinkToFit vec =
   capacity vec & \(vec', Ur cap) ->
     size vec' & \(vec'', Ur s') ->
-      if cap Prelude.> s'
+      if cap > s'
       then unsafeResize s' vec''
       else vec''
 
@@ -324,7 +324,7 @@ growToFit :: HasCallStack => Int -> Vector a #-> Vector a
 growToFit n vec =
   capacity vec & \(vec', Ur cap) ->
     size vec' & \(vec'', Ur s') ->
-      if s' + n Prelude.<= cap
+      if s' + n <= cap
       then vec''
       else
         let -- Calculate the closest power of growth factor
@@ -357,6 +357,6 @@ unsafeResize newSize (Vec size' ma) =
 assertIndexInRange :: HasCallStack => Int -> Vector a #-> Vector a
 assertIndexInRange i vec =
   size vec & \(vec', Ur s) ->
-    if 0 Prelude.<= i Prelude.&& i Prelude.< s
+    if 0 <= i && i < s
     then vec'
     else vec' `lseq` error "Vector: index out of bounds"
