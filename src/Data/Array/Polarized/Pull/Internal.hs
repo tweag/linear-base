@@ -13,7 +13,6 @@ import Prelude.Linear
 import qualified Prelude
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
-import Data.Monoid.Linear
 
 import qualified Unsafe.Linear as Unsafe
 

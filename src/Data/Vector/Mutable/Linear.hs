@@ -214,7 +214,7 @@ modify_ vec f ix =
 toList :: Vector a #-> Ur [a]
 toList (Vec s arr) =
   Array.toList arr & \(Ur xs) ->
-    Ur (take s xs)
+    Ur (Prelude.take s xs)
 
 -- | Filters the vector in-place. It does not deallocate unused capacity,
 -- use 'shrinkToFit' for that if necessary.

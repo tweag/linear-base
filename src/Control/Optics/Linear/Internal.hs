@@ -121,7 +121,7 @@ setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) a b s t -> 
 setSwap (Optical l) s = getLA (getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (LA (\b -> (a,b)))))) s))
 
 match :: Optic_ (Market a b) a b s t -> s #-> Either t a
-match (Optical l) = snd (runMarket (l (Market id Right)))
+match (Optical l) = P.snd (runMarket (l (Market id Right)))
 
 build :: Optic_ (Linear.CoKleisli (Const b)) a b s t -> b #-> t
 build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Const x)

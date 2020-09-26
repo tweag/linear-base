@@ -32,6 +32,7 @@ class Eq a where
   x == y = not (x /= y)
   (/=) :: a #-> a #-> Bool
   x /= y = not (x == y)
+  infix 4 ==, /=
 
 deriving via MovableEq () instance Eq ()
 deriving via MovableEq Prelude.Int instance Eq Prelude.Int

@@ -9,10 +9,11 @@ module Data.Bool.Linear
   , (&&)
   , (||)
   , not
+  , otherwise
   )
   where
 
-import Prelude (Bool(..))
+import Prelude (Bool(..), otherwise)
 
 -- | @True@ iff both are @True@.
 -- __NOTE:__ this is strict and not lazy!

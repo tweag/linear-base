@@ -21,6 +21,7 @@ module Data.List.Linear
   , NonLinear.last
   , NonLinear.init
   , reverse
+  , NonLinear.lookup
   , length
   , NonLinear.null
     -- * Extracting sublists
@@ -76,7 +77,7 @@ module Data.List.Linear
 
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude as Prelude
-import Prelude (Maybe(..), Either(..), Int, otherwise)
+import Prelude (Maybe(..), Either(..), Int)
 import Prelude.Linear.Internal
 import Data.Bool.Linear
 import Data.Unrestricted.Linear

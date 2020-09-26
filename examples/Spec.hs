@@ -23,12 +23,12 @@ import Prelude.Linear
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a #-> List a #-> Ur Bool
+eqList :: forall a. (Manual.Representable a, Movable a, P.Eq a) => List a #-> List a #-> Ur Bool
 eqList l1 l2 =
     eqUL (move (List.toList l1)) (move (List.toList l2))
   where
     eqUL :: Ur [a] #-> Ur [a] #-> Ur Bool
-    eqUL (Ur as1) (Ur as2) = Ur (as1 == as2)
+    eqUL (Ur as1) (Ur as2) = Ur (as1 P.== as2)
 
 data InjectedError = InjectedError
   deriving (Typeable, Show)
@@ -43,7 +43,7 @@ main = hspec P.$ do
         property (\(l :: [Int]) -> unur (Manual.withPool $ \pool ->
           let
             check :: Ur [Int] #-> Ur Bool
-            check (Ur l') = Ur P.$ l' == l
+            check (Ur l') = Ur P.$ l' P.== l
           in
             check $ move (List.toList $ List.ofList l pool)))
 
@@ -76,7 +76,7 @@ main = hspec P.$ do
   describe "Off-heap heaps" P.$ do
     describe "sort" P.$ do
       it "sorts" P.$
-        property (\(l :: [(Int, ())]) -> Heap.sort l == (L.reverse P.$ L.sort l))
+        property (\(l :: [(Int, ())]) -> Heap.sort l P.== (L.reverse P.$ L.sort l))
 
   describe "Linear arrays" P.$ do
     describe "destination arrays" P.$ do
@@ -85,32 +85,32 @@ main = hspec P.$ do
           property (\(l :: [Int]) ->
             let xs = Vector.fromList l
                 n = Vector.length xs
-             in DArray.alloc n (DArray.mirror xs id) == xs)
+             in DArray.alloc n (DArray.mirror xs id) P.== xs)
 
       describe "replicate" P.$
         it "replicates" P.$
           property (\(x :: Int) (NonNegative n) ->
-            DArray.alloc n (DArray.replicate x) == Vector.replicate n x)
+            DArray.alloc n (DArray.replicate x) P.== Vector.replicate n x)
 
       describe "fill" P.$
         it "fills one slot" P.$
           property (\(x :: Int) ->
-            DArray.alloc 1 (DArray.fill x) == Vector.singleton x)
+            DArray.alloc 1 (DArray.fill x) P.== Vector.singleton x)
 
       describe "fromFunction" P.$ do
         it "mimics Vector.enumFromN" P.$
           property (\(start :: Int) (NonNegative n) ->
-            DArray.alloc n (DArray.fromFunction (P.+ start)) == Vector.enumFromN start n)
+            DArray.alloc n (DArray.fromFunction (P.+ start)) P.== Vector.enumFromN start n)
         it "matches Vector.generate" P.$
           property (\(f :: Fun Int Int) (NonNegative n) ->
-            DArray.alloc n (DArray.fromFunction (applyFun f)) == Vector.generate n (applyFun f))
+            DArray.alloc n (DArray.fromFunction (applyFun f)) P.== Vector.generate n (applyFun f))
 
     describe "polarized arrays" P.$ do
       describe "conversions" P.$ do
         it "roundtrips correctly" P.$
           property (\(l :: [Int]) ->
             let xs = Vector.fromList l
-             in Push.alloc (Polarized.transfer (Pull.fromVector xs)) == xs)
+             in Push.alloc (Polarized.transfer (Pull.fromVector xs)) P.== xs)
 
     describe "push arrays" P.$ do
       describe "append" P.$
@@ -118,12 +118,12 @@ main = hspec P.$ do
           property (\(x :: [Int]) (y :: [Int]) ->
             let xs = Vector.fromList x
                 ys = Vector.fromList y
-             in Push.alloc (Polarized.walk xs <> Polarized.walk ys) == xs Vector.++ ys)
+             in Push.alloc (Polarized.walk xs <> Polarized.walk ys) P.== xs Vector.++ ys)
 
       describe "make" P.$
         it "matches Vector.replicate" P.$
           property (\(x :: Int) (NonNegative n) ->
-            Push.alloc (Push.make x n) == Vector.replicate n x)
+            Push.alloc (Push.make x n) P.== Vector.replicate n x)
 
       -- TODO: figure out a way to test fmap on push arrays (linearity issues at the moment)
 
@@ -133,23 +133,23 @@ main = hspec P.$ do
           property (\(x :: [Int]) (y :: [Int]) ->
             let xs = Vector.fromList x
                 ys = Vector.fromList y
-             in Pull.toVector (Pull.fromVector xs <> Pull.fromVector ys) == xs Vector.++ ys)
+             in Pull.toVector (Pull.fromVector xs <> Pull.fromVector ys) P.== xs Vector.++ ys)
 
       describe "asList" P.$
         it "roundtrips correctly" P.$
           property (\(x :: [Int]) ->
-            Pull.asList (Pull.fromVector (Vector.fromList x)) == x)
+            Pull.asList (Pull.fromVector (Vector.fromList x)) P.== x)
 
       describe "singleton" P.$
         it "matches list singleton" P.$
-          property (\(x :: Int) -> Pull.asList (Pull.singleton x) == [x])
+          property (\(x :: Int) -> Pull.asList (Pull.singleton x) P.== [x])
 
       describe "split" P.$
         it "matches list splitAt" P.$
           property (\(x :: [Int]) (NonNegative n) ->
             let xs = Pull.fromVector (Vector.fromList x)
                 (l,r) = Pull.split n xs
-             in (Pull.asList l, Pull.asList r) == splitAt n x)
+             in (Pull.asList l, Pull.asList r) P.== splitAt n x)
 
       -- TODO: test `zip` to make sure it does error when given different lengths
       describe "zip" P.$
@@ -158,9 +158,9 @@ main = hspec P.$ do
             let (x',y') = unzip x
                 xs = Pull.fromVector (Vector.fromList x')
                 ys = Pull.fromVector (Vector.fromList y')
-             in Pull.asList (Pull.zip xs ys) == zip x' y')
+             in Pull.asList (Pull.zip xs ys) P.== zip x' y')
 
       describe "make" P.$
         it "matches list replicate" P.$
           property (\(x :: Int) (NonNegative n) ->
-            Pull.asList (Pull.make x n) == replicate n x)
+            Pull.asList (Pull.make x n) P.== replicate n x)

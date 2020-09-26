@@ -8,9 +8,12 @@ module Data.Tuple.Linear
     fst
   , snd
   , swap
+  , curry
+  , uncurry
   )
   where
 
+import Prelude.Linear.Internal
 import Data.Unrestricted.Linear
 
 fst :: Consumable b => (a,b) #-> a

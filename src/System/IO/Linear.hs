@@ -62,6 +62,7 @@ import qualified Data.Functor.Linear as Data
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)
 import qualified Unsafe.Linear as Unsafe
+import qualified Prelude
 import qualified System.IO as System
 
 
@@ -104,7 +105,7 @@ fromSystemIO = Unsafe.coerce
 -- 'Ur'.
 fromSystemIOU :: System.IO a -> IO (Ur a)
 fromSystemIOU action =
-  fromSystemIO (Ur <$> action)
+  fromSystemIO (Ur Prelude.<$> action)
 
 -- | Convert a linear IO action to a "System.IO" action.
 toSystemIO :: IO a #-> System.IO a
@@ -118,7 +119,7 @@ toSystemIO = Unsafe.coerce -- basically just subtyping
 -- main = Linear.withLinearIO $ do ...
 -- @
 withLinearIO :: IO (Ur a) -> System.IO a
-withLinearIO action = (\x -> unur x) <$> (toSystemIO action)
+withLinearIO action = (\x -> unur x) Prelude.<$> (toSystemIO action)
 
 -- * Monadic interface
 
