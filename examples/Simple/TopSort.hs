@@ -67,16 +67,16 @@ postOrderHM nodes dag = findSources nodes (computeInDeg nodes dag) & \case
   -- Increment in-degree of all neighbors
   incChildren :: InDegGraph #-> Ur Node #-> InDegGraph
   incChildren dag (Ur node) = HMap.lookup dag node & \case
-     (dag, Ur Nothing) -> dag
-     (dag, Ur (Just (xs,i))) -> incNodes (move xs) dag
+     (Ur Nothing, dag) -> dag
+     (Ur (Just (xs,i)), dag) -> incNodes (move xs) dag
     where
       incNodes :: Ur [Node] #-> InDegGraph #-> InDegGraph
       incNodes (Ur ns) dag = Linear.foldl incNode dag (map Ur ns)
 
       incNode :: InDegGraph #-> Ur Node #-> InDegGraph
       incNode dag (Ur node) = HMap.lookup dag node & \case
-        (dag', Ur Nothing) -> dag'
-        (dag', Ur (Just (n,d))) ->
+        (Ur Nothing, dag') -> dag'
+        (Ur (Just (n,d)), dag') ->
           HMap.insert dag' node (n,d+1)
         --HMap.alter dag (\(Just (n,d)) -> Just (n,d+1)) node
 
@@ -84,8 +84,8 @@ postOrderHM nodes dag = findSources nodes (computeInDeg nodes dag) & \case
 pluckSources :: [Node] -> [Node] -> InDegGraph #-> Ur [Node]
 pluckSources [] postOrd dag = lseq dag (move postOrd)
 pluckSources (s:ss) postOrd dag = HMap.lookup dag s & \case
-  (dag, Ur Nothing) -> pluckSources ss (s:postOrd) dag
-  (dag, Ur (Just (xs,i))) -> walk xs dag & \case
+  (Ur Nothing, dag) -> pluckSources ss (s:postOrd) dag
+  (Ur (Just (xs,i)), dag) -> walk xs dag & \case
       (dag', Ur newSrcs) ->
         pluckSources (newSrcs ++ ss) (s:postOrd) dag'
   where
@@ -97,8 +97,8 @@ pluckSources (s:ss) postOrd dag = HMap.lookup dag s & \case
     -- Decrement the degree of a node, save it if it is now a source
     decDegree :: Node -> InDegGraph #-> (InDegGraph, Ur (Maybe Node))
     decDegree node dag = HMap.lookup dag node & \case
-        (dag', Ur Nothing) -> (dag', Ur Nothing)
-        (dag', Ur (Just (n,d))) ->
+        (Ur Nothing, dag') -> (dag', Ur Nothing)
+        (Ur (Just (n,d)), dag') ->
           checkSource node (HMap.insert dag' node (n,d-1))
 
 
@@ -111,9 +111,9 @@ findSources nodes dag =
 -- | Check if a node is a source, and if so return it
 checkSource :: Node -> InDegGraph #-> (InDegGraph, Ur (Maybe Node))
 checkSource node dag = HMap.lookup dag node & \case
-  (dag, Ur Nothing) -> (dag, Ur Nothing)
-  (dag, Ur (Just (xs,0))) ->  (dag, Ur (Just node))
-  (dag, Ur (Just (xs,n))) -> (dag, Ur Nothing)
+  (Ur Nothing, dag) -> (dag, Ur Nothing)
+  (Ur (Just (xs,0)), dag) ->  (dag, Ur (Just node))
+  (Ur (Just (xs,n)), dag) -> (dag, Ur Nothing)
 
 
 mapAccum ::

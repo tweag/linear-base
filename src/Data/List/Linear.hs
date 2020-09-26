@@ -116,9 +116,9 @@ reverse :: [a] #-> [a]
 reverse = Unsafe.toLinear NonLinear.reverse
 
 -- | Return the length of the given list alongside with the list itself.
-length :: [a] #-> ([a], Ur Int)
+length :: [a] #-> (Ur Int, [a])
 length = Unsafe.toLinear $ \xs ->
-  (xs, Ur (NonLinear.length xs))
+  (Ur (NonLinear.length xs), xs)
 -- We can only do this because of the fact that 'NonLinear.length'
 -- does not inspect the elements.
 

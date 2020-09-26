@@ -77,13 +77,13 @@ intersection (Set hm1) (Set hm2) =
 -- # Accessors
 -------------------------------------------------------------------------------
 
-size :: Keyed a => Set a #-> (Set a, Ur Int)
+size :: Keyed a => Set a #-> (Ur Int, Set a)
 size (Set hm) =
-  Linear.size hm Linear.& \(hm', s) -> (Set hm', s)
+  Linear.size hm Linear.& \(s, hm') -> (s, Set hm')
 
-member :: Keyed a => Set a #-> a -> (Set a, Ur Bool)
+member :: Keyed a => Set a #-> a -> (Ur Bool, Set a)
 member (Set hm) a =
-  Linear.member hm a Linear.& \(hm', b) -> (Set hm', b)
+  Linear.member hm a Linear.& \(b, hm') -> (b, Set hm')
 
 fromList :: Keyed a => [a] -> (Set a #-> Ur b) #-> Ur b
 fromList xs f =

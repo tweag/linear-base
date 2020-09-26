@@ -81,14 +81,14 @@ testOnAnyHM propHmtest = defProperty $ do
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
-  fromLookup Linear.$ getSnd Linear.$ HashMap.lookup hmap k
+  fromLookup Linear.$ getFst Linear.$ HashMap.lookup hmap k
   where
     fromLookup :: Ur (Maybe String) #-> Ur Bool
     fromLookup (Ur Nothing) = Ur False
     fromLookup (Ur (Just v')) = Ur (v' == v)
 
 testKeyMember :: Int -> HMTest
-testKeyMember key hmap = getSnd Linear.$ HashMap.member hmap key
+testKeyMember key hmap = getFst Linear.$ HashMap.member hmap key
 
 testKeyNotMember :: Int -> HMTest
 testKeyNotMember key hmap = Linear.fmap Linear.not (testKeyMember key hmap)
@@ -96,7 +96,7 @@ testKeyNotMember key hmap = Linear.fmap Linear.not (testKeyMember key hmap)
 -- | That is, test that lookup gives us `Nothing`
 testKeyMissing :: Int -> HMTest
 testKeyMissing key hmap =
-  fromLookup Linear.$ getSnd Linear.$ HashMap.lookup hmap key
+  fromLookup Linear.$ getFst Linear.$ HashMap.lookup hmap key
   where
     fromLookup :: Ur (Maybe String) #-> Ur Bool
     fromLookup (Ur Nothing) = Ur True
@@ -105,9 +105,9 @@ testKeyMissing key hmap =
 testLookupUnchanged :: (HMap #-> HMap) -> Int -> HMTest
 testLookupUnchanged f k hmap = fromLookup (HashMap.lookup hmap k)
   where
-    fromLookup :: (HMap, Ur (Maybe String)) #-> Ur Bool
-    fromLookup (hmap', look1) =
-      compareMaybes look1 (getSnd Linear.$ HashMap.lookup (f hmap') k)
+    fromLookup :: (Ur (Maybe String), HMap) #-> Ur Bool
+    fromLookup (look1, hmap') =
+      compareMaybes look1 (getFst Linear.$ HashMap.lookup (f hmap') k)
 
 deleteKey :: Int -> HMap #-> HMap
 deleteKey key hmap = HashMap.delete hmap key
@@ -116,8 +116,8 @@ insertPair :: (Int, String) -> HMap #-> HMap
 insertPair (k, v) hmap = HashMap.insert hmap k v
 
 -- XXX: This is a terrible name
-getSnd :: (Consumable a) => (a, b) #-> b
-getSnd (a, b) = lseq a b
+getFst :: (Consumable b) => (a, b) #-> a
+getFst (a, b) = lseq b a
 
 compareMaybes :: Eq a =>
   Ur (Maybe a) #->
@@ -210,10 +210,10 @@ sizeInsert = testOnAnyHM $ do
 checkSizeAfterInsert :: (Int, String) -> HMTest
 checkSizeAfterInsert (k, v) hmap = withSize Linear.$ HashMap.size hmap
   where
-    withSize :: (HMap, Ur Int) #-> Ur Bool
-    withSize (hmap, oldSize) =
+    withSize :: (Ur Int, HMap) #-> Ur Bool
+    withSize (oldSize, hmap) =
       checkSize oldSize
-        Linear.$ getSnd
+        Linear.$ getFst
         Linear.$ HashMap.size
         Linear.$ HashMap.insert hmap k v
     checkSize :: Ur Int #-> Ur Int #-> Ur Bool
@@ -231,10 +231,10 @@ deleteSize = testOnAnyHM $ do
 checkSizeAfterDelete :: Int -> HMTest
 checkSizeAfterDelete key hmap = fromSize (HashMap.size hmap)
   where
-    fromSize :: (HMap, Ur Int) #-> Ur Bool
-    fromSize (hmap, orgSize) =
+    fromSize :: (Ur Int, HMap) #-> Ur Bool
+    fromSize (orgSize, hmap) =
       compSizes orgSize
-        Linear.$ getSnd
+        Linear.$ getFst
         Linear.$ HashMap.size (HashMap.delete hmap key)
     compSizes :: Ur Int #-> Ur Int #-> Ur Bool
     compSizes (Ur orgSize) (Ur newSize) =

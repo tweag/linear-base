@@ -72,29 +72,29 @@ alloc (GHC.I# s) a f =
 -- using another 'Array#' as a uniqueness proof.
 --
 -- The size should be non-negative.
-allocBeside :: Int -> a -> Array# b #-> (# Array# b, Array# a #)
+allocBeside :: Int -> a -> Array# b #-> (# Array# a, Array# b #)
 allocBeside (GHC.I# s) a orig =
   let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
-   in (# orig, new #)
+   in (# new, orig #)
 {-# NOINLINE allocBeside #-}  -- prevents runRW# from floating outwards
 
-size :: Array# a #-> (# Array# a, Ur Int #)
+size :: Array# a #-> (# Ur Int, Array# a #)
 size = Unsafe.toLinear go
   where
-    go :: Array# a -> (# Array# a, Ur Int #)
+    go :: Array# a -> (# Ur Int, Array# a #)
     go (Array# arr) =
       let !s = GHC.sizeofMutableArray# arr
-      in  (# Array# arr, Ur (GHC.I# s) #)
+      in  (# Ur (GHC.I# s), Array# arr  #)
 
-read ::  Int -> Array# a #-> (# Array# a, Ur a #)
+read ::  Int -> Array# a #-> (# Ur a, Array# a #)
 read (GHC.I# i) = Unsafe.toLinear go
   where
-    go :: Array# a -> (# Array# a, Ur a #)
+    go :: Array# a -> (# Ur a, Array# a #)
     go (Array# arr) =
       case GHC.runRW# (GHC.readArray# arr i) of
-        (# _, ret #) -> (# Array# arr, Ur ret #)
+        (# _, ret #) -> (# Ur ret, Array# arr #)
 {-# NOINLINE read #-}  -- prevents the runRW# effect from being reordered
 
 write :: Int -> a -> Array# a #-> Array# a
@@ -131,7 +131,7 @@ copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
 map :: (a -> b) -> Array# a #-> Array# b
 map (f :: a -> b) arr =
   size arr
-    `chain2` \(# arr', Ur s #) -> go 0 s arr'
+    `chain2` \(# Ur s, arr' #) -> go 0 s arr'
  where
   -- When we're mapping an array, we first insert `b`'s
   -- inside an `Array# a` by unsafeCoerce'ing, and then we
@@ -142,7 +142,7 @@ map (f :: a -> b) arr =
         Unsafe.toLinear GHC.unsafeCoerce# arr'
     | Prelude.otherwise =
         read i arr'
-          `chain2` \(# arr'', Ur a #) -> write i (Unsafe.coerce (f a)) arr''
+          `chain2` \(# Ur a, arr'' #) -> write i (Unsafe.coerce (f a)) arr''
           `chain` \arr''' -> go (i Prelude.+ 1) s arr'''
 {-# NOINLINE map #-}
 
@@ -192,6 +192,6 @@ chain :: forall (r :: GHC.RuntimeRep) a (b :: GHC.TYPE r).
 chain a f = f a
 
 chain2 :: forall (r :: GHC.RuntimeRep) a b (c :: GHC.TYPE r).
-        (# Array# a, b #) #-> ((# Array# a, b #) #-> c) #-> c
+        (# b, Array# a #) #-> ((# b, Array# a #) #-> c) #-> c
 chain2 a f = f a
 infixl 1 `chain`, `chain2`
