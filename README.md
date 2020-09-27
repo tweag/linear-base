@@ -43,11 +43,11 @@ the top:
 
 ## User Guide
 
-If you already know what `-XLinearHaskell` does and what the linear
+If you already know what `-XLinearTypes` does and what the linear
 arrow `a #-> b` means, then read the [User Guide] and explore the
 [`examples/`](./examples) folder to know how to use `linear-base`.
 
-## Learning about `-XLinearHaskell`
+## Learning about `-XLinearTypes`
 
 If you're a Haskeller who hasn't written any Linear Haskell code, don't fear!
 There are plenty of excellent resources and examples to help you.
