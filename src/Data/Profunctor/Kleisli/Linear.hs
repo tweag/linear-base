@@ -56,7 +56,7 @@ instance Data.Functor f => Monoidal Either Void (Kleisli f) where
   unit = Kleisli $ \case {}
 
 instance Control.Applicative f => Wandering (Kleisli f) where
-  wander (Kleisli f) = Kleisli (Data.traverse f)
+  wander traverse (Kleisli f) = Kleisli (traverse f)
 
 -- | Linear co-Kleisli arrows for the comonad `w`. These arrows are still
 -- useful in the case where `w` is not a comonad however, and some

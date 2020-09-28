@@ -32,11 +32,12 @@ module Control.Optics.Linear.Internal
   , reifyLens
   , withIso, withLens, withPrism
     -- * Constructing optics
-  , iso, lens, prism
+  , iso, lens, prism, traversal
   )
   where
 
 import qualified Control.Arrow as NonLinear
+import qualified Control.Monad.Linear as Control
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Profunctor.Linear
@@ -79,6 +80,9 @@ lens k = Optical $ \f -> dimap k (\(x,g) -> g $ x) (first f)
 prism :: (b #-> t) -> (s #-> Either t a) -> Prism s t a b
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
 
+traversal :: (forall f. Control.Applicative f => (a #-> f b) -> s #-> f t) -> Traversal s t a b
+traversal trav = Optical $ wander trav
+
 _1 :: Lens (a,c) (b,c) a b
 _1 = Optical first
 
@@ -98,7 +102,7 @@ _Nothing :: Prism' (Maybe a) ()
 _Nothing = prism (\() -> Nothing) Left
 
 traversed :: Traversable t => Traversal (t a) (t b) a b
-traversed = Optical wander
+traversed = Optical $ wander traverse
 
 over :: Optic_ LinearArrow s t a b -> (a #-> b) -> s #-> t
 over (Optical l) f = getLA (l (LA f))

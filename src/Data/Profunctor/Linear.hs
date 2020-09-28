@@ -5,6 +5,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -18,7 +19,7 @@ module Data.Profunctor.Linear
   , Market(..), runMarket
   ) where
 
-import qualified Data.Functor.Linear as Data
+import qualified Control.Monad.Linear as Control
 import Data.Bifunctor.Linear hiding (first, second)
 import qualified Data.Bifunctor as Prelude
 import Prelude.Linear
@@ -60,7 +61,10 @@ class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   {-# INLINE second #-}
 
 class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
-  wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
+  -- | Equivalently but less efficient in general:
+  --
+  -- > wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
+  wander :: forall s t a b. (forall f. Control.Applicative f => (a #-> f b) -> s #-> f t) -> a `arr` b -> s `arr` t
 
 ---------------
 -- Instances --

@@ -9,6 +9,7 @@ module Control.Optics.Linear.Traversal
   , over, over'
   , traverseOf, traverseOf'
     -- * Constructing optics
+  , traversal
   )
   where
 
