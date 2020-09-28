@@ -22,17 +22,16 @@
 -- = A simple example
 -- > {-# LANGUAGE LinearTypes #-}
 -- > {-# LANGUAGE QualifiedDo #-}
--- > {-# LANGUAGE RecordWildCards #-}
+-- > {-# LANGUAGE NoImplicitPrelude #-}
 -- >
 -- > import qualified System.IO.Resource as Linear
 -- > import qualified Control.Monad.Linear as Control
 -- > import qualified Data.Text as Text
--- > import Data.Unrestricted.Linear
--- > import System.IO
--- > import Prelude
+-- > import Prelude.Linear
+-- > import qualified Prelude
 -- >
 -- > linearWriteToFile :: IO ()
--- > linearWriteToFile = Linear.run $ Control.do
+-- > linearWriteToFile = Linear.run Prelude.$ Control.do
 -- >   handle1 <- Linear.openFile "/home/user/test.txt" WriteMode
 -- >   handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
 -- >   () <- Linear.hClose handle2
@@ -49,7 +48,8 @@ module System.IO.Resource
     -- $files
   , Handle
     -- ** File I/O
-  , openFile 
+  , openFile
+  , System.IOMode (..)
     -- ** Working with Handles
   , hClose
   , hIsEOF
