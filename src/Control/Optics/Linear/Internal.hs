@@ -26,8 +26,8 @@ module Control.Optics.Linear.Internal
     -- * Using optics
   , get, set, gets, setSwap
   , match, build
-  , over, over'
-  , traverseOf, traverseOf'
+  , over, overU
+  , traverseOf, traverseOfU
   , toListOf, lengthOf
   , reifyLens
   , withIso, withLens, withPrism
@@ -141,12 +141,12 @@ lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Adding r))) s t 
 lengthOf l s = getAdded (gets l (const (Adding one)) s)
 
 -- XXX: the below two functions will be made redundant with multiplicity
--- polymorphism on over and traverseOf'
-over' :: Optic_ (->) s t a b -> (a -> b) -> s -> t
-over' (Optical l) f = l f
+-- polymorphism on over and traverseOfU
+overU :: Optic_ (->) s t a b -> (a -> b) -> s -> t
+overU (Optical l) f = l f
 
-traverseOf' :: Optic_ (NonLinear.Kleisli f) s t a b -> (a -> f b) -> s -> f t
-traverseOf' (Optical l) f = NonLinear.runKleisli (l (NonLinear.Kleisli f))
+traverseOfU :: Optic_ (NonLinear.Kleisli f) s t a b -> (a -> f b) -> s -> f t
+traverseOfU (Optical l) f = NonLinear.runKleisli (l (NonLinear.Kleisli f))
 
 iso :: (s #-> a) -> (b #-> t) -> Iso s t a b
 iso f g = Optical (dimap f g)
