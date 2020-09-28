@@ -29,6 +29,7 @@ module Control.Optics.Linear.Internal
   , over, over'
   , traverseOf, traverseOf'
   , toListOf, lengthOf
+  , reifyLens
   , withIso, withLens, withPrism
     -- * Constructing optics
   , iso, lens, prism
@@ -154,8 +155,15 @@ withPrism :: Optic_ (Market a b) s t a b -> ((b #-> t) -> (s #-> Either t a) -> 
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)
 
-withLens :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) s t a b -> s #-> (a, b #-> t)
-withLens (Optical l) s = getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (a, id)))) s)
+-- XXX: probably a direct implementation would be better
+withLens
+  :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) s t a b
+  -> (forall c. (s #-> (c, a)) -> ((c, b) #-> t) -> r)
+  -> r
+withLens l k = k (Bifunctor.swap . (reifyLens l)) (uncurry ($))
+
+reifyLens :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) s t a b -> s #-> (a, b #-> t)
+reifyLens (Optical l) s = getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (a, id)))) s)
 
 -- linear variant of getCompose
 getCompose :: Compose f g a #-> f (g a)
