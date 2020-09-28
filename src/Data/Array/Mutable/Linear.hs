@@ -19,9 +19,9 @@
 -- == A Tiny Example
 --
 -- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE NoImplicitPrelude #-}
+-- >
 -- > import Prelude.Linear
--- > import Data.Unrestricted.Linear
--- > import qualified Unsafe.Linear as Unsafe
 -- > import qualified Data.Array.Mutable.Linear as Array
 -- >
 -- > isTrue :: Bool
@@ -31,13 +31,9 @@
 -- > isFalse = unur $ Array.fromList [1,2,3] isFirstZero
 -- >
 -- > isFirstZero :: Array.Array Int #-> Ur Bool
--- > isFirstZero arr = withReadingFirst (Array.read arr 0)
--- >   where
--- >     withReadingFirst :: (Array.Array Int, Int) #-> Ur Bool
--- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
--- >
--- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
--- > (===) = Unsafe.toLinear2 (==)
+-- > isFirstZero arr =
+-- >   Array.read arr 0
+-- >     & \(arr', Ur val) -> arr' `lseq` Ur (val == 0)
 module Data.Array.Mutable.Linear
   ( -- * Mutable Linear Arrays
     Array,

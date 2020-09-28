@@ -21,7 +21,6 @@
 -- = Example
 -- @
 -- import qualified System.IO.Linear as Linear
--- import qualified Prelude.Linear as Linear
 --
 -- main :: IO ()
 -- main = Linear.withLinearIO $
