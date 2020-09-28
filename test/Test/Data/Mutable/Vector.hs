@@ -86,8 +86,8 @@ compInts ::
 compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getSnd :: Consumable a => (a, b) #-> b
-getSnd (a, b) = lseq a b
+getFst :: Consumable b => (a, b) #-> a
+getFst (a, b) = lseq b a
 
 
 -- # Tests
@@ -99,7 +99,7 @@ snocOnEmptyVector = withTests 1 . property $ do
         Vector.empty
           Linear.$ \vec -> Vector.push vec (42 :: Int)
           Linear.& \vec -> Vector.read vec 0
-          Linear.& getSnd
+          Linear.& getFst
   actual === 42
 
 -- | Constant should give us a constant vector.
@@ -111,7 +111,7 @@ readConst = property $ do
   test $ unur Linear.$ Vector.constant size v (readConstTest ix v)
 
 readConstTest :: Int -> Int -> VectorTester
-readConstTest ix val vec = compInts (getSnd (Vector.read vec ix)) (move val)
+readConstTest ix val vec = compInts (getFst (Vector.read vec ix)) (move val)
 
 readWrite1 :: Property
 readWrite1 = property $ do
@@ -124,7 +124,7 @@ readWrite1 = property $ do
 
 readWrite1Test :: Int -> Int -> VectorTester
 readWrite1Test ix val vec =
-  compInts (move val) (getSnd Linear.$ Vector.read (Vector.write vec ix val) ix)
+  compInts (move val) (getFst Linear.$ Vector.read (Vector.write vec ix val) ix)
 
 readWrite2 :: Property
 readWrite2 = property $ do
@@ -140,11 +140,11 @@ readWrite2 = property $ do
 readWrite2Test :: Int -> Int -> Int -> VectorTester
 readWrite2Test ix jx val vec = fromRead (Vector.read vec ix)
   where
-    fromRead :: (Vector.Vector Int, Ur Int) #-> Ur (TestT IO ())
-    fromRead (vec, val1) =
+    fromRead :: (Ur Int, Vector.Vector Int) #-> Ur (TestT IO ())
+    fromRead (val1, vec) =
       compInts
         val1
-        (getSnd Linear.$ Vector.read (Vector.write vec jx val) ix)
+        (getFst Linear.$ Vector.read (Vector.write vec jx val) ix)
 
 readPush1 :: Property
 readPush1 = property $ do
@@ -158,9 +158,9 @@ readPush1 = property $ do
 readPush1Test :: Int -> Int -> VectorTester
 readPush1Test val ix vec = fromRead (Vector.read vec ix)
   where
-    fromRead :: (Vector.Vector Int, Ur Int) #-> Ur (TestT IO ())
-    fromRead (vec,val') =
-      compInts (getSnd (Vector.read (Vector.push vec val) ix)) val'
+    fromRead :: (Ur Int, Vector.Vector Int) #-> Ur (TestT IO ())
+    fromRead (val', vec) =
+      compInts (getFst (Vector.read (Vector.push vec val) ix)) val'
 
 
 readPush2 :: Property
@@ -174,10 +174,10 @@ readPush2Test :: Int -> VectorTester
 readPush2Test val vec = fromLen (Vector.size vec)
   where
     fromLen ::
-      (Vector.Vector Int, Ur Int) #->
+      (Ur Int, Vector.Vector Int) #->
       Ur (TestT IO ())
-    fromLen (vec, Ur len) =
-      compInts (getSnd (Vector.read (Vector.push vec val) len)) (move val)
+    fromLen (Ur len, vec) =
+      compInts (getFst (Vector.read (Vector.push vec val) len)) (move val)
 
 lenConst :: Property
 lenConst = property $ do
@@ -187,7 +187,7 @@ lenConst = property $ do
 
 lenConstTest :: Int -> VectorTester
 lenConstTest size vec =
-  compInts (move size) (getSnd Linear.$ Vector.size vec)
+  compInts (move size) (getFst Linear.$ Vector.size vec)
 
 lenWrite :: Property
 lenWrite = property $ do
@@ -202,7 +202,7 @@ lenWriteTest :: Int -> Int -> Int -> VectorTester
 lenWriteTest size val ix vec =
   compInts
     (move size)
-    (getSnd Linear.$ Vector.size (Vector.write vec ix val))
+    (getFst Linear.$ Vector.size (Vector.write vec ix val))
 
 lenPush :: Property
 lenPush = property $ do
@@ -215,10 +215,10 @@ lenPushTest :: Int -> VectorTester
 lenPushTest val vec = fromLen Linear.$ Vector.size vec
   where
     fromLen ::
-      (Vector.Vector Int, Ur Int) #->
+      (Ur Int, Vector.Vector Int) #->
       Ur (TestT IO ())
-    fromLen (vec, Ur len) =
-      compInts (move (len+1)) (getSnd (Vector.size (Vector.push vec val)))
+    fromLen (Ur len, vec) =
+      compInts (move (len+1)) (getFst (Vector.size (Vector.push vec val)))
 
 refToListFromList :: Property
 refToListFromList = property $ do
@@ -244,7 +244,7 @@ refPopPush = property $ do
         Vector.fromList xs Linear.$ \vec ->
           Vector.push vec (error "not used")
             Linear.& Vector.pop
-            Linear.& \(vec, Ur _) ->
+            Linear.& \(Ur _, vec) ->
                         Vector.toList vec
   xs === actual
 
@@ -254,7 +254,7 @@ refPushPop = property $ do
   let Ur actual =
         Vector.fromList xs Linear.$ \vec ->
           Vector.pop vec
-            Linear.& \(vec, Ur (Just a)) ->
+            Linear.& \(Ur (Just a), vec) ->
                         Vector.push vec a
             Linear.& Vector.toList
   xs === actual
@@ -269,8 +269,8 @@ refToListViaPop = property $ do
    popAll :: [a] -> Vector.Vector a #-> Ur [a]
    popAll acc vec =
      Vector.pop vec Linear.& \case
-       (vec', Ur Nothing) -> vec' `lseq` Ur acc
-       (vec', Ur (Just x)) -> popAll (x:acc) vec'
+       (Ur Nothing, vec') -> vec' `lseq` Ur acc
+       (Ur (Just x), vec') -> popAll (x:acc) vec'
 
 refFromListViaPush :: Property
 refFromListViaPush = property $ do
@@ -373,6 +373,6 @@ readAndWriteTest = withTests 1 . property $
   where
     test :: Vector.Vector Char #-> Ur Char
     test vec =
-      Vector.read vec 0 Linear.& \(vec', before) ->
+      Vector.read vec 0 Linear.& \(before, vec') ->
         Vector.write vec' 0 'b' Linear.& \vec'' ->
           vec'' `Linear.lseq` before

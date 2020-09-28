@@ -100,8 +100,8 @@ compInts ::
 compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getSnd :: Consumable a => (a, b) #-> b
-getSnd (a, b) = lseq a b
+getFst :: Consumable b => (a, b) #-> a
+getFst (a, b) = lseq b a
 
 
 -- # Tests
@@ -115,7 +115,7 @@ readAlloc = property $ do
   test $ unur Linear.$ Array.alloc size val (readAllocTest ix val)
 
 readAllocTest :: Int -> Int -> ArrayTester
-readAllocTest ix val arr = compInts (getSnd (Array.read arr ix)) (move val)
+readAllocTest ix val arr = compInts (getFst (Array.read arr ix)) (move val)
 
 readResize :: Property
 readResize = property $ do
@@ -129,9 +129,9 @@ readResize = property $ do
 readResizeTest :: Int -> Int -> ArrayTester
 readResizeTest size ix arr =
   Array.read arr ix
-    Linear.& \(arr, Ur old) -> Array.resize size 42 arr
+    Linear.& \(Ur old, arr) -> Array.resize size 42 arr
     Linear.& \arr -> Array.read arr ix
-    Linear.& getSnd
+    Linear.& getFst
     Linear.& \(Ur new) -> Ur (old === new)
 
 readWrite1 :: Property
@@ -145,7 +145,7 @@ readWrite1 = property $ do
 
 readWrite1Test :: Int -> Int -> ArrayTester
 readWrite1Test ix val arr =
-  compInts (move val) (getSnd Linear.$ Array.read (Array.write arr ix val) ix)
+  compInts (move val) (getFst Linear.$ Array.read (Array.write arr ix val) ix)
 
 readWrite2 :: Property
 readWrite2 = property $ do
@@ -162,11 +162,11 @@ readWrite2Test :: Int -> Int -> Int -> ArrayTester
 readWrite2Test ix jx val arr = fromRead (Array.read arr ix)
   where
     fromRead ::
-      (Array.Array Int, Ur Int) #-> Ur (TestT IO ())
-    fromRead (arr, val1) =
+      (Ur Int, Array.Array Int) #-> Ur (TestT IO ())
+    fromRead (val1, arr) =
       compInts
         val1
-        (getSnd Linear.$ Array.read (Array.write arr jx val) ix)
+        (getFst Linear.$ Array.read (Array.write arr jx val) ix)
 
 allocBeside :: Property
 allocBeside = property $ do
@@ -181,9 +181,9 @@ allocBeside = property $ do
 allocBesideTest :: Int -> Int -> Int -> ArrayTester
 allocBesideTest newSize val ix arr =
   Array.allocBeside newSize val arr
-    Linear.& getSnd
+    Linear.& getFst
     Linear.& \arr -> Array.read arr ix
-    Linear.& getSnd
+    Linear.& getFst
     Linear.& compInts (move val)
 
 lenAlloc :: Property
@@ -194,7 +194,7 @@ lenAlloc = property $ do
 
 lenAllocTest :: Int -> ArrayTester
 lenAllocTest size arr =
-  compInts (move size) (getSnd Linear.$ Array.size arr)
+  compInts (move size) (getFst Linear.$ Array.size arr)
 
 lenWrite :: Property
 lenWrite = property $ do
@@ -208,7 +208,7 @@ lenWrite = property $ do
 lenWriteTest :: Int -> Int -> Int -> ArrayTester
 lenWriteTest size val ix arr =
   compInts (move size)
-    (getSnd Linear.$ Array.size (Array.write arr ix val))
+    (getFst Linear.$ Array.size (Array.write arr ix val))
 
 lenResizeSeed :: Property
 lenResizeSeed = property $ do
@@ -223,7 +223,7 @@ lenResizeSeedTest :: Int -> Int -> ArrayTester
 lenResizeSeedTest newSize val arr =
   compInts
     (move newSize)
-    (getSnd Linear.$ Array.size (Array.resize newSize val arr))
+    (getFst Linear.$ Array.size (Array.resize newSize val arr))
 
 resizeRef :: Property
 resizeRef = property $ do
@@ -293,7 +293,7 @@ readAndWriteTest = withTests 1 . property $
   where
     test :: Array.Array Char #-> Ur Char
     test arr =
-      Array.read arr 0 Linear.& \(arr', before) ->
+      Array.read arr 0 Linear.& \(before, arr') ->
         Array.write arr' 0 'b' Linear.& \arr'' ->
           arr'' `Linear.lseq` before
 
@@ -305,5 +305,5 @@ strictnessTest = withTests 1 . property $
     test :: Array.Array () #-> Ur ()
     test arr =
       Array.write arr 0 (error "this should not be evaluated") Linear.& \arr ->
-      Array.read arr 0 Linear.& \(arr, Ur _) ->
+      Array.read arr 0 Linear.& \(Ur _, arr) ->
         arr `Linear.lseq` Ur ()

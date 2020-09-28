@@ -160,10 +160,10 @@ empty size scope =
     (\arr -> scope (HashMap 0 arr))
 
 -- | Create an empty HashMap, using another as a uniqueness proof.
-allocBeside :: Keyed k => Int -> HashMap k' v' #-> (HashMap k' v', HashMap k v)
+allocBeside :: Keyed k => Int -> HashMap k' v' #-> (HashMap k v, HashMap k' v')
 allocBeside size (HashMap s' arr) =
   Array.allocBeside (max 1 size) Nothing arr & \(arr', arr'') ->
-    (HashMap s' arr', HashMap size arr'')
+    (HashMap size arr', HashMap s' arr'')
 
 -- | Run a computation with an 'HashMap' containing given key-value pairs.
 fromList :: forall k v b.
@@ -180,7 +180,7 @@ fromList xs scope =
 -- a value of the key.
 alter :: Keyed k => HashMap k v #-> k -> (Maybe v -> Maybe v) -> HashMap k v
 alter hm key f =
-  idealIndexForKey key hm & \(hm', Ur idx) ->
+  idealIndexForKey key hm & \(Ur idx, hm') ->
     probeFrom (key, 0) idx hm' & \case
       -- The key does not exist, and there is an empty cell to insert.
       (HashMap count arr, IndexToInsert psl ix) ->
@@ -195,7 +195,7 @@ alter hm key f =
              & growMapIfNecessary
       -- The key exists.
       (hm'', IndexToUpdate v psl ix) ->
-        capacity hm'' & \(HashMap count arr, Ur cap) ->
+        capacity hm'' & \(Ur cap, HashMap count arr) ->
           Ur (f (Just v)) & \case
             -- We need to delete it.
             Ur Nothing ->
@@ -216,7 +216,7 @@ alter hm key f =
           Ur Nothing -> hm
           -- We need to insert a new key.
           Ur (Just v)->
-            capacity hm & \(HashMap count arr, Ur cap) ->
+            capacity hm & \(Ur cap, HashMap count arr) ->
               tryInsertAtIndex
                 (HashMap
                   count
@@ -252,11 +252,11 @@ mapMaybe f = mapMaybeWithKey (\_k v -> f v)
 mapMaybeWithKey :: Keyed k => (k -> v -> Maybe v') -> HashMap k v #-> HashMap k v'
 mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr') =
   Array.size arr' & \case
-    (arr'', Ur 0) ->
+    (Ur 0, arr'') ->
       recurOrReturn True 0 0 0 0 arr'' & \(arr''', Ur _) ->
         HashMap 0 arr'''
-    (arr'', Ur sz) ->
-      numSpillovers arr'' & \(arr''', Ur spillovers) ->
+    (Ur sz, arr'') ->
+      numSpillovers arr'' & \(Ur spillovers, arr''') ->
         go
           spillovers
           ((sz - 1 + spillovers) `mod` sz)
@@ -273,9 +273,9 @@ mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr') =
      #-> (RobinArr k v', Ur Int)
   go curr end sz ret arr =
     Array.read arr curr & \case
-      (arr', Ur Nothing) ->
+      (Ur Nothing, arr') ->
         recurOrReturn True curr end sz ret arr'
-      (arr', Ur (Just (RobinVal psl k v))) ->
+      (Ur (Just (RobinVal psl k v)), arr') ->
         case f k v of
           Just v' ->
            Array.write arr' curr
@@ -320,8 +320,8 @@ unionWith
 unionWith onConflict (hm1 :: HashMap k v) hm2 =
   -- To insert the elements in smaller map to the larger map, we
   -- compare their capacities, and flip the arguments if necessary.
-  capacity hm1 & \(hm1', Ur cap1) ->
-    capacity hm2 & \(hm2', Ur cap2) ->
+  capacity hm1 & \(Ur cap1, hm1') ->
+    capacity hm2 & \(Ur cap2, hm2') ->
       if cap1 > cap2
       then go onConflict hm1' (toList hm2')
       else go (\v2 v1 -> onConflict v1 v2) hm2' (toList hm1')
@@ -351,9 +351,9 @@ intersectionWith
   => (a -> b -> c)
   -> HashMap k a #-> HashMap k b #-> HashMap k c
 intersectionWith combine (hm1 :: HashMap k a') hm2 =
-  allocBeside 0 hm1 & \(hm1', hmNew) ->
-    capacity hm1' & \(hm1'', Ur cap1) ->
-      capacity hm2 & \(hm2', Ur cap2) ->
+  allocBeside 0 hm1 & \(hmNew, hm1') ->
+    capacity hm1' & \(Ur cap1, hm1'') ->
+      capacity hm2 & \(Ur cap2, hm2') ->
         if cap1 > cap2
         then go combine hm1'' (toList hm2') hmNew
         else go (\v2 v1 -> combine v1 v2) hm2' (toList hm1'') hmNew
@@ -366,8 +366,8 @@ intersectionWith combine (hm1 :: HashMap k a') hm2 =
    go _ hm (Ur []) acc = hm `lseq` acc
    go f hm (Ur ((k, b):xs)) acc =
      lookup hm k & \case
-       (hm', Ur Nothing) -> go f hm' (Ur xs) acc
-       (hm', Ur (Just a)) -> go f hm' (Ur xs) (insert acc k (f a b))
+       (Ur Nothing, hm') -> go f hm' (Ur xs) acc
+       (Ur (Just a), hm') -> go f hm' (Ur xs) (insert acc k (f a b))
 
 -- |
 -- Reduce the 'HashMap' 'capacity' to decrease wasted memory. Returns
@@ -378,7 +378,7 @@ intersectionWith combine (hm1 :: HashMap k a') hm2 =
 -- Complexity: O(capacity hm)
 shrinkToFit :: Keyed k => HashMap k a #-> HashMap k a
 shrinkToFit hm =
-  size hm & \(hm', Ur size) ->
+  size hm & \(Ur size, hm') ->
     let targetSize = ceiling
           (Prelude.max 1 (fromIntegral size Prelude./ constMaxLoadFactor))
     in  resize targetSize hm'
@@ -387,37 +387,37 @@ shrinkToFit hm =
 --------------------------------------------------
 
 -- | Number of key-value pairs inside the 'HashMap'
-size :: HashMap k v #-> (HashMap k v, Ur Int)
-size (HashMap ct arr) = (HashMap ct arr, Ur ct)
+size :: HashMap k v #-> (Ur Int, HashMap k v)
+size (HashMap ct arr) = (Ur ct, HashMap ct arr)
 
 -- | Maximum number of elements the HashMap can store without
 -- resizing. However, for performance reasons, the 'HashMap' might be
 -- before full.
 --
 -- Use 'shrinkToFit' to reduce the wasted space.
-capacity :: HashMap k v #-> (HashMap k v, Ur Int)
+capacity :: HashMap k v #-> (Ur Int, HashMap k v)
 capacity (HashMap ct arr) =
-  Array.size arr & \(arr', len) ->
-    (HashMap ct arr', len)
+  Array.size arr & \(len, arr') ->
+    (len, HashMap ct arr')
 
 -- | Look up a value from a 'HashMap'.
-lookup :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur (Maybe v))
+lookup :: Keyed k => HashMap k v #-> k -> (Ur (Maybe v), HashMap k v)
 lookup hm k =
-  idealIndexForKey k hm & \(hm', Ur idx) ->
+  idealIndexForKey k hm & \(Ur idx, hm') ->
     probeFrom (k,0) idx hm' & \case
       (h, IndexToUpdate v _ _) ->
-        (h, Ur (Just v))
+        (Ur (Just v), h)
       (h, IndexToInsert _ _) ->
-        (h, Ur Nothing)
+        (Ur Nothing, h)
       (h, IndexToSwap _ _ _) ->
-        (h, Ur Nothing)
+        (Ur Nothing, h)
 
 -- | Check if the given key exists.
-member :: Keyed k => HashMap k v #-> k -> (HashMap k v, Ur Bool)
+member :: Keyed k => HashMap k v #-> k -> (Ur Bool, HashMap k v)
 member hm k =
   lookup hm k & \case
-    (hm, Ur Nothing) -> (hm, Ur False)
-    (hm, Ur (Just _)) -> (hm, Ur True)
+    (Ur Nothing, hm') -> (Ur False, hm')
+    (Ur (Just _), hm') -> (Ur True, hm')
 
 -- | Converts a HashMap to a lazy list.
 toList :: HashMap k v #-> Ur [(k, v)]
@@ -468,28 +468,28 @@ _debugShow (HashMap _ robinArr) =
 -- This function finds the number of spillovers. The spillovers can
 -- be determined by the length of the prefix of the array where
 -- PSL > index. This works since they form a contiguous segment.
-numSpillovers :: RobinArr k v #-> (RobinArr k v, Ur Int)
+numSpillovers :: RobinArr k v #-> (Ur Int, RobinArr k v)
 numSpillovers arr =
-  Array.size arr & \(arr', Ur sz) ->
+  Array.size arr & \(Ur sz, arr') ->
     go 0 sz arr'
  where
-  go :: Int -> Int -> RobinArr k v #-> (RobinArr k v, Ur Int)
+  go :: Int -> Int -> RobinArr k v #-> (Ur Int, RobinArr k v)
   go curr sz arr
-    | curr == sz = (arr, Ur 0) -- This should only happen when the
+    | curr == sz = (Ur 0, arr) -- This should only happen when the
                                -- Array is empty.
     | otherwise =
       Array.read arr curr & \case
-        (arr', Ur Nothing) -> (arr', Ur curr)
-        (arr', Ur (Just (RobinVal (PSL psl) _ _)))
-          | psl <= curr -> (arr', Ur curr)
+        (Ur Nothing, arr') -> (Ur curr, arr')
+        (Ur (Just (RobinVal (PSL psl) _ _)), arr')
+          | psl <= curr -> (Ur curr, arr')
           | otherwise -> go (curr+1) sz arr'
 
 idealIndexForKey
   :: Keyed k
-  => k -> HashMap k v #-> (HashMap k v, Ur Int)
+  => k -> HashMap k v #-> (Ur Int, HashMap k v)
 idealIndexForKey k hm =
-  capacity hm & \(hm', Ur cap) ->
-    (hm', Ur (mod (hash k) cap))
+  capacity hm & \(Ur cap, hm') ->
+    (Ur (mod (hash k) cap), hm')
 
 -- | Given a key, psl of the probe so far, current unread index, and
 -- a full hashmap, return a probe result: the place the key already
@@ -497,16 +497,16 @@ idealIndexForKey k hm =
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v #-> (HashMap k v, ProbeResult k v)
 probeFrom (k, p) ix (HashMap ct arr) = Array.read arr ix & \case
-  (arr', Ur Nothing) ->
+  (Ur Nothing, arr') ->
     (HashMap ct arr', IndexToInsert p ix)
-  (arr', Ur (Just robinVal'@(RobinVal psl k' v'))) ->
+  (Ur (Just robinVal'@(RobinVal psl k' v')), arr') ->
     case k == k' of
       -- Note: in the True case, we must have p == psl
       True -> (HashMap ct arr', IndexToUpdate v' psl ix)
       False -> case psl Prelude.< p of
         True -> (HashMap ct arr', IndexToSwap robinVal' p ix)
         False ->
-          capacity (HashMap ct arr') & \(HashMap ct' arr'', Ur cap) ->
+          capacity (HashMap ct arr') & \(Ur cap, HashMap ct' arr'') ->
             probeFrom (k, p+1) ((ix+1)`mod` cap) (HashMap ct' arr'')
 
 -- | Try to insert at a given index with a given PSL. So the
@@ -520,7 +520,7 @@ tryInsertAtIndex hmap ix (RobinVal psl key val) =
     (HashMap c arr, IndexToInsert psl' ix') ->
       HashMap (c + 1) (Array.write arr ix' (Just $ RobinVal psl' key val))
     (hm, IndexToSwap oldVal psl' ix') ->
-      capacity hm  & \(HashMap ct arr, Ur cap) ->
+      capacity hm  & \(Ur cap, HashMap ct arr) ->
         tryInsertAtIndex
           (HashMap ct (Array.write arr ix' (Just $ RobinVal psl' key val)))
           ((ix' + 1) `mod` cap)
@@ -532,9 +532,9 @@ tryInsertAtIndex hmap ix (RobinVal psl key val) =
 shiftSegmentBackward :: Keyed k =>
   Int -> RobinArr k v #-> Int -> RobinArr k v
 shiftSegmentBackward s arr ix = Array.read arr ix & \case
-  (arr', Ur Nothing) -> arr'
-  (arr', Ur (Just (RobinVal 0 _ _))) -> arr'
-  (arr', Ur (Just val)) ->
+  (Ur Nothing, arr') -> arr'
+  (Ur (Just (RobinVal 0 _ _)), arr') -> arr'
+  (Ur (Just val), arr') ->
     Array.write arr' ix Nothing & \arr'' ->
       shiftSegmentBackward
         s
@@ -548,8 +548,8 @@ shiftSegmentBackward s arr ix = Array.read arr ix & \case
 -- (constMaxUtilization), resizes (constGrowthFactor) if necessary.
 growMapIfNecessary :: Keyed k => HashMap k v #-> HashMap k v
 growMapIfNecessary hm =
-  capacity hm & \(hm', Ur cap) ->
-   size hm' & \(hm'', Ur sz) ->
+  capacity hm & \(Ur cap, hm') ->
+   size hm' & \(Ur sz, hm'') ->
     let load = fromIntegral sz / fromIntegral cap
     in if load Prelude.< constMaxLoadFactor
        then hm''
@@ -563,7 +563,7 @@ growMapIfNecessary hm =
 -- checked.
 resize :: Keyed k => Int -> HashMap k v #-> HashMap k v
 resize targetSize (HashMap _ arr) =
-  Array.allocBeside targetSize Nothing arr & \(oldArr, newArr) ->
+  Array.allocBeside targetSize Nothing arr & \(newArr, oldArr) ->
     Array.toList oldArr & \(Ur elems) ->
       let xs =
             elems
