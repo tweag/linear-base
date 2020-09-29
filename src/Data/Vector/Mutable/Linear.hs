@@ -111,7 +111,7 @@ data Vector a where
 fromArray :: HasCallStack => Array a #-> Vector a
 fromArray arr =
   Array.size arr
-    & \(arr', Ur size') -> Vec size' arr'
+    & \(Ur size', arr') -> Vec size' arr'
 
 -- Allocate an empty vector
 empty :: (Vector a #-> Ur b) #-> Ur b
@@ -135,14 +135,14 @@ fromList xs f = Array.fromList xs (f . fromArray)
 --
 -- This might be different than how much actual memory the vector is using.
 -- For that, see: 'capacity'.
-size :: Vector a #-> (Vector a, Ur Int)
-size (Vec size' arr) = (Vec size' arr, Ur size')
+size :: Vector a #-> (Ur Int, Vector a)
+size (Vec size' arr) = (Ur size', Vec size' arr)
 
 -- | Capacity of a vector. In other words, the number of elements
 -- the vector can contain before it is copied to a bigger array.
-capacity :: Vector a #-> (Vector a, Ur Int)
+capacity :: Vector a #-> (Ur Int, Vector a)
 capacity (Vec s arr) =
-  Array.size arr & \(arr', cap) -> (Vec s arr', cap)
+  Array.size arr & \(cap, arr') -> (cap, Vec s arr')
 
 -- | Insert at the end of the vector. This will grow the vector if there
 -- is no empty space.
@@ -153,15 +153,15 @@ push vec x =
 
 -- | Pop from the end of the vector. This will never shrink the vector, use
 -- 'shrinkToFit' to remove the wasted space.
-pop :: Vector a #-> (Vector a, Ur (Maybe a))
+pop :: Vector a #-> (Ur (Maybe a), Vector a)
 pop vec =
   size vec & \case
-    (vec', Ur 0) ->
-      (vec', Ur Nothing)
-    (vec', Ur s) ->
-      read vec' (s-1) & \(Vec _ arr, Ur a) ->
-        ( Vec (s-1) arr
-        , Ur (Just a)
+    (Ur 0, vec') ->
+      (Ur Nothing, vec')
+    (Ur s, vec') ->
+      read vec' (s-1) & \(Ur a, Vec _ arr) ->
+        ( Ur (Just a)
+        , Vec (s-1) arr
         )
 
 -- | Write to an element . Note: this will not write to elements beyond the
@@ -178,37 +178,37 @@ unsafeWrite (Vec size' arr) ix val =
 
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..size-1@).
-read :: HasCallStack => Vector a #-> Int -> (Vector a, Ur a)
+read :: HasCallStack => Vector a #-> Int -> (Ur a, Vector a)
 read vec ix =
   unsafeRead (assertIndexInRange ix vec) ix
 
 -- | Same as 'read', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
-unsafeRead :: HasCallStack => Vector a #-> Int -> (Vector a, Ur a)
+unsafeRead :: HasCallStack => Vector a #-> Int -> (Ur a, Vector a)
 unsafeRead (Vec size' arr) ix =
   Array.unsafeRead arr ix
-    & \(arr', val) -> (Vec size' arr', val)
+    & \(val, arr') -> (val, Vec size' arr')
 
 -- | Same as 'modify', but does not do bounds-checking.
 unsafeModify :: HasCallStack => Vector a #-> (a -> (a, b)) -> Int
-             -> (Vector a, Ur b)
+             -> (Ur b, Vector a)
 unsafeModify (Vec size' arr) f ix =
-  Array.unsafeRead arr ix & \(arr', Ur old) ->
+  Array.unsafeRead arr ix & \(Ur old, arr') ->
     case f old of
       (a, b) -> Array.unsafeWrite arr' ix a & \arr'' ->
-        (Vec size' arr'', Ur b)
+        (Ur b, Vec size' arr'')
 
 -- | Modify a value inside a vector, with an ability to return an extra
 -- information. Errors if the index is out of bounds.
 modify :: HasCallStack => Vector a #-> (a -> (a, b)) -> Int
-       -> (Vector a, Ur b)
+       -> (Ur b, Vector a)
 modify vec f ix = unsafeModify (assertIndexInRange ix vec) f ix
 
 -- | Same as 'modify', but without the ability to return extra information.
 modify_ :: HasCallStack => Vector a #-> (a -> a) -> Int -> Vector a
 modify_ vec f ix =
   modify vec (\a -> (f a, ())) ix
-    & \(vec', Ur ()) -> vec'
+    & \(Ur (), vec') -> vec'
 
 -- | Return the vector elements as a lazy list.
 toList :: Vector a #-> Ur [a]
@@ -228,7 +228,7 @@ filter v f = mapMaybe v (\a -> if f a then Just a else Nothing)
 -- | A version of 'fmap' which can throw out elements.
 mapMaybe :: Vector a #-> (a -> Maybe b) -> Vector b
 mapMaybe vec (f :: a -> Maybe b) =
-  size vec & \(vec', Ur s) -> go 0 0 s vec'
+  size vec & \(Ur s, vec') -> go 0 0 s vec'
  where
   go :: Int -- ^ read cursor
      -> Int -- ^ write cursor
@@ -244,7 +244,7 @@ mapMaybe vec (f :: a -> Maybe b) =
     -- the write cursor; otherwise keep the write cursor skipping the element.
     | otherwise =
         unsafeRead vec' r & \case
-          (vec'', Ur a)
+          (Ur a, vec'')
             | Just b <- f a ->
                 go (r+1) (w+1) s (unsafeWrite vec'' w (Unsafe.coerce b))
             | otherwise ->
@@ -254,8 +254,8 @@ mapMaybe vec (f :: a -> Maybe b) =
 -- returns a semantically identical vector.
 shrinkToFit :: Vector a #-> Vector a
 shrinkToFit vec =
-  capacity vec & \(vec', Ur cap) ->
-    size vec' & \(vec'', Ur s') ->
+  capacity vec & \(Ur cap, vec') ->
+    size vec' & \(Ur s', vec'') ->
       if cap > s'
       then unsafeResize s' vec''
       else vec''
@@ -301,7 +301,7 @@ instance Prelude.Semigroup (Vector a) where
 instance Semigroup (Vector a) where
   -- This operation tries to use the existing capacity of v1 when possible.
   v1 <> v2 =
-    size v2 & \(v2', Ur s2) ->
+    size v2 & \(Ur s2, v2') ->
       growToFit s2 v1 & \v1' ->
         toList v2' & \(Ur xs) ->
           go xs v1'
@@ -322,8 +322,8 @@ instance Data.Functor Vector where
 -- fit at least n more elements.
 growToFit :: HasCallStack => Int -> Vector a #-> Vector a
 growToFit n vec =
-  capacity vec & \(vec', Ur cap) ->
-    size vec' & \(vec'', Ur s') ->
+  capacity vec & \(Ur cap, vec') ->
+    size vec' & \(Ur s', vec'') ->
       if s' + n <= cap
       then vec''
       else
@@ -356,7 +356,7 @@ unsafeResize newSize (Vec size' ma) =
 -- | Check if given index is within the Vector, otherwise panic.
 assertIndexInRange :: HasCallStack => Int -> Vector a #-> Vector a
 assertIndexInRange i vec =
-  size vec & \(vec', Ur s) ->
+  size vec & \(Ur s, vec') ->
     if 0 <= i && i < s
     then vec'
     else vec' `lseq` error "Vector: index out of bounds"

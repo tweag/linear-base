@@ -86,9 +86,9 @@ module Data.Unrestricted.Linear
   ) where
 
 import qualified Data.Functor.Linear.Internal as Data
-import Data.Vector.Linear (V)
 import Data.Type.Equality
-import qualified Data.Vector.Linear as V
+import Data.V.Linear (V)
+import qualified Data.V.Linear as V
 import GHC.TypeLits
 import GHC.Types hiding (Any)
 import Data.Monoid.Linear

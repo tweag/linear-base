@@ -19,9 +19,9 @@
 -- == A Tiny Example
 --
 -- > {-# LANGUAGE LinearTypes #-}
+-- > {-# LANGUAGE NoImplicitPrelude #-}
+-- >
 -- > import Prelude.Linear
--- > import Data.Unrestricted.Linear
--- > import qualified Unsafe.Linear as Unsafe
 -- > import qualified Data.Array.Mutable.Linear as Array
 -- >
 -- > isTrue :: Bool
@@ -31,13 +31,9 @@
 -- > isFalse = unur $ Array.fromList [1,2,3] isFirstZero
 -- >
 -- > isFirstZero :: Array.Array Int #-> Ur Bool
--- > isFirstZero arr = withReadingFirst (Array.read arr 0)
--- >   where
--- >     withReadingFirst :: (Array.Array Int, Int) #-> Ur Bool
--- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
--- >
--- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
--- > (===) = Unsafe.toLinear2 (==)
+-- > isFirstZero arr =
+-- >   Array.read arr 0
+-- >     & \(arr', Ur val) -> arr' `lseq` Ur (val == 0)
 module Data.Array.Mutable.Linear
   ( -- * Mutable Linear Arrays
     Array,
@@ -92,7 +88,7 @@ alloc s x f
 
 -- | Allocate a constant array given a size and an initial value,
 -- using another array as a uniqueness proof.
-allocBeside :: Int -> a -> Array b #-> (Array b, Array a)
+allocBeside :: Int -> a -> Array b #-> (Array a, Array b)
 allocBeside s x (Array orig)
   | s < 0 =
      Unlifted.lseq
@@ -101,7 +97,7 @@ allocBeside s x (Array orig)
   | otherwise =
       wrap (Unlifted.allocBeside s x orig)
      where
-      wrap :: (# Array# b, Array# a #) #-> (Array b, Array a)
+      wrap :: (# Array# a, Array# b #) #-> (Array a, Array b)
       wrap (# orig, new #) = (Array orig, Array new)
 
 -- | Allocate an array from a list
@@ -123,11 +119,11 @@ fromList list (f :: Array a #-> Ur b) =
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
 
-size :: Array a #-> (Array a, Ur Int)
+size :: Array a #-> (Ur Int, Array a)
 size (Array arr) = f (Unlifted.size arr)
  where
-  f :: (# Array# a, Ur Int #) #-> (Array a, Ur Int)
-  f (# arr, s #) = (Array arr, s)
+  f :: (# Ur Int, Array# a #) #-> (Ur Int, Array a)
+  f (# s, arr #) = (s, Array arr)
 
 -- | Writes a value to an index of an Array. The index should be less than the
 -- arrays size, otherwise this errors.
@@ -142,16 +138,16 @@ unsafeWrite (Array arr) ix val =
 
 -- | Read an index from an Array. The index should be less than the arrays size,
 -- otherwise this errors.
-read :: HasCallStack => Array a #-> Int -> (Array a, Ur a)
+read :: HasCallStack => Array a #-> Int -> (Ur a, Array a)
 read arr i = unsafeRead (assertIndexInRange i arr) i
 
 -- | Same as read, but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
-unsafeRead :: Array a #-> Int -> (Array a, Ur a)
+unsafeRead :: Array a #-> Int -> (Ur a, Array a)
 unsafeRead (Array arr) ix = wrap (Unlifted.read ix arr)
  where
-  wrap :: (# Array# a, Ur a #) #-> (Array a, Ur a)
-  wrap (# arr, ret #) = (Array arr, ret)
+  wrap :: (# Ur a, Array# a #) #-> (Ur a, Array a)
+  wrap (# ret, arr #) = (ret, Array arr)
 
 -- | Resize an array. That is, given an array, a target size, and a seed
 -- value; resize the array to the given size using the seed value to fill
@@ -175,10 +171,10 @@ resize newSize seed (Array arr :: Array a)
       doCopy (Unlifted.allocBeside newSize seed arr)
      where
       doCopy :: (# Array# a, Array# a #) #-> Array a
-      doCopy (# src, dest #) = wrap (Unlifted.copyInto 0 src dest)
+      doCopy (# new, old #) = wrap (Unlifted.copyInto 0 old new)
 
       wrap :: (# Array# a, Array# a #) #-> Array a
-      wrap (# old, new #) = old `Unlifted.lseq` Array new
+      wrap (# src, dst #) = src `Unlifted.lseq` Array dst
 
 
 -- | Return the array elements as a lazy list.
@@ -203,7 +199,7 @@ slice
   -> Array a #-> (Array a, Array a)
 slice from targetSize arr =
   size arr & \case
-    (Array old, Ur s)
+    (Ur s, Array old)
       | s < from + targetSize ->
           Unlifted.lseq
             old
@@ -216,7 +212,7 @@ slice from targetSize arr =
                old)
   where
     doCopy :: (# Array# a, Array# a #) #-> (Array a, Array a)
-    doCopy (# old, new #) = wrap (Unlifted.copyInto from old new)
+    doCopy (# new, old #) = wrap (Unlifted.copyInto from old new)
 
     wrap :: (# Array# a, Array# a  #) #-> (Array a, Array a)
     wrap (# old, new #) = (Array old, Array new)
@@ -261,7 +257,7 @@ instance Data.Functor Array where
 -- | Check if given index is within the Array, otherwise panic.
 assertIndexInRange :: HasCallStack => Int -> Array a #-> Array a
 assertIndexInRange i arr =
-  size arr & \(arr', Ur s) ->
+  size arr & \(Ur s, arr') ->
     if 0 <= i && i < s
     then arr'
     else arr' `lseq` error "Array: index out of bounds"

@@ -7,7 +7,6 @@
 module Data.Ord.Linear
   ( Ord(..)
   , Ordering(..)
-  , (<), (<=), (>), (>=)
   , min
   , max
   )
@@ -20,18 +19,6 @@ import Data.Ord (Ordering(..))
 import Data.Bool.Linear ( Bool (..), not )
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear
-
-{-
-
-== Design notes on linear orderings.
-
-Unlike in the non-linear setting, a linear @compare@ doesn't follow from
-@<=@ since you need two calls: one to @<=@ and one to @==@.
-
-Since a linear `compare` can be used to implement other comparison
-operators (and the inverse is not true), we choose to only add `compare`
-to the typeclass, and implement other operators outside of it.
--}
 
 -- | Linear Orderings
 --
@@ -47,25 +34,31 @@ to the typeclass, and implement other operators outside of it.
 -- * @x <= y@ = @not (y > x)@
 -- * @x >= y@ = @not (y < x)@
 --
+-- Unlike in the non-linear setting, a linear @compare@ doesn't follow from
+-- @<=@ since it requires calls: one to @<=@ and one to @==@. However,
+-- from a linear @compare@ it is easy to implement the others. Hence, the
+-- minimal complete definition only contains @compare@.
 class Eq a => Ord a where
+  {-# MINIMAL compare #-}
+
   -- | @compare x y@ returns an @Ordering@ which is
   -- one of @GT@ (greater than), @EQ@ (equal), or @LT@ (less than)
   -- which should be understood as \"x is @(compare x y)@ y\".
   compare :: a #-> a #-> Ordering
 
-(<=) :: Ord a => a #-> a #-> Bool
-x <= y = not (x > y)
+  (<=) :: a #-> a #-> Bool
+  x <= y = not (x > y)
 
-(<) :: Ord a => a #-> a #-> Bool
-x < y = compare x y == LT
+  (<) :: a #-> a #-> Bool
+  x < y = compare x y == LT
 
-(>) :: Ord a => a #-> a #-> Bool
-x > y = compare x y == GT
+  (>) :: a #-> a #-> Bool
+  x > y = compare x y == GT
 
-(>=) :: Ord a => a #-> a #-> Bool
-x >= y = not (x < y)
+  (>=) :: a #-> a #-> Bool
+  x >= y = not (x < y)
 
-infix 4 <=, <, >, >=
+  infix 4 <=, <, >, >=
 
 
 -- | @max x y@ returns the larger input, or  'y'
