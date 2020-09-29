@@ -19,3 +19,15 @@ source-repository-package
   location: https://github.com/utdemir/haskell-hedgehog.git
   tag: c98aa9e33bf6871098d6f4ac94eeaac10383d696
   subdir: hedgehog
+
+source-repository-package
+  -- https://github.com/dreixel/syb/pull/25
+  type: git
+  location: https://github.com/utdemir/syb.git
+  tag: a072e20d7a5806779486646418fa20c5ffd99a4f
+
+source-repository-package
+  -- https://github.com/sol/doctest/pull/272
+  type: git
+  location: https://github.com/utdemir/doctest.git
+  tag: 090cccaf12c5643ca80f8c2afe693a488277d365
