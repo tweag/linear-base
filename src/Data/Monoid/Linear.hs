@@ -102,3 +102,17 @@ newtype NonLinear a = NonLinear a
 
 instance Semigroup a => Prelude.Semigroup (NonLinear a) where
   NonLinear a <> NonLinear b = NonLinear (a <> b)
+
+instance Semigroup Ordering where
+    LT <> LT = LT
+    LT <> GT = LT
+    LT <> EQ = LT
+    EQ <> y = y
+    GT <> LT = GT
+    GT <> GT = GT
+    GT <> EQ = GT
+    -- We can not use `lseq` above because of an import loop.
+    -- So it's easier to just expand the cases here.
+
+instance Monoid Ordering where
+    mempty = EQ

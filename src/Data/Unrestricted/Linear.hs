@@ -251,6 +251,21 @@ instance Dupable Char where
 instance Movable Char where
   move (C# c) = Unsafe.toLinear (\x -> Ur (C# x)) c
 
+instance Consumable Ordering where
+  consume LT = ()
+  consume GT = ()
+  consume EQ = ()
+
+instance Dupable Ordering where
+  dup2 LT = (LT, LT)
+  dup2 GT = (GT, GT)
+  dup2 EQ = (EQ, EQ)
+
+instance Movable Ordering where
+  move LT = Ur LT
+  move GT = Ur GT
+  move EQ = Ur EQ
+
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
 
