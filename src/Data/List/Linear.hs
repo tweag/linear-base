@@ -64,6 +64,10 @@ module Data.List.Linear
   , cycle
   , iterate
   , unfoldr
+  -- * Ordered lists
+  , NonLinear.sort
+  , NonLinear.sortOn
+  , NonLinear.insert
   -- * Zipping lists
   , zip
   , zip'

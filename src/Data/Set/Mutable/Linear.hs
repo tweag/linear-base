@@ -32,7 +32,7 @@ module Data.Set.Mutable.Linear
 where
 
 import qualified Data.HashMap.Linear as Linear
-import qualified Prelude.Linear as Linear
+import qualified Prelude.Linear as Linear hiding (insert)
 import Prelude (Int, Bool)
 import qualified Prelude
 import Data.Monoid.Linear

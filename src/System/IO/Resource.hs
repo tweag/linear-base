@@ -49,7 +49,7 @@ module System.IO.Resource
     -- $files
   , Handle
     -- ** File I/O
-  , openFile 
+  , openFile
     -- ** Working with Handles
   , hClose
   , hIsEOF
@@ -79,7 +79,7 @@ import Data.IntMap.Strict (IntMap)
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
 import Prelude.Linear hiding (IO)
-import qualified Prelude as P
+import qualified Prelude
 import qualified System.IO.Linear as Linear
 import qualified System.IO as System
 
@@ -106,13 +106,13 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease P.$ Ur.fmap P.snd P.$ IntMap.toList releaseMap))
+           safeRelease Prelude.$ Ur.fmap snd Prelude.$ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
   where
     safeRelease :: [Linear.IO ()] -> System.IO ()
-    safeRelease [] = P.return ()
+    safeRelease [] = Prelude.return ()
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
@@ -157,7 +157,7 @@ newtype Handle = Handle (UnsafeResource System.Handle)
 openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = Control.do
     h <- unsafeAcquire
-      (Linear.fromSystemIOU P.$ System.openFile path mode)
+      (Linear.fromSystemIOU Prelude.$ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
     Control.return $ Handle h
 
@@ -249,7 +249,7 @@ unsafeFromSystemIOResource
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
-      P.return (Ur c, UnsafeResource key resource))
+      Prelude.return (Ur c, UnsafeResource key resource))
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
