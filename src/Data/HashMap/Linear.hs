@@ -52,7 +52,7 @@ import qualified Data.Functor.Linear as Data
 import qualified Data.Array.Mutable.Linear as Array
 import Data.Hashable
 import Data.Unrestricted.Linear
-import Prelude.Linear hiding ((+), lookup, read, filter, mapMaybe)
+import Prelude.Linear hiding ((+), lookup, read, filter, mapMaybe, insert)
 import Prelude ((+))
 import qualified Data.Maybe as NonLinear
 import qualified Data.Function as NonLinear
