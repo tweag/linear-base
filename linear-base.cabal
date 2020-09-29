@@ -8,10 +8,16 @@ author: Tweag
 maintainer: arnaud.spiwack@tweag.io
 copyright: (c) Tweag Holding and affiliates
 category: Prelude
-build-type: Simple
+build-type: Custom
 extra-source-files: README.md
 synopsis: Standard library for linear types.
 description: Please see README.md.
+
+custom-setup
+ setup-depends:
+   base >= 4 && <5,
+   Cabal,
+   cabal-doctest
 
 library
   hs-source-dirs: src
@@ -121,6 +127,16 @@ test-suite examples
     text
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   default-language: Haskell2010
+
+test-suite doctests
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       test/
+  main-is:              Doctest.hs
+  build-depends:        base
+                      , doctest
+                      , linear-base
+  ghc-options:          -Wall -threaded
+  default-language:     Haskell2010
 
 source-repository head
   type: git

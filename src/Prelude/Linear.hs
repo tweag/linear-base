@@ -7,16 +7,19 @@
 --
 -- A simple example:
 --
--- > {-# LANGUAGE LinearTypes #-}
--- > {-# LANGUAGE NoImplicitPrelude #-}
--- > import Prelude.Linear
--- >
--- > makeInt :: Either Int Bool #-> Int
--- > makeInt = either id boolToInt
--- >
--- > boolToInt :: Bool #-> Int
--- > boolToInt False = 0
--- > boolToInt True = 1
+-- >>> :set -XLinearTypes
+-- >>> :set -XNoImplicitPrelude
+-- >>> import Prelude.Linear
+-- >>> :{
+--   boolToInt :: Bool #-> Int
+--   boolToInt False = 0
+--   boolToInt True = 1
+-- :}
+--
+-- >>> :{
+--   makeInt :: Either Int Bool #-> Int
+--   makeInt = either id boolToInt
+-- :}
 --
 -- This module is designed to be imported unqualifed.
 

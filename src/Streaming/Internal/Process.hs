@@ -192,10 +192,11 @@ splitAt n stream = loop n stream where
 {-| Split a stream of elements wherever a given element arises.
     The action is like that of 'Prelude.words'.
 
->>> S.stdoutLn $ mapped S.toList $ S.split ' ' $ each' "hello world  "
+@
+\>\>\> S.stdoutLn $ mapped S.toList $ S.split ' ' $ each' "hello world  "
 hello
 world
-
+@
 -}
 split :: forall a m r. (Eq a, Control.Monad m) =>
   a -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
@@ -213,13 +214,14 @@ split x stream = loop stream
 {-| Break a sequence upon meeting an element that falls under a predicate,
     keeping it and the rest of the stream as the return value.
 
->>> rest <- S.print $ S.break even $ each' [1,1,2,3]
+@
+\>\>\> rest <- S.print $ S.break even $ each' [1,1,2,3]
 1
 1
->>> S.print rest
+\>\>\> S.print rest
 2
 3
-
+@
 -}
 break :: forall a m r. Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
@@ -237,14 +239,15 @@ break f stream = loop stream
 {-| Break during periods where the predicate is not satisfied,
    grouping the periods when it is.
 
->>> S.print $ mapped S.toList $ S.breaks not $ S.each' [False,True,True,False,True,True,False]
+@
+\>\>\> S.print $ mapped S.toList $ S.breaks not $ S.each' [False,True,True,False,True,True,False]
 [True,True]
 [True,True]
->>> S.print $ mapped S.toList $ S.breaks id $ S.each' [False,True,True,False,True,True,False]
+\>\>\> S.print $ mapped S.toList $ S.breaks id $ S.each' [False,True,True,False,True,True,False]
 [False]
 [False]
 [False]
-
+@
 -}
 breaks :: forall a m r. Control.Monad m =>
   (a -> Bool) -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
@@ -267,19 +270,20 @@ breaks f stream = loop stream
    and the element that breaks it will be put after the break.
    This function is easiest to use with 'Control.Foldl.purely'
 
->>> rest <- each' [1..10] & L.purely S.breakWhen L.sum (>10) & S.print
+@
+\>\>\> rest <- each' [1..10] & L.purely S.breakWhen L.sum (>10) & S.print
 1
 2
 3
 4
->>> S.print rest
+\>\>\> S.print rest
 5
 6
 7
 8
 9
 10
-
+@
 -}
 breakWhen :: forall m a x b r. Control.Monad m
           => (x -> a -> x) -> x -> (x -> b) -> (b -> Bool)
@@ -309,8 +313,8 @@ span f = break (Prelude.not Prelude.. f)
 
 {-| Group elements of a stream in accordance with the supplied comparison.
 
-
->>> S.print $ mapped S.toList $ S.groupBy (>=) $ each' [1,2,3,1,2,3,4,3,2,4,5,6,7,6,5]
+@
+\>\>\> S.print $ mapped S.toList $ S.groupBy (>=) $ each' [1,2,3,1,2,3,4,3,2,4,5,6,7,6,5]
 [1]
 [2]
 [3,1,2,3]
@@ -318,7 +322,7 @@ span f = break (Prelude.not Prelude.. f)
 [5]
 [6]
 [7,6,5]
-
+@
 -}
 groupBy :: forall a m r. Control.Monad m =>
   (a -> a -> Bool) -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
@@ -341,12 +345,15 @@ groupBy equals stream = loop stream
 
 {-| Group successive equal items together
 
->>> S.toList $ mapped S.toList $ S.group $ each' "baaaaad"
+@
+\>\>\> S.toList $ mapped S.toList $ S.group $ each' "baaaaad"
 ["b","aaaaa","d"] :> ()
+@
 
->>> S.toList $ concats $ maps (S.drained . S.splitAt 1) $ S.group $ each' "baaaaaaad"
+@
+\>\>\> S.toList $ concats $ maps (S.drained . S.splitAt 1) $ S.group $ each' "baaaaaaad"
 "bad" :> ()
-
+@
 -}
 group :: (Control.Monad m, Eq a) =>
   Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
@@ -367,16 +374,18 @@ distinguish predicate (a :> b) = case predicate a of
 
 {-| Swap the order of functors in a sum of functors.
 
->>> S.toList $ S.print $ separate $ maps S.switch $ maps (S.distinguish (=='a')) $ S.each' "banana"
+@
+\>\>\> S.toList $ S.print $ separate $ maps S.switch $ maps (S.distinguish (=='a')) $ S.each' "banana"
 'a'
 'a'
 'a'
 "bnn" :> ()
->>> S.toList $ S.print $ separate $ maps (S.distinguish (=='a')) $ S.each' "banana"
+\>\>\> S.toList $ S.print $ separate $ maps (S.distinguish (=='a')) $ S.each' "banana"
 'b'
 'n'
 'n'
 "aaa" :> ()
+@
 -}
 switch :: Sum f g r -> Sum g f r
 switch s = case s of InL a -> InR a; InR a -> InL a
@@ -412,25 +421,29 @@ sumToCompose x = case x of
     other material for another treatment. It generalizes
     'Data.Either.partitionEithers', but actually streams properly.
 
->>> let odd_even = S.maps (S.distinguish even) $ S.each' [1..10::Int]
->>> :t separate odd_even
+@
+\>\>\> let odd_even = S.maps (S.distinguish even) $ S.each' [1..10::Int]
+\>\>\> :t separate odd_even
 separate odd_even
   :: Monad m => Stream (Of Int) (Stream (Of Int) m) ()
+@
 
     Now, for example, it is convenient to fold on the left and right values separately:
 
->>> S.toList $ S.toList $ separate odd_even
+@
+\>\>\> S.toList $ S.toList $ separate odd_even
 [2,4,6,8,10] :> ([1,3,5,7,9] :> ())
-
+@
 
    Or we can write them to separate files or whatever.
 
    Of course, in the special case of @Stream (Of a) m r@, we can achieve the above
    effects more simply by using 'Streaming.Prelude.copy'
 
->>> S.toList . S.filter even $ S.toList . S.filter odd $ S.copy $ each' [1..10::Int]
+@
+\>\>\> S.toList . S.filter even $ S.toList . S.filter odd $ S.copy $ each' [1..10::Int]
 [2,4,6,8,10] :> ([1,3,5,7,9] :> ())
-
+@
 
     But 'separate' and 'unseparate' are functor-general.
 
@@ -575,9 +588,11 @@ hoist f stream = loop stream where
 
 {-| Standard map on the elements of a stream.
 
->>> S.stdoutLn $ S.map reverse $ each' (words "alpha beta")
+@
+\>\>\> S.stdoutLn $ S.map reverse $ each' (words "alpha beta")
 ahpla
 ateb
+@
 -}
 map :: Control.Monad m => (a -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
 map f = maps (\(x :> rest) -> f x :> rest)
@@ -586,7 +601,7 @@ map f = maps (\(x :> rest) -> f x :> rest)
 -- Remark.
 --
 -- The functor transformation in functions like maps, mapped, mapsPost,
--- and such must be linear since the 'Stream' data type holds each 
+-- and such must be linear since the 'Stream' data type holds each
 -- functor step with a linear arrow.
 
 {- | Map layers of one functor to another with a transformation. Compare
@@ -615,13 +630,15 @@ maps phi = loop
 --
 {-| Replace each element of a stream with the result of a monadic action
 
->>> S.print $ S.mapM readIORef $ S.chain (\ior -> modifyIORef ior (*100)) $ S.mapM newIORef $ each' [1..6]
+@
+\>\>\> S.print $ S.mapM readIORef $ S.chain (\ior -> modifyIORef ior (*100)) $ S.mapM newIORef $ each' [1..6]
 100
 200
 300
 400
 500
 600
+@
 
 See also 'chain' for a variant of this which ignores the return value of the function and just uses the side effects.
 -}
@@ -662,7 +679,7 @@ mapsPost phi = loop
 {-# INLINABLE mapsPost #-}
 
 {- | Map layers of one functor to another with a transformation involving the base monad.
- 
+
      This function is completely functor-general. It is often useful with the more concrete type
 
 @
@@ -676,8 +693,10 @@ mapped :: (forall x. Stream (Of a) IO x -> IO (Of b x)) -> Stream (Stream (Of a)
      'Streaming.Prelude.mconcat' or 'Streaming.Prelude.toList' are often used
      to define the transformation argument. For example:
 
->>> S.toList_ $ S.mapped S.toList $ S.split 'c' (S.each' "abcde")
+@
+\>\>\> S.toList_ $ S.mapped S.toList $ S.split 'c' (S.each' "abcde")
 ["ab","de"]
+@
 
      'Streaming.Prelude.maps' and 'Streaming.Prelude.mapped' obey these rules:
 
@@ -777,12 +796,14 @@ for stream expand = loop stream
 > with = flip subst
 > subst = flip with
 
->>> with (each' [1..3]) (yield . Prelude.show) & intercalates (yield "--") & S.stdoutLn
+@
+\>\>\> with (each' [1..3]) (yield . Prelude.show) & intercalates (yield "--") & S.stdoutLn
 1
 --
 2
 --
 3
+@
  -}
 with :: forall f m r a x . (Control.Monad m, Control.Functor f, Consumable x) =>
   Stream (Of a) m r #-> (a -> f x) -> Stream f m r
@@ -815,20 +836,24 @@ subst = flip with where
 {-| Duplicate the content of a stream, so that it can be acted on twice in different ways,
     but without breaking streaming. Thus, with @each' [1,2]@ I might do:
 
->>> S.print $ each' ["one","two"]
+@
+\>\>\> S.print $ each' ["one","two"]
 "one"
 "two"
->>> S.stdoutLn $ each' ["one","two"]
+\>\>\> S.stdoutLn $ each' ["one","two"]
 one
 two
+@
 
     With copy, I can do these simultaneously:
 
->>> S.print $ S.stdoutLn $ S.copy $ each' ["one","two"]
+@
+\>\>\> S.print $ S.stdoutLn $ S.copy $ each' ["one","two"]
 "one"
 one
 "two"
 two
+@
 
     'copy' should be understood together with 'effects' and is subject to the rules
 
@@ -842,44 +867,57 @@ two
     folds is often more straightforwardly effected with `Control.Foldl`,
     e.g.
 
->>> L.purely S.fold (liftA2 (,) L.sum L.product) $ each' [1..10]
+@
+\>\>\> L.purely S.fold (liftA2 (,) L.sum L.product) $ each' [1..10]
 (55,3628800) :> ()
+@
 
     rather than
 
->>> S.sum $ S.product . S.copy $ each' [1..10]
+@
+\>\>\> S.sum $ S.product . S.copy $ each' [1..10]
 55 :> (3628800 :> ())
+@
 
     A @Control.Foldl@ fold can be altered to act on a selection of elements by
     using 'Control.Foldl.handles' on an appropriate lens. Some such
     manipulations are simpler and more 'Data.List'-like, using 'copy':
 
->>> L.purely S.fold (liftA2 (,) (L.handles (L.filtered odd) L.sum) (L.handles (L.filtered even) L.product)) $ each' [1..10]
+@
+\>\>\> L.purely S.fold (liftA2 (,) (L.handles (L.filtered odd) L.sum) (L.handles (L.filtered even) L.product)) $ each' [1..10]
 (25,3840) :> ()
+@
 
      becomes
 
->>> S.sum $ S.filter odd $ S.product $ S.filter even $ S.copy' $ each' [1..10]
+@
+\>\>\> S.sum $ S.filter odd $ S.product $ S.filter even $ S.copy' $ each' [1..10]
 25 :> (3840 :> ())
+@
 
     or using 'store'
 
->>> S.sum $ S.filter odd $ S.store (S.product . S.filter even) $ each' [1..10]
+@
+\>\>\> S.sum $ S.filter odd $ S.store (S.product . S.filter even) $ each' [1..10]
 25 :> (3840 :> ())
+@
 
     But anything that fold of a @Stream (Of a) m r@ into e.g. an @m (Of b r)@
     that has a constraint on @m@ that is carried over into @Stream f m@ -
     e.g. @Control.Monad@, @Control.Functor@, etc. can be used on the stream.
     Thus, I can fold over different groupings of the original stream:
 
->>>  (S.toList . mapped S.toList . chunksOf 5) $  (S.toList . mapped S.toList . chunksOf 3) $ S.copy $ each' [1..10]
+@
+\>\>\>  (S.toList . mapped S.toList . chunksOf 5) $  (S.toList . mapped S.toList . chunksOf 3) $ S.copy $ each' [1..10]
 [[1,2,3,4,5],[6,7,8,9,10]] :> ([[1,2,3],[4,5,6],[7,8,9],[10]] :> ())
+@
 
     The procedure can be iterated as one pleases, as one can see from this (otherwise unadvisable!) example:
 
->>>  (S.toList . mapped S.toList . chunksOf 4) $ (S.toList . mapped S.toList . chunksOf 3) $ S.copy $ (S.toList . mapped S.toList . chunksOf 2) $ S.copy $ each' [1..12]
+@
+\>\>\>  (S.toList . mapped S.toList . chunksOf 4) $ (S.toList . mapped S.toList . chunksOf 3) $ S.copy $ (S.toList . mapped S.toList . chunksOf 2) $ S.copy $ each' [1..12]
 [[1,2,3,4],[5,6,7,8],[9,10,11,12]] :> ([[1,2,3],[4,5,6],[7,8,9],[10,11,12]] :> ([[1,2],[3,4],[5,6],[7,8],[9,10],[11,12]] :> ()))
-
+@
 
 @copy@ can be considered a special case of 'expand':
 
@@ -918,19 +956,23 @@ duplicate = copy
 {-| Store the result of any suitable fold over a stream, keeping the stream for
     further manipulation. @store f = f . copy@ :
 
->>> S.print $ S.store S.product $ each' [1..4]
+@
+\>\>\> S.print $ S.store S.product $ each' [1..4]
 1
 2
 3
 4
 24 :> ()
+@
 
->>> S.print $ S.store S.sum $ S.store S.product $ each' [1..4]
+@
+\>\>\> S.print $ S.store S.sum $ S.store S.product $ each' [1..4]
 1
 2
 3
 4
 10 :> (24 :> ())
+@
 
    Here the sum (10) and the product (24) have been \'stored\' for use when
    finally we have traversed the stream with 'print' . Needless to say,
@@ -939,12 +981,14 @@ duplicate = copy
    simultaneously, and in constant memory -- as they would be if,
    say, you linked them together with @Control.Fold@:
 
->>> L.impurely S.foldM (liftA3 (\a b c -> (b, c)) (L.sink Prelude.print) (L.generalize L.sum) (L.generalize L.product)) $ each' [1..4]
+@
+\>\>\> L.impurely S.foldM (liftA3 (\a b c -> (b, c)) (L.sink Prelude.print) (L.generalize L.sum) (L.generalize L.product)) $ each' [1..4]
 1
 2
 3
 4
 (10,24) :> ()
+@
 
    Fusing folds after the fashion of @Control.Foldl@ will generally be a bit faster
    than the corresponding succession of uses of 'store', but by
@@ -953,8 +997,10 @@ duplicate = copy
    But 'store' \/ 'copy' is /much/ more powerful, as you can see by reflecting on
    uses like this:
 
->>> S.sum $ S.store (S.sum . mapped S.product . chunksOf 2) $ S.store (S.product . mapped S.sum . chunksOf 2) $ each' [1..6]
+@
+\>\>\> S.sum $ S.store (S.sum . mapped S.product . chunksOf 2) $ S.store (S.product . mapped S.sum . chunksOf 2) $ each' [1..6]
 21 :> (44 :> (231 :> ()))
+@
 
    It will be clear that this cannot be reproduced with any combination of lenses,
    @Control.Fold@ folds, or the like.  (See also the discussion of 'copy'.)
@@ -975,15 +1021,16 @@ duplicate = copy
     Thus I can independently filter and write to one file, but
     nub and write to another, or interact with a database and a logfile and the like:
 
->>> (S.writeFile "hello2.txt" . S.nubOrd) $ store (S.writeFile "hello.txt" . S.filter (/= "world")) $ each' ["hello", "world", "goodbye", "world"]
->>> :! cat hello.txt
+@
+\>\>\> (S.writeFile "hello2.txt" . S.nubOrd) $ store (S.writeFile "hello.txt" . S.filter (/= "world")) $ each' ["hello", "world", "goodbye", "world"]
+\>\>\> :! cat hello.txt
 hello
 goodbye
->>> :! cat hello2.txt
+\>\>\> :! cat hello2.txt
 hello
 world
 goodbye
-
+@
 
 -}
 store :: Control.Monad m =>
@@ -997,13 +1044,15 @@ store f x = f (copy x)
 {-| Apply an action to all values, re-yielding each.
     The return value (@y@) of the function is ignored.
 
->>> S.product $ S.chain Prelude.print $ S.each' [1..5]
+@
+\>\>\> S.product $ S.chain Prelude.print $ S.each' [1..5]
 1
 2
 3
 4
 5
 120 :> ()
+@
 
 See also 'mapM' for a variant of this which uses the return value of the function to transorm the values in the stream.
 -}
@@ -1115,12 +1164,14 @@ filterM pred = loop
 
 {-| Intersperse given value between each element of the stream.
 
->>> S.print $ S.intersperse 0 $ each [1,2,3]
+@
+\>\>\> S.print $ S.intersperse 0 $ each [1,2,3]
 1
 0
 2
 0
 3
+@
 
 -}
 intersperse :: forall a m r . Control.Monad m =>
@@ -1141,19 +1192,23 @@ intersperse x stream = stream & \case
 
 {-|  Ignore the first n elements of a stream, but carry out the actions
 
->>> S.toList $ S.drop 2 $ S.replicateM 5 getLine
+@
+\>\>\> S.toList $ S.drop 2 $ S.replicateM 5 getLine
 a<Enter>
 b<Enter>
 c<Enter>
 d<Enter>
 e<Enter>
 ["c","d","e"] :> ()
+@
 
      Because it retains the final return value, @drop n@  is a suitable argument
      for @maps@:
 
->>> S.toList $ concats $ maps (S.drop 4) $ chunksOf 5 $ each [1..20]
+@
+\>\>\> S.toList $ concats $ maps (S.drop 4) $ chunksOf 5 $ each [1..20]
 [5,10,15,20] :> ()
+@
   -}
 drop :: forall a m r. (HasCallStack, Control.Monad m) =>
   Int -> Stream (Of a) m r #-> Stream (Of a) m r
@@ -1170,7 +1225,8 @@ drop n stream = case compare n 0 of
 
 {- | Ignore elements of a stream until a test succeeds, retaining the rest.
 
->>> S.print $ S.dropWhile ((< 5) . length) S.stdinLn
+@
+\>\>\> S.print $ S.dropWhile ((< 5) . length) S.stdinLn
 one<Enter>
 two<Enter>
 three<Enter>
@@ -1178,7 +1234,7 @@ three<Enter>
 four<Enter>
 "four"
 ^CInterrupted.
-
+@
 
 -}
 dropWhile :: forall a m r . Control.Monad m =>
@@ -1197,22 +1253,24 @@ dropWhile pred = loop
 {-| Strict left scan, streaming, e.g. successive partial results. The seed
     is yielded first, before any action of finding the next element is performed.
 
-
->>> S.print $ S.scan (++) "" id $ each' (words "a b c d")
+@
+\>\>\> S.print $ S.scan (++) "" id $ each' (words "a b c d")
 ""
 "a"
 "ab"
 "abc"
 "abcd"
+@
 
     'scan' is fitted for use with @Control.Foldl@, thus:
 
->>> S.print $ L.purely S.scan L.list $ each' [3..5]
+@
+\>\>\> S.print $ L.purely S.scan L.list $ each' [3..5]
 []
 [3]
 [3,4]
 [3,4,5]
-
+@
 -}
 scan :: forall a x b m r . Control.Monad m =>
   (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
@@ -1234,14 +1292,15 @@ scan step begin done stream = Step (done begin :> loop begin stream)
     'FoldM's from @Control.Foldl@ using 'impurely'. Here we yield
     a succession of vectors each recording
 
->>> let v = L.impurely scanM L.vectorM $ each' [1..4::Int] :: Stream (Of (Vector Int)) IO ()
->>> S.print v
+@
+\>\>\> let v = L.impurely scanM L.vectorM $ each' [1..4::Int] :: Stream (Of (Vector Int)) IO ()
+\>\>\> S.print v
 []
 [1]
 [1,2]
 [1,2,3]
 [1,2,3,4]
-
+@
 -}
 scanM :: forall a x b m r . Control.Monad m =>
   (x #-> a -> m (Ur x)) ->
@@ -1266,16 +1325,19 @@ scanM step mx done stream = loop stream
 
 {-| Label each element in a stream with a value accumulated according to a fold.
 
->>> S.print $ S.scanned (*) 1 id $ S.each' [100,200,300]
+@
+\>\>\> S.print $ S.scanned (*) 1 id $ S.each' [100,200,300]
 (100,100)
 (200,20000)
 (300,6000000)
+@
 
->>> S.print $ L.purely S.scanned' L.product $ S.each [100,200,300]
+@
+\>\>\> S.print $ L.purely S.scanned' L.product $ S.each [100,200,300]
 (100,100)
 (200,20000)
 (300,6000000)
-
+@
 -}
 scanned :: forall a x b m r . Control.Monad m =>
   (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> Stream (Of (a,b)) m r
@@ -1296,12 +1358,13 @@ scanned step begin done = loop begin
 --
 {- | Make a stream of strings into a stream of parsed values, skipping bad cases
 
->>> S.sum_ $ S.read $ S.takeWhile (/= "total") S.stdinLn :: IO Int
+@
+\>\>\> S.sum_ $ S.read $ S.takeWhile (/= "total") S.stdinLn :: IO Int
 1000<Enter>
 2000<Enter>
 total<Enter>
 3000
-
+@
 
 -}
 read :: (Control.Monad m, Read a) =>
@@ -1348,7 +1411,7 @@ cons a str = Step (a :> str)
 {-# INLINE cons #-}
 
 -- Note. The action function that is the second argument must be linear since
--- it gets its argument from binding to the first argument, which uses a 
+-- it gets its argument from binding to the first argument, which uses a
 -- control monad.
 --
 {-| Before evaluating the monadic action returning the next step in the 'Stream', @wrapEffect@
@@ -1373,11 +1436,12 @@ wrapEffect ma action stream = stream & \case
      It follows the behavior of the slidingWindow function in
      <https://hackage.haskell.org/package/conduit-combinators-1.0.4/docs/Data-Conduit-Combinators.html#v:slidingWindow conduit-combinators>.
 
->>> S.print $ S.slidingWindow 4 $ S.each "123456"
+@
+\>\>\> S.print $ S.slidingWindow 4 $ S.each "123456"
 fromList "1234"
 fromList "2345"
 fromList "3456"
-
+@
 -}
 slidingWindow :: forall a b m. Control.Monad m => Int -> Stream (Of a) m b
               #-> Stream (Of (Seq.Seq a)) m b
