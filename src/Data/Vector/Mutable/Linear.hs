@@ -20,28 +20,20 @@
 --
 -- == Example
 --
--- > {-# LANGUAGE LinearTypes #-}
--- > import Prelude.Linear
--- > import Data.Ur.Linear
--- > import qualified Unsafe.Linear as Unsafe
--- > import qualified Data.Vector.Mutable.Linear as Vector
--- >
--- > isTrue :: Bool
--- > isTrue = unur $ Vector.fromList [0..10] isFirstZero
--- >
--- > isFalse :: Bool
--- > isFalse = unur $ Vector.fromList [1,2,3] isFirstZero
--- >
--- > isFirstZero :: Vector.Vector Int #-> Ur Bool
--- > isFirstZero arr = withReadingFirst (Vector.read arr 0)
--- >   where
--- >     withReadingFirst :: (Vector.Vector Int, Int) #-> Ur Bool
--- >     withReadingFirst (arr, i) = lseq arr $ move (i === 0)
--- >
--- > (===) :: (Num a, Eq a) => a #-> a #-> Bool
--- > (===) = Unsafe.toLinear2 (==)
+-- >>> :set -XLinearTypes
+-- >>> import Prelude.Linear
+-- >>> import qualified Data.Vector.Mutable.Linear as Vector
+-- >>> :{
+--  isFirstZero :: Vector.Vector Int #-> Ur Bool
+--  isFirstZero vec =
+--    Vector.read vec 0
+--      & \(Ur ret, vec) -> vec `lseq` Ur (ret == 0)
+-- :}
 --
---
+-- >>> unur $ Vector.fromList [0..10] isFirstZero
+-- True
+-- >>> unur $ Vector.fromList [1,2,3] isFirstZero
+-- False
 module Data.Vector.Mutable.Linear
   ( -- * A mutable vector
     Vector,

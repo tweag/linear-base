@@ -20,22 +20,22 @@
 -- run it to get a "System.IO" computation.
 --
 -- = A simple example
--- > {-# LANGUAGE LinearTypes #-}
--- > {-# LANGUAGE QualifiedDo #-}
--- > {-# LANGUAGE NoImplicitPrelude #-}
--- >
--- > import qualified System.IO.Resource as Linear
--- > import qualified Control.Monad.Linear as Control
--- > import qualified Data.Text as Text
--- > import Prelude.Linear
--- > import qualified Prelude
--- >
--- > linearWriteToFile :: IO ()
--- > linearWriteToFile = Linear.run Prelude.$ Control.do
--- >   handle1 <- Linear.openFile "/home/user/test.txt" WriteMode
--- >   handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
--- >   () <- Linear.hClose handle2
--- >   Control.return (Ur ())
+-- >>> :set -XLinearTypes
+-- >>> :set -XQualifiedDo
+-- >>> :set -XNoImplicitPrelude
+-- >>> import qualified System.IO.Resource as Linear
+-- >>> import qualified Control.Monad.Linear as Control
+-- >>> import qualified Data.Text as Text
+-- >>> import Prelude.Linear
+-- >>> import qualified Prelude
+-- >>> :{
+--  linearWriteToFile :: IO ()
+--  linearWriteToFile = Linear.run Prelude.$ Control.do
+--    handle1 <- Linear.openFile "/home/user/test.txt" Linear.WriteMode
+--    handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
+--    () <- Linear.hClose handle2
+--    Control.return (Ur ())
+-- :}
 --
 -- To enable do notation, `QualifiedDo` extension is used. But since QualifiedDo
 -- only modifies the desugaring of binds, we still need to qualify `Control.return`.

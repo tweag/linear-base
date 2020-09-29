@@ -36,15 +36,17 @@
 --
 -- A toy example:
 --
--- > {-# LANGUAGE LinearTypes #-}
--- > import Data.Unrestricted.Linear
--- > import qualified Foreign.Marshal.Pure as Manual
--- >
--- > three :: Int
--- > three = unur (Manual.withPool nothingWith3)
--- >
--- > nothingWith3 :: Pool #-> Ur Int
--- > nothingWith3 pool = move (Manual.deconstruct (Manual.alloc 3 pool))
+-- >>> :set -XLinearTypes
+-- >>> import Data.Unrestricted.Linear
+-- >>> import qualified Foreign.Marshal.Pure as Manual
+-- >>> :{
+--   nothingWith3 :: Pool #-> Ur Int
+--   nothingWith3 pool = move (Manual.deconstruct (Manual.alloc 3 pool))
+-- :}
+--
+-- >>> unur (Manual.withPool nothingWith3)
+-- 3
+--
 --
 -- === What are 'Pool's?
 --

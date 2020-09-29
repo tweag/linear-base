@@ -18,22 +18,21 @@
 --
 -- == A Tiny Example
 --
--- > {-# LANGUAGE LinearTypes #-}
--- > {-# LANGUAGE NoImplicitPrelude #-}
--- >
--- > import Prelude.Linear
--- > import qualified Data.Array.Mutable.Linear as Array
--- >
--- > isTrue :: Bool
--- > isTrue = unur $ Array.fromList [0..10] isFirstZero
--- >
--- > isFalse :: Bool
--- > isFalse = unur $ Array.fromList [1,2,3] isFirstZero
--- >
--- > isFirstZero :: Array.Array Int #-> Ur Bool
--- > isFirstZero arr =
--- >   Array.read arr 0
--- >     & \(arr', Ur val) -> arr' `lseq` Ur (val == 0)
+-- >>> :set -XLinearTypes
+-- >>> :set -XNoImplicitPrelude
+-- >>> import Prelude.Linear
+-- >>> import qualified Data.Array.Mutable.Linear as Array
+-- >>> :{
+--  isFirstZero :: Array.Array Int #-> Ur Bool
+--  isFirstZero arr =
+--    Array.read arr 0
+--      & \(Ur val, arr') -> arr' `lseq` Ur (val == 0)
+-- :}
+--
+-- >>> unur $ Array.fromList [0..10] isFirstZero
+-- True
+-- >>> unur $ Array.fromList [1,2,3] isFirstZero
+-- False
 module Data.Array.Mutable.Linear
   ( -- * Mutable Linear Arrays
     Array,

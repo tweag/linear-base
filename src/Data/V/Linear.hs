@@ -23,24 +23,25 @@
 -- Make these vectors by giving any finite number of arguments to 'make'
 -- and use them with 'elim':
 --
--- > {-# LANGUAGE LinearTypes #-}
--- > {-# LANGUAGE TypeApplications #-}
--- > {-# LANGUAGE TypeInType #-}
--- > {-# LANGUAGE TypeFamilies #-}
--- >
--- > import Prelude.Linear
--- > import qualified Data.V.Linear as V
--- >
--- > isTrue :: Bool
--- > isTrue = V.elim (listMaker 4 9) doSomething
--- >   where
--- >     -- GHC can't figure out this type equality, so this is needed.
--- >     listMaker :: Int #-> Int #-> V.V 2 Int
--- >     listMaker = V.make @2 @Int
--- >
--- > doSomething :: Int #-> Int #-> Bool
--- > doSomething x y = lseq x (lseq y True)
+-- >>> :set -XLinearTypes
+-- >>> :set -XTypeApplications
+-- >>> :set -XTypeInType
+-- >>> :set -XTypeFamilies
+-- >>> import Prelude.Linear
+-- >>> import qualified Data.V.Linear as V
+-- >>> :{
+--  doSomething :: Int #-> Int #-> Bool
+--  doSomething x y = x + y > 0
+-- :}
 --
+-- >>> :{
+--  isTrue :: Bool
+--  isTrue = V.elim (build 4 9) doSomething
+--    where
+--      -- GHC can't figure out this type equality, so this is needed.
+--      build :: Int #-> Int #-> V.V 2 Int
+--      build = V.make @2 @Int
+-- :}
 --
 -- A much more expensive library of vectors of known size (including matrices
 -- and tensors of all dimensions) is the [@linear@ library on
