@@ -64,10 +64,10 @@ import GHC.Stack
 
 {-| A singleton stream
 
->>> stdoutLn $ yield "hello"
+\>\>\> stdoutLn $ yield "hello"
 hello
 
->>> S.sum $ do {yield 1; yield 2; yield 3}
+\>\>\> S.sum $ do {yield 1; yield 2; yield 3}
 6 :> ()
 
 -}
@@ -77,7 +77,7 @@ yield x = Step $ x :> Return ()
 
 {- | Stream the elements of a pure, foldable container.
 
->>> S.print $ each' [1..3]
+\>\>\> S.print $ each' [1..3]
 1
 2
 3
@@ -143,10 +143,10 @@ replicate n a
 
 {-| Repeat an action several times, streaming its results.
 
->>> import qualified Unsafe.Linear as Unsafe
->>> import qualified Data.Time as Time
->>> let getCurrentTime = fromSystemIO (Unsafe.coerce Time.getCurrentTime)
->>> S.print $ S.replicateM 2 getCurrentTime
+\>\>\> import qualified Unsafe.Linear as Unsafe
+\>\>\> import qualified Data.Time as Time
+\>\>\> let getCurrentTime = fromSystemIO (Unsafe.coerce Time.getCurrentTime)
+\>\>\> S.print $ S.replicateM 2 getCurrentTime
 2015-08-18 00:57:36.124508 UTC
 2015-08-18 00:57:36.124785 UTC
 
@@ -445,7 +445,7 @@ cycleZip str stream = zip str $ cycle stream
 {-| An finite sequence of enumerable values at a fixed distance, determined
    by the first and second values.
 
->>> S.print $ S.enumFromThenN 3 100 200
+\>\>\> S.print $ S.enumFromThenN 3 100 200
 100
 200
 300

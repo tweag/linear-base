@@ -463,9 +463,9 @@ inspect = loop
 {-| Split a succession of layers after some number, returning a streaming or
     effectful pair.
 
->>> rest <- S.print $ S.splitAt 1 $ each' [1..3]
+\>\>\> rest <- S.print $ S.splitAt 1 $ each' [1..3]
 1
->>> S.print rest
+\>\>\> S.print rest
 2
 3
 
@@ -474,12 +474,12 @@ inspect = loop
 
     Thus, e.g.
 
->>> rest <- S.print $ (\s -> splitsAt 2 s >>= splitsAt 2) each' [1..5]
+\>\>\> rest <- S.print $ (\s -> splitsAt 2 s >>= splitsAt 2) each' [1..5]
 1
 2
 3
 4
->>> S.print rest
+\>\>\> S.print rest
 5
 
 -}
@@ -501,7 +501,7 @@ splitsAt n stream = loop n stream
 
 {-| Break a stream into substreams each with n functorial layers.
 
->>>  S.print $ mapped S.sum $ chunksOf 2 $ each' [1,1,1,1,1]
+\>\>\>  S.print $ mapped S.sum $ chunksOf 2 $ each' [1,1,1,1,1]
 2
 2
 1
@@ -583,27 +583,27 @@ unzips str = destroyExposed
     other material for another treatment. It generalizes
     'Data.Either.partitionEithers', but actually streams properly.
 
->>> let odd_even = S.maps (S.distinguish even) $ S.each' [1..10::Int]
->>> :t separate odd_even
+\>\>\> let odd_even = S.maps (S.distinguish even) $ S.each' [1..10::Int]
+\>\>\> :t separate odd_even
 separate odd_even
   :: Monad m => Stream (Of Int) (Stream (Of Int) m) ()
 
     Now, for example, it is convenient to fold on the left and right values separately:
 
->>> S.toList $ S.toList $ separate odd_even
+\>\>\> S.toList $ S.toList $ separate odd_even
 [2,4,6,8,10] :> ([1,3,5,7,9] :> ())
 
 
    Or we can write them to separate files or whatever:
 
->>> S.writeFile "even.txt" . S.show $ S.writeFile "odd.txt" . S.show $ S.separate odd_even
->>> :! cat even.txt
+\>\>\> S.writeFile "even.txt" . S.show $ S.writeFile "odd.txt" . S.show $ S.separate odd_even
+\>\>\> :! cat even.txt
 2
 4
 6
 8
 10
->>> :! cat odd.txt
+\>\>\> :! cat odd.txt
 1
 3
 5
@@ -613,7 +613,7 @@ separate odd_even
    Of course, in the special case of @Stream (Of a) m r@, we can achieve the above
    effects more simply by using 'Streaming.Prelude.copy'
 
->>> S.toList . S.filter even $ S.toList . S.filter odd $ S.copy $ each [1..10::Int]
+\>\>\> S.toList . S.filter even $ S.toList . S.filter odd $ S.copy $ each [1..10::Int]
 [2,4,6,8,10] :> ([1,3,5,7,9] :> ())
 
 
@@ -736,24 +736,24 @@ run = loop
     to @foldr@  It is more convenient to query in ghci to figure out
     what kind of \'algebra\' you need to write.
 
->>> :t streamFold Control.return Control.join
+\>\>\> :t streamFold Control.return Control.join
 (Control.Monad m, Control.Functor f) =>
      (f (m a) #-> m a) -> Stream f m a #-> m a        -- iterT
 
->>> :t streamFold Control.return (Control.join . Control.lift)
+\>\>\> :t streamFold Control.return (Control.join . Control.lift)
 (Control.Monad m, Control.Monad (t m), Control.Functor f, Control.MonadTrans t) =>
      (f (t m a) #-> t m a) -> Stream f m a #-> t m a  -- iterTM
 
->>> :t streamFold Control.return effect
+\>\>\> :t streamFold Control.return effect
 (Control.Monad m, Control.Functor f, Control.Functor g) =>
      (f (Stream g m r) #-> Stream g m r) -> Stream f m r #-> Stream g m r
 
->>> :t \f -> streamFold Control.return effect (wrap . f)
+\>\>\> :t \f -> streamFold Control.return effect (wrap . f)
 (Control.Monad m, Control.Functor f, Control.Functor g) =>
      (f (Stream g m a) #-> g (Stream g m a))
      -> Stream f m a #-> Stream g m a                 -- maps
 
->>> :t \f -> streamFold Control.return effect (effect . Control.fmap wrap . f)
+\>\>\> :t \f -> streamFold Control.return effect (effect . Control.fmap wrap . f)
 (Control.Monad m, Control.Functor f, Control.Functor g) =>
      (f (Stream g m a) #-> m (g (Stream g m a)))
      -> Stream f m a #-> Stream g m a                 -- mapped

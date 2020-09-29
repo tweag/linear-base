@@ -83,7 +83,7 @@ import qualified Control.Monad.Linear as Control
 {-| Write 'String's to 'System.stdout' using 'Text.putStrLn'; terminates on a broken output pipe
     (The name and implementation are modelled on the @Pipes.Prelude@ @stdoutLn@).
 
->>> withLinearIO $ Control.fmap move $ S.stdoutLn $ S.each $ words "one two three"
+\>\>\> withLinearIO $ Control.fmap move $ S.stdoutLn $ S.each $ words "one two three"
 one
 two
 three
@@ -136,8 +136,8 @@ writeFile filepath stream = Control.do
 
 {- | Reduce a stream, performing its actions but ignoring its elements.
 
->>> rest <- S.effects $ S.splitAt 2 $ each' [1..5]
->>> S.print rest
+\>\>\> rest <- S.effects $ S.splitAt 2 $ each' [1..5]
+\>\>\> S.print rest
 3
 4
 5
@@ -178,10 +178,10 @@ erase stream = loop stream where
 
    Here, for example, we split a stream in two places and throw out the middle segment:
 
->>> rest <- S.print $ S.drained $ S.splitAt 2 $ S.splitAt 5 $ each' [1..7]
+\>\>\> rest <- S.print $ S.drained $ S.splitAt 2 $ S.splitAt 5 $ each' [1..7]
 1
 2
->>> S.print rest
+\>\>\> S.print rest
 6
 7
 
@@ -197,17 +197,17 @@ drained = Control.join . Control.fmap (Control.lift . effects)
 
 {-| Reduce a stream to its return value with a monadic action.
 
->>> S.mapM_ Prelude.print $ each' [1..3]
+\>\>\> S.mapM_ Prelude.print $ each' [1..3]
 1
 2
 3
 
 
->>> rest <- S.mapM_ Prelude.print $ S.splitAt 3 $ each' [1..10]
+\>\>\> rest <- S.mapM_ Prelude.print $ S.splitAt 3 $ each' [1..10]
 1
 2
 3
->>> S.sum rest
+\>\>\> S.sum rest
 49 :> ()
 
 -}
@@ -233,10 +233,10 @@ mapM_  f stream = loop stream where
    This does not short circuit and all effects are performed.
    The third parameter will often be 'id' where a fold is written by hand:
 
->>> S.fold (+) 0 id $ each' [1..10]
+\>\>\> S.fold (+) 0 id $ each' [1..10]
 55 :> ()
 
->>> S.fold (*) 1 id $ S.fold (+) 0 id $ S.copy $ each' [1..10]
+\>\>\> S.fold (*) 1 id $ S.fold (+) 0 id $ S.copy $ each' [1..10]
 3628800 :> (55 :> ())
 
     It can be used to replace a standard Haskell type with one more suited to
@@ -254,7 +254,7 @@ mapM_  f stream = loop stream where
     Here we use the Applicative instance for @Control.Foldl.Fold@ to
     stream three-item segments of a stream together with their sums and products.
 
->>> S.print $ mapped (L.purely S.fold (liftA3 (,,) L.list L.product L.sum)) $ chunksOf 3 $ each' [1..10]
+\>\>\> S.print $ mapped (L.purely S.fold (liftA3 (,,) L.list L.product L.sum)) $ chunksOf 3 $ each' [1..10]
 ([1,2,3],6,6)
 ([4,5,6],120,15)
 ([7,8,9],504,24)
@@ -276,7 +276,7 @@ fold f x g stream = loop stream where
     are performed. The third parameter will often be 'id' where a fold
     is written by hand:
 
->>> S.fold_ (+) 0 id $ each [1..10]
+\>\>\> S.fold_ (+) 0 id $ each [1..10]
 55
 
     It can be used to replace a standard Haskell type with one more suited to
@@ -308,7 +308,7 @@ fold_ f x g stream = loop stream where
    Thus to accumulate the elements of a stream as a vector, together with a random
    element we might write:
 
->>> L.impurely S.foldM (liftA2 (,) L.vectorM L.random) $ each' [1..10::Int] :: IO (Of (Vector Int, Maybe Int) ())
+\>\>\> L.impurely S.foldM (liftA2 (,) L.vectorM L.random) $ each' [1..10::Int] :: IO (Of (Vector Int, Maybe Int) ())
 ([1,2,3,4,5,6,7,8,9,10],Just 9) :> ()
 
 -}
@@ -361,16 +361,16 @@ any_ f stream = fold_ (||) False id (map f stream)
 >  mapped S.sum :: Stream (Stream (Of Int)) m r #-> Stream (Of Int) m r
 
 
->>> S.sum $ each' [1..10]
+\>\>\> S.sum $ each' [1..10]
 55 :> ()
 
->>> (n :> rest)  <- S.sum $ S.splitAt 3 $ each' [1..10]
->>> System.IO.print n
+\>\>\> (n :> rest)  <- S.sum $ S.splitAt 3 $ each' [1..10]
+\>\>\> System.IO.print n
 6
->>> (m :> rest') <- S.sum $ S.splitAt 3 rest
->>> System.IO.print m
+\>\>\> (m :> rest') <- S.sum $ S.splitAt 3 rest
+\>\>\> System.IO.print m
 15
->>> S.print rest'
+\>\>\> S.print rest'
 7
 8
 9
@@ -479,7 +479,7 @@ notElem_ a stream = Control.fmap Linear.not $ elem_ a stream
 
 {-| Run a stream, keeping its length and its return value.
 
->>> S.print $ mapped S.length $ chunksOf 3 $ S.each' [1..10]
+\>\>\> S.print $ mapped S.length $ chunksOf 3 $ S.each' [1..10]
 3
 3
 3
@@ -493,7 +493,7 @@ length = fold (\n _ -> n + 1) 0 id
 
 {-| Run a stream, remembering only its length:
 
->>> runIdentity $ S.length_ (S.each [1..10] :: Stream (Of Int) Identity ())
+\>\>\> runIdentity $ S.length_ (S.each [1..10] :: Stream (Of Int) Identity ())
 10
 
 -}
@@ -508,12 +508,12 @@ length_ = fold_ (\n _ -> n + 1) 0 id
     Like 'toList_', 'toList' breaks streaming; unlike 'toList_' it /preserves the return value/
     and thus is frequently useful with e.g. 'mapped'
 
->>> S.print $ mapped S.toList $ chunksOf 3 $ each' [1..9]
+\>\>\> S.print $ mapped S.toList $ chunksOf 3 $ each' [1..9]
 [1,2,3]
 [4,5,6]
 [7,8,9]
 
->>> S.print $ mapped S.toList $ chunksOf 2 $ S.replicateM 4 getLine
+\>\>\> S.print $ mapped S.toList $ chunksOf 2 $ S.replicateM 4 getLine
 s<Enter>
 t<Enter>
 ["s","t"]

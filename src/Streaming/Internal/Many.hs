@@ -57,18 +57,18 @@ import qualified Control.Monad.Linear as Control
    This @unzip@ does
    stream, though of course you can spoil this by using e.g. 'toList':
 
->>> let xs = Prelude.map (\x -> (x, Prelude.show x)) [1..5 :: Int]
+\>\>\> let xs = Prelude.map (\x -> (x, Prelude.show x)) [1..5 :: Int]
 
->>> S.toList $ S.toList $ S.unzip (S.each' xs)
+\>\>\> S.toList $ S.toList $ S.unzip (S.each' xs)
 ["1","2","3","4","5"] :> ([1,2,3,4,5] :> ())
 
->>> Prelude.unzip xs
+\>\>\> Prelude.unzip xs
 ([1,2,3,4,5],["1","2","3","4","5"])
 
     Note the difference of order in the results. It may be of some use to think why.
     The first application of 'toList' was applied to a stream of integers:
 
->>> :t S.unzip $ S.each' xs
+\>\>\> :t S.unzip $ S.each' xs
 S.unzip $ S.each' xs :: Control.Monad m => Stream (Of Int) (Stream (Of String) m) ()
 
     Like any fold, 'toList' takes no notice of the monad of effects.
@@ -79,14 +79,14 @@ S.unzip $ S.each' xs :: Control.Monad m => Stream (Of Int) (Stream (Of String) m
     So when I apply 'toList', I exhaust that stream of integers, folding
     it into a list:
 
->>> :t S.toList $ S.unzip $ S.each' xs
+\>\>\> :t S.toList $ S.unzip $ S.each' xs
 S.toList $ S.unzip $ S.each' xs
   :: Control.Monad m => Stream (Of String) m (Of [Int] ())
 
     When I apply 'toList' to /this/, I reduce everything to an ordinary action in @IO@,
     and return a list of strings:
 
->>> S.toList $ S.toList $ S.unzip (S.each' xs)
+\>\>\> S.toList $ S.toList $ S.unzip (S.each' xs)
 ["1","2","3","4","5"] :> ([1,2,3,4,5] :> ())
 
 'unzip' can be considered a special case of either 'unzips' or 'expand':
@@ -304,7 +304,7 @@ extractResult (Right s) = effects s
 
    The return values of both streams are returned.
 
->>> S.print $ merge (each [1,3,5]) (each [2,4])
+\>\>\> S.print $ merge (each [1,3,5]) (each [2,4])
 1
 2
 3
