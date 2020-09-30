@@ -184,11 +184,11 @@ alter hm key f =
     probeFrom (key, 0) idx hm' & \case
       -- The key does not exist, and there is an empty cell to insert.
       (HashMap count arr, IndexToInsert psl ix) ->
-        Ur (f Nothing) & \case
+        case f Nothing of
           -- We don't need to insert anything.
-          Ur Nothing -> HashMap count arr
+          Nothing -> HashMap count arr
           -- We need to insert a new key.
-          Ur (Just v)->
+          Just v->
             HashMap
              (count+1)
              (Array.write arr ix (Just (RobinVal psl key v)))
@@ -196,26 +196,26 @@ alter hm key f =
       -- The key exists.
       (hm'', IndexToUpdate v psl ix) ->
         capacity hm'' & \(Ur cap, HashMap count arr) ->
-          Ur (f (Just v)) & \case
+          case f (Just v) of
             -- We need to delete it.
-            Ur Nothing ->
+            Nothing ->
               Array.write arr ix Nothing & \arr' ->
                 shiftSegmentBackward cap arr' ((ix + 1) `mod` cap) & \arr'' ->
                   HashMap
                     (count - 1)
                     arr''
             -- We need to update it.
-            Ur (Just new)->
+            Just new->
               HashMap
                 count
                 (Array.write arr ix (Just (RobinVal psl key new)))
       -- The key does not exist, but there is a key to evict.
       (hm, IndexToSwap evicted psl ix) ->
-        Ur (f Nothing) & \case
+        case f Nothing of
           -- We don't need to insert anything.
-          Ur Nothing -> hm
+          Nothing -> hm
           -- We need to insert a new key.
-          Ur (Just v)->
+          Just v->
             capacity hm & \(Ur cap, HashMap count arr) ->
               tryInsertAtIndex
                 (HashMap
