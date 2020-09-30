@@ -20,6 +20,7 @@ module Control.Monad.Linear
     -- $monad
     Functor(..)
   , (<$>)
+  , (<&>)
   , (<$)
   , dataFmapDefault
   , Applicative(..)

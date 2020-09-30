@@ -94,6 +94,13 @@ dataPureDefault x = pure x
 (<$>) :: Functor f => (a #-> b) #-> f a #-> f b
 (<$>) = fmap
 
+-- |  @
+--    ('<&>') = 'flip' 'fmap'
+--    @
+(<&>) :: Functor f => f a #-> (a #-> b) #-> f b
+(<&>) a f = f <$> a
+{-# INLINE (<&>) #-}
+
 {-# INLINE return #-}
 return :: Monad m => a #-> m a
 return x = pure x
