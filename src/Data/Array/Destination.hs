@@ -34,36 +34,55 @@
 -- }
 -- @
 --
--- We could write this with @Data.Vector@ in haskell and rely on GHC to fuse
--- (but this isn't great in complex uses where some simple changes can
--- break the fusion):
+-- == Example: Stencil computation
+--
+-- One possible use of destination arrays could be the stencil computation
+-- typically called
+-- [jacobi](https://en.wikipedia.org/wiki/Iterative_Stencil_Loops#Example:_2D_Jacobi_iteration).
+-- Here we show one time step of this computation in a single dimension:
 --
 -- @
--- import Data.Vector (Vector)
--- import qualified Data.Vector as Vector
--- import qualified Prelude
+-- jacobi1d :: Int -> Vector Double -> Vector Double
+-- jacobi1d n oldA = case stepArr n oldA of 
+--   newB -> stepArr n newB
 --
--- apbxc :: Vector Int -> Vector Int -> Int -> Vector Int
--- apbxc a b c = mult c Prelude.$ Vector.zipWith (Prelude.+) a b
---
--- mult :: Int -> Vector Int -> Vector Int
--- mult c = Vector.map (Prelude.* c)
+-- -- @jacobi1d N A[N] B[N] = (new_A[N], new_B[N])@.
+-- stepArr :: Int -> Vector Double -> Vector Double
+-- stepArr n oldArr = alloc n $ \newArr -> fillArr newArr oldArr 1
+--   where
+--     fillArr :: DArray Double #-> Vector Double -> Int -> ()
+--     fillArr newA oldA ix
+--       | ix == (n-1) = newA &
+--           fill (0.33 * ((oldA ! (ix-1)) + (oldA ! ix) + (oldA ! (ix+1))))
+--       | True = split 1 newA & \(fst, rest) ->
+--           fill (0.33 * ((oldA ! (ix-1)) + (oldA ! ix) + (oldA ! (ix+1)))) fst &
+--             \() -> fillArr rest oldA (ix+1)
 -- @
 --
--- Doing this with destination arrays we are guarenteed only one allocation
--- of the resulting array:
+-- We can be sure that @stepArr@ only allocates one array. In certain
+-- variations and implementations of the jacobi kernel or similar dense array
+-- computations, ensuring one allocation with @Data.Vector@'s fusion oriented
+-- implementation may not be trivial.
+--
+-- For reference, the C equivalent of this code is the following:
 --
 -- @
---  apbxcDest :: Vector Int -> Vector Int -> Int -> Vector Int
---  apbxcDest a b c = alloc (Vector.length a) writeResult
---    where
---      writeResult :: DArray Int #-> ()
---      writeResult = fromFunction (\i -> ((a ! i) + (b ! i)) * c)
+-- static void jacobi_1d_time_step(int n, int *A, int *B){
+--   int t, i;
+--   for (i = 1; i < _PB_N - 1; i++)
+--     B[i] = 0.33333 * (A[i-1] + A[i] + A[i + 1]);
+--   for (i = 1; i < _PB_N - 1; i++)
+--     A[i] = 0.33333 * (B[i-1] + B[i] + B[i + 1]);
+-- }
 -- @
+--
+-- This example is taken from the
+-- [polybench test-suite](https://web.cse.ohio-state.edu/~pouchet.2/software/polybench/)
+-- of dense array codes.
 --
 -- == Aside: Why do we need linear types?
 --
--- Linear types avoids ambigious writes to the destination array.
+-- Linear types avoids ambiguous writes to the destination array.
 -- For example, this function could never be linear and hence we avoid
 -- ambiguity:
 --
@@ -73,7 +92,14 @@
 --    ((),()) -> ()
 -- @
 --
--- Further, linear types are used to ensure that each cell in the destination
+-- Furthermore, this API is safely implemented by mutating an underlying array
+-- which is good for performance. The API is safe because linear types
+-- enforce the fact that each reference to an underlying mutable array
+-- (and there can be more than one by using @split@) is
+-- linearly threaded through functions and at the end consumed by one of our
+-- write functions.
+--
+-- Lastly, linear types are used to ensure that each cell in the destination
 -- array is written to exactly once. This is because the only way to create and
 -- use a destination array is via
 --
@@ -109,7 +135,6 @@ import qualified Prelude as Prelude
 import Prelude.Linear hiding (replicate)
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
-
 
 -- | A destination array, or @DArray@, is a write-only array that is filled
 -- by some computation which ultimately returns an array.
@@ -157,8 +182,7 @@ split n = Unsafe.toLinear unsafeSplit
       let (dsl, dsr) = MVector.splitAt n ds in
         (DArray dsl, DArray dsr)
 
--- | Convert a Vector into a destination array to be filled, possibly with a
--- conversion function.  Assumes both arrays have the same size.
+-- | Fills the destination array with the contents of given vector
 mirror :: Vector a -> (a #-> b) -> DArray b #-> ()
 mirror v f = fromFunction (\t -> f (v ! t))
 
