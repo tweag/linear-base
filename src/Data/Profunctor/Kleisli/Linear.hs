@@ -15,9 +15,11 @@ module Data.Profunctor.Kleisli.Linear
   where
 
 
+import Data.Functor.Compose hiding (getCompose)
 import Data.Profunctor.Linear
+import qualified Data.Unrestricted.Linear as Ur
 import Data.Void
-import Prelude.Linear (Either(..), either)
+import Prelude.Linear (Either(..), either, Ur(..))
 import Prelude.Linear.Internal
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
@@ -57,6 +59,12 @@ instance Data.Functor f => Monoidal Either Void (Kleisli f) where
 
 instance Control.Applicative f => Wandering (Kleisli f) where
   wander traverse (Kleisli f) = Kleisli (traverse f)
+
+instance Data.Functor f => Unrestricting (Kleisli (Compose f Ur)) where
+  unrestrict (Kleisli f) = Kleisli $ \(Ur a) -> Compose $  Ur.duplicate Data.<$> getCompose (f a)
+
+getCompose :: Compose f g a #-> f (g a)
+getCompose (Compose x) = x
 
 -- | Linear co-Kleisli arrows for the comonad `w`. These arrows are still
 -- useful in the case where `w` is not a comonad however, and some

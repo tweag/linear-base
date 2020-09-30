@@ -14,6 +14,7 @@ module Data.Profunctor.Linear
   , Monoidal(..)
   , Strong(..)
   , Wandering(..)
+  , Unrestricting(..)
   , LinearArrow(..), getLA
   , Exchange(..)
   , Market(..), runMarket
@@ -66,6 +67,9 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
   -- > wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
   wander :: forall s t a b. (forall f. Control.Applicative f => (a #-> f b) -> s #-> f t) -> a `arr` b -> s `arr` t
 
+class Unrestricting arr where
+  unrestrict :: a `arr` b -> Ur a `arr` Ur b
+
 ---------------
 -- Instances --
 ---------------
@@ -107,6 +111,8 @@ instance Monoidal (,) () (->) where
 instance Monoidal Either Void (->) where
   f *** g = Prelude.bimap f g
   unit = \case {}
+instance Unrestricting (->) where
+  unrestrict f (Ur a) = Ur (f a)
 
 data Exchange a b s t = Exchange (s #-> a) (b #-> t)
 instance Profunctor (Exchange a b) where
@@ -133,6 +139,9 @@ instance Prelude.Functor f => Monoidal Either Void (Kleisli f) where
     Left a -> Left Prelude.<$> f a
     Right b -> Right Prelude.<$> g b
   unit = Kleisli $ \case {}
+
+instance Prelude.Functor f => Unrestricting (Kleisli f) where
+  unrestrict (Kleisli f) = Kleisli $ \(Ur a) -> Ur Prelude.<$> f a
 
 data Market a b s t = Market (b #-> t) (s #-> Either t a)
 runMarket :: Market a b s t #-> (b #-> t, s #-> Either t a)

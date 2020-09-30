@@ -75,6 +75,8 @@ module Data.Unrestricted.Linear
   , unur
   , lift
   , lift2
+  , duplicate
+  , extend
     -- * Performing non-linear actions on linearly bound values
   , Consumable(..)
   , Dupable(..)
@@ -119,6 +121,18 @@ data Ur a where
 -- >     f x = ...
 unur :: Ur a #-> a
 unur (Ur a) = a
+
+-- | Nest an 'Ur' value. @'duplicate' a@ forces @a@. This is a comonadic
+-- duplication ('unur' is the unit). The use of this function is pretty niche,
+-- but you will know it when you need it.
+duplicate :: Ur a #-> Ur (Ur a)
+duplicate (Ur a) = Ur (Ur a)
+
+-- | Comonadic extension for 'Ur'. @'extend' f a@ forces @a@.The use of this
+-- function is pretty niche, but you will know it when you need it. See also
+-- 'unur' and 'duplicate'.
+extend :: (Ur a #-> b) -> Ur a #-> Ur b
+extend f (Ur a) = Ur (f (Ur a))
 
 -- | Lifts a function on a linear @Ur a@.
 lift :: (a -> b) -> Ur a #-> Ur b

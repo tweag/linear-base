@@ -82,12 +82,11 @@ module Streaming.Internal.Process
   ) where
 
 import Streaming.Internal.Type
-import Prelude.Linear ((&), ($), (.))
+import Prelude.Linear ((&), ($), (.), Ur(..), Consumable(..), lseq)
 import Prelude (Maybe(..), Either(..), Bool(..), Int,
                Ordering(..), Num(..), Eq(..), id, Ord(..), Read(..),
                String, Double)
 import qualified Prelude
-import Data.Unrestricted.Linear
 import qualified Control.Monad.Linear as Control
 import System.IO.Linear
 import Data.Functor.Sum
