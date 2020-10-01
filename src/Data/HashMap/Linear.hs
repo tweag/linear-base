@@ -34,6 +34,8 @@ module Data.HashMap.Linear
     mapMaybe,
     mapMaybeWithKey,
     shrinkToFit,
+    alter,
+    alterF,
     -- * Accessors
     size,
     capacity,
@@ -47,7 +49,9 @@ module Data.HashMap.Linear
   )
 where
 
+import qualified Control.Monad.Linear as Control
 import Data.Array.Mutable.Linear (Array)
+import Data.Functor.Identity hiding (runIdentity)
 import qualified Data.Functor.Linear as Data
 import qualified Data.Array.Mutable.Linear as Array
 import Data.Hashable
@@ -177,18 +181,19 @@ fromList xs scope =
     (\arr -> scope (insertAll xs (HashMap 0 arr)))
 
 -- | The most general modification function; which can insert, update or delete
--- a value of the key.
-alter :: Keyed k => (Maybe v -> Maybe v) -> k -> HashMap k v #-> HashMap k v
-alter f key hm =
+-- a value of the key, while collecting an effect in the form of an arbitrary
+-- 'Control.Functor'.
+alterF :: (Keyed k, Control.Functor f) => (Maybe v -> f (Ur (Maybe v))) -> k -> HashMap k v #-> f (HashMap k v)
+alterF f key hm =
   idealIndexForKey key hm & \(Ur idx, hm') ->
     probeFrom (key, 0) idx hm' & \case
       -- The key does not exist, and there is an empty cell to insert.
       (HashMap count arr, IndexToInsert psl ix) ->
-        case f Nothing of
+        f Nothing Control.<&> \case
           -- We don't need to insert anything.
-          Nothing -> HashMap count arr
+          Ur Nothing -> HashMap count arr
           -- We need to insert a new key.
-          Just v->
+          Ur (Just v)->
             HashMap
              (count+1)
              (Array.write arr ix (Just (RobinVal psl key v)))
@@ -196,26 +201,26 @@ alter f key hm =
       -- The key exists.
       (hm'', IndexToUpdate v psl ix) ->
         capacity hm'' & \(Ur cap, HashMap count arr) ->
-          case f (Just v) of
+          f (Just v) Control.<&> \case
             -- We need to delete it.
-            Nothing ->
+            Ur Nothing ->
               Array.write arr ix Nothing & \arr' ->
                 shiftSegmentBackward cap arr' ((ix + 1) `mod` cap) & \arr'' ->
                   HashMap
                     (count - 1)
                     arr''
             -- We need to update it.
-            Just new->
+            Ur (Just new)->
               HashMap
                 count
                 (Array.write arr ix (Just (RobinVal psl key new)))
       -- The key does not exist, but there is a key to evict.
       (hm, IndexToSwap evicted psl ix) ->
-        case f Nothing of
+        f Nothing Control.<&> \case
           -- We don't need to insert anything.
-          Nothing -> hm
+          Ur Nothing -> hm
           -- We need to insert a new key.
-          Just v->
+          Ur (Just v)->
             capacity hm & \(Ur cap, HashMap count arr) ->
               tryInsertAtIndex
                 (HashMap
@@ -224,6 +229,21 @@ alter f key hm =
                 ((ix + 1) `mod` cap)
                 (incRobinValPSL evicted)
               & growMapIfNecessary
+
+-- aspiwack: I'm implementing `alter` in terms of `alterF`, because, at this
+-- point, we may have some bug fixes and so on and so forth. And maintaining two
+-- functions this size is quite a bit unpleasant. Nevertheless, the extra boxing
+-- required by the intermediate `Ur` call, there, makes it so that the
+-- specialisation of `alterF` to `Identity` doesn't quite yield the code that we
+-- would like, it's a bit costlier than it should. So in an ideal word, we would
+-- implement both manually. In the future probably.
+-- | A general modification function; which can insert, update or delete
+-- a value of the key. See 'alterF', for an even more general function.
+alter :: Keyed k => (Maybe v -> Maybe v) -> k -> HashMap k v #-> HashMap k v
+alter f key hm = runIdentity $ alterF (\v -> Identity (Ur (f v))) key hm
+  where
+    runIdentity :: Identity a #-> a
+    runIdentity (Identity x) = x
 
 -- | Insert a key value pair to a 'HashMap'. It overwrites the previous
 -- value if it exists.
