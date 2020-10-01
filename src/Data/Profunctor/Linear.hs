@@ -98,6 +98,9 @@ instance Monoidal Either Void LinearArrow where
   LA f *** LA g = LA $ bimap f g
   unit = LA $ \case {}
 
+instance Unrestricting LinearArrow where
+  unrestrict (LA f) = LA $ \(Ur a) -> Ur (f a)
+
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))
 instance Strong (,) () (->) where
