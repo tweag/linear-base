@@ -10,11 +10,11 @@
 module Control.Optics.Linear.Internal
   ( -- * Types
     Optic_(..)
-  , Optic
-  , Iso, Iso'
-  , Lens, Lens'
-  , Prism, Prism'
-  , Traversal, Traversal'
+  , Optic, OpticU
+  , Iso, Iso', IsoU, IsoU'
+  , Lens, Lens', LensU, LensU'
+  , Prism, Prism', PrismU, PrismU'
+  , Traversal, Traversal', TraversalU, TraversalU'
     -- * Composing optics
   , (.>)
     -- * Common optics
@@ -54,15 +54,25 @@ newtype Optic_ arr s t a b = Optical (a `arr` b -> s `arr` t)
 
 type Optic c s t a b =
   forall arr. c arr => Optic_ arr s t a b
+type OpticU c s t a b =
+  forall arr. (Unrestricting arr, c arr) => Optic_ arr s t a b
 
 type Iso s t a b = Optic Profunctor s t a b
 type Iso' s a = Iso s s a a
+type IsoU s t a b = Optic Unrestricting s t a b
+type IsoU' s a = IsoU s s a a
 type Lens s t a b = Optic (Strong (,) ()) s t a b
 type Lens' s a = Lens s s a a
+type LensU s t a b = OpticU (Strong (,) ()) s t a b
+type LensU' s a = LensU s s a a
 type Prism s t a b = Optic (Strong Either Void) s t a b
 type Prism' s a = Prism s s a a
+type PrismU s t a b = OpticU (Strong Either Void) s t a b
+type PrismU' s a = PrismU s s a a
 type Traversal s t a b = Optic Wandering s t a b
 type Traversal' s a = Traversal s s a a
+type TraversalU s t a b = OpticU Wandering s t a b
+type TraversalU' s a = TraversalU s s a a
 
 swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = iso Bifunctor.swap Bifunctor.swap

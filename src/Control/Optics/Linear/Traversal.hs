@@ -1,6 +1,6 @@
 module Control.Optics.Linear.Traversal
   ( -- * Types
-    Traversal, Traversal'
+    Traversal, Traversal', TraversalU, TraversalU'
     -- * Composing optics
   , (.>)
     -- * Common optics

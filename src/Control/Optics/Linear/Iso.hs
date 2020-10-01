@@ -1,6 +1,6 @@
 module Control.Optics.Linear.Iso
   ( -- * Types
-    Iso, Iso'
+    Iso, Iso', IsoU, IsoU'
     -- * Composing optics
   , (.>)
     -- * Common optics

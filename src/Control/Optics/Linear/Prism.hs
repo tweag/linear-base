@@ -1,6 +1,6 @@
 module Control.Optics.Linear.Prism
   ( -- * Types
-    Prism, Prism'
+    Prism, Prism', PrismU, PrismU'
     -- * Composing optics
   , (.>)
     -- * Common optics

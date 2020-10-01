@@ -1,6 +1,6 @@
 module Control.Optics.Linear.Lens
   ( -- * Types
-    Lens, Lens'
+    Lens, Lens', LensU, LensU'
     -- * Composing lens
   , (.>)
     -- * Common optics
