@@ -97,8 +97,8 @@ snocOnEmptyVector :: Property
 snocOnEmptyVector = withTests 1 . property $ do
   let Ur actual =
         Vector.empty
-          Linear.$ \vec -> Vector.push vec (42 :: Int)
-          Linear.& \vec -> Vector.read vec 0
+          Linear.$ \vec -> Vector.push (42 :: Int) vec
+          Linear.& Vector.get 0
           Linear.& getFst
   actual === 42
 
@@ -160,7 +160,7 @@ readPush1Test val ix vec = fromRead (Vector.read vec ix)
   where
     fromRead :: (Ur Int, Vector.Vector Int) #-> Ur (TestT IO ())
     fromRead (val', vec) =
-      compInts (getFst (Vector.read (Vector.push vec val) ix)) val'
+      compInts (getFst (Vector.get ix (Vector.push val vec))) val'
 
 
 readPush2 :: Property
@@ -177,7 +177,7 @@ readPush2Test val vec = fromLen (Vector.size vec)
       (Ur Int, Vector.Vector Int) #->
       Ur (TestT IO ())
     fromLen (Ur len, vec) =
-      compInts (getFst (Vector.read (Vector.push vec val) len)) (move val)
+      compInts (getFst (Vector.get len (Vector.push val vec))) (move val)
 
 lenConst :: Property
 lenConst = property $ do
@@ -218,7 +218,7 @@ lenPushTest val vec = fromLen Linear.$ Vector.size vec
       (Ur Int, Vector.Vector Int) #->
       Ur (TestT IO ())
     fromLen (Ur len, vec) =
-      compInts (move (len+1)) (getFst (Vector.size (Vector.push vec val)))
+      compInts (move (len+1)) (getFst (Vector.size (Vector.push val vec)))
 
 refToListFromList :: Property
 refToListFromList = property $ do
@@ -233,7 +233,7 @@ refToListWithExtraCapacity = property $ do
       expected = xs ++ [val]
       Ur actual =
         Vector.fromList xs Linear.$ \vec ->
-          Vector.push vec val -- This will cause the vector to grow.
+          Vector.push val vec -- This will cause the vector to grow.
             Linear.& Vector.toList
   expected === actual
 
@@ -242,7 +242,7 @@ refPopPush = property $ do
   xs <- forAll list
   let Ur actual =
         Vector.fromList xs Linear.$ \vec ->
-          Vector.push vec (error "not used")
+          Vector.push (error "not used") vec
             Linear.& Vector.pop
             Linear.& \(Ur _, vec) ->
                         Vector.toList vec
@@ -255,7 +255,7 @@ refPushPop = property $ do
         Vector.fromList xs Linear.$ \vec ->
           Vector.pop vec
             Linear.& \(Ur (Just a), vec) ->
-                        Vector.push vec a
+                        Vector.push a vec
             Linear.& Vector.toList
   xs === actual
 
@@ -282,7 +282,7 @@ refFromListViaPush = property $ do
  where
    pushAll :: [a] -> Vector.Vector a #-> Vector.Vector a
    pushAll [] vec = vec
-   pushAll (x:xs) vec = Vector.push vec x Linear.& pushAll xs
+   pushAll (x:xs) vec = Vector.push x vec Linear.& pushAll xs
 
 refSlice :: Property
 refSlice = property $ do
@@ -361,7 +361,7 @@ refFreeze = property $ do
 
       Ur actual = Vector.fromList xs Linear.$ \vec ->
            (if shouldAppend
-            then Vector.push vec 12
+            then Vector.push 12 vec
             else vec
            ) Linear.& Vector.freeze
   expected === ImmutableVector.toList actual
