@@ -25,7 +25,7 @@
 -- >>> :{
 --  isFirstZero :: Array.Array Int #-> Ur Bool
 --  isFirstZero arr =
---    Array.read arr 0
+--    Array.get 0 arr
 --      & \(Ur val, arr') -> arr' `lseq` Ur (val == 0)
 -- :}
 --
@@ -40,18 +40,23 @@ module Data.Array.Mutable.Linear
     alloc,
     allocBeside,
     fromList,
-    -- * Mutators
-    write,
-    unsafeWrite,
+    -- * Modifications
+    set,
+    unsafeSet,
     resize,
     map,
     -- * Accessors
-    read,
-    unsafeRead,
+    get,
+    unsafeGet,
     size,
     slice,
     toList,
     freeze,
+    -- * Mutable-style interface
+    read,
+    unsafeRead,
+    write,
+    unsafeWrite
   )
 where
 
@@ -113,7 +118,7 @@ fromList list (f :: Array a #-> Ur b) =
 
   doWrites :: [(a,Int)] -> Array a #-> Array a
   doWrites [] arr = arr
-  doWrites ((a,ix):xs) arr = doWrites xs (unsafeWrite arr ix a)
+  doWrites ((a,ix):xs) arr = doWrites xs (unsafeSet ix a arr)
 
 -- # Mutations and Reads
 -------------------------------------------------------------------------------
@@ -124,26 +129,26 @@ size (Array arr) = f (Unlifted.size arr)
   f :: (# Ur Int, Array# a #) #-> (Ur Int, Array a)
   f (# s, arr #) = (s, Array arr)
 
--- | Writes a value to an index of an Array. The index should be less than the
--- arrays size, otherwise this errors.
-write :: HasCallStack => Array a #-> Int -> a -> Array a
-write arr i x = unsafeWrite (assertIndexInRange i arr) i x
+-- | Sets the value of an index. The index should be less than the arrays
+-- size, otherwise this errors.
+set :: HasCallStack => Int -> a -> Array a #-> Array a
+set i x arr = unsafeSet i x (assertIndexInRange i arr)
 
--- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
+-- | Same as 'set, but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
-unsafeWrite :: Array a #-> Int -> a -> Array a
-unsafeWrite (Array arr) ix val =
-  Array (Unlifted.write ix val arr)
+unsafeSet :: Int -> a -> Array a #-> Array a
+unsafeSet ix val (Array arr) =
+  Array (Unlifted.set ix val arr)
 
--- | Read an index from an Array. The index should be less than the arrays size,
+-- | Get the value of an index. The index should be less than the arrays 'size',
 -- otherwise this errors.
-read :: HasCallStack => Array a #-> Int -> (Ur a, Array a)
-read arr i = unsafeRead (assertIndexInRange i arr) i
+get :: HasCallStack => Int -> Array a #-> (Ur a, Array a)
+get i arr = unsafeGet i (assertIndexInRange i arr)
 
--- | Same as read, but does not do bounds-checking. The behaviour is undefined
+-- | Same as 'get', but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
-unsafeRead :: Array a #-> Int -> (Ur a, Array a)
-unsafeRead (Array arr) ix = wrap (Unlifted.read ix arr)
+unsafeGet :: Int -> Array a #-> (Ur a, Array a)
+unsafeGet ix (Array arr) = wrap (Unlifted.get ix arr)
  where
   wrap :: (# Ur a, Array# a #) #-> (Ur a, Array a)
   wrap (# ret, arr #) = (ret, Array arr)
@@ -232,6 +237,25 @@ freeze (Array arr) =
 
 map :: (a -> b) -> Array a #-> Array b
 map f (Array arr) = Array (Unlifted.map f arr)
+
+-- # Mutation-style API
+-------------------------------------------------------------------------------
+
+-- | Same as 'set', but takes the 'Array' as the first parameter.
+write :: HasCallStack => Array a #-> Int -> a -> Array a
+write arr i a = set i a arr
+
+-- | Same as 'unsafeSafe', but takes the 'Array' as the first parameter.
+unsafeWrite ::  Array a #-> Int -> a -> Array a
+unsafeWrite arr i a = unsafeSet i a arr
+
+-- | Same as 'get', but takes the 'Array' as the first parameter.
+read :: HasCallStack => Array a #-> Int -> (Ur a, Array a)
+read arr i = get i arr
+
+-- | Same as 'unsafeGet', but takes the 'Array' as the first parameter.
+unsafeRead :: Array a #-> Int -> (Ur a, Array a)
+unsafeRead arr i = unsafeGet i arr
 
 -- # Instances
 -------------------------------------------------------------------------------

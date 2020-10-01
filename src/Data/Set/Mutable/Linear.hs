@@ -60,11 +60,11 @@ toList (Set hm) =
   Linear.toList hm
     Linear.& \(Ur xs) -> Ur (Prelude.map Prelude.fst xs)
 
-insert :: Keyed a => Set a #-> a -> Set a
-insert (Set hmap) a = Set (Linear.insert hmap a ())
+insert :: Keyed a => a -> Set a #-> Set a
+insert a (Set hmap) = Set (Linear.insert a () hmap)
 
-delete :: Keyed a => Set a #-> a -> Set a
-delete (Set hmap) a = Set (Linear.delete hmap a)
+delete :: Keyed a => a -> Set a #-> Set a
+delete a (Set hmap) = Set (Linear.delete a hmap)
 
 union :: Keyed a => Set a #-> Set a #-> Set a
 union (Set hm1) (Set hm2) =
@@ -81,9 +81,9 @@ size :: Keyed a => Set a #-> (Ur Int, Set a)
 size (Set hm) =
   Linear.size hm Linear.& \(s, hm') -> (s, Set hm')
 
-member :: Keyed a => Set a #-> a -> (Ur Bool, Set a)
-member (Set hm) a =
-  Linear.member hm a Linear.& \(b, hm') -> (b, Set hm')
+member :: Keyed a => a -> Set a #-> (Ur Bool, Set a)
+member a (Set hm) =
+  Linear.member a hm Linear.& \(b, hm') -> (b, Set hm')
 
 fromList :: Keyed a => [a] -> (Set a #-> Ur b) #-> Ur b
 fromList xs f =

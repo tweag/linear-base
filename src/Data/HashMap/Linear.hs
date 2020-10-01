@@ -178,8 +178,8 @@ fromList xs scope =
 
 -- | The most general modification function; which can insert, update or delete
 -- a value of the key.
-alter :: Keyed k => HashMap k v #-> k -> (Maybe v -> Maybe v) -> HashMap k v
-alter hm key f =
+alter :: Keyed k => (Maybe v -> Maybe v) -> k -> HashMap k v #-> HashMap k v
+alter f key hm =
   idealIndexForKey key hm & \(Ur idx, hm') ->
     probeFrom (key, 0) idx hm' & \case
       -- The key does not exist, and there is an empty cell to insert.
@@ -227,19 +227,19 @@ alter hm key f =
 
 -- | Insert a key value pair to a 'HashMap'. It overwrites the previous
 -- value if it exists.
-insert :: Keyed k => HashMap k v #-> k -> v -> HashMap k v
-insert hm k v = alter hm k (\_ -> Just v)
+insert :: Keyed k => k -> v -> HashMap k v #-> HashMap k v
+insert k v = alter (\_ -> Just v) k
 
 -- | Delete a key from a 'HashMap'. Does nothing if the key does not
 -- exist.
-delete :: Keyed k => HashMap k v #-> k -> HashMap k v
-delete hm k = alter hm k (\_ -> Nothing)
+delete :: Keyed k => k -> HashMap k v #-> HashMap k v
+delete = alter (\_ -> Nothing)
 
 -- | 'insert' (in the provided order) the given key-value pairs to
 -- the hashmap.
 insertAll :: Keyed k => [(k, v)] -> HashMap k v #-> HashMap k v
 insertAll [] hmap = hmap
-insertAll ((k, v) : xs) hmap = insertAll xs (insert hmap k v)
+insertAll ((k, v) : xs) hmap = insertAll xs (insert k v hmap)
 -- TODO: Do a resize first on the length of the input.
 
 -- | A version of 'fmap' which can throw out the elements.
@@ -332,9 +332,11 @@ unionWith onConflict (hm1 :: HashMap k v) hm2 =
        #-> HashMap k v
     go _ hm (Ur []) = hm
     go f hm (Ur ((k, vr):xs)) =
-      alter hm k (\case
+      alter (\case
         Nothing -> Just vr
         Just vl -> Just (f vl vr))
+        k
+        hm
         & \hm -> go f hm (Ur xs)
 
 -- | A right-biased union.
@@ -365,9 +367,9 @@ intersectionWith combine (hm1 :: HashMap k a') hm2 =
       #-> HashMap k c #-> HashMap k c
    go _ hm (Ur []) acc = hm `lseq` acc
    go f hm (Ur ((k, b):xs)) acc =
-     lookup hm k & \case
+     lookup k hm & \case
        (Ur Nothing, hm') -> go f hm' (Ur xs) acc
-       (Ur (Just a), hm') -> go f hm' (Ur xs) (insert acc k (f a b))
+       (Ur (Just a), hm') -> go f hm' (Ur xs) (insert k (f a b) acc)
 
 -- |
 -- Reduce the 'HashMap' 'capacity' to decrease wasted memory. Returns
@@ -401,8 +403,8 @@ capacity (HashMap ct arr) =
     (len, HashMap ct arr')
 
 -- | Look up a value from a 'HashMap'.
-lookup :: Keyed k => HashMap k v #-> k -> (Ur (Maybe v), HashMap k v)
-lookup hm k =
+lookup :: Keyed k => k -> HashMap k v #-> (Ur (Maybe v), HashMap k v)
+lookup k hm =
   idealIndexForKey k hm & \(Ur idx, hm') ->
     probeFrom (k,0) idx hm' & \case
       (h, IndexToUpdate v _ _) ->
@@ -413,9 +415,9 @@ lookup hm k =
         (Ur Nothing, h)
 
 -- | Check if the given key exists.
-member :: Keyed k => HashMap k v #-> k -> (Ur Bool, HashMap k v)
-member hm k =
-  lookup hm k & \case
+member :: Keyed k => k -> HashMap k v #-> (Ur Bool, HashMap k v)
+member k hm =
+  lookup k hm & \case
     (Ur Nothing, hm') -> (Ur False, hm')
     (Ur (Just _), hm') -> (Ur True, hm')
 

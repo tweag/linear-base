@@ -26,7 +26,7 @@
 -- >>> :{
 --  isFirstZero :: Vector.Vector Int #-> Ur Bool
 --  isFirstZero vec =
---    Vector.read vec 0
+--    Vector.get 0 vec
 --      & \(Ur ret, vec) -> vec `lseq` Ur (ret == 0)
 -- :}
 --
@@ -42,8 +42,8 @@ module Data.Vector.Mutable.Linear
     constant,
     fromList,
     -- * Mutators
-    write,
-    unsafeWrite,
+    set,
+    unsafeSet,
     modify,
     modify_,
     push,
@@ -53,12 +53,17 @@ module Data.Vector.Mutable.Linear
     slice,
     shrinkToFit,
     -- * Accessors
-    read,
-    unsafeRead,
+    get,
+    unsafeGet,
     size,
     capacity,
     toList,
     freeze,
+    -- * Mutable-style interface
+    read,
+    unsafeRead,
+    write,
+    unsafeWrite
   )
 where
 
@@ -138,10 +143,10 @@ capacity (Vec s arr) =
 
 -- | Insert at the end of the vector. This will grow the vector if there
 -- is no empty space.
-push :: Vector a #-> a -> Vector a
-push vec x =
+push :: a -> Vector a #-> Vector a
+push x vec =
   growToFit 1 vec & \(Vec s arr) ->
-    write (Vec (s + 1) arr) s x
+    unsafeSet s x (Vec (s + 1) arr)
 
 -- | Pop from the end of the vector. This will never shrink the vector, use
 -- 'shrinkToFit' to remove the wasted space.
@@ -151,55 +156,55 @@ pop vec =
     (Ur 0, vec') ->
       (Ur Nothing, vec')
     (Ur s, vec') ->
-      read vec' (s-1) & \(Ur a, Vec _ arr) ->
+      get (s-1) vec' & \(Ur a, Vec _ arr) ->
         ( Ur (Just a)
         , Vec (s-1) arr
         )
 
 -- | Write to an element . Note: this will not write to elements beyond the
 -- current size of the vector and will error instead.
-write :: HasCallStack => Vector a #-> Int -> a -> Vector a
-write vec ix val =
-  unsafeWrite (assertIndexInRange ix vec) ix val
+set :: HasCallStack => Int -> a -> Vector a #-> Vector a
+set ix val vec =
+  unsafeSet ix val (assertIndexInRange ix vec)
 
 -- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
-unsafeWrite :: HasCallStack => Vector a #-> Int -> a -> Vector a
-unsafeWrite (Vec size' arr) ix val =
-  Vec size' (Array.unsafeWrite arr ix val)
+unsafeSet :: HasCallStack => Int -> a -> Vector a #-> Vector a
+unsafeSet ix val (Vec size' arr) =
+  Vec size' (Array.unsafeSet ix val arr)
 
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..size-1@).
-read :: HasCallStack => Vector a #-> Int -> (Ur a, Vector a)
-read vec ix =
-  unsafeRead (assertIndexInRange ix vec) ix
+get :: HasCallStack => Int -> Vector a #-> (Ur a, Vector a)
+get ix vec =
+  unsafeGet ix (assertIndexInRange ix vec)
 
 -- | Same as 'read', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
-unsafeRead :: HasCallStack => Vector a #-> Int -> (Ur a, Vector a)
-unsafeRead (Vec size' arr) ix =
-  Array.unsafeRead arr ix
+unsafeGet :: HasCallStack => Int -> Vector a #-> (Ur a, Vector a)
+unsafeGet ix (Vec size' arr) =
+  Array.unsafeGet ix arr
     & \(val, arr') -> (val, Vec size' arr')
 
 -- | Same as 'modify', but does not do bounds-checking.
-unsafeModify :: HasCallStack => Vector a #-> (a -> (a, b)) -> Int
-             -> (Ur b, Vector a)
-unsafeModify (Vec size' arr) f ix =
-  Array.unsafeRead arr ix & \(Ur old, arr') ->
+unsafeModify :: HasCallStack => (a -> (a, b)) -> Int
+             -> Vector a #-> (Ur b, Vector a)
+unsafeModify f ix (Vec size' arr) =
+  Array.unsafeGet ix arr & \(Ur old, arr') ->
     case f old of
-      (a, b) -> Array.unsafeWrite arr' ix a & \arr'' ->
+      (a, b) -> Array.unsafeSet ix a arr' & \arr'' ->
         (Ur b, Vec size' arr'')
 
 -- | Modify a value inside a vector, with an ability to return an extra
 -- information. Errors if the index is out of bounds.
-modify :: HasCallStack => Vector a #-> (a -> (a, b)) -> Int
-       -> (Ur b, Vector a)
-modify vec f ix = unsafeModify (assertIndexInRange ix vec) f ix
+modify :: HasCallStack => (a -> (a, b)) -> Int
+       -> Vector a #-> (Ur b, Vector a)
+modify f ix vec = unsafeModify f ix (assertIndexInRange ix vec)
 
 -- | Same as 'modify', but without the ability to return extra information.
-modify_ :: HasCallStack => Vector a #-> (a -> a) -> Int -> Vector a
-modify_ vec f ix =
-  modify vec (\a -> (f a, ())) ix
+modify_ :: HasCallStack => (a -> a) -> Int -> Vector a #-> Vector a
+modify_ f ix vec =
+  modify (\a -> (f a, ())) ix vec
     & \(Ur (), vec') -> vec'
 
 -- | Return the vector elements as a lazy list.
@@ -235,10 +240,10 @@ mapMaybe vec (f :: a -> Maybe b) =
     -- Otherwise, read an element, write if the predicate is true and advance
     -- the write cursor; otherwise keep the write cursor skipping the element.
     | otherwise =
-        unsafeRead vec' r & \case
+        unsafeGet r vec' & \case
           (Ur a, vec'')
             | Just b <- f a ->
-                go (r+1) (w+1) s (unsafeWrite vec'' w (Unsafe.coerce b))
+                go (r+1) (w+1) s (unsafeSet w (Unsafe.coerce b) vec'')
             | otherwise ->
                 go (r+1) w s vec''
 
@@ -275,6 +280,22 @@ freeze (Vec sz arr) =
   Array.freeze arr
     & \(Ur vec) -> Ur (Vector.take sz vec)
 
+-- | Same as 'set', but takes the 'Vector' as the first parameter.
+write :: HasCallStack => Vector a #-> Int -> a -> Vector a
+write arr i a = set i a arr
+
+-- | Same as 'unsafeSafe', but takes the 'Vector' as the first parameter.
+unsafeWrite ::  Vector a #-> Int -> a -> Vector a
+unsafeWrite arr i a = unsafeSet i a arr
+
+-- | Same as 'get', but takes the 'Vector' as the first parameter.
+read :: HasCallStack => Vector a #-> Int -> (Ur a, Vector a)
+read arr i = get i arr
+
+-- | Same as 'unsafeGet', but takes the 'Vector' as the first parameter.
+unsafeRead :: Vector a #-> Int -> (Ur a, Vector a)
+unsafeRead arr i = unsafeGet i arr
+
 -- # Instances
 -------------------------------------------------------------------------------
 
@@ -301,7 +322,7 @@ instance Semigroup (Vector a) where
      go :: [a] -> Vector a #-> Vector a
      go [] vec = vec
      go (x:xs) (Vec sz arr) =
-       unsafeWrite (Vec (sz+1) arr) sz x
+       unsafeSet sz x (Vec (sz+1) arr)
          & go xs
 
 instance Data.Functor Vector where
