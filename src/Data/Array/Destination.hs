@@ -116,6 +116,7 @@ module Data.Array.Destination
     DArray
   -- * Create and use a @DArray@
   , alloc
+  , size
   -- * Ways to write to a @DArray@
   , replicate
   , split
@@ -134,6 +135,7 @@ import GHC.Exts (RealWorld)
 import qualified Prelude as Prelude
 import Prelude.Linear hiding (replicate)
 import System.IO.Unsafe
+import GHC.Stack
 import qualified Unsafe.Linear as Unsafe
 
 -- | A destination array, or @DArray@, is a write-only array that is filled
@@ -154,13 +156,19 @@ alloc n = Unsafe.toLinear unsafeAlloc
       evaluate (build (DArray dest))
       Vector.unsafeFreeze dest
 
+-- | Get the size of a destination array.
+size :: DArray a #-> (Ur Int, DArray a)
+size (DArray vec) = Unsafe.toLinear go vec
+ where
+  go vec' = (Ur (MVector.length vec'), DArray vec')
+
 -- | Fill a destination array with a constant
 replicate :: a -> DArray a #-> ()
 replicate a = fromFunction (const a)
 
 -- | @fill a dest@ fills a singleton destination array.
 -- Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
-fill :: a #-> DArray a #-> ()
+fill :: HasCallStack => a #-> DArray a #-> ()
 fill = Unsafe.toLinear2 unsafeFill
     -- XXX: we will probably be able to spare this unsafe cast given a
     -- (linear) length function on destination.
@@ -182,9 +190,15 @@ split n = Unsafe.toLinear unsafeSplit
       let (dsl, dsr) = MVector.splitAt n ds in
         (DArray dsl, DArray dsr)
 
--- | Fills the destination array with the contents of given vector
-mirror :: Vector a -> (a #-> b) -> DArray b #-> ()
-mirror v f = fromFunction (\t -> f (v ! t))
+-- | Fills the destination array with the contents of given vector.
+--
+-- Errors if the given vector is smaller than the destination array.
+mirror :: HasCallStack => Vector a -> (a #-> b) -> DArray b #-> ()
+mirror v f arr =
+  size arr & \(Ur sz, arr') ->
+    if Vector.length v < sz
+    then error "Destination.mirror: argument smaller than DArray" $ arr'
+    else fromFunction (\t -> f (v ! t)) arr'
 
 -- | Fill a destination array using the given index-to-value function.
 fromFunction :: (Int -> b) -> DArray b #-> ()
