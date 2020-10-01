@@ -77,6 +77,11 @@ We have established the following conventions in this project:
   instance, import `Data.Functor.Linear` as `Linear` and not as `F`
   for functor.
 * All public modules have an export list.
+* For things which is meant te be used in pure contexts, take the
+thing as the last parameter (similar to `Data.Map`). If it is meant
+to be used in monadic contexts, take the thing as the first parameter
+(eg. `Control.Concurrent.MVar`). See [issue #147][issue-147] for some
+more details.
 
 [functors]: https://www.tweag.io/posts/2020-01-16-data-vs-control.html
 [examples/Simple/FileIO.hs]: https://github.com/tweag/linear-base/tree/master/examples/Simple/FileIO.hs
@@ -87,3 +92,4 @@ We have established the following conventions in this project:
 [blog post]: https://www.tweag.io/posts/2020-01-16-data-vs-control.html
 [contributor's guide]: ../CONTRIBUTING.md
 [`System.IO.Resource`]: https://github.com/tweag/linear-base/blob/master/src/System/IO/Resource.hs
+[issue-147]: https://github.com/tweag/linear-base/issues/147
