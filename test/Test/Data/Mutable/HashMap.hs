@@ -81,14 +81,14 @@ testOnAnyHM propHmtest = defProperty $ do
 
 testKVPairExists :: (Int, String) -> HMTest
 testKVPairExists (k, v) hmap =
-  fromLookup Linear.$ getFst Linear.$ HashMap.lookup hmap k
+  fromLookup Linear.$ getFst Linear.$ HashMap.lookup k hmap
   where
     fromLookup :: Ur (Maybe String) #-> Ur Bool
     fromLookup (Ur Nothing) = Ur False
     fromLookup (Ur (Just v')) = Ur (v' == v)
 
 testKeyMember :: Int -> HMTest
-testKeyMember key hmap = getFst Linear.$ HashMap.member hmap key
+testKeyMember key hmap = getFst Linear.$ HashMap.member key hmap
 
 testKeyNotMember :: Int -> HMTest
 testKeyNotMember key hmap = Linear.fmap Linear.not (testKeyMember key hmap)
@@ -96,24 +96,21 @@ testKeyNotMember key hmap = Linear.fmap Linear.not (testKeyMember key hmap)
 -- | That is, test that lookup gives us `Nothing`
 testKeyMissing :: Int -> HMTest
 testKeyMissing key hmap =
-  fromLookup Linear.$ getFst Linear.$ HashMap.lookup hmap key
+  fromLookup Linear.$ getFst Linear.$ HashMap.lookup key hmap
   where
     fromLookup :: Ur (Maybe String) #-> Ur Bool
     fromLookup (Ur Nothing) = Ur True
     fromLookup (Ur _) = Ur False
 
 testLookupUnchanged :: (HMap #-> HMap) -> Int -> HMTest
-testLookupUnchanged f k hmap = fromLookup (HashMap.lookup hmap k)
+testLookupUnchanged f k hmap = fromLookup (HashMap.lookup k hmap)
   where
     fromLookup :: (Ur (Maybe String), HMap) #-> Ur Bool
     fromLookup (look1, hmap') =
-      compareMaybes look1 (getFst Linear.$ HashMap.lookup (f hmap') k)
-
-deleteKey :: Int -> HMap #-> HMap
-deleteKey key hmap = HashMap.delete hmap key
+      compareMaybes look1 (getFst Linear.$ HashMap.lookup k (f hmap'))
 
 insertPair :: (Int, String) -> HMap #-> HMap
-insertPair (k, v) hmap = HashMap.insert hmap k v
+insertPair (k, v) hmap = HashMap.insert k v hmap
 
 -- XXX: This is a terrible name
 getFst :: (Consumable b) => (a, b) #-> a
@@ -169,16 +166,14 @@ lookupInsert2 = testOnAnyHM $ do
 lookupDelete1 :: Property
 lookupDelete1 = testOnAnyHM $ do
   k <- forAll key
-  let deleteK = deleteKey k
   let checkNoKey = testKeyMissing k
-  return (checkNoKey Linear.. deleteK)
+  return (checkNoKey Linear.. HashMap.delete k)
 
 lookupDelete2 :: Property
 lookupDelete2 = testOnAnyHM $ do
   k <- forAll key
   k' <- forAll $ Gen.filter (/= k) key
-  let deleteK = deleteKey k
-  return (testLookupUnchanged deleteK k')
+  return (testLookupUnchanged (HashMap.delete k) k')
 
 memberInsert :: Property
 memberInsert = testOnAnyHM $ do
@@ -193,19 +188,17 @@ memberDelete = testOnAnyHM $ do
   k <- forAll key
   v <- forAll val
   let pair = (k, v)
-  let deleteK = deleteKey k
   let insertKV = insertPair pair
   let checkNotMember = testKeyNotMember k
-  return (checkNotMember Linear.. deleteK Linear.. insertKV)
+  return (checkNotMember Linear.. HashMap.delete k Linear.. insertKV)
 
 sizeInsert :: Property
 sizeInsert = testOnAnyHM $ do
   k <- forAll key
   v <- forAll val
   let pair = (k, v)
-  let deleteK = deleteKey k
   let insertCheckSize = checkSizeAfterInsert pair
-  return (insertCheckSize Linear.. deleteK)
+  return (insertCheckSize Linear.. HashMap.delete k)
 
 checkSizeAfterInsert :: (Int, String) -> HMTest
 checkSizeAfterInsert (k, v) hmap = withSize Linear.$ HashMap.size hmap
@@ -215,7 +208,7 @@ checkSizeAfterInsert (k, v) hmap = withSize Linear.$ HashMap.size hmap
       checkSize oldSize
         Linear.$ getFst
         Linear.$ HashMap.size
-        Linear.$ HashMap.insert hmap k v
+        Linear.$ HashMap.insert k v hmap
     checkSize :: Ur Int #-> Ur Int #-> Ur Bool
     checkSize (Ur old) (Ur new) =
       Ur ((old + 1) == new)
@@ -235,7 +228,7 @@ checkSizeAfterDelete key hmap = fromSize (HashMap.size hmap)
     fromSize (orgSize, hmap) =
       compSizes orgSize
         Linear.$ getFst
-        Linear.$ HashMap.size (HashMap.delete hmap key)
+        Linear.$ HashMap.size (HashMap.delete key hmap)
     compSizes :: Ur Int #-> Ur Int #-> Ur Bool
     compSizes (Ur orgSize) (Ur newSize) =
       Ur ((newSize + 1) == orgSize)

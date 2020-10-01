@@ -24,8 +24,8 @@ module Data.Array.Mutable.Unlifted.Linear
   , allocBeside
   , lseq
   , size
-  , read
-  , write
+  , get
+  , set
   , copyInto
   , map
   , toList
@@ -88,23 +88,23 @@ size = Unsafe.toLinear go
       let !s = GHC.sizeofMutableArray# arr
       in  (# Ur (GHC.I# s), Array# arr  #)
 
-read ::  Int -> Array# a #-> (# Ur a, Array# a #)
-read (GHC.I# i) = Unsafe.toLinear go
+get ::  Int -> Array# a #-> (# Ur a, Array# a #)
+get (GHC.I# i) = Unsafe.toLinear go
   where
     go :: Array# a -> (# Ur a, Array# a #)
     go (Array# arr) =
       case GHC.runRW# (GHC.readArray# arr i) of
         (# _, ret #) -> (# Ur ret, Array# arr #)
-{-# NOINLINE read #-}  -- prevents the runRW# effect from being reordered
+{-# NOINLINE get #-}  -- prevents the runRW# effect from being reordered
 
-write :: Int -> a -> Array# a #-> Array# a
-write (GHC.I# i) (a :: a) = Unsafe.toLinear go
+set :: Int -> a -> Array# a #-> Array# a
+set (GHC.I# i) (a :: a) = Unsafe.toLinear go
   where
     go :: Array# a -> Array# a
     go (Array# arr) =
       case GHC.runRW# (GHC.writeArray# arr i a) of
         _ -> Array# arr
-{-# NOINLINE write #-}  -- prevents the runRW# effect from being reordered
+{-# NOINLINE set #-}  -- prevents the runRW# effect from being reordered
 
 -- | Copy the first mutable array into the second mutable array, starting
 -- from the given index of the source array.
@@ -141,8 +141,8 @@ map (f :: a -> b) arr =
     | i Prelude.== s =
         Unsafe.toLinear GHC.unsafeCoerce# arr'
     | Prelude.otherwise =
-        read i arr'
-          `chain2` \(# Ur a, arr'' #) -> write i (Unsafe.coerce (f a)) arr''
+        get i arr'
+          `chain2` \(# Ur a, arr'' #) -> set i (Unsafe.coerce (f a)) arr''
           `chain` \arr''' -> go (i Prelude.+ 1) s arr'''
 {-# NOINLINE map #-}
 

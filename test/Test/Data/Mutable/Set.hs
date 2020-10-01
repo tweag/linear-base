@@ -80,7 +80,7 @@ memberInsert1Test :: Int -> SetTester
 memberInsert1Test val set =
   testEqual
     (Ur True)
-    (getFst (Set.member (Set.insert set val) val))
+    (getFst (Set.member val (Set.insert val set)))
 
 memberInsert2 :: Property
 memberInsert2 = property $ do
@@ -91,13 +91,13 @@ memberInsert2 = property $ do
   test $ unur Linear.$ Set.fromList l tester
 
 memberInsert2Test :: Int -> Int -> SetTester
-memberInsert2Test val1 val2 set = fromRead (Set.member set val2)
+memberInsert2Test val1 val2 set = fromRead (Set.member val2 set)
   where
     fromRead :: (Ur Bool, Set.Set Int) #-> Ur (TestT IO ())
     fromRead (memberVal2, set) =
       testEqual
         memberVal2
-        (getFst (Set.member (Set.insert set val1) val2))
+        (getFst (Set.member val2 (Set.insert val1 set)))
 
 memberDelete1 :: Property
 memberDelete1 = property $ do
@@ -110,7 +110,7 @@ memberDelete1Test :: Int -> SetTester
 memberDelete1Test val set =
   testEqual
     (Ur False)
-    (getFst (Set.member (Set.delete set val) val))
+    (getFst (Set.member val (Set.delete val set)))
 
 memberDelete2 :: Property
 memberDelete2 = property $ do
@@ -121,13 +121,13 @@ memberDelete2 = property $ do
   test $ unur Linear.$ Set.fromList l tester
 
 memberDelete2Test :: Int -> Int -> SetTester
-memberDelete2Test val1 val2 set = fromRead (Set.member set val2)
+memberDelete2Test val1 val2 set = fromRead (Set.member val2 set)
   where
     fromRead :: (Ur Bool, Set.Set Int) #-> Ur (TestT IO ())
     fromRead (memberVal2, set) =
       testEqual
         memberVal2
-        (getFst Linear.$ Set.member (Set.delete set val1) val2)
+        (getFst Linear.$ Set.member val2 (Set.delete val1 set))
 
 sizeInsert1 :: Property
 sizeInsert1 = property $ do
@@ -143,7 +143,7 @@ sizeInsert1Test val set = fromRead (Set.size set)
     fromRead (sizeOriginal, set) =
       testEqual
         sizeOriginal
-        (getFst Linear.$ (Set.size (Set.insert set val)))
+        (getFst Linear.$ (Set.size (Set.insert val set)))
 
 sizeInsert2 :: Property
 sizeInsert2 = property $ do
@@ -159,7 +159,7 @@ sizeInsert2Test val set = fromRead (Set.size set)
     fromRead (sizeOriginal, set) =
       testEqual
         ((Linear.+ 1) Data.<$> sizeOriginal)
-        (getFst Linear.$ (Set.size (Set.insert set val)))
+        (getFst Linear.$ (Set.size (Set.insert val set)))
 
 sizeDelete1 :: Property
 sizeDelete1 = property $ do
@@ -175,7 +175,7 @@ sizeDelete1Test val set = fromRead (Set.size set)
     fromRead (sizeOriginal, set) =
       testEqual
         ((Linear.- 1) Data.<$> sizeOriginal)
-        (getFst Linear.$ (Set.size (Set.delete set val)))
+        (getFst Linear.$ (Set.size (Set.delete val set)))
 
 sizeDelete2 :: Property
 sizeDelete2 = property $ do
@@ -191,4 +191,4 @@ sizeDelete2Test val set = fromRead (Set.size set)
     fromRead (sizeOriginal, set) =
       testEqual
         sizeOriginal
-        (getFst Linear.$ (Set.size (Set.delete set val)))
+        (getFst Linear.$ (Set.size (Set.delete val set)))
