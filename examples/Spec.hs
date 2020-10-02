@@ -22,7 +22,7 @@ import Prelude.Linear hiding (void)
 import Test.Hspec
 import Test.QuickCheck
 
-eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a #-> List a #-> Ur Bool
+eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a %1-> List a %1-> Ur Bool
 eqList l1 l2 = move $ (List.toList l1) == (List.toList l2)
 
 data InjectedError = InjectedError
@@ -37,7 +37,7 @@ main = hspec Prelude.$ do
       it "is invertible" Prelude.$
         property (\(l :: [Int]) -> unur (Manual.withPool $ \pool ->
           let
-            check :: Ur [Int] #-> Ur Bool
+            check :: Ur [Int] %1-> Ur Bool
             check (Ur l') = move $ l' == l
           in
             check $ move (List.toList $ List.ofList l pool)))
@@ -46,7 +46,7 @@ main = hspec Prelude.$ do
       it "of identity is the identity" Prelude.$
         property (\(l :: [Int]) -> unur (Manual.withPool $ \pool ->
           let
-            check :: (Pool, Pool, Pool) #-> Ur Bool
+            check :: (Pool, Pool, Pool) %1-> Ur Bool
             check (pool1, pool2, pool3) =
               eqList
                 (List.map (\x -> x) (List.ofList l pool1) pool2)

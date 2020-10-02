@@ -37,5 +37,5 @@ import Data.Unrestricted.Linear
 
 -- | Replace all occurances of @b@ with the given @a@
 -- and consume the functor @f b@.
-(<$) :: (Functor f, Consumable b) => a -> f b #-> f a
+(<$) :: (Functor f, Consumable b) => a -> f b %1-> f a
 a <$ fb = fmap (`lseq` a) fb

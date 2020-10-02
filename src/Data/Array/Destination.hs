@@ -50,7 +50,7 @@
 -- stepArr :: Int -> Vector Double -> Vector Double
 -- stepArr n oldArr = alloc n $ \newArr -> fillArr newArr oldArr 1
 --   where
---     fillArr :: DArray Double #-> Vector Double -> Int -> ()
+--     fillArr :: DArray Double %1-> Vector Double -> Int -> ()
 --     fillArr newA oldA ix
 --       | ix == (n-1) = newA &
 --           fill (0.33 * ((oldA ! (ix-1)) + (oldA ! ix) + (oldA ! (ix+1))))
@@ -104,7 +104,7 @@
 -- use a destination array is via
 --
 -- @
--- alloc :: Int -> (DArray a #-> ()) #-> Vector a
+-- alloc :: Int -> (DArray a %1-> ()) %1-> Vector a
 -- @
 --
 -- and the only way to really consume a @DArray@ is via our API
@@ -147,28 +147,28 @@ newtype DArray a = DArray (MVector RealWorld a)
 -- eventually, anyway. This would allow to move the MutableArray logic to
 -- linear IO, possibly, and segregate the unsafe casts to the Linear IO
 -- module.  @`alloc` n k@ must be called with a non-negative value of @n@.
-alloc :: Int -> (DArray a #-> ()) #-> Vector a
+alloc :: Int -> (DArray a %1-> ()) %1-> Vector a
 alloc n = Unsafe.toLinear unsafeAlloc
   where
-    unsafeAlloc :: (DArray a #-> ()) -> Vector a
+    unsafeAlloc :: (DArray a %1-> ()) -> Vector a
     unsafeAlloc build = unsafeDupablePerformIO Prelude.$ do
       dest <- MVector.unsafeNew n
       evaluate (build (DArray dest))
       Vector.unsafeFreeze dest
 
 -- | Get the size of a destination array.
-size :: DArray a #-> (Ur Int, DArray a)
+size :: DArray a %1-> (Ur Int, DArray a)
 size (DArray vec) = Unsafe.toLinear go vec
  where
   go vec' = (Ur (MVector.length vec'), DArray vec')
 
 -- | Fill a destination array with a constant
-replicate :: a -> DArray a #-> ()
+replicate :: a -> DArray a %1-> ()
 replicate a = fromFunction (const a)
 
 -- | @fill a dest@ fills a singleton destination array.
 -- Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
-fill :: HasCallStack => a #-> DArray a #-> ()
+fill :: HasCallStack => a %1-> DArray a %1-> ()
 fill = Unsafe.toLinear2 unsafeFill
     -- XXX: we will probably be able to spare this unsafe cast given a
     -- (linear) length function on destination.
@@ -183,7 +183,7 @@ fill = Unsafe.toLinear2 unsafeFill
 --
 -- 'split' is total: if @n@ is larger than the length of @dest@, then
 -- @destr@ is empty.
-split :: Int -> DArray a #-> (DArray a, DArray a)
+split :: Int -> DArray a %1-> (DArray a, DArray a)
 split n = Unsafe.toLinear unsafeSplit
   where
     unsafeSplit (DArray ds) =
@@ -193,7 +193,7 @@ split n = Unsafe.toLinear unsafeSplit
 -- | Fills the destination array with the contents of given vector.
 --
 -- Errors if the given vector is smaller than the destination array.
-mirror :: HasCallStack => Vector a -> (a #-> b) -> DArray b #-> ()
+mirror :: HasCallStack => Vector a -> (a %1-> b) -> DArray b %1-> ()
 mirror v f arr =
   size arr & \(Ur sz, arr') ->
     if Vector.length v < sz
@@ -201,7 +201,7 @@ mirror v f arr =
     else fromFunction (\t -> f (v ! t)) arr'
 
 -- | Fill a destination array using the given index-to-value function.
-fromFunction :: (Int -> b) -> DArray b #-> ()
+fromFunction :: (Int -> b) -> DArray b %1-> ()
 fromFunction f = Unsafe.toLinear unsafeFromFunction
   where unsafeFromFunction (DArray ds) = unsafeDupablePerformIO Prelude.$ do
           let n = MVector.length ds

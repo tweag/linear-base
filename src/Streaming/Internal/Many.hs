@@ -77,7 +77,7 @@ S.unzip $ S.each' xs :: Control.Monad m => Stream (Of Int) (Stream (Of String) m
 
     Like any fold, 'toList' takes no notice of the monad of effects.
 
-> toList :: Control.Monad m => Stream (Of a) m r #-> m (Of [a] r)
+> toList :: Control.Monad m => Stream (Of a) m r %1-> m (Of [a] r)
 
     In the case at hand (since I am in @ghci@) @m = Stream (Of String) IO@.
     So when I apply 'toList', I exhaust that stream of integers, folding
@@ -105,11 +105,11 @@ S.toList $ S.unzip $ S.each' xs
 @
 -}
 unzip :: Control.Monad m =>
-  Stream (Of (a, b)) m r #-> Stream (Of a) (Stream (Of b) m) r
+  Stream (Of (a, b)) m r %1-> Stream (Of a) (Stream (Of b) m) r
 unzip = loop
   where
   loop :: Control.Monad m =>
-    Stream (Of (a, b)) m r #-> Stream (Of a) (Stream (Of b) m) r
+    Stream (Of (a, b)) m r %1-> Stream (Of a) (Stream (Of b) m) r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap loop $ Control.lift m
@@ -135,9 +135,9 @@ longer stream.
 -}
 
 data Either3 a b c where
-  Left3 :: a #-> Either3 a b c
-  Middle3 :: b #-> Either3 a b c
-  Right3 :: c #-> Either3 a b c
+  Left3 :: a %1-> Either3 a b c
+  Middle3 :: b %1-> Either3 a b c
+  Right3 :: c %1-> Either3 a b c
 
 -- | The remainder of zipping two streams
 type ZipResidual a b m r1 r2 =
@@ -152,15 +152,15 @@ type ZipResidual a b m r1 r2 =
 -- end-of-stream result, that stream is treated as a residual.
 zipWithR :: Control.Monad m =>
   (a -> b -> c) ->
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
   Stream (Of c) m (ZipResidual a b m r1 r2)
 zipWithR = loop
   where
   loop :: Control.Monad m =>
     (a -> b -> c) ->
-    Stream (Of a) m r1 #->
-    Stream (Of b) m r2 #->
+    Stream (Of a) m r1 %1->
+    Stream (Of b) m r2 %1->
     Stream (Of c) m (ZipResidual a b m r1 r2)
   loop f st1 st2 = st1 & \case
     Effect ms -> Effect $ Control.fmap (\s -> loop f s st2) ms
@@ -176,8 +176,8 @@ zipWithR = loop
 
 zipWith :: Control.Monad m =>
   (a -> b -> c) ->
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
   Stream (Of c) m (r1,r2)
 zipWith f s1 s2 = Control.do
   result <- zipWithR f s1 s2
@@ -194,16 +194,16 @@ zipWith f s1 s2 = Control.do
 -- | @zip@ zips two streams exhausing the remainder of the longer
 -- stream and consuming its effects.
 zip :: Control.Monad m =>
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
   Stream (Of (a,b)) m (r1, r2)
 zip = zipWith (,)
 {-# INLINE zip #-}
 
 -- | @zipR@ zips two streams keeping the remainder if there is one.
 zipR :: Control.Monad m =>
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
   Stream (Of (a,b)) m (ZipResidual a b m r1 r2)
 zipR = zipWithR (,)
 {-# INLINE zipR #-}
@@ -224,17 +224,17 @@ type ZipResidual3 a b c m r1 r2 r3 =
 -- | Like @zipWithR@ but with three streams.
 zipWith3R :: Control.Monad m =>
   (a -> b -> c -> d) ->
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
-  Stream (Of c) m r3 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
+  Stream (Of c) m r3 %1->
   Stream (Of d) m (ZipResidual3 a b c m r1 r2 r3)
 zipWith3R = loop
   where
   loop :: Control.Monad m =>
     (a -> b -> c -> d) ->
-    Stream (Of a) m r1 #->
-    Stream (Of b) m r2 #->
-    Stream (Of c) m r3 #->
+    Stream (Of a) m r1 %1->
+    Stream (Of b) m r2 %1->
+    Stream (Of c) m r3 %1->
     Stream (Of d) m (ZipResidual3 a b c m r1 r2 r3)
   loop f s1 s2 s3 = s1 & \case
     Effect ms -> Effect $ Control.fmap (\s -> loop f s s2 s3) ms
@@ -256,9 +256,9 @@ zipWith3R = loop
 -- | Like @zipWith@ but with three streams
 zipWith3 :: Control.Monad m =>
   (a -> b -> c -> d) ->
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
-  Stream (Of c) m r3 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
+  Stream (Of c) m r3 %1->
   Stream (Of d) m (r1, r2, r3)
 zipWith3 f s1 s2 s3 = Control.do
   result <- zipWith3R f s1 s2 s3
@@ -272,25 +272,25 @@ zipWith3 f s1 s2 s3 = Control.do
 
 -- | Like @zipR@ but with three streams.
 zip3 :: Control.Monad m =>
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
-  Stream (Of c) m r3 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
+  Stream (Of c) m r3 %1->
   Stream (Of (a,b,c)) m (r1, r2, r3)
 zip3 = zipWith3 (,,)
 {-# INLINABLE zip3 #-}
 
 -- | Like @zipR@ but with three streams.
 zip3R :: Control.Monad m =>
-  Stream (Of a) m r1 #->
-  Stream (Of b) m r2 #->
-  Stream (Of c) m r3 #->
+  Stream (Of a) m r1 %1->
+  Stream (Of b) m r2 %1->
+  Stream (Of c) m r3 %1->
   Stream (Of (a,b,c)) m (ZipResidual3 a b c m r1 r2 r3)
 zip3R = zipWith3R (,,)
 {-# INLINABLE zip3R #-}
 
 -- | Internal function to consume a stream remainder to
 -- get the payload
-extractResult :: Control.Monad m => Either r (Stream (Of a) m r) #-> m r
+extractResult :: Control.Monad m => Either r (Stream (Of a) m r) %1-> m r
 extractResult (Left r) = Control.return r
 extractResult (Right s) = effects s
 
@@ -324,7 +324,7 @@ extractResult (Right s) = effects s
 
 -}
 merge :: (Control.Monad m, Ord a) =>
-  Stream (Of a) m r #-> Stream (Of a) m s #-> Stream (Of a) m (r,s)
+  Stream (Of a) m r %1-> Stream (Of a) m s %1-> Stream (Of a) m (r,s)
 merge = mergeBy compare
 {-# INLINE merge #-}
 
@@ -335,8 +335,8 @@ merge = mergeBy compare
 -}
 mergeOn :: (Control.Monad m, Ord b) =>
   (a -> b) ->
-  Stream (Of a) m r #->
-  Stream (Of a) m s #->
+  Stream (Of a) m r %1->
+  Stream (Of a) m s %1->
   Stream (Of a) m (r,s)
 mergeOn f = mergeBy (\x y -> compare (f x) (f y))
 {-# INLINE mergeOn #-}
@@ -347,12 +347,12 @@ mergeOn f = mergeBy (\x y -> compare (f x) (f y))
 -}
 mergeBy :: forall m a r s . Control.Monad m =>
   (a -> a -> Ordering) ->
-  Stream (Of a) m r #->
-  Stream (Of a) m s #->
+  Stream (Of a) m r %1->
+  Stream (Of a) m s %1->
   Stream (Of a) m (r,s)
 mergeBy comp s1 s2 = loop s1 s2
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m s #-> Stream (Of a) m (r,s)
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m s %1-> Stream (Of a) m (r,s)
     loop s1 s2 = s1 & \case
       Return r ->
         Effect $ effects s2 Control.>>= \s -> Control.return $ Return (r, s)

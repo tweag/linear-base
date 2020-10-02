@@ -51,7 +51,7 @@ import Data.Monoid.Linear
 -- > (a + b) + c = a + (b + c)
 -- > a + b = b + c
 class Additive a where
-  (+) :: a #-> a #-> a
+  (+) :: a %1-> a %1-> a
 
 -- | An 'Additive' type with an identity on @(+)@.
 class Additive a => AddIdentity a where
@@ -61,14 +61,14 @@ class Additive a => AddIdentity a where
 -- the laws of an [abelian group](https://en.wikipedia.org/wiki/Abelian_group)
 class AddIdentity a => AdditiveGroup a where
   {-# MINIMAL negate | (-) #-}
-  negate :: a #-> a
+  negate :: a %1-> a
   negate x = zero - x
-  (-) :: a #-> a #-> a
+  (-) :: a %1-> a %1-> a
   x - y = x + negate y
 
 -- | A numeric type with an associative @(*)@ operation
 class Multiplicative a where
-  (*) :: a #-> a #-> a
+  (*) :: a %1-> a %1-> a
 
 -- | A 'Multipcative' type with an identity for @(*)@
 class Multiplicative a => MultIdentity a where
@@ -99,14 +99,14 @@ class (AdditiveGroup a, Semiring a) => Ring a where
 --
 -- For mathy folk: @fromInteger@ should be a homomorphism over @(+)@ and @(*)@.
 class FromInteger a where
-  fromInteger :: Prelude.Integer #-> a
+  fromInteger :: Prelude.Integer %1-> a
 
 -- XXX: subclass of Prelude.Num? subclass of Eq?
 class (Ring a, FromInteger a) => Num a where
   {-# MINIMAL abs, signum #-}
   -- XXX: is it fine to insist abs,signum are linear? I think it is
-  abs :: a #-> a
-  signum :: a #-> a
+  abs :: a %1-> a
+  signum :: a %1-> a
 
 newtype MovableNum a = MovableNum a
   deriving (Consumable, Dupable, Movable, Prelude.Num)
@@ -136,21 +136,21 @@ instance (Movable a, Prelude.Num a) => Num (MovableNum a) where
   abs = liftU Prelude.abs
   signum = liftU Prelude.signum
 
-liftU :: (Movable a) => (a -> b) #-> (a #-> b)
+liftU :: (Movable a) => (a -> b) %1-> (a %1-> b)
 liftU f x = lifted f (move x)
-  where lifted :: (a -> b) #-> (Ur a #-> b)
+  where lifted :: (a -> b) %1-> (Ur a %1-> b)
         lifted g (Ur a) = g a
 
-liftU2 :: (Movable a, Movable b) => (a -> b -> c) #-> (a #-> b #-> c)
+liftU2 :: (Movable a, Movable b) => (a -> b -> c) %1-> (a %1-> b %1-> c)
 liftU2 f x y = lifted f (move x) (move y)
-  where lifted :: (a -> b -> c) #-> (Ur a #-> Ur b #-> c)
+  where lifted :: (a -> b -> c) %1-> (Ur a %1-> Ur b %1-> c)
         lifted g (Ur a) (Ur b) = g a b
 
 -- A newtype wrapper to give the underlying monoid for an additive structure.
 newtype Adding a = Adding a
   deriving Prelude.Semigroup via NonLinear (Adding a)
 
-getAdded :: Adding a #-> a
+getAdded :: Adding a %1-> a
 getAdded (Adding x) = x
 
 instance Additive a => Semigroup (Adding a) where
@@ -163,7 +163,7 @@ instance AddIdentity a => Monoid (Adding a)
 newtype Multiplying a = Multiplying a
   deriving Prelude.Semigroup via NonLinear (Multiplying a)
 
-getMultiplied :: Multiplying a #-> a
+getMultiplied :: Multiplying a %1-> a
 getMultiplied (Multiplying x) = x
 
 instance Multiplicative a => Semigroup (Multiplying a) where

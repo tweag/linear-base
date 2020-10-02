@@ -48,13 +48,13 @@ import Prelude.Linear (($), (.))
     \- or, in the producer case, 'Streaming.Prelude.next'
 -}
 data Stream f m r where
-  Step :: !(f (Stream f m r)) #-> Stream f m r
-  Effect :: m (Stream f m r) #-> Stream f m r
-  Return :: r #-> Stream f m r
+  Step :: !(f (Stream f m r)) %1-> Stream f m r
+  Effect :: m (Stream f m r) %1-> Stream f m r
+  Return :: r %1-> Stream f m r
 
 -- | A left-strict pair; the base functor for streams of individual elements.
 data Of a b where
-  (:>) :: !a -> b #-> Of a b
+  (:>) :: !a -> b %1-> Of a b
 
 infixr 5 :>
 
@@ -69,12 +69,12 @@ infixr 5 :>
 -- Data.Functor m and Data.Functor m.
 instance (Data.Functor m, Data.Functor f) => Data.Functor (Stream f m) where
   fmap :: (Data.Functor m, Data.Functor f) =>
-    (a #-> b) -> Stream f m a #-> Stream f m b
+    (a %1-> b) -> Stream f m a %1-> Stream f m b
   fmap f s = fmap' f s
   {-# INLINABLE fmap #-}
 
 fmap' :: (Data.Functor m, Data.Functor f) =>
-  (a #-> b) -> Stream f m a #-> Stream f m b
+  (a %1-> b) -> Stream f m a %1-> Stream f m b
 fmap' f (Return r) = Return (f r)
 fmap' f (Step fs) = Step $ Data.fmap (Data.fmap f) fs
 fmap' f (Effect ms) = Effect $ Data.fmap (Data.fmap f) ms
@@ -88,12 +88,12 @@ instance (Control.Functor m, Control.Functor f) =>
   {-# INLINE pure #-}
 
   (<*>) :: (Control.Functor m, Control.Functor f) =>
-    Stream f m (a #-> b) #-> Stream f m a #-> Stream f m b
+    Stream f m (a %1-> b) %1-> Stream f m a %1-> Stream f m b
   (<*>) s1 s2 = app s1 s2
   {-# INLINABLE (<*>) #-}
 
 app :: (Control.Functor m, Control.Functor f) =>
-  Stream f m (a #-> b) #-> Stream f m a #-> Stream f m b
+  Stream f m (a %1-> b) %1-> Stream f m a %1-> Stream f m b
 app (Return f) stream = Control.fmap f stream
 app (Step fs) stream = Step $ Control.fmap (Data.<*> stream) fs
 app (Effect ms) stream = Effect $ Control.fmap (Data.<*> stream) ms
@@ -103,12 +103,12 @@ app (Effect ms) stream = Effect $ Control.fmap (Data.<*> stream) ms
 instance (Control.Functor m, Control.Functor f) =>
   Control.Functor (Stream f m) where
   fmap :: (Data.Functor m, Data.Functor f) =>
-    (a #-> b) #-> Stream f m a #-> Stream f m b
+    (a %1-> b) %1-> Stream f m a %1-> Stream f m b
   fmap f s = fmap'' f s
   {-# INLINABLE fmap #-}
 
 fmap'' :: (Control.Functor m, Control.Functor f) =>
-  (a #-> b) #-> Stream f m a #-> Stream f m b
+  (a %1-> b) %1-> Stream f m a %1-> Stream f m b
 fmap'' f (Return r) = Return (f r)
 fmap'' f (Step fs) = Step $ Control.fmap (Control.fmap f) fs
 fmap'' f (Effect ms) = Effect $ Control.fmap (Control.fmap f) ms
@@ -116,23 +116,23 @@ fmap'' f (Effect ms) = Effect $ Control.fmap (Control.fmap f) ms
 
 instance (Control.Functor m, Control.Functor f) =>
   Control.Applicative (Stream f m) where
-  pure :: a #-> Stream f m a
+  pure :: a %1-> Stream f m a
   pure = Return
   {-# INLINE pure #-}
 
   (<*>) :: (Control.Functor m, Control.Functor f) =>
-    Stream f m (a #-> b) #-> Stream f m a #-> Stream f m b
+    Stream f m (a %1-> b) %1-> Stream f m a %1-> Stream f m b
   (<*>) = (Data.<*>)
   {-# INLINE (<*>) #-}
 
 instance (Control.Functor m, Control.Functor f) =>
   Control.Monad (Stream f m) where
-  (>>=) :: Stream f m a #-> (a #-> Stream f m b) #-> Stream f m b
+  (>>=) :: Stream f m a %1-> (a %1-> Stream f m b) %1-> Stream f m b
   (>>=) = bind
   {-# INLINABLE (>>=) #-}
 
 bind :: (Control.Functor m, Control.Functor f) =>
-  Stream f m a #-> (a #-> Stream f m b) #-> Stream f m b
+  Stream f m a %1-> (a %1-> Stream f m b) %1-> Stream f m b
 bind (Return a) f = f a
 bind (Step fs) f = Step $ Control.fmap (Control.>>= f) fs
 bind (Effect ms) f = Effect $ Control.fmap (Control.>>= f) ms
@@ -142,7 +142,7 @@ bind (Effect ms) f = Effect $ Control.fmap (Control.>>= f) ms
 -------------------------------------------------------------------------------
 
 instance Control.Functor f => Control.MonadTrans (Stream f) where
-  lift :: (Control.Functor m, Control.Functor f) => m a #-> Stream f m a
+  lift :: (Control.Functor m, Control.Functor f) => m a %1-> Stream f m a
   lift = Effect . Control.fmap Control.return
   {-# INLINE lift #-}
 
@@ -150,7 +150,7 @@ instance Control.Functor f => Control.MonadTrans (Stream f) where
 -- # Control.Functor for (Of)
 -------------------------------------------------------------------------------
 
-ofFmap :: (a #-> b) #-> (Of x a) #-> (Of x b)
+ofFmap :: (a %1-> b) %1-> (Of x a) %1-> (Of x b)
 ofFmap f (a :> b) = a :> f b
 {-# INLINE ofFmap #-}
 

@@ -56,8 +56,8 @@ import qualified Data.Functor.Linear.Internal as Data
 -- $stateT
 -- This is a linear version of the standard state monad.
 -- The linear arrows ensure that the state is threaded linearly through
--- functions of the form @a #-> StateT s m a@. That is, when sequencing 
--- @f :: a #-> StateT s m b@ and @g :: b #-> StateT s m c@,
+-- functions of the form @a %1-> StateT s m a@. That is, when sequencing 
+-- @f :: a %1-> StateT s m b@ and @g :: b %1-> StateT s m c@,
 -- the type system enforces that state produced by $f$ is fed into @g@.
 --
 -- For this reason, there is only one way to define '(>>=)':
@@ -87,12 +87,12 @@ import qualified Data.Functor.Linear.Internal as Data
 -- should use the linear reader monad just like the non-linear monad, except
 -- that the type system ensures that you explicity use or discard the
 -- read-only state (with the 'Consumable' instance).
-newtype ReaderT r m a = ReaderT (r #-> m a)
+newtype ReaderT r m a = ReaderT (r %1-> m a)
 
 -- XXX: Replace with a newtype deconstructor once it can be inferred as linear.
 -- | Provide an intial read-only state and run the monadic computation in 
 -- a reader monad transformer
-runReaderT :: ReaderT r m a #-> r #-> m a
+runReaderT :: ReaderT r m a %1-> r %1-> m a
 runReaderT (ReaderT f) = f
 
 instance Data.Functor m => Data.Functor (ReaderT r m) where
@@ -117,28 +117,28 @@ type Reader r = ReaderT r Identity
 ask :: Applicative m => ReaderT r m r
 ask = ReaderT pure
 
-withReaderT :: (r' #-> r) #-> ReaderT r m a #-> ReaderT r' m a
+withReaderT :: (r' %1-> r) %1-> ReaderT r m a %1-> ReaderT r' m a
 withReaderT f m = ReaderT $ runReaderT m . f
 
-local :: (r #-> r) #-> ReaderT r m a #-> ReaderT r m a
+local :: (r %1-> r) %1-> ReaderT r m a %1-> ReaderT r m a
 local = withReaderT
 
-reader :: Monad m => (r #-> a) #-> ReaderT r m a
+reader :: Monad m => (r %1-> a) %1-> ReaderT r m a
 reader f = ReaderT (return . f)
 
-runReader :: Reader r a #-> r #-> a
+runReader :: Reader r a %1-> r %1-> a
 runReader m = runIdentity' . runReaderT m
 
-mapReader :: (a #-> b) #-> Reader r a #-> Reader r b
+mapReader :: (a %1-> b) %1-> Reader r a %1-> Reader r b
 mapReader f = mapReaderT (Identity . f . runIdentity')
 
-mapReaderT :: (m a #-> n b) #-> ReaderT r m a #-> ReaderT r n b
+mapReaderT :: (m a %1-> n b) %1-> ReaderT r m a %1-> ReaderT r n b
 mapReaderT f m = ReaderT (f . runReaderT m)
 
-withReader :: (r' #-> r) #-> Reader r a #-> Reader r' a
+withReader :: (r' %1-> r) %1-> Reader r a %1-> Reader r' a
 withReader = withReaderT
 
-asks :: Monad m => (r #-> a) #-> ReaderT r m a
+asks :: Monad m => (r %1-> a) %1-> ReaderT r m a
 asks f = ReaderT (return . f)
 
 instance Dupable r => MonadTrans (ReaderT r) where
@@ -147,12 +147,12 @@ instance Dupable r => MonadTrans (ReaderT r) where
 get :: (Applicative m, Dupable s) => StateT s m s
 get = state dup
 
-put :: (Applicative m, Consumable s) => s #-> StateT s m ()
+put :: (Applicative m, Consumable s) => s %1-> StateT s m ()
 put = void . replace
 
-gets :: (Applicative m, Dupable s) => (s #-> a) #-> StateT s m a
+gets :: (Applicative m, Dupable s) => (s %1-> a) %1-> StateT s m a
 gets f = state ((\(s1,s2) -> (f s1, s2)) . dup)
 
 -- | Linearly typed replacement for the standard '(Prelude.<$)' function.
-(<$) :: (Functor f, Consumable b) => a #-> f b #-> f a
+(<$) :: (Functor f, Consumable b) => a %1-> f b %1-> f a
 a <$ fb = fmap (`lseq` a) fb

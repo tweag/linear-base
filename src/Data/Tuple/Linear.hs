@@ -16,11 +16,11 @@ module Data.Tuple.Linear
 import Prelude.Linear.Internal
 import Data.Unrestricted.Linear
 
-fst :: Consumable b => (a,b) #-> a
+fst :: Consumable b => (a,b) %1-> a
 fst (a,b) = lseq b a
 
-snd :: Consumable a => (a,b) #-> b
+snd :: Consumable a => (a,b) %1-> b
 snd (a,b) = lseq a b
 
-swap :: (a,b) #-> (b,a)
+swap :: (a,b) %1-> (b,a)
 swap (a,b) = (b,a)

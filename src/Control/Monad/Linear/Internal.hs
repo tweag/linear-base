@@ -26,8 +26,8 @@ import qualified Control.Monad.Trans.State.Strict as NonLinear
 -- this is a hierarchy of enriched monads. In order to have some common
 -- vocabulary.
 
--- There is also room for another type of functor where map has type `(a #->b)
--- -> f a #-> f b`. `[]` and `Maybe` are such functors (they are regular
+-- There is also room for another type of functor where map has type `(a %1->b)
+-- -> f a %1-> f b`. `[]` and `Maybe` are such functors (they are regular
 -- (endo)functors of the category of linear functions whereas `LFunctor` are
 -- control functors). A Traversable hierarchy would start with non-control
 -- functors.
@@ -41,7 +41,7 @@ import qualified Control.Monad.Trans.State.Strict as NonLinear
 class Data.Functor f => Functor f where
   -- | Map a linear function @g@ over a control functor @f a@.
   -- Note that @g@ is used linearly over the single @a@ in @f a@.
-  fmap :: (a #-> b) #-> f a #-> f b
+  fmap :: (a %1-> b) %1-> f a %1-> f b
 
 -- | Control linear applicative functors. These represent effectful
 -- computations that could produce continuations that can be applied with
@@ -49,28 +49,28 @@ class Data.Functor f => Functor f where
 class (Data.Applicative f, Functor f) => Applicative f where
   {-# MINIMAL pure, ((<*>) | liftA2) #-}
   -- | Inject (and consume) a value into an applicative control functor.
-  pure :: a #-> f a
+  pure :: a %1-> f a
   -- | Apply the linear function in a control applicative functor to the value
   -- of type @a@ in another functor. This is essentialy composing two effectful
-  -- computations, one that produces a function @f :: a #-> b@ and one that
+  -- computations, one that produces a function @f :: a %1-> b@ and one that
   -- produces a value of type @a@ into a single effectful computation that
   -- produces a value of type @b@.
-  (<*>) :: f (a #-> b) #-> f a #-> f b
+  (<*>) :: f (a %1-> b) %1-> f a %1-> f b
   (<*>) = liftA2 id
   -- | @liftA2 g@ consumes @g@ linearly as it lifts it
-  -- over two functors: @liftA2 g :: f a #-> f b #-> f c@.
-  liftA2 :: (a #-> b #-> c) #-> f a #-> f b #-> f c
+  -- over two functors: @liftA2 g :: f a %1-> f b %1-> f c@.
+  liftA2 :: (a %1-> b %1-> c) %1-> f a %1-> f b %1-> f c
   liftA2 f x y = f <$> x <*> y
 
 -- | Control linear monads.
 -- A linear monad is one in which you sequence linear functions in a context,
--- i.e., you sequence functions of the form @a #-> m b@.
+-- i.e., you sequence functions of the form @a %1-> m b@.
 class Applicative m => Monad m where
   {-# MINIMAL (>>=) #-}
   -- | @x >>= g@ applies a /linear/ function @g@ linearly (i.e., using it
   -- exactly once) on the value of type @a@ inside the value of type @m a@
-  (>>=) :: m a #-> (a #-> m b) #-> m b
-  (>>) :: m () #-> m a #-> m a
+  (>>=) :: m a %1-> (a %1-> m b) %1-> m b
+  (>>) :: m () %1-> m a %1-> m a
   m >> k = m >>= (\() -> k)
 
 -- | This class handles pattern-matching failure in do-notation.
@@ -83,7 +83,7 @@ class Monad m => MonadFail m where
 ---------------------------
 
 -- | Apply the control @fmap@ over a data functor.
-dataFmapDefault :: Functor f => (a #-> b) -> f a #-> f b
+dataFmapDefault :: Functor f => (a %1-> b) -> f a %1-> f b
 dataFmapDefault f = fmap f
 
 -- | Apply the control @pure@ over a data applicative.
@@ -91,28 +91,28 @@ dataPureDefault :: Applicative f => a -> f a
 dataPureDefault x = pure x
 
 {-# INLINE (<$>) #-}
-(<$>) :: Functor f => (a #-> b) #-> f a #-> f b
+(<$>) :: Functor f => (a %1-> b) %1-> f a %1-> f b
 (<$>) = fmap
 
 -- |  @
 --    ('<&>') = 'flip' 'fmap'
 --    @
-(<&>) :: Functor f => f a #-> (a #-> b) #-> f b
+(<&>) :: Functor f => f a %1-> (a %1-> b) %1-> f b
 (<&>) a f = f <$> a
 {-# INLINE (<&>) #-}
 
 {-# INLINE return #-}
-return :: Monad m => a #-> m a
+return :: Monad m => a %1-> m a
 return x = pure x
 
 -- | Given an effect-producing computation that produces an effect-producing computation
 -- that produces an @a@, simplify it to an effect-producing
 -- computation that produces an @a@.
-join :: Monad m => m (m a) #-> m a
+join :: Monad m => m (m a) %1-> m a
 join action = action >>= id
 
 -- | Use this operator to define Applicative instances in terms of Monad instances.
-ap :: Monad m => m (a #-> b) #-> m a #-> m b
+ap :: Monad m => m (a %1-> b) %1-> m a %1-> m b
 ap f x = f >>= (\f' -> fmap f' x)
 
 -------------------
@@ -121,7 +121,7 @@ ap f x = f >>= (\f' -> fmap f' x)
 
 -- | Fold from left to right with a linear monad.
 -- This is a linear version of 'NonLinear.foldM'.
-foldM :: forall m a b. Monad m => (b #-> a #-> m b) -> b #-> [a] #-> m b
+foldM :: forall m a b. Monad m => (b %1-> a %1-> m b) -> b %1-> [a] %1-> m b
 foldM _ i [] = return i
 foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 
@@ -153,7 +153,7 @@ instance Monoid a => Applicative ((,) a) where
 
 instance Monoid a => Monad ((,) a) where
   (a, x) >>= f = go a (f x)
-    where go :: a #-> (a,b) #-> (a,b)
+    where go :: a %1-> (a,b) %1-> (a,b)
           go b1 (b2, y) = (b1 <> b2, y)
 
 instance Functor Identity where
@@ -167,7 +167,7 @@ instance Monad Identity where
   Identity x >>= f = f x
 
 -- XXX: Temporary, until newtype record projections are linear.
-runIdentity' :: Identity a #-> a
+runIdentity' :: Identity a %1-> a
 runIdentity' (Identity x) = x
 
 instance (Functor f, Functor g) => Functor (Sum f g) where
@@ -190,7 +190,7 @@ instance Monad m => Monad (NonLinear.ReaderT r m) where
   NonLinear.ReaderT x >>= f = NonLinear.ReaderT $ \r -> x r >>= (\a -> runReaderT' (f a) r)
 
 -- XXX: Temporary, until newtype record projections are linear.
-runReaderT' :: NonLinear.ReaderT r m a #-> r -> m a
+runReaderT' :: NonLinear.ReaderT r m a %1-> r -> m a
 runReaderT' (NonLinear.ReaderT f) = f
 
 instance Functor m => Functor (NonLinear.StateT s m) where
@@ -201,7 +201,7 @@ instance Functor m => Functor (NonLinear.StateT s m) where
 ----------------------------
 
 -- | A (strict) linear state monad transformer.
-newtype StateT s m a = StateT (s #-> m (a, s))
+newtype StateT s m a = StateT (s %1-> m (a, s))
   deriving Data.Applicative via Data (StateT s m)
   -- We derive Data.Applicative and not Data.Functor since Data.Functor can use
   -- weaker constraints on m than Control.Functor, while
@@ -209,7 +209,7 @@ newtype StateT s m a = StateT (s #-> m (a, s))
 
 type State s = StateT s Identity
 
-runStateT :: StateT s m a #-> s #-> m (a, s)
+runStateT :: StateT s m a %1-> s %1-> m (a, s)
 runStateT (StateT f) = f
 
 instance Data.Functor m => Data.Functor (StateT s m) where
@@ -230,37 +230,37 @@ instance Monad m => Monad (StateT s m) where
     (x, s') <- mx s
     runStateT (f x) s'
 
-state :: Applicative m => (s #-> (a,s)) #-> StateT s m a
+state :: Applicative m => (s %1-> (a,s)) %1-> StateT s m a
 state f = StateT (pure . f)
 
-runState :: State s a #-> s #-> (a, s)
+runState :: State s a %1-> s %1-> (a, s)
 runState f = runIdentity' . runStateT f
 
-mapStateT :: (m (a, s) #-> n (b, s)) #-> StateT s m a #-> StateT s n b
+mapStateT :: (m (a, s) %1-> n (b, s)) %1-> StateT s m a %1-> StateT s n b
 mapStateT r (StateT f) = StateT (r . f)
 
-withStateT :: (s #-> s) #-> StateT s m a #-> StateT s m a
+withStateT :: (s %1-> s) %1-> StateT s m a %1-> StateT s m a
 withStateT r (StateT f) = StateT (f . r)
 
-execStateT :: Functor m => StateT s m () #-> s #-> m s
+execStateT :: Functor m => StateT s m () %1-> s %1-> m s
 execStateT f = fmap (\((), s) -> s) . (runStateT f)
 
-mapState :: ((a,s) #-> (b,s)) #-> State s a #-> State s b
+mapState :: ((a,s) %1-> (b,s)) %1-> State s a %1-> State s b
 mapState f = mapStateT (Identity . f . runIdentity')
 
-withState :: (s #-> s) #-> State s a #-> State s a
+withState :: (s %1-> s) %1-> State s a %1-> State s a
 withState = withStateT
 
-execState :: State s () #-> s #-> s
+execState :: State s () %1-> s %1-> s
 execState f = runIdentity' . execStateT f
 
-modify :: Applicative m => (s #-> s) #-> StateT s m ()
+modify :: Applicative m => (s %1-> s) %1-> StateT s m ()
 modify f = state $ \s -> ((), f s)
 -- TODO: add strict version of `modify`
 
 -- | @replace s@ will replace the current state with the new given state, and
 -- return the old state.
-replace :: Applicative m => s #-> StateT s m s
+replace :: Applicative m => s %1-> StateT s m s
 replace s = state $ (\s' -> (s', s))
 
 -----------------------------
@@ -268,7 +268,7 @@ replace s = state $ (\s' -> (s', s))
 -----------------------------
 
 class (forall m. Monad m => Monad (t m)) => MonadTrans t where
-  lift :: Monad m => m a #-> t m a
+  lift :: Monad m => m a %1-> t m a
 
 instance MonadTrans (NonLinear.ReaderT r) where
   lift x = NonLinear.ReaderT (\_ -> x)

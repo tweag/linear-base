@@ -29,7 +29,7 @@ import Prelude (Maybe(..), Either(..))
 -- TODO: maybe add a Foldable class between Functor and Traversable as well
 
 -- | A linear data traversible is a functor of type @t a@ where you can apply a
--- linear effectful action of type @a #-> f b@ on each value of type @a@ and
+-- linear effectful action of type @a %1-> f b@ on each value of type @a@ and
 -- compose this to perform an action on the whole functor, resulting in a value
 -- of type @f (t b)@.
 --
@@ -53,44 +53,44 @@ import Prelude (Maybe(..), Either(..))
 class Data.Functor t => Traversable t where
   {-# MINIMAL traverse | sequence #-}
 
-  traverse :: Control.Applicative f => (a #-> f b) -> t a #-> f (t b)
+  traverse :: Control.Applicative f => (a %1-> f b) -> t a %1-> f (t b)
   {-# INLINE traverse #-}
   traverse f x = sequence (Data.fmap f x)
 
-  sequence :: Control.Applicative f => t (f a) #-> f (t a)
+  sequence :: Control.Applicative f => t (f a) %1-> f (t a)
   {-# INLINE sequence #-}
   sequence = traverse id
 
-mapM :: (Traversable t, Control.Monad m) => (a #-> m b) -> t a #-> m (t b)
+mapM :: (Traversable t, Control.Monad m) => (a %1-> m b) -> t a %1-> m (t b)
 mapM = traverse
 {-# INLINE mapM #-}
 
-sequenceA :: (Traversable t, Control.Applicative f) => t (f a) #-> f (t a)
+sequenceA :: (Traversable t, Control.Applicative f) => t (f a) %1-> f (t a)
 sequenceA = sequence
 {-# INLINE sequenceA #-}
 
-for :: (Traversable t, Control.Applicative f) => t a #-> (a #-> f b) -> f (t b)
+for :: (Traversable t, Control.Applicative f) => t a %1-> (a %1-> f b) -> f (t b)
 for t f = traverse f t
 {-# INLINE for #-}
 
-forM :: (Traversable t, Control.Monad m) => t a #-> (a #-> m b) -> m (t b)
+forM :: (Traversable t, Control.Monad m) => t a %1-> (a %1-> m b) -> m (t b)
 forM = for
 {-# INLINE forM #-}
 
-mapAccumL :: Traversable t => (a #-> b #-> (a,c)) -> a #-> t b #-> (a, t c)
+mapAccumL :: Traversable t => (a %1-> b %1-> (a,c)) -> a %1-> t b %1-> (a, t c)
 mapAccumL f s t = swap $ Control.runState (traverse (\b -> Control.state $ \i -> swap $ f i b) t) s
 
-mapAccumR :: Traversable t => (a #-> b #-> (a,c)) -> a #-> t b #-> (a, t c)
+mapAccumR :: Traversable t => (a %1-> b %1-> (a,c)) -> a %1-> t b %1-> (a, t c)
 mapAccumR f s t = swap $ runStateR (traverse (\b -> StateR $ \i -> swap $ f i b) t) s
 
-swap :: (a,b) #-> (b,a)
+swap :: (a,b) %1-> (b,a)
 swap (x,y) = (y,x)
 
 -- | A right-to-left state transformer
-newtype StateR s a = StateR (s #-> (a, s))
+newtype StateR s a = StateR (s %1-> (a, s))
   deriving (Data.Functor, Data.Applicative) via Control.Data (StateR s)
 
-runStateR :: StateR s a #-> s #-> (a, s)
+runStateR :: StateR s a %1-> s %1-> (a, s)
 runStateR (StateR f) = f
 
 instance Control.Functor (StateR s) where
@@ -99,7 +99,7 @@ instance Control.Functor (StateR s) where
 instance Control.Applicative (StateR s) where
   pure x = StateR $ \s -> (x,s)
   StateR f <*> StateR x = StateR (go . Control.fmap f . x)
-    where go :: (a, (a #-> b, s)) #-> (b, s)
+    where go :: (a, (a %1-> b, s)) %1-> (b, s)
           go (a, (h, s'')) = (h a, s'')
 
 ------------------------

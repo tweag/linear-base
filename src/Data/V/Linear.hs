@@ -30,7 +30,7 @@
 -- >>> import Prelude.Linear
 -- >>> import qualified Data.V.Linear as V
 -- >>> :{
---  doSomething :: Int #-> Int #-> Bool
+--  doSomething :: Int %1-> Int %1-> Bool
 --  doSomething x y = x + y > 0
 -- :}
 --
@@ -39,7 +39,7 @@
 --  isTrue = V.elim (build 4 9) doSomething
 --    where
 --      -- GHC can't figure out this type equality, so this is needed.
---      build :: Int #-> Int #-> V.V 2 Int
+--      build :: Int %1-> Int %1-> V.V 2 Int
 --      build = V.make @2 @Int
 -- :}
 --
@@ -108,15 +108,15 @@ instance KnownNat n => Data.Traversable (V n) where
 
 type family FunN (n :: Nat) (a :: Type) (b :: Type) :: Type where
   FunN 0 a b = b
-  FunN n a b = a #-> FunN (n-1) a b
+  FunN n a b = a %1-> FunN (n-1) a b
 
-split :: 1 <= n => V n a #-> (# a, V (n-1) a #)
+split :: 1 <= n => V n a %1-> (# a, V (n-1) a #)
 split = Unsafe.toLinear split'
   where
     split' :: 1 <= n => V n a -> (# a, V (n-1) a #)
     split' (V xs) = (# Vector.head xs, V (Vector.tail xs) #)
 
-consumeV :: V 0 a #-> b #-> b
+consumeV :: V 0 a %1-> b %1-> b
 consumeV = Unsafe.toLinear (\_ -> id)
 
 unsafeZero :: n :~: 0
@@ -143,23 +143,23 @@ caseNat =
 {-# INLINE caseNat #-}
 
 -- By definition.
-expandFunN :: forall n a b. (1 <= n) => FunN n a b #-> a #-> FunN (n-1) a b
+expandFunN :: forall n a b. (1 <= n) => FunN n a b %1-> a %1-> FunN (n-1) a b
 expandFunN k = Unsafe.coerce k
 
 -- By definition.
-contractFunN :: (1 <= n) => (a #-> FunN (n-1) a b) #-> FunN n a b
+contractFunN :: (1 <= n) => (a %1-> FunN (n-1) a b) %1-> FunN n a b
 contractFunN k = Unsafe.coerce k
 
 -- TODO: consider using template haskell to make this expression more efficient.
 -- | This is like pattern-matching on a n-tuple. It will eventually be
 -- polymorphic the same way as a case expression.
-elim :: forall n a b. KnownNat n => V n a #-> FunN n a b #-> b
+elim :: forall n a b. KnownNat n => V n a %1-> FunN n a b %1-> b
 elim xs f =
   case caseNat @n of
     Left Refl -> consumeV xs f
     Right Refl -> elimS (split xs) f
   where
-    elimS :: 1 <= n => (# a, V (n-1) a #) #-> FunN n a b #-> b
+    elimS :: 1 <= n => (# a, V (n-1) a #) %1-> FunN n a b %1-> b
     elimS (# x, xs' #) g = case predNat @n of
       Dict -> elim xs' (expandFunN @n @a @b g x)
 
@@ -168,32 +168,32 @@ make :: forall n a. KnownNat n => FunN n a (V n a)
 make = case caseNat @n of
           Left Refl -> V Vector.empty
           Right Refl -> contractFunN @n @a @(V n a) prepend
-            where prepend :: a #-> FunN (n-1) a (V n a)
+            where prepend :: a %1-> FunN (n-1) a (V n a)
                   prepend t = case predNat @n of
                                 Dict -> continue @(n-1) @a @(V (n-1) a) (cons t) (make @(n-1) @a)
 
-cons :: forall n a. a #-> V (n-1) a #-> V n a
+cons :: forall n a. a %1-> V (n-1) a %1-> V n a
 cons = Unsafe.toLinear2 $ \x (V v) -> V (Vector.cons x v)
 
-continue :: forall n a b c. KnownNat n => (b #-> c) #-> FunN n a b #-> FunN n a c
+continue :: forall n a b c. KnownNat n => (b %1-> c) %1-> FunN n a b %1-> FunN n a c
 continue = case caseNat @n of
              Left Refl -> id
              Right Refl -> \f t -> contractFunN @n @a @c (continueS f (expandFunN @n @a @b t))
-               where continueS :: (KnownNat n, 1 <= n) => (b #-> c) #-> (a #-> FunN (n-1) a b) #-> (a #-> FunN (n-1) a c)
+               where continueS :: (KnownNat n, 1 <= n) => (b %1-> c) %1-> (a %1-> FunN (n-1) a b) %1-> (a %1-> FunN (n-1) a c)
                      continueS f' x a = case predNat @n of Dict -> continue @(n-1) @a @b f' (x a)
 
-iterate :: forall n a. (KnownNat n, 1 <= n) => (a #-> (a, a)) -> a #-> V n a
+iterate :: forall n a. (KnownNat n, 1 <= n) => (a %1-> (a, a)) -> a %1-> V n a
 iterate dup init =
   go @n init
  where
-  go :: forall m. (KnownNat m, 1 <= m) => a #-> V m a
+  go :: forall m. (KnownNat m, 1 <= m) => a %1-> V m a
   go a =
     case predNat @m of
       Dict -> case caseNat @(m-1) of
         Prelude.Left Refl ->
           case pr1 @m Refl of
             Refl ->
-              (make @m @a :: a #-> V m a) a
+              (make @m @a :: a %1-> V m a) a
         Prelude.Right Refl ->
           dup a & \(a', a'') ->
             a' `cons` go @(m-1) a''

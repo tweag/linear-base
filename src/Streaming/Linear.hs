@@ -85,9 +85,9 @@ import GHC.Stack
     Some of these are quite abstract and pervade any use of the library,
     e.g.
 
->   maps    :: (forall x . f x #-> g x) -> Stream f m r #-> Stream g m r
->   mapped  :: (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
->   concats :: Stream (Stream f m) m r #-> Stream f m r
+>   maps    :: (forall x . f x %1-> g x) -> Stream f m r %1-> Stream g m r
+>   mapped  :: (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
+>   concats :: Stream (Stream f m) m r %1-> Stream f m r
 
     (assuming here and thoughout that @m@ or @n@ satisfies
     a @Control.Monad@ constraint, and @f@ or @g@ a @Control.Functor@
@@ -95,13 +95,13 @@ import GHC.Stack
 
     Others are surprisingly determinate in content:
 
->   chunksOf     :: Int -> Stream f m r #-> Stream (Stream f m) m r
->   splitsAt     :: Int -> Stream f m r #-> Stream f m (Stream f m r)
->   intercalates :: Stream f m () -> Stream (Stream f m) m r #-> Stream f m r
->   unzips       :: Stream (Compose f g) m r #->  Stream f (Stream g m) r
+>   chunksOf     :: Int -> Stream f m r %1-> Stream (Stream f m) m r
+>   splitsAt     :: Int -> Stream f m r %1-> Stream f m (Stream f m r)
+>   intercalates :: Stream f m () -> Stream (Stream f m) m r %1-> Stream f m r
+>   unzips       :: Stream (Compose f g) m r %1->  Stream f (Stream g m) r
 >   separate     :: Stream (Sum f g) m r -> Stream f (Stream g m) r  -- cp. partitionEithers
 >   unseparate   :: Stream f (Stream g) m r -> Stream (Sum f g) m r
->   groups       :: Stream (Sum f g) m r #-> Stream (Sum (Stream f m) (Stream g m)) m r
+>   groups       :: Stream (Sum f g) m r %1-> Stream (Sum (Stream f m) (Stream g m)) m r
 
     One way to see that /any/ streaming library needs some such general type is
     that it is required to represent the segmentation of a stream, and to
@@ -127,15 +127,15 @@ import GHC.Stack
 {-| @yields@ is like @lift@ for items in the streamed functor.
     It makes a singleton or one-layer succession.
 
-> lift :: (Control.Monad m, Control.Functor f)    => m r #-> Stream f m r
-> yields ::  (Control.Monad m, Control.Functor f) => f r #-> Stream f m r
+> lift :: (Control.Monad m, Control.Functor f)    => m r %1-> Stream f m r
+> yields ::  (Control.Monad m, Control.Functor f) => f r %1-> Stream f m r
 
     Viewed in another light, it is like a functor-general version of @yield@:
 
 > S.yield a = yields (a :> ())
 
 -}
-yields :: (Control.Monad m, Control.Functor f) => f r #-> Stream f m r
+yields :: (Control.Monad m, Control.Functor f) => f r %1-> Stream f m r
 yields fr = Step $ Control.fmap Return fr
 {-# INLINE yields #-}
 
@@ -147,13 +147,13 @@ yields fr = Step $ Control.fmap Return fr
 
 -}
 effect :: (Control.Monad m, Control.Functor f) =>
-  m (Stream f m r) #-> Stream f m r
+  m (Stream f m r) %1-> Stream f m r
 effect = Effect
 {-# INLINE effect #-}
 
 {-| Wrap a new layer of a stream. So, e.g.
 
-> S.cons :: Control.Monad m => a -> Stream (Of a) m r #-> Stream (Of a) m r
+> S.cons :: Control.Monad m => a -> Stream (Of a) m r %1-> Stream (Of a) m r
 > S.cons a str = wrap (a :> str)
 
    and, recursively:
@@ -164,21 +164,21 @@ effect = Effect
    The two operations
 
 > wrap :: (Control.Monad m, Control.Functor f) =>
->   f (Stream f m r) #-> Stream f m r
+>   f (Stream f m r) %1-> Stream f m r
 > effect :: (Control.Monad m, Control.Functor f) =>
->   m (Stream f m r) #-> Stream f m r
+>   m (Stream f m r) %1-> Stream f m r
 
    are fundamental. We can define the parallel operations @yields@ and @lift@
    in terms of them
 
-> yields :: (Control.Monad m, Control.Functor f) => f r #-> Stream f m r
+> yields :: (Control.Monad m, Control.Functor f) => f r %1-> Stream f m r
 > yields = wrap . Control.fmap Control.return
-> lift ::  (Control.Monad m, Control.Functor f)  => m r #-> Stream f m r
+> lift ::  (Control.Monad m, Control.Functor f)  => m r %1-> Stream f m r
 > lift = effect . Control.fmap Control.return
 
 -}
 wrap :: (Control.Monad m, Control.Functor f) =>
-  f (Stream f m r) #-> Stream f m r
+  f (Stream f m r) %1-> Stream f m r
 wrap = Step
 {-# INLINE wrap #-}
 
@@ -211,11 +211,11 @@ replicatesM = loop
 {-# INLINABLE replicatesM #-}
 
 unfold :: (Control.Monad m, Control.Functor f) =>
-  (s #-> m (Either r (f s))) -> s #-> Stream f m r
+  (s %1-> m (Either r (f s))) -> s %1-> Stream f m r
 unfold step state = unfold' step state
   where
     unfold' :: (Control.Monad m, Control.Functor f) =>
-      (s #-> m (Either r (f s))) -> s #-> Stream f m r
+      (s %1-> m (Either r (f s))) -> s %1-> Stream f m r
     unfold' step state = Effect $ Control.do
       either <- step state
       either & \case
@@ -244,7 +244,7 @@ untilJust action = loop
 > streamFold return_ effect_ step_ (streamBuild psi) = psi return_ effect_ step_
 -}
 streamBuild ::
-  (forall b. (r #-> b) -> (m b #-> b) -> (f b #-> b) -> b) -> Stream f m r
+  (forall b. (r %1-> b) -> (m b %1-> b) -> (f b %1-> b) -> b) -> Stream f m r
 streamBuild = \phi -> phi Return Effect Step
 {-# INLINE streamBuild #-}
 
@@ -271,7 +271,7 @@ delays seconds = loop
 
 -}
 maps :: forall f g m r . (Control.Monad m, Control.Functor f) =>
-  (forall x . f x #-> g x) -> Stream f m r #-> Stream g m r
+  (forall x . f x %1-> g x) -> Stream f m r %1-> Stream g m r
 maps = Stream.maps
 {-# INLINE maps #-}
 
@@ -286,7 +286,7 @@ maps = Stream.maps
      is cheaper for the target functor than for the source functor.
 -}
 mapsPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
-  (forall x. f x #-> g x) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> g x) -> Stream f m r %1-> Stream g m r
 mapsPost = Stream.mapsPost
 {-# INLINE mapsPost #-}
 
@@ -303,9 +303,9 @@ mapsPost = Stream.mapsPost
 
 -}
 mapsM :: forall f g m r . (Control.Monad m, Control.Functor f) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mapsM transform = loop where
-  loop :: Stream f m r #-> Stream g m r
+  loop :: Stream f m r %1-> Stream g m r
   loop stream = stream & \case
     Return r -> Return r
     Step f -> Effect $ Control.fmap Step $ transform $ Control.fmap loop f
@@ -327,7 +327,7 @@ mapsM transform = loop where
 
 -}
 mapsMPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mapsMPost = Stream.mapsMPost
 {-# INLINE mapsMPost #-}
 
@@ -355,7 +355,7 @@ mapsMPost = Stream.mapsMPost
 
 -}
 mapped :: forall f g m r . (Control.Monad m, Control.Functor f) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mapped = mapsM
 {-# INLINE mapped #-}
 
@@ -365,16 +365,16 @@ mapped = mapsM
 
 -}
 mappedPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mappedPost = mapsMPost
 {-# INLINE mappedPost #-}
 
 -- | A less-efficient version of 'hoist' that works properly even when its
 -- argument is not a monad morphism.
 hoistUnexposed :: forall f m n r. (Control.Monad m, Control.Functor f)
-               => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
+               => (forall a. m a %1-> n a) -> Stream f m r %1-> Stream f n r
 hoistUnexposed trans = loop where
-  loop :: Stream f m r #-> Stream f n r
+  loop :: Stream f m r %1-> Stream f n r
   loop = Effect
     . trans
     . inspectC
@@ -386,9 +386,9 @@ hoistUnexposed trans = loop where
 -- Note that due to the linear constructors of 'Stream', these continuations
 -- are linear.
 inspectC :: forall f m r a. Control.Monad m =>
-  (r #-> m a) -> (f (Stream f m r) #-> m a) -> Stream f m r #-> m a
+  (r %1-> m a) -> (f (Stream f m r) %1-> m a) -> Stream f m r %1-> m a
 inspectC f g = loop where
-  loop :: Stream f m r #-> m a
+  loop :: Stream f m r %1-> m a
   loop (Return r) = f r
   loop (Step x)   = g x
   loop (Effect m) = m Control.>>= loop
@@ -399,10 +399,10 @@ inspectC f g = loop where
 -}
 groups :: forall f g m r .
   (Control.Monad m, Control.Functor f, Control.Functor g) =>
-  Stream (Sum f g) m r #-> Stream (Sum (Stream f m) (Stream g m)) m r
+  Stream (Sum f g) m r %1-> Stream (Sum (Stream f m) (Stream g m)) m r
 groups = loop
   where
-    loop :: Stream (Sum f g) m r #-> Stream (Sum (Stream f m) (Stream g m)) m r
+    loop :: Stream (Sum f g) m r %1-> Stream (Sum (Stream f m) (Stream g m)) m r
     loop str = Control.do
       e <- Control.lift $ inspect str
       e & \case
@@ -411,10 +411,10 @@ groups = loop
           InR gstr -> Step $ InR $ Control.fmap loop $ cleanR (Step (InR gstr))
           InL fstr -> Step $ InL $ Control.fmap loop $ cleanL (Step (InL fstr))
 
-    cleanL :: Stream (Sum f g) m r #-> Stream f m (Stream (Sum f g) m r)
+    cleanL :: Stream (Sum f g) m r %1-> Stream f m (Stream (Sum f g) m r)
     cleanL = go
       where
-        go :: Stream (Sum f g) m r #-> Stream f m (Stream (Sum f g) m r)
+        go :: Stream (Sum f g) m r %1-> Stream f m (Stream (Sum f g) m r)
         go s = Control.do
          e <- Control.lift $ inspect s
          e & \case
@@ -422,10 +422,10 @@ groups = loop
           Right (InL fstr) -> Step $ Control.fmap go fstr
           Right (InR gstr) -> Control.return $ Step (InR gstr)
 
-    cleanR  :: Stream (Sum f g) m r #-> Stream g m (Stream (Sum f g) m r)
+    cleanR  :: Stream (Sum f g) m r %1-> Stream g m (Stream (Sum f g) m r)
     cleanR = go
       where
-        go :: Stream (Sum f g) m r #-> Stream g m (Stream (Sum f g) m r)
+        go :: Stream (Sum f g) m r %1-> Stream g m (Stream (Sum f g) m r)
         go s = Control.do
          e <- Control.lift $ inspect s
          e & \case
@@ -446,10 +446,10 @@ groups = loop
 > Streaming.Prelude.unfoldr StreamingPrelude.next = id
 -}
 inspect :: forall f m r . Control.Monad m =>
-     Stream f m r #-> m (Either r (f (Stream f m r)))
+     Stream f m r %1-> m (Either r (f (Stream f m r)))
 inspect = loop
   where
-    loop :: Stream f m r #-> m (Either r (f (Stream f m r)))
+    loop :: Stream f m r %1-> m (Either r (f (Stream f m r)))
     loop stream = stream & \case
       Return r -> Control.return (Left r)
       Effect m -> m Control.>>= loop
@@ -485,10 +485,10 @@ inspect = loop
 -}
 splitsAt :: forall f m r .
   (HasCallStack, Control.Monad m, Control.Functor f) =>
-  Int -> Stream f m r #-> Stream f m (Stream f m r)
+  Int -> Stream f m r %1-> Stream f m (Stream f m r)
 splitsAt n stream = loop n stream
   where
-    loop :: Int -> Stream f m r #-> Stream f m (Stream f m r)
+    loop :: Int -> Stream f m r %1-> Stream f m (Stream f m r)
     loop n stream = case compare n 0 of
       LT -> Prelude.error "splitsAt called with negative index" $ stream
       EQ -> Return stream
@@ -508,10 +508,10 @@ splitsAt n stream = loop n stream
 -}
 chunksOf :: forall f m r .
   (HasCallStack, Control.Monad m, Control.Functor f) =>
-  Int -> Stream f m r #-> Stream (Stream f m) m r
+  Int -> Stream f m r %1-> Stream (Stream f m) m r
 chunksOf n stream = loop n stream
   where
-    loop :: Int -> Stream f m r #-> Stream (Stream f m) m r
+    loop :: Int -> Stream f m r %1-> Stream (Stream f m) m r
     loop _ (Return r) = Return r
     loop n stream = Step $ Control.fmap (loop n) $ splitsAt n stream
 {-# INLINABLE chunksOf #-}
@@ -520,10 +520,10 @@ chunksOf n stream = loop n stream
 
 -}
 concats :: forall f m r . (Control.Monad m, Control.Functor f) =>
-  Stream (Stream f m) m r #-> Stream f m r
+  Stream (Stream f m) m r %1-> Stream f m r
 concats = loop
   where
-    loop :: Stream (Stream f m) m r #-> Stream f m r
+    loop :: Stream (Stream f m) m r %1-> Stream f m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -537,14 +537,14 @@ concats = loop
 -- monad transformer.
 {-| Interpolate a layer at each segment. This specializes to e.g.
 
-> intercalates :: Stream f m () -> Stream (Stream f m) m r #-> Stream f m r
+> intercalates :: Stream f m () -> Stream (Stream f m) m r %1-> Stream f m r
 -}
 intercalates :: forall t m r x .
   (Control.Monad m, Control.Monad (t m), Control.MonadTrans t, Consumable x) =>
-  t m x -> Stream (t m) m r #-> t m r
+  t m x -> Stream (t m) m r %1-> t m r
 intercalates sep = go0
   where
-    go0 :: Stream (t m) m r #-> t m r
+    go0 :: Stream (t m) m r %1-> t m r
     go0 f = f & \case
       Return r -> Control.return r
       Effect m -> Control.lift m Control.>>= go0
@@ -552,7 +552,7 @@ intercalates sep = go0
         f' <- fstr
         go1 f'
 
-    go1 :: Stream (t m) m r #-> t m r
+    go1 :: Stream (t m) m r %1-> t m r
     go1 f = f & \case
       Return r -> Control.return r
       Effect m -> Control.lift m Control.>>= go1
@@ -569,7 +569,7 @@ intercalates sep = go0
 
 unzips :: forall f g m r .
   (Control.Monad m, Control.Functor f, Control.Functor g) =>
-  Stream (Compose f g) m r #-> Stream f (Stream g m) r
+  Stream (Compose f g) m r %1-> Stream f (Stream g m) r
 unzips str = destroyExposed
   str
   (\(Compose fgstr) -> Step (Control.fmap (Effect . yields) fgstr))
@@ -625,7 +625,7 @@ separate :: forall f g m r .
   Stream (Sum f g) m r -> Stream f (Stream g m) r
 separate str = destroyExposed str construct (Effect . Control.lift) Return
   where
-    construct :: Sum f g (Stream f (Stream g m) r) #-> Stream f (Stream g m) r
+    construct :: Sum f g (Stream f (Stream g m) r) %1-> Stream f (Stream g m) r
     construct (InL fss) = Step fss
     construct (InR gss) = Effect (yields gss)
 {-# INLINABLE separate #-}
@@ -652,14 +652,14 @@ unseparate str = destroyExposed
   since @maps@ and @hoist@ are the really fundamental operations that preserve the
   shape of the stream:
 
-> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x #-> g x) -> Stream f m r #-> Stream g m r
-> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
+> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x %1-> g x) -> Stream f m r %1-> Stream g m r
+> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a %1-> n a) -> Stream f m r %1-> Stream f n r
 
 -}
 decompose :: forall f m r . (Control.Monad m, Control.Functor f) =>
-  Stream (Compose m f) m r #-> Stream f m r
+  Stream (Compose m f) m r %1-> Stream f m r
 decompose = loop where
-  loop :: Stream (Compose m f) m r #-> Stream f m r
+  loop :: Stream (Compose m f) m r %1-> Stream f m r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap loop m
@@ -680,10 +680,10 @@ decompose = loop where
 -- See 'expandPost' for a version that requires a @Control.Functor g@
 -- instance instead.
 expand :: forall f m r g h . (Control.Monad m, Control.Functor f) =>
-  (forall a b. (g a #-> b) -> f a #-> h b) ->
-  Stream f m r #-> Stream g (Stream h m) r
+  (forall a b. (g a %1-> b) -> f a %1-> h b) ->
+  Stream f m r %1-> Stream g (Stream h m) r
 expand ext = loop where
-  loop :: Stream f m r #-> Stream g (Stream h m) r
+  loop :: Stream f m r %1-> Stream g (Stream h m) r
   loop (Return r) = Return r
   loop (Step f) = Effect $ Step $ ext (Return . Step) (Control.fmap loop f)
   loop (Effect m) = Effect $ Effect $ Control.fmap (Return . loop) m
@@ -697,10 +697,10 @@ expand ext = loop where
 -- See 'expand' for a version that requires a @Control.Functor f@ instance
 -- instead.
 expandPost :: forall f m r g h . (Control.Monad m, Control.Functor g) =>
-  (forall a b. (g a #-> b) -> f a #-> h b) ->
-  Stream f m r #-> Stream g (Stream h m) r
+  (forall a b. (g a %1-> b) -> f a %1-> h b) ->
+  Stream f m r %1-> Stream g (Stream h m) r
 expandPost ext = loop where
-  loop :: Stream f m r #-> Stream g (Stream h m) r
+  loop :: Stream f m r %1-> Stream g (Stream h m) r
   loop (Return r) = Return r
   loop (Step f) = Effect $ Step $ ext (Return . Step . Control.fmap loop) f
   loop (Effect m) = Effect $ Effect $ Control.fmap (Return . loop) m
@@ -716,16 +716,16 @@ expandPost ext = loop where
 {-| Map each layer to an effect, and run them all.
 -}
 mapsM_ :: (Control.Functor f, Control.Monad m) =>
-  (forall x . f x #-> m x) -> Stream f m r #-> m r
+  (forall x . f x %1-> m x) -> Stream f m r %1-> m r
 mapsM_ f = run . maps f
 {-# INLINE mapsM_ #-}
 
 {-| Run the effects in a stream that merely layers effects.
 -}
-run :: Control.Monad m => Stream m m r #-> m r
+run :: Control.Monad m => Stream m m r %1-> m r
 run = loop
   where
-    loop :: Control.Monad m => Stream m m r #-> m r
+    loop :: Control.Monad m => Stream m m r %1-> m r
     loop stream = stream & \case
       Return r   -> Control.return r
       Effect  m  -> m Control.>>= loop
@@ -738,25 +738,25 @@ run = loop
 
 \>\>\> :t streamFold Control.return Control.join
 (Control.Monad m, Control.Functor f) =>
-     (f (m a) #-> m a) -> Stream f m a #-> m a        -- iterT
+     (f (m a) %1-> m a) -> Stream f m a %1-> m a        -- iterT
 
 \>\>\> :t streamFold Control.return (Control.join . Control.lift)
 (Control.Monad m, Control.Monad (t m), Control.Functor f, Control.MonadTrans t) =>
-     (f (t m a) #-> t m a) -> Stream f m a #-> t m a  -- iterTM
+     (f (t m a) %1-> t m a) -> Stream f m a %1-> t m a  -- iterTM
 
 \>\>\> :t streamFold Control.return effect
 (Control.Monad m, Control.Functor f, Control.Functor g) =>
-     (f (Stream g m r) #-> Stream g m r) -> Stream f m r #-> Stream g m r
+     (f (Stream g m r) %1-> Stream g m r) -> Stream f m r %1-> Stream g m r
 
 \>\>\> :t \f -> streamFold Control.return effect (wrap . f)
 (Control.Monad m, Control.Functor f, Control.Functor g) =>
-     (f (Stream g m a) #-> g (Stream g m a))
-     -> Stream f m a #-> Stream g m a                 -- maps
+     (f (Stream g m a) %1-> g (Stream g m a))
+     -> Stream f m a %1-> Stream g m a                 -- maps
 
 \>\>\> :t \f -> streamFold Control.return effect (effect . Control.fmap wrap . f)
 (Control.Monad m, Control.Functor f, Control.Functor g) =>
-     (f (Stream g m a) #-> m (g (Stream g m a)))
-     -> Stream f m a #-> Stream g m a                 -- mapped
+     (f (Stream g m a) %1-> m (g (Stream g m a)))
+     -> Stream f m a %1-> Stream g m a                 -- mapped
 
 @
     streamFold done eff construct
@@ -764,7 +764,7 @@ run = loop
 @
 -}
 streamFold :: (Control.Functor f, Control.Monad m) =>
-     (r #-> b) -> (m b #-> b) ->  (f b #-> b) -> Stream f m r #-> b
+     (r %1-> b) -> (m b %1-> b) ->  (f b %1-> b) -> Stream f m r %1-> b
 streamFold done theEffect construct stream =
   destroy stream construct theEffect done
 {-# INLINE streamFold #-}
@@ -775,7 +775,7 @@ streamFold done theEffect construct stream =
 > iterT alg = runIdentityT . iterTM (IdentityT . alg . Control.fmap runIdentityT)
 -}
 iterT :: (Control.Functor f, Control.Monad m) =>
-  (f (m a) #-> m a) -> Stream f m a #-> m a
+  (f (m a) %1-> m a) -> Stream f m a %1-> m a
 iterT out stream = destroyExposed stream out Control.join Control.return
 {-# INLINE iterT #-}
 
@@ -787,7 +787,7 @@ iterT out stream = destroyExposed stream out Control.join Control.return
 iterTM ::
   ( Control.Functor f, Control.Monad m
   , Control.MonadTrans t, Control.Monad (t m)) =>
-  (f (t m a) #-> t m a) -> Stream f m a #-> t m a
+  (f (t m a) %1-> t m a) -> Stream f m a %1-> t m a
 iterTM out stream =
   destroyExposed stream out (Control.join . Control.lift) Control.return
 {-# INLINE iterTM #-}
@@ -806,10 +806,10 @@ iterTM out stream =
     @
 -}
 destroy :: forall f m r b . (Control.Functor f, Control.Monad m) =>
-     Stream f m r #-> (f b #-> b) -> (m b #-> b) -> (r #-> b) -> b
+     Stream f m r %1-> (f b %1-> b) -> (m b %1-> b) -> (r %1-> b) -> b
 destroy stream0 construct theEffect done = theEffect (loop stream0)
   where
-    loop :: Stream f m r #-> m b
+    loop :: Stream f m r %1-> m b
     loop stream = stream & \case
       Return r -> Control.return $ done r
       Effect m -> m Control.>>= loop

@@ -74,13 +74,13 @@ assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 Optical f .> Optical g = Optical (f P.. g)
 
 
-lens :: (s #-> (a, b #-> t)) -> Lens s t a b
+lens :: (s %1-> (a, b %1-> t)) -> Lens s t a b
 lens k = Optical $ \f -> dimap k (\(x,g) -> g $ x) (first f)
 
-prism :: (b #-> t) -> (s #-> Either t a) -> Prism s t a b
+prism :: (b %1-> t) -> (s %1-> Either t a) -> Prism s t a b
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
 
-traversal :: (forall f. Control.Applicative f => (a #-> f b) -> s #-> f t) -> Traversal s t a b
+traversal :: (forall f. Control.Applicative f => (a %1-> f b) -> s %1-> f t) -> Traversal s t a b
 traversal trav = Optical $ wander trav
 
 _1 :: Lens (a,c) (b,c) a b
@@ -104,10 +104,10 @@ _Nothing = prism (\() -> Nothing) Left
 traversed :: Traversable t => Traversal (t a) (t b) a b
 traversed = Optical $ wander traverse
 
-over :: Optic_ LinearArrow s t a b -> (a #-> b) -> s #-> t
+over :: Optic_ LinearArrow s t a b -> (a %1-> b) -> s %1-> t
 over (Optical l) f = getLA (l (LA f))
 
-traverseOf :: Optic_ (Linear.Kleisli f) s t a b -> (a #-> f b) -> s #-> f t
+traverseOf :: Optic_ (Linear.Kleisli f) s t a b -> (a %1-> f b) -> s %1-> f t
 traverseOf (Optical l) f = Linear.runKleisli (l (Linear.Kleisli f))
 
 toListOf :: Optic_ (NonLinear.Kleisli (Const [a])) s t a b -> s -> [a]
@@ -122,19 +122,19 @@ gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Co
 set :: Optic_ (->) s t a b -> b -> s -> t
 set (Optical l) x = l (const x)
 
-setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) s t a b -> s #-> b #-> (a, t)
+setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) s t a b -> s %1-> b %1-> (a, t)
 setSwap (Optical l) s = getLA (getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (LA (\b -> (a,b)))))) s))
 
-match :: Optic_ (Market a b) s t a b -> s #-> Either t a
+match :: Optic_ (Market a b) s t a b -> s %1-> Either t a
 match (Optical l) = P.snd (runMarket (l (Market id Right)))
 
-build :: Optic_ (Linear.CoKleisli (Const b)) s t a b -> b #-> t
+build :: Optic_ (Linear.CoKleisli (Const b)) s t a b -> b %1-> t
 build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Const x)
 
 -- XXX: move this to Prelude
 -- | Linearly typed patch for the newtype deconstructor. (Temporary until
 -- inference will get this from the newtype declaration.)
-getConst' :: Const a b #-> a
+getConst' :: Const a b %1-> a
 getConst' (Const x) = x
 
 lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Adding r))) s t a b -> s -> r
@@ -148,27 +148,27 @@ overU (Optical l) f = l f
 traverseOfU :: Optic_ (NonLinear.Kleisli f) s t a b -> (a -> f b) -> s -> f t
 traverseOfU (Optical l) f = NonLinear.runKleisli (l (NonLinear.Kleisli f))
 
-iso :: (s #-> a) -> (b #-> t) -> Iso s t a b
+iso :: (s %1-> a) -> (b %1-> t) -> Iso s t a b
 iso f g = Optical (dimap f g)
 
-withIso :: Optic_ (Exchange a b) s t a b -> ((s #-> a) -> (b #-> t) -> r) -> r
+withIso :: Optic_ (Exchange a b) s t a b -> ((s %1-> a) -> (b %1-> t) -> r) -> r
 withIso (Optical l) f = f fro to
   where Exchange fro to = l (Exchange id id)
 
-withPrism :: Optic_ (Market a b) s t a b -> ((b #-> t) -> (s #-> Either t a) -> r) -> r
+withPrism :: Optic_ (Market a b) s t a b -> ((b %1-> t) -> (s %1-> Either t a) -> r) -> r
 withPrism (Optical l) f = f b m
   where Market b m = l (Market id Right)
 
 -- XXX: probably a direct implementation would be better
 withLens
   :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) s t a b
-  -> (forall c. (s #-> (c, a)) -> ((c, b) #-> t) -> r)
+  -> (forall c. (s %1-> (c, a)) -> ((c, b) %1-> t) -> r)
   -> r
 withLens l k = k (Bifunctor.swap . (reifyLens l)) (uncurry ($))
 
-reifyLens :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) s t a b -> s #-> (a, b #-> t)
+reifyLens :: Optic_ (Linear.Kleisli (Compose ((,) a) (FUN 'One b))) s t a b -> s %1-> (a, b %1-> t)
 reifyLens (Optical l) s = getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (a, id)))) s)
 
 -- linear variant of getCompose
-getCompose :: Compose f g a #-> f (g a)
+getCompose :: Compose f g a %1-> f (g a)
 getCompose (Compose x) = x

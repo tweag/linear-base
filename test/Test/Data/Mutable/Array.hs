@@ -81,7 +81,7 @@ group =
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type ArrayTester = Array.Array Int #-> Ur (TestT IO ())
+type ArrayTester = Array.Array Int %1-> Ur (TestT IO ())
 
 nonEmptyList :: Gen [Int]
 nonEmptyList = Gen.list (Range.linear 1 1000) value
@@ -94,13 +94,13 @@ value :: Gen Int
 value = Gen.int (Range.linear (-1000) 1000)
 
 compInts ::
-  Ur Int #->
-  Ur Int #->
+  Ur Int %1->
+  Ur Int %1->
   Ur (TestT IO ())
 compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getFst :: Consumable b => (a, b) #-> a
+getFst :: Consumable b => (a, b) %1-> a
 getFst (a, b) = lseq b a
 
 
@@ -162,7 +162,7 @@ readWrite2Test :: Int -> Int -> Int -> ArrayTester
 readWrite2Test ix jx val arr = fromRead (Array.read arr ix)
   where
     fromRead ::
-      (Ur Int, Array.Array Int) #-> Ur (TestT IO ())
+      (Ur Int, Array.Array Int) %1-> Ur (TestT IO ())
     fromRead (val1, arr) =
       compInts
         val1
@@ -260,7 +260,7 @@ refFmap :: Property
 refFmap = property $ do
   xs <- forAll list
   let -- An arbitrary function
-      f :: Int #-> Bool
+      f :: Int %1-> Bool
       f = (Linear.> 0)
       expected = map (Linear.forget f) xs
       Ur actual =
@@ -291,7 +291,7 @@ readAndWriteTest :: Property
 readAndWriteTest = withTests 1 . property $
   unur (Array.fromList "a" test) === 'a'
   where
-    test :: Array.Array Char #-> Ur Char
+    test :: Array.Array Char %1-> Ur Char
     test arr =
       Array.read arr 0 Linear.& \(before, arr') ->
         Array.write arr' 0 'b' Linear.& \arr'' ->
@@ -302,7 +302,7 @@ strictnessTest :: Property
 strictnessTest = withTests 1 . property $
   unur (Array.fromList [()] test) === ()
   where
-    test :: Array.Array () #-> Ur ()
+    test :: Array.Array () %1-> Ur ()
     test arr =
       Array.write arr 0 (error "this should not be evaluated") Linear.& \arr ->
       Array.read arr 0 Linear.& \(Ur _, arr) ->

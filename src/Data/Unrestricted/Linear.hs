@@ -16,7 +16,7 @@
 --
 -- = /Critical/ Definition: Restricted
 --
--- In a linear function @f :: a #-> b@, the argument @a@ must
+-- In a linear function @f :: a %1-> b@, the argument @a@ must
 -- be used in a linear way. Its use is __restricted__ while
 -- an argument in a non-linear function is __unrestricted__.
 --
@@ -25,7 +25,7 @@
 -- the following equivalence:
 --
 -- @
--- (Ur a #-> b) ≌ (a -> b)
+-- (Ur a %1-> b) ≌ (a -> b)
 -- @
 --
 -- = Consumable, Dupable, Moveable classes
@@ -35,36 +35,36 @@
 -- If a type is 'Consumable', you can __consume__ it in a linear function that
 -- doesn't need that value to produce it's result:
 --
--- > first :: Consumable b => (a,b) #-> a
+-- > first :: Consumable b => (a,b) %1-> a
 -- > first (a,b) = withConsume (consume b) a
 -- >   where
--- >     withConsume :: () #-> a #-> a
+-- >     withConsume :: () %1-> a %1-> a
 -- >     withConsume () x = x
 --
 -- If a type is 'Dupable', you can __duplicate__ it as much as you like.
 --
 -- > -- checkIndex ix size_of_array
--- > checkIndex :: Int #-> Int #-> Bool
+-- > checkIndex :: Int %1-> Int %1-> Bool
 -- > checkIndex ix size = withDuplicate (dup2 ix) size
 -- >   where
--- >     withDuplicate :: (Int, Int) #-> Int #-> Bool
+-- >     withDuplicate :: (Int, Int) %1-> Int %1-> Bool
 -- >     withDuplicate (ix,ix') size = (0 <= ix) && (ix < size)
--- >     (<) :: Int #-> Int #-> Bool
+-- >     (<) :: Int %1-> Int %1-> Bool
 -- >     (<) = ...
 -- >
--- >     (<=) :: Int #-> Int #-> Bool
+-- >     (<=) :: Int %1-> Int %1-> Bool
 -- >     (<=) = ...
 -- >
--- >     (&&) :: Bool #-> Bool #-> Bool
+-- >     (&&) :: Bool %1-> Bool %1-> Bool
 -- >     (&&) = ...
 --
 -- If a type is 'Moveable', you can __move__ it inside 'Ur'
 -- and use it in any non-linear way you would like.
 --
--- > diverge :: Int #-> Bool
+-- > diverge :: Int %1-> Bool
 -- > diverge ix = fromMove (move ix)
 -- >   where
--- >     fromMove :: Ur Int #-> Bool
+-- >     fromMove :: Ur Int %1-> Bool
 -- >     fromMove (Ur 0) = True
 -- >     fromMove (Ur 1) = True
 -- >     fromMove (Ur x) = False
@@ -102,7 +102,7 @@ import qualified Unsafe.Linear as Unsafe
 -- context. The key idea is that because the contructor holds @a@ with a
 -- regular arrow, a function that uses @Ur a@ linearly can use @a@
 -- however it likes.
--- > someLinear :: Ur a #-> (a,a)
+-- > someLinear :: Ur a %1-> (a,a)
 -- > someLinear (Ur a) = (a,a)
 data Ur a where
   Ur :: a -> Ur a
@@ -111,36 +111,36 @@ data Ur a where
 -- linearly bound @Ur a@, then the @a@ you get out has to be used
 -- linearly, for example:
 --
--- > restricted :: Ur a #-> b
+-- > restricted :: Ur a %1-> b
 -- > restricted x = f (unur x)
 -- >   where
 -- >     -- f __must__ be linear
--- >     f :: a #-> b
+-- >     f :: a %1-> b
 -- >     f x = ...
-unur :: Ur a #-> a
+unur :: Ur a %1-> a
 unur (Ur a) = a
 
 -- | Lifts a function on a linear @Ur a@.
-lift :: (a -> b) -> Ur a #-> Ur b
+lift :: (a -> b) -> Ur a %1-> Ur b
 lift f (Ur a) = Ur (f a)
 
 -- | Lifts a function to work on two linear @Ur a@.
-lift2 :: (a -> b -> c) -> Ur a #-> Ur b #-> Ur c
+lift2 :: (a -> b -> c) -> Ur a %1-> Ur b %1-> Ur c
 lift2 f (Ur a) (Ur b) = Ur (f a b)
 
 
 class Consumable a where
-  consume :: a #-> ()
+  consume :: a %1-> ()
 
 -- | Consume the unit and return the second argument.
 -- This is like 'seq' but since the first argument is restricted to be of type
 -- @()@ it is consumed, hence @seqUnit@ is linear in its first argument.
-seqUnit :: () #-> b #-> b
+seqUnit :: () %1-> b %1-> b
 seqUnit () b = b
 
 -- | Consume the first argument and return the second argument.
 -- This is like 'seq' but the first argument is restricted to be 'Consumable'.
-lseq :: Consumable a => a #-> b #-> b
+lseq :: Consumable a => a %1-> b %1-> b
 lseq a b = seqUnit (consume a) b
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
@@ -155,13 +155,13 @@ lseq a b = seqUnit (consume a) b
 class Consumable a => Dupable a where
   {-# MINIMAL dupV | dup2 #-}
 
-  dupV :: forall n. KnownNat n => a #-> V n a
+  dupV :: forall n. KnownNat n => a %1-> V n a
   dupV a =
     case V.caseNat @n of
       Prelude.Left Refl -> a `lseq` V.make @0 @a
       Prelude.Right Refl -> V.iterate dup2 a
 
-  dup2 :: a #-> (a, a)
+  dup2 :: a %1-> (a, a)
   dup2 a = V.elim (dupV @a @2 a) (,)
 
 -- | The laws of the @Movable@ class mean that @move@ is compatible with
@@ -171,12 +171,12 @@ class Consumable a => Dupable a where
 -- * @case move x of {Ur x -> x} = x@
 -- * @case move x of {Ur x -> (x, x)} = dup2 x@
 class Dupable a => Movable a where
-  move :: a #-> Ur a
+  move :: a %1-> Ur a
 
-dup3 :: Dupable a => a #-> (a, a, a)
+dup3 :: Dupable a => a %1-> (a, a, a)
 dup3 x = V.elim (dupV @_ @3 x) (,,)
 
-dup :: Dupable a => a #-> (a, a)
+dup :: Dupable a => a %1-> (a, a)
 dup = dup2
 
 instance Consumable () where
@@ -362,7 +362,7 @@ instance Prelude.Traversable Ur where
   sequenceA (Ur x) = Prelude.fmap Ur x
 
 -- | Discard a consumable value stored in a data functor.
-void :: (Data.Functor f, Consumable a) => f a #-> f ()
+void :: (Data.Functor f, Consumable a) => f a %1-> f ()
 void = Data.fmap consume
 
 -- Some stock instances
@@ -384,6 +384,6 @@ newtype MovableMonoid a = MovableMonoid a
 
 instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
   MovableMonoid a <> MovableMonoid b = MovableMonoid (combine (move a) (move b))
-    where combine :: Prelude.Semigroup a => Ur a #-> Ur a #-> a
+    where combine :: Prelude.Semigroup a => Ur a %1-> Ur a %1-> a
           combine (Ur x) (Ur y) = x Prelude.<> y
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)

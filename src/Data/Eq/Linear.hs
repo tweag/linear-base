@@ -12,6 +12,7 @@ module Data.Eq.Linear
 
 import Data.Bool.Linear
 import qualified Prelude
+import Prelude.Linear.Internal
 import Data.Unrestricted.Linear
 
 -- | Testing equality on values.
@@ -26,9 +27,9 @@ import Data.Unrestricted.Linear
 --
 class Eq a where
   {-# MINIMAL (==) | (/=) #-}
-  (==) :: a #-> a #-> Bool
+  (==) :: a %1-> a %1-> Bool
   x == y = not (x /= y)
-  (/=) :: a #-> a #-> Bool
+  (/=) :: a %1-> a %1-> Bool
   x /= y = not (x == y)
   infix 4 ==, /=
 
@@ -77,9 +78,9 @@ newtype MovableEq a = MovableEq a
 
 instance (Prelude.Eq a, Movable a) => Eq (MovableEq a) where
   MovableEq ar == MovableEq br
-    | Ur a <- move ar , Ur b <- move br
-    = a Prelude.== b
+    = move (ar, br) & \(Ur (a, b)) ->
+        a Prelude.== b
 
   MovableEq ar /= MovableEq br
-    | Ur a <- move ar , Ur b <- move br
-    = a Prelude./= b
+    = move (ar, br) & \(Ur (a, b)) ->
+        a Prelude./= b

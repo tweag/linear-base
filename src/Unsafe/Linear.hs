@@ -13,7 +13,7 @@
 --
 -- * Import this module qualifed as Unsafe.
 -- * Do not use this unless you have to. Specifically, if you can write a
--- linear function @f :: A #-> B@, do not write a non-linear version and coerce
+-- linear function @f :: A %1-> B@, do not write a non-linear version and coerce
 -- it.
 
 module Unsafe.Linear
@@ -29,23 +29,23 @@ import qualified Unsafe.Coerce as NonLinear
 import GHC.Exts (TYPE, RuntimeRep)
 
 -- | Linearly typed @unsafeCoerce@
-coerce :: a #-> b
+coerce :: a %1-> b
 coerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
 
 -- | Converts an unrestricted function into a linear function
 toLinear
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2).
-     (a -> b) #-> (a #-> b)
+     (a -> b) %1-> (a %1-> b)
 toLinear = coerce
 
 -- | Like 'toLinear' but for two-argument functions
 toLinear2
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep) (r3 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3).
-     (a -> b -> c) #-> (a #-> b #-> c)
+     (a -> b -> c) %1-> (a %1-> b %1-> c)
 toLinear2 = coerce
 
 -- | Like 'toLinear' but for three-argument functions
-toLinear3 :: (a -> b -> c -> d) #-> (a #-> b #-> c #-> d)
+toLinear3 :: (a -> b -> c -> d) %1-> (a %1-> b %1-> c %1-> d)
 toLinear3 = coerce

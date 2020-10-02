@@ -44,20 +44,20 @@ newtype Array# a = Array# (GHC.MutableArray# GHC.RealWorld a)
 
 -- | Extract the underlying 'GHC.MutableArray#', consuming the 'Array#'
 -- in process.
-unArray# :: (GHC.MutableArray# GHC.RealWorld a -> b) -> Array# a #-> Ur b
+unArray# :: (GHC.MutableArray# GHC.RealWorld a -> b) -> Array# a %1-> Ur b
 unArray# f = Unsafe.toLinear (\(Array# a) -> Ur (f a))
 
 -- | Consume an 'Array#'.
 --
 -- Note that we can not implement a 'Consumable' instance because 'Array#'
 -- is unlifted.
-lseq :: Array# a #-> b #-> b
+lseq :: Array# a %1-> b %1-> b
 lseq = Unsafe.toLinear2 (\_ b -> b)
 
 -- | Allocate a mutable array of given size using a default value.
 --
 -- The size should be non-negative.
-alloc :: Int -> a -> (Array# a #-> Ur b) #-> Ur b
+alloc :: Int -> a -> (Array# a %1-> Ur b) %1-> Ur b
 alloc (GHC.I# s) a f =
   let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
@@ -72,7 +72,7 @@ alloc (GHC.I# s) a f =
 -- using another 'Array#' as a uniqueness proof.
 --
 -- The size should be non-negative.
-allocBeside :: Int -> a -> Array# b #-> (# Array# a, Array# b #)
+allocBeside :: Int -> a -> Array# b %1-> (# Array# a, Array# b #)
 allocBeside (GHC.I# s) a orig =
   let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
@@ -80,7 +80,7 @@ allocBeside (GHC.I# s) a orig =
    in (# new, orig #)
 {-# NOINLINE allocBeside #-}  -- prevents runRW# from floating outwards
 
-size :: Array# a #-> (# Ur Int, Array# a #)
+size :: Array# a %1-> (# Ur Int, Array# a #)
 size = Unsafe.toLinear go
   where
     go :: Array# a -> (# Ur Int, Array# a #)
@@ -88,7 +88,7 @@ size = Unsafe.toLinear go
       let !s = GHC.sizeofMutableArray# arr
       in  (# Ur (GHC.I# s), Array# arr  #)
 
-get ::  Int -> Array# a #-> (# Ur a, Array# a #)
+get ::  Int -> Array# a %1-> (# Ur a, Array# a #)
 get (GHC.I# i) = Unsafe.toLinear go
   where
     go :: Array# a -> (# Ur a, Array# a #)
@@ -97,7 +97,7 @@ get (GHC.I# i) = Unsafe.toLinear go
         (# _, ret #) -> (# Ur ret, Array# arr #)
 {-# NOINLINE get #-}  -- prevents the runRW# effect from being reordered
 
-set :: Int -> a -> Array# a #-> Array# a
+set :: Int -> a -> Array# a %1-> Array# a
 set (GHC.I# i) (a :: a) = Unsafe.toLinear go
   where
     go :: Array# a -> Array# a
@@ -116,7 +116,7 @@ set (GHC.I# i) (a :: a) = Unsafe.toLinear go
 --  copyInto n src dest:
 --   dest[i] = src[n+i] for i < size dest, i < size src + n
 -- @
-copyInto :: Int -> Array# a #-> Array# a #-> (# Array# a, Array# a #)
+copyInto :: Int -> Array# a %1-> Array# a %1-> (# Array# a, Array# a #)
 copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
   where
     go :: Array# a -> Array# a -> (# Array# a, Array# a #)
@@ -128,7 +128,7 @@ copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
             _ -> (# Array# src, Array# dst #)
 {-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
 
-map :: (a -> b) -> Array# a #-> Array# b
+map :: (a -> b) -> Array# a %1-> Array# b
 map (f :: a -> b) arr =
   size arr
     `chain2` \(# Ur s, arr' #) -> go 0 s arr'
@@ -136,7 +136,7 @@ map (f :: a -> b) arr =
   -- When we're mapping an array, we first insert `b`'s
   -- inside an `Array# a` by unsafeCoerce'ing, and then we
   -- unsafeCoerce the result to an `Array# b`.
-  go :: Int -> Int -> Array# a #-> Array# b
+  go :: Int -> Int -> Array# a %1-> Array# b
   go i s arr'
     | i Prelude.== s =
         Unsafe.toLinear GHC.unsafeCoerce# arr'
@@ -147,7 +147,7 @@ map (f :: a -> b) arr =
 {-# NOINLINE map #-}
 
 -- | Return the array elements as a lazy list.
-toList :: Array# a #-> Ur [a]
+toList :: Array# a %1-> Ur [a]
 toList = unArray# Prelude.$ \arr ->
   go
     0
@@ -161,7 +161,7 @@ toList = unArray# Prelude.$ \arr ->
           (# _, ret #) -> ret : go (i Prelude.+ 1) len arr
 
 -- | /O(1)/ Convert an 'Array#' to an immutable 'GHC.Array#'.
-freeze :: (GHC.Array# a -> b) -> Array# a #-> Ur b
+freeze :: (GHC.Array# a -> b) -> Array# a %1-> Ur b
 freeze f = unArray# go
  where
   go mut =
@@ -169,7 +169,7 @@ freeze f = unArray# go
       (# _, ret #) -> f ret
 
 -- | Clone an array.
-dup2 :: Array# a #-> (# Array# a, Array# a #)
+dup2 :: Array# a %1-> (# Array# a, Array# a #)
 dup2 = Unsafe.toLinear go
  where
   go :: Array# a -> (# Array# a, Array# a #)
@@ -188,10 +188,10 @@ dup2 = Unsafe.toLinear go
 -- disallows binding to levity-polymorphic values.
 
 chain :: forall (r :: GHC.RuntimeRep) a (b :: GHC.TYPE r).
-        Array# a #-> (Array# a #-> b) #-> b
+        Array# a %1-> (Array# a %1-> b) %1-> b
 chain a f = f a
 
 chain2 :: forall (r :: GHC.RuntimeRep) a b (c :: GHC.TYPE r).
-        (# b, Array# a #) #-> ((# b, Array# a #) #-> c) #-> c
+        (# b, Array# a #) %1-> ((# b, Array# a #) %1-> c) %1-> c
 chain2 a f = f a
 infixl 1 `chain`, `chain2`

@@ -32,7 +32,7 @@ import qualified Data.Functor.Linear as Data
 -- | Linear Kleisli arrows for the monad `m`. These arrows are still useful
 -- in the case where `m` is not a monad however, and some profunctorial
 -- properties still hold in this weaker setting.
-newtype Kleisli m a b = Kleisli { runKleisli :: a #-> m b }
+newtype Kleisli m a b = Kleisli { runKleisli :: a %1-> m b }
 
 instance Data.Functor f => Profunctor (Kleisli f) where
   dimap f g (Kleisli h) = Kleisli (Data.fmap g . h . f)
@@ -63,7 +63,7 @@ instance Control.Applicative f => Wandering (Kleisli f) where
 -- profunctorial properties still hold in this weaker setting.
 -- However stronger requirements on `f` are needed for profunctorial
 -- strength, so we have fewer instances.
-newtype CoKleisli w a b = CoKleisli { runCoKleisli :: w a #-> b }
+newtype CoKleisli w a b = CoKleisli { runCoKleisli :: w a %1-> b }
 
 instance Data.Functor f => Profunctor (CoKleisli f) where
   dimap f g (CoKleisli h) = CoKleisli (g . h . Data.fmap f)

@@ -32,7 +32,7 @@ import qualified Prelude
 -- | A linear semigroup @a@ is a type with an associative binary operation @<>@
 -- that linearly consumes two @a@s.
 class Prelude.Semigroup a => Semigroup a where
-  (<>) :: a #-> a #-> a
+  (<>) :: a %1-> a %1-> a
 
 -- | A linear monoid is a linear semigroup with an identity on the binary
 -- operation.
@@ -42,10 +42,10 @@ class (Semigroup a, Prelude.Monoid a) => Monoid a where
   mempty = Prelude.mempty
   -- convenience redefine
 
-mconcat :: Monoid a => [a] #-> a
+mconcat :: Monoid a => [a] %1-> a
 mconcat (xs' :: [a]) = go mempty xs'
   where
-    go :: a #-> [a] #-> a
+    go :: a %1-> [a] %1-> a
     go acc [] = acc
     go acc (x:xs) = go (acc <> x) xs
 
@@ -56,15 +56,15 @@ mconcat (xs' :: [a]) = go mempty xs'
 instance Semigroup () where
   () <> () = ()
 
--- | An @Endo a@ is just a linear function of type @a #-> a@.
+-- | An @Endo a@ is just a linear function of type @a %1-> a@.
 -- This has a classic monoid definition with 'id' and '(.)'.
-newtype Endo a = Endo (a #-> a)
+newtype Endo a = Endo (a %1-> a)
   deriving (Prelude.Semigroup) via NonLinear (Endo a)
 
 -- TODO: have this as a newtype deconstructor once the right type can be
 -- correctly inferred
 -- | A linear application of an 'Endo'.
-appEndo :: Endo a #-> a #-> a
+appEndo :: Endo a %1-> a %1-> a
 appEndo (Endo f) = f
 
 instance Semigroup (Endo a) where
@@ -96,7 +96,7 @@ instance Semigroup Any where
 -- For linear monoids, you should supply a Prelude.Monoid instance and either
 -- declare an empty Monoid instance, or use DeriveAnyClass. For example:
 --
--- > newtype Endo a = Endo (a #-> a)
+-- > newtype Endo a = Endo (a %1-> a)
 -- >   deriving (Prelude.Semigroup) via NonLinear (Endo a)
 newtype NonLinear a = NonLinear a
 

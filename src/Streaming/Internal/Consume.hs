@@ -88,14 +88,14 @@ one
 two
 three
 -}
-stdoutLn :: Stream (Of Text) IO () #-> IO ()
+stdoutLn :: Stream (Of Text) IO () %1-> IO ()
 stdoutLn stream = stdoutLn' stream
 {-# INLINE stdoutLn #-}
 
 -- | Like stdoutLn but with an arbitrary return value
-stdoutLn' :: forall r. Stream (Of Text) IO r #-> IO r
+stdoutLn' :: forall r. Stream (Of Text) IO r %1-> IO r
 stdoutLn' stream = loop stream where
-  loop :: Stream (Of Text) IO r #-> IO r
+  loop :: Stream (Of Text) IO r %1-> IO r
   loop stream = stream & \case
     Return r -> Control.return r
     Effect ms -> ms Control.>>= stdoutLn'
@@ -107,13 +107,13 @@ stdoutLn' stream = loop stream where
 {-| Print the elements of a stream as they arise.
 
 -}
-print :: Show a => Stream (Of a) IO r #-> IO r
+print :: Show a => Stream (Of a) IO r %1-> IO r
 print = stdoutLn' . map (Text.pack Prelude.. Prelude.show)
 
 -- | Write a stream to a handle and return the handle.
-toHandle :: Handle #-> Stream (Of Text) RIO r #-> RIO (r, Handle)
+toHandle :: Handle %1-> Stream (Of Text) RIO r %1-> RIO (r, Handle)
 toHandle handle stream = loop handle stream where
-  loop :: Handle #-> Stream (Of Text) RIO r #-> RIO (r, Handle)
+  loop :: Handle %1-> Stream (Of Text) RIO r %1-> RIO (r, Handle)
   loop handle stream = stream & \case
     Return r -> Control.return (r, handle)
     Effect ms -> ms Control.>>= toHandle handle
@@ -123,7 +123,7 @@ toHandle handle stream = loop handle stream where
 {-# INLINABLE toHandle #-}
 
 -- | Write a stream of text as lines as lines to a file
-writeFile :: FilePath -> Stream (Of Text) RIO r #-> RIO r
+writeFile :: FilePath -> Stream (Of Text) RIO r %1-> RIO r
 writeFile filepath stream = Control.do
   handle <- openFile filepath System.WriteMode
   (r,handle') <- toHandle handle stream
@@ -152,9 +152,9 @@ writeFile filepath stream = Control.do
     The similar @effects@ and @copy@ operations in @Data.ByteString.Streaming@ obey the same rules.
 
 -}
-effects :: forall a m r. Control.Monad m => Stream (Of a) m r #-> m r
+effects :: forall a m r. Control.Monad m => Stream (Of a) m r %1-> m r
 effects stream = loop stream where
-  loop :: Stream (Of a) m r #-> m r
+  loop :: Stream (Of a) m r %1-> m r
   loop stream = stream & \case
     Return r -> Control.return r
     Effect ms -> ms Control.>>= effects
@@ -163,9 +163,9 @@ effects stream = loop stream where
 
 {- | Remove the elements from a stream of values, retaining the structure of layers.
 -}
-erase :: forall a m r. Control.Monad m => Stream (Of a) m r #-> Stream Identity m r
+erase :: forall a m r. Control.Monad m => Stream (Of a) m r %1-> Stream Identity m r
 erase stream = loop stream where
-  loop :: Stream (Of a) m r #-> Stream Identity m r
+  loop :: Stream (Of a) m r %1-> Stream Identity m r
   loop stream = stream & \case
     Return r -> Return r
     Step (_ :> stream') -> Step $ Identity (erase stream')
@@ -195,7 +195,7 @@ drained ::
   , Control.Monad (t m)
   , Control.Functor (t m)
   , Control.MonadTrans t) =>
-  t m (Stream (Of a) m r) #-> t m r
+  t m (Stream (Of a) m r) %1-> t m r
 drained = Control.join . Control.fmap (Control.lift . effects)
 {-# INLINE drained #-}
 
@@ -219,9 +219,9 @@ drained = Control.join . Control.fmap (Control.lift . effects)
 
 -}
 mapM_ :: forall a m b r. (Consumable b, Control.Monad m) =>
-  (a -> m b) -> Stream (Of a) m r #-> m r
+  (a -> m b) -> Stream (Of a) m r %1-> m r
 mapM_  f stream = loop stream where
-  loop :: Stream (Of a) m r #-> m r
+  loop :: Stream (Of a) m r %1-> m r
   loop stream = stream & \case
     Return r -> Control.return r
     Effect ms -> ms Control.>>= mapM_ f
@@ -255,12 +255,12 @@ mapM_  f stream = loop stream where
     Applicative instance for @Control.Foldl.Fold@  We can apply such a fold
     @purely@
 
-> Control.Foldl.purely S.fold :: Control.Monad m => Fold a b -> Stream (Of a) m r #-> m (Of b r)
+> Control.Foldl.purely S.fold :: Control.Monad m => Fold a b -> Stream (Of a) m r %1-> m (Of b r)
 
     Thus, specializing a bit:
 
-> L.purely S.fold L.sum :: Stream (Of Int) Int r #-> m (Of Int r)
-> mapped (L.purely S.fold L.sum) :: Stream (Stream (Of Int)) IO r #-> Stream (Of Int) IO r
+> L.purely S.fold L.sum :: Stream (Of Int) Int r %1-> m (Of Int r)
+> mapped (L.purely S.fold L.sum) :: Stream (Stream (Of Int)) IO r %1-> Stream (Of Int) IO r
 
     Here we use the Applicative instance for @Control.Foldl.Fold@ to
     stream three-item segments of a stream together with their sums and products.
@@ -275,9 +275,9 @@ mapM_  f stream = loop stream where
 
 -}
 fold :: forall x a b m r. Control.Monad m =>
-  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> m (Of b r)
+  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r %1-> m (Of b r)
 fold f x g stream = loop stream where
-  loop :: Stream (Of a) m r #-> m (Of b r)
+  loop :: Stream (Of a) m r %1-> m (Of b r)
   loop stream = stream & \case
     Return r -> Control.return $ g x :> r
     Effect ms -> ms Control.>>= fold f x g
@@ -298,13 +298,13 @@ fold f x g stream = loop stream where
     writing a strict accumulation function. It is also crucial to the
     Applicative instance for @Control.Foldl.Fold@
 
-> Control.Foldl.purely fold :: Control.Monad m => Fold a b -> Stream (Of a) m () #-> m b
+> Control.Foldl.purely fold :: Control.Monad m => Fold a b -> Stream (Of a) m () %1-> m b
 
 -}
 fold_ :: forall x a b m r. (Control.Monad m, Consumable r) =>
-  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> m b
+  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r %1-> m b
 fold_ f x g stream = loop stream where
-  loop :: Stream (Of a) m r #-> m b
+  loop :: Stream (Of a) m r %1-> m b
   loop stream = stream & \case
     Return r -> lseq r $ Control.return $ g x
     Effect ms -> ms Control.>>= fold_ f x g
@@ -318,7 +318,7 @@ fold_ f x g stream = loop stream where
 --
 {-| Strict, monadic fold of the elements of a @Stream (Of a)@
 
-> Control.Foldl.impurely foldM :: Control.Monad m => FoldM a b -> Stream (Of a) m r #-> m (b, r)
+> Control.Foldl.impurely foldM :: Control.Monad m => FoldM a b -> Stream (Of a) m r %1-> m (b, r)
 
    Thus to accumulate the elements of a stream as a vector, together with a random
    element we might write:
@@ -329,9 +329,9 @@ fold_ f x g stream = loop stream where
 @
 -}
 foldM :: forall x a m b r. Control.Monad m =>
-  (x #-> a -> m x) -> m x -> (x #-> m b) -> Stream (Of a) m r #-> m (b,r)
+  (x %1-> a -> m x) -> m x -> (x %1-> m b) -> Stream (Of a) m r %1-> m (b,r)
 foldM f mx g stream = loop stream where
-  loop :: Stream (Of a) m r #-> m (b,r)
+  loop :: Stream (Of a) m r %1-> m (b,r)
   loop stream = stream & \case
     Return r -> mx Control.>>= g Control.>>= (\b -> Control.return (b,r))
     Effect ms -> ms Control.>>= foldM f mx g
@@ -340,12 +340,12 @@ foldM f mx g stream = loop stream where
 
 {-| Strict, monadic fold of the elements of a @Stream (Of a)@
 
-> Control.Foldl.impurely foldM_ :: Control.Monad m => FoldM a b -> Stream (Of a) m () #-> m b
+> Control.Foldl.impurely foldM_ :: Control.Monad m => FoldM a b -> Stream (Of a) m () %1-> m b
 -}
 foldM_ :: forall a m x b r. (Control.Monad m, Consumable r) =>
-  (x #-> a -> m x) -> m x -> (x #-> m b) -> Stream (Of a) m r #-> m b
+  (x %1-> a -> m x) -> m x -> (x %1-> m b) -> Stream (Of a) m r %1-> m b
 foldM_ f mx g stream = loop stream where
-  loop :: Stream (Of a) m r #-> m b
+  loop :: Stream (Of a) m r %1-> m b
   loop stream = stream & \case
     Return r  -> lseq r $ mx Control.>>= g
     Effect ms -> ms Control.>>= foldM_ f mx g
@@ -353,28 +353,28 @@ foldM_ f mx g stream = loop stream where
 {-# INLINABLE foldM_ #-}
 
 -- | Note: does not short circuit
-all :: Control.Monad m => (a -> Bool) -> Stream (Of a) m r #-> m (Of Bool r)
+all :: Control.Monad m => (a -> Bool) -> Stream (Of a) m r %1-> m (Of Bool r)
 all f stream = fold (&&) True id (map f stream)
 {-# INLINABLE all #-}
 
 -- | Note: does not short circuit
-all_ :: (Consumable r, Control.Monad m) => (a -> Bool) -> Stream (Of a) m r #-> m Bool
+all_ :: (Consumable r, Control.Monad m) => (a -> Bool) -> Stream (Of a) m r %1-> m Bool
 all_ f stream = fold_ (&&) True id (map f stream)
 {-# INLINABLE all_ #-}
 
 -- | Note: does not short circuit
-any :: Control.Monad m => (a -> Bool) -> Stream (Of a) m r #-> m (Of Bool r)
+any :: Control.Monad m => (a -> Bool) -> Stream (Of a) m r %1-> m (Of Bool r)
 any f stream = fold (||) False id (map f stream)
 {-# INLINABLE any #-}
 
 -- | Note: does not short circuit
-any_ :: (Consumable r, Control.Monad m) => (a -> Bool) -> Stream (Of a) m r #-> m Bool
+any_ :: (Consumable r, Control.Monad m) => (a -> Bool) -> Stream (Of a) m r %1-> m Bool
 any_ f stream = fold_ (||) False id (map f stream)
 {-# INLINABLE any_ #-}
 
 {-| Fold a 'Stream' of numbers into their sum with the return value
 
->  mapped S.sum :: Stream (Stream (Of Int)) m r #-> Stream (Of Int) m r
+>  mapped S.sum :: Stream (Stream (Of Int)) m r %1-> Stream (Of Int) m r
 
 @
 \>\>\> S.sum $ each' [1..10]
@@ -395,12 +395,12 @@ any_ f stream = fold_ (||) False id (map f stream)
 10
 @
 -}
-sum :: (Control.Monad m, Num a) => Stream (Of a) m r #-> m (Of a r)
+sum :: (Control.Monad m, Num a) => Stream (Of a) m r %1-> m (Of a r)
 sum stream = fold (+) 0 id stream
 {-# INLINE sum #-}
 
 -- | Fold a 'Stream' of numbers into their sum
-sum_ :: (Control.Monad m, Num a) => Stream (Of a) m () #-> m a
+sum_ :: (Control.Monad m, Num a) => Stream (Of a) m () %1-> m a
 sum_ stream = fold_ (+) 0 id stream
 {-# INLINE sum_ #-}
 
@@ -408,18 +408,18 @@ sum_ stream = fold_ (+) 0 id stream
 
 >  mapped product :: Stream (Stream (Of Int)) m r -> Stream (Of Int) m r
 -}
-product :: (Control.Monad m, Num a) => Stream (Of a) m r #-> m (Of a r)
+product :: (Control.Monad m, Num a) => Stream (Of a) m r %1-> m (Of a r)
 product stream = fold (*) 1 id stream
 {-# INLINE product #-}
 
 -- | Fold a 'Stream' of numbers into their product
-product_ :: (Control.Monad m, Num a) => Stream (Of a) m () #-> m a
+product_ :: (Control.Monad m, Num a) => Stream (Of a) m () %1-> m a
 product_ stream = fold_ (*) 1 id stream
 {-# INLINE product_ #-}
 
 -- | Note that 'head' exhausts the rest of the stream following the
 -- first element, performing all monadic effects via 'effects'
-head :: Control.Monad m => Stream (Of a) m r #-> m (Of (Maybe a) r)
+head :: Control.Monad m => Stream (Of a) m r %1-> m (Of (Maybe a) r)
 head str = str & \case
   Return r -> Control.return (Nothing :> r)
   Effect m -> m Control.>>= head
@@ -429,7 +429,7 @@ head str = str & \case
 
 -- | Note that 'head' exhausts the rest of the stream following the
 -- first element, performing all monadic effects via 'effects'
-head_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r #-> m (Maybe a)
+head_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r %1-> m (Maybe a)
 head_ str = str & \case
   Return r -> lseq r $ Control.return Nothing
   Effect m -> m Control.>>= head_
@@ -437,20 +437,20 @@ head_ str = str & \case
     effects rest Control.>>= \r -> lseq r $ Control.return  (Just a)
 {-# INLINABLE head_ #-}
 
-last :: Control.Monad m => Stream (Of a) m r #-> m (Of (Maybe a) r)
+last :: Control.Monad m => Stream (Of a) m r %1-> m (Of (Maybe a) r)
 last = loop Nothing where
   loop :: Control.Monad m =>
-    Maybe a -> Stream (Of a) m r #-> m (Of (Maybe a) r)
+    Maybe a -> Stream (Of a) m r %1-> m (Of (Maybe a) r)
   loop m s = s & \case
     Return r  -> Control.return (m :> r)
     Effect m -> m Control.>>= last
     Step (a :> rest) -> loop (Just a) rest
 {-# INLINABLE last #-}
 
-last_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r #-> m (Maybe a)
+last_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r %1-> m (Maybe a)
 last_ = loop Nothing where
   loop :: (Consumable r, Control.Monad m) =>
-    Maybe a -> Stream (Of a) m r #-> m (Maybe a)
+    Maybe a -> Stream (Of a) m r %1-> m (Maybe a)
   loop m s = s & \case
     Return r  -> lseq r $ Control.return m
     Effect m -> m Control.>>= last_
@@ -458,9 +458,9 @@ last_ = loop Nothing where
 {-# INLINABLE last_ #-}
 
 elem :: forall a m r. (Control.Monad m, Eq a) =>
-  a -> Stream (Of a) m r #-> m (Of Bool r)
+  a -> Stream (Of a) m r %1-> m (Of Bool r)
 elem a stream = loop stream where
-  loop :: Stream (Of a) m r #-> m (Of Bool r)
+  loop :: Stream (Of a) m r %1-> m (Of Bool r)
   loop stream = stream & \case
     Return r -> Control.return $ False :> r
     Effect ms -> ms Control.>>= elem a
@@ -470,9 +470,9 @@ elem a stream = loop stream where
 {-# INLINABLE elem #-}
 
 elem_ :: forall a m r. (Consumable r, Control.Monad m, Eq a) =>
-  a -> Stream (Of a) m r #-> m Bool
+  a -> Stream (Of a) m r %1-> m Bool
 elem_ a stream = loop stream where
-  loop :: Stream (Of a) m r #-> m Bool
+  loop :: Stream (Of a) m r %1-> m Bool
   loop stream = stream & \case
     Return r -> lseq r $ Control.return False
     Effect ms -> ms Control.>>= elem_ a
@@ -484,14 +484,14 @@ elem_ a stream = loop stream where
 {-| Exhaust a stream deciding whether @a@ was an element.
 
 -}
-notElem :: (Control.Monad m, Eq a) => a -> Stream (Of a) m r #-> m (Of Bool r)
+notElem :: (Control.Monad m, Eq a) => a -> Stream (Of a) m r %1-> m (Of Bool r)
 notElem a stream = Control.fmap negate $ elem a stream
   where
-    negate :: Of Bool r #-> Of Bool r
+    negate :: Of Bool r %1-> Of Bool r
     negate (b :> r) = Prelude.not b :> r
 {-# INLINE notElem #-}
 
-notElem_ :: (Consumable r, Control.Monad m, Eq a) => a -> Stream (Of a) m r #-> m Bool
+notElem_ :: (Consumable r, Control.Monad m, Eq a) => a -> Stream (Of a) m r %1-> m Bool
 notElem_ a stream = Control.fmap Linear.not $ elem_ a stream
 {-# INLINE notElem_ #-}
 
@@ -506,7 +506,7 @@ notElem_ a stream = Control.fmap Linear.not $ elem_ a stream
 @
 
 -}
-length :: Control.Monad m => Stream (Of a) m r #-> m (Of Int r)
+length :: Control.Monad m => Stream (Of a) m r %1-> m (Of Int r)
 length = fold (\n _ -> n + 1) 0 id
 {-# INLINE length #-}
 
@@ -518,13 +518,13 @@ length = fold (\n _ -> n + 1) 0 id
 10
 @
 -}
-length_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r #-> m Int
+length_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r %1-> m Int
 length_ = fold_ (\n _ -> n + 1) 0 id
 {-# INLINE length_ #-}
 
 {-| Convert an effectful 'Stream' into a list alongside the return value
 
->  mapped toList :: Stream (Stream (Of a) m) m r #-> Stream (Of [a]) m r
+>  mapped toList :: Stream (Stream (Of a) m) m r %1-> Stream (Of [a]) m r
 
     Like 'toList_', 'toList' breaks streaming; unlike 'toList_' it /preserves the return value/
     and thus is frequently useful with e.g. 'mapped'
@@ -546,7 +546,7 @@ v<Enter>
 ["u","v"]
 @
 -}
-toList :: Control.Monad m => Stream (Of a) m r #-> m (Of [a] r)
+toList :: Control.Monad m => Stream (Of a) m r %1-> m (Of [a] r)
 toList = fold (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
 {-# INLINE toList #-}
 
@@ -558,36 +558,36 @@ toList = fold (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
     is a leading cause of space leaks.
 
 -}
-toList_ :: Control.Monad m => Stream (Of a) m () #-> m [a]
+toList_ :: Control.Monad m => Stream (Of a) m () %1-> m [a]
 toList_ = fold_ (\diff a ls -> diff (a: ls)) id (\diff -> diff [])
 {-# INLINE toList_ #-}
 
 {-| Fold streamed items into their monoidal sum
  -}
-mconcat :: (Control.Monad m, Prelude.Monoid w) => Stream (Of w) m r #-> m (Of w r)
+mconcat :: (Control.Monad m, Prelude.Monoid w) => Stream (Of w) m r %1-> m (Of w r)
 mconcat = fold (Prelude.<>) Prelude.mempty id
 {-# INLINE mconcat #-}
 
 mconcat_ :: (Consumable r, Control.Monad m, Prelude.Monoid w) =>
-  Stream (Of w) m r #-> m w
+  Stream (Of w) m r %1-> m w
 mconcat_ = fold_ (Prelude.<>) Prelude.mempty id
 {-# INLINE mconcat_ #-}
 
-minimum :: (Control.Monad m, Ord a) => Stream (Of a) m r #-> m (Of (Maybe a) r)
+minimum :: (Control.Monad m, Ord a) => Stream (Of a) m r %1-> m (Of (Maybe a) r)
 minimum = fold getMin Nothing id . map Just
 {-# INLINE minimum #-}
 
 minimum_ :: (Consumable r, Control.Monad m, Ord a) =>
-  Stream (Of a) m r #-> m (Maybe a)
+  Stream (Of a) m r %1-> m (Maybe a)
 minimum_ = fold_ getMin Nothing id . map Just
 {-# INLINE minimum_ #-}
 
-maximum :: (Control.Monad m, Ord a) => Stream (Of a) m r #-> m (Of (Maybe a) r)
+maximum :: (Control.Monad m, Ord a) => Stream (Of a) m r %1-> m (Of (Maybe a) r)
 maximum = fold getMax Nothing id . map Just
 {-# INLINE maximum #-}
 
 maximum_ :: (Consumable r, Control.Monad m, Ord a) =>
-  Stream (Of a) m r #-> m (Maybe a)
+  Stream (Of a) m r %1-> m (Maybe a)
 maximum_ = fold_ getMax Nothing id . map Just
 {-# INLINE maximum_ #-}
 
@@ -608,9 +608,9 @@ mCompare comp (Just x) (Just y) = Just $ comp x y
     still more general 'destroy'
 -}
 foldrM :: forall a m r. Control.Monad m
-       => (a -> m r #-> m r) -> Stream (Of a) m r #-> m r
+       => (a -> m r %1-> m r) -> Stream (Of a) m r %1-> m r
 foldrM step stream = loop stream where
-  loop :: Stream (Of a) m r #-> m r
+  loop :: Stream (Of a) m r %1-> m r
   loop stream = stream & \case
     Return r -> Control.return r
     Effect m -> m Control.>>= foldrM step
@@ -626,9 +626,9 @@ foldrM step stream = loop stream where
 -}
 foldrT :: forall a t m r.
   (Control.Monad m, Control.MonadTrans t, Control.Monad (t m)) =>
-  (a -> t m r #-> t m r) -> Stream (Of a) m r #-> t m r
+  (a -> t m r %1-> t m r) -> Stream (Of a) m r %1-> t m r
 foldrT step stream = loop stream where
-  loop :: Stream (Of a) m r #-> t m r
+  loop :: Stream (Of a) m r %1-> t m r
   loop stream = stream & \case
     Return r -> Control.return r
     Effect ms -> (Control.lift ms) Control.>>= foldrT step

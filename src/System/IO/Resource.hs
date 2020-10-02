@@ -93,7 +93,7 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- are always released.
 newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
   deriving (Data.Functor, Data.Applicative) via (Control.Data RIO)
-unRIO :: RIO a #-> IORef ReleaseMap -> Linear.IO a
+unRIO :: RIO a %1-> IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
 
 -- | Take a @RIO@ computation with a value @a@ that is not linearly bound and
@@ -116,13 +116,13 @@ run (RIO action) = do
     safeRelease (finalizer:fs) = Linear.withLinearIO (moveLinearIO finalizer)
       `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
-    moveLinearIO :: Movable a => Linear.IO a #-> Linear.IO (Ur a)
+    moveLinearIO :: Movable a => Linear.IO a %1-> Linear.IO (Ur a)
     moveLinearIO action' = Control.do
         result <- action'
         Control.return $ move result
 
 -- | Should not be applied to a function that acquires or releases resources.
-unsafeFromSystemIO :: System.IO a #-> RIO a
+unsafeFromSystemIO :: System.IO a %1-> RIO a
 unsafeFromSystemIO action = RIO (\ _ -> Linear.fromSystemIO action)
 
 -- $monad
@@ -161,36 +161,36 @@ openFile path mode = Control.do
       (\h -> Linear.fromSystemIO $ System.hClose h)
     Control.return $ Handle h
 
-hClose :: Handle #-> RIO ()
+hClose :: Handle %1-> RIO ()
 hClose (Handle h) = unsafeRelease h
 
-hIsEOF :: Handle #-> RIO (Ur Bool, Handle)
+hIsEOF :: Handle %1-> RIO (Ur Bool, Handle)
 hIsEOF = coerce (unsafeFromSystemIOResource System.hIsEOF)
 
-hGetChar :: Handle #-> RIO (Ur Char, Handle)
+hGetChar :: Handle %1-> RIO (Ur Char, Handle)
 hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)
 
-hPutChar :: Handle #-> Char -> RIO Handle
+hPutChar :: Handle %1-> Char -> RIO Handle
 hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
   where
-    flipHPutChar :: Char -> Handle #-> RIO Handle
+    flipHPutChar :: Char -> Handle %1-> RIO Handle
     flipHPutChar c =
       coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
 
-hGetLine :: Handle #-> RIO (Ur Text, Handle)
+hGetLine :: Handle %1-> RIO (Ur Text, Handle)
 hGetLine = coerce (unsafeFromSystemIOResource Text.hGetLine)
 
-hPutStr :: Handle #-> Text -> RIO Handle
+hPutStr :: Handle %1-> Text -> RIO Handle
 hPutStr h s = flipHPutStr s h -- needs a multiplicity polymorphic flip
   where
-    flipHPutStr :: Text -> Handle #-> RIO Handle
+    flipHPutStr :: Text -> Handle %1-> RIO Handle
     flipHPutStr s =
       coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStr h' s))
 
-hPutStrLn :: Handle #-> Text -> RIO Handle
+hPutStrLn :: Handle %1-> Text -> RIO Handle
 hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
   where
-    flipHPutStrLn :: Text -> Handle #-> RIO Handle
+    flipHPutStrLn :: Text -> Handle %1-> RIO Handle
     flipHPutStrLn s =
       coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s))
 
@@ -204,7 +204,7 @@ data UnsafeResource a where
 
 -- | Given an unsafe resource, release it with the linear IO action provided
 -- when the resrouce was acquired.
-unsafeRelease :: UnsafeResource a #-> RIO ()
+unsafeRelease :: UnsafeResource a %1-> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
     releaseWith key rrm = Control.do
@@ -239,13 +239,13 @@ unsafeAcquire acquire release = RIO $ \rrm -> Linear.mask_ (Control.do
 -- | Given a "System.IO" computation on an unsafe resource,
 -- lift it to @RIO@ computaton on the acquired resource.
 -- That is function of type @a -> IO b@ turns into a function of type
--- @UnsafeResource a #-> RIO (Ur b)@ 
+-- @UnsafeResource a %1-> RIO (Ur b)@ 
 -- along with threading the @UnsafeResource a@.
 --
 -- Note that the result @b@ can be used non-linearly.
 unsafeFromSystemIOResource
   :: (a -> System.IO b)
-  -> (UnsafeResource a #-> RIO (Ur b, UnsafeResource a))
+  -> (UnsafeResource a %1-> RIO (Ur b, UnsafeResource a))
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
     unsafeFromSystemIO (do
       c <- action resource
@@ -253,7 +253,7 @@ unsafeFromSystemIOResource action (UnsafeResource key resource) =
 
 unsafeFromSystemIOResource_
   :: (a -> System.IO ())
-  -> (UnsafeResource a #-> RIO (UnsafeResource a))
+  -> (UnsafeResource a %1-> RIO (UnsafeResource a))
 unsafeFromSystemIOResource_ action resource = Control.do
     (Ur _, resource) <- unsafeFromSystemIOResource action resource
     Control.return resource
