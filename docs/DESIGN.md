@@ -77,10 +77,10 @@ We have established the following conventions in this project:
   instance, import `Data.Functor.Linear` as `Linear` and not as `F`
   for functor.
 * All public modules have an export list.
-* For things which is meant te be used in pure contexts, take the
-thing as the last parameter (similar to `Data.Map`). If it is meant
-to be used in monadic contexts, take the thing as the first parameter
-(eg. `Control.Concurrent.MVar`). See [issue #147][issue-147] for some
+* Pure functions which modify a container take the
+container as the last parameter (similar to functions in `Data.Map`). Monadic functions on containers
+take the containers as the first parameter
+(similar to functions in `Control.Concurrent.MVar`). See [issue #147][issue-147] for some
 more details.
 
 [functors]: https://www.tweag.io/posts/2020-01-16-data-vs-control.html
