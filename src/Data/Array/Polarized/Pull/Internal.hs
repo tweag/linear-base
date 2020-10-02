@@ -37,18 +37,18 @@ instance Data.Functor Array where
 -- taken out of the Array (which is interesting in and of itself: I think this
 -- is like an n-ary With), and changing the other arrows makes no difference)
 -- | Produce a pull array consisting of solely the given element.
-singleton :: a #-> Array a
+singleton :: a %1-> Array a
 singleton = Unsafe.toLinear (\x -> fromFunction (\_ -> x) 1)
 
 -- | /!\ Partial! Only works if both arrays have the same length.
 -- Zip both pull arrays together.
-zip :: Array a #-> Array b #-> Array (a,b)
+zip :: Array a %1-> Array b %1-> Array (a,b)
 zip (Array g n) (Array h m)
   | n /= m    = error "Polarized.zip: size mismatch"
   | otherwise = fromFunction (\k -> (g k, h k)) n
 
 -- | Concatenate two pull arrays.
-append :: Array a #-> Array a #-> Array a
+append :: Array a %1-> Array a %1-> Array a
 append (Array f m) (Array g n) = Array h (m + n)
   where h k = if k < m
                  then f k
@@ -62,9 +62,9 @@ instance Semigroup (Array a) where
   (<>) = append
 
 -- A right-fold of a pull array.
-foldr :: (a #-> b #-> b) -> b #-> Array a #-> b
+foldr :: (a %1-> b %1-> b) -> b %1-> Array a %1-> b
 foldr f z (Array g n) = go f z g n
-  where go :: (_ #-> _ #-> _) -> _ #-> _ -> _ -> _
+  where go :: (_ %1-> _ %1-> _) -> _ %1-> _ -> _ -> _
         go _ z' _ 0 = z'
         go f' z' g' k = go f' (f' (g' (k-1)) z') g' (k-1)
         -- go is strict in its last argument
@@ -72,7 +72,7 @@ foldr f z (Array g n) = go f z g n
 -- | Extract the length of an array, and give back the original array. This
 -- is possible since getting the length of an array doesn't count as consuming
 -- it.
-findLength :: Array a #-> (Int, Array a)
+findLength :: Array a %1-> (Int, Array a)
 findLength (Array f n) = (n, Array f n)
 
 -- | A constructor for pull arrays from a function and specified length.
@@ -88,7 +88,7 @@ fromFunction f n = Array f' n
 
 -- | This is a shortcut function, which does the same thing as
 -- `alloc` . `transfer`
-toVector :: Array a #-> Vector a
+toVector :: Array a %1-> Vector a
 toVector (Array f n) = Vector.generate n f
 -- TODO: A test to make sure alloc . transfer == toVector
 
@@ -96,9 +96,9 @@ toVector (Array f n) = Vector.generate n f
 --
 -- 'split' is total: if @n@ is larger than the length of @v@, then @vr@ is
 -- empty.
-split :: Int -> Array a #-> (Array a, Array a)
+split :: Int -> Array a %1-> (Array a, Array a)
 split k (Array f n) = (fromFunction f (min k n), fromFunction (\x -> f (x+k)) (max (n-k) 0))
 
 -- | Reverse a pull array.
-reverse :: Array a #-> Array a
+reverse :: Array a %1-> Array a
 reverse (Array f n) = Array (\x -> f (n+1-x)) n

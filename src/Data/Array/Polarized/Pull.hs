@@ -39,18 +39,18 @@ import qualified Data.Vector as Vector
 import qualified Unsafe.Linear as Unsafe
 
 -- | Convert a pull array into a list.
-asList :: Array a #-> [a]
+asList :: Array a %1-> [a]
 asList = foldr (\x xs -> x:xs) []
 
 -- | /!\ Partial! Only works if both arrays have the same length.
-zipWith :: (a #-> b #-> c) -> Array a #-> Array b #-> Array c
+zipWith :: (a %1-> b %1-> c) -> Array a %1-> Array b %1-> Array c
 zipWith f x y = Data.fmap (uncurry f) (zip x y)
 
 -- | Fold a pull array into a monoid.
-foldMap :: Monoid m => (a #-> m) -> Array a #-> m
+foldMap :: Monoid m => (a %1-> m) -> Array a %1-> m
 foldMap f = foldr ((<>) . f) mempty
 
 -- I'm fairly sure this can be used safely
 -- | Convert a Vector to a pull array.
-fromVector :: Vector a #-> Array a
+fromVector :: Vector a %1-> Array a
 fromVector = Unsafe.toLinear $ \v -> fromFunction (v Vector.!) (Vector.length v)

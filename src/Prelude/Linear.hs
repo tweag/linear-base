@@ -11,13 +11,13 @@
 -- >>> :set -XNoImplicitPrelude
 -- >>> import Prelude.Linear
 -- >>> :{
---   boolToInt :: Bool #-> Int
+--   boolToInt :: Bool %1-> Int
 --   boolToInt False = 0
 --   boolToInt True = 1
 -- :}
 --
 -- >>> :{
---   makeInt :: Either Int Bool #-> Int
+--   makeInt :: Either Int Bool %1-> Int
 --   makeInt = either id boolToInt
 -- :}
 --
@@ -151,9 +151,9 @@ import Data.Eq.Linear
 import Data.String
 
 -- | Replacement for the flip function with generalized multiplicities.
-flip :: FUN r (FUN p a (FUN q b c)) (FUN q b (FUN p a c))
+flip :: (a %p -> b %q -> c) %r -> b %q -> a %p -> c
 flip f b a = f a b
 
 -- | Linearly typed replacement for the standard '(Prelude.<*)' function.
-(<*) :: (Data.Applicative f, Consumable b) => f a #-> f b #-> f a
+(<*) :: (Data.Applicative f, Consumable b) => f a %1-> f b %1-> f a
 fa <* fb = Data.fmap (flip lseq) fa Data.<*> fb

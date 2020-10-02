@@ -30,7 +30,7 @@
 -- == The Interface
 --
 -- Run a computation that uses heap memory by passing a continuation to
--- 'withPool' of type @Pool #-> Ur b@. Allocate and free with
+-- 'withPool' of type @Pool %1-> Ur b@. Allocate and free with
 -- 'alloc' and 'deconstruct'. Make as many or as few pools you need, by
 -- using the 'Dupable' and 'Consumable' instances of  'Pool'.
 --
@@ -40,7 +40,7 @@
 -- >>> import Data.Unrestricted.Linear
 -- >>> import qualified Foreign.Marshal.Pure as Manual
 -- >>> :{
---   nothingWith3 :: Pool #-> Ur Int
+--   nothingWith3 :: Pool %1-> Ur Int
 --   nothingWith3 pool = move (Manual.deconstruct (Manual.alloc 3 pool))
 -- :}
 --
@@ -194,13 +194,13 @@ instance KnownRepresentable a => KnownRepresentable (Maybe a) where
 class (KnownRepresentable (AsKnown a)) => Representable a where
   type AsKnown a :: Type
 
-  toKnown :: a #-> AsKnown a
-  ofKnown :: AsKnown a #-> a
+  toKnown :: a %1-> AsKnown a
+  ofKnown :: AsKnown a %1-> a
 
   default toKnown
-    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => a #-> AsKnown a
+    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => a %1-> AsKnown a
   default ofKnown
-    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a #-> a
+    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a %1-> a
 
   toKnown a = toKnown (toRepr a)
   ofKnown b = ofRepr (ofKnown b)
@@ -263,8 +263,8 @@ instance Representable a => Representable (Maybe a) where
 -- * 'ofRepr' may be partial, but must be total on the image of 'toRepr'
 -- * @ofRepr . toRepr = id@
 class Representable b => MkRepresentable a b | a -> b where
-  toRepr :: a #-> b
-  ofRepr :: b #-> a
+  toRepr :: a %1-> b
+  ofRepr :: b %1-> a
 
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
@@ -336,11 +336,11 @@ freeAll start end = do
 -- TODO: document individual functions
 
 -- | Given a linear computation that manages memory, run that computation.
-withPool :: (Pool #-> Ur b) #-> Ur b
+withPool :: (Pool %1-> Ur b) %1-> Ur b
 withPool scope = Unsafe.toLinear performScope scope
     -- XXX: do ^ without `toLinear` by using linear IO
   where
-    performScope :: (Pool #-> Ur b) -> Ur b
+    performScope :: (Pool %1-> Ur b) -> Ur b
     performScope scope' = unsafeDupablePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc
@@ -387,11 +387,11 @@ instance Representable (Box a) where
 -- Movable. In order to be useful, need some kind of borrowing on the values, I
 -- guess. 'Box' can be realloced, but not RC pointers.
 
-reprPoke :: forall a. Representable a => Ptr a -> a #-> IO ()
+reprPoke :: forall a. Representable a => Ptr a -> a %1-> IO ()
 reprPoke ptr a | Dict <- storable @(AsKnown a) =
   Unsafe.toLinear (poke (castPtr ptr :: Ptr (AsKnown a))) (toKnown a)
 
-reprNew :: forall a. Representable a => a #-> IO (Ptr a)
+reprNew :: forall a. Representable a => a %1-> IO (Ptr a)
 reprNew a =
     Unsafe.toLinear mkPtr a
   where
@@ -410,7 +410,7 @@ reprNew a =
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
 -- | Store a value @a@ on the system heap that is not managed by the GC.
-alloc :: forall a. Representable a => a #-> Pool #-> Box a
+alloc :: forall a. Representable a => a %1-> Pool %1-> Box a
 alloc a (Pool pool) =
     Unsafe.toLinear mkPtr a
   where
@@ -429,7 +429,7 @@ reprPeek ptr | Dict <- storable @(AsKnown a) = do
   return (ofKnown knownRepr)
 
 -- | Retrieve the value stored on system heap memory.
-deconstruct :: Representable a => Box a #-> a
+deconstruct :: Representable a => Box a %1-> a
 deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $ mask_ $ do
   res <- reprPeek ptr
   delete =<< peek poolPtr

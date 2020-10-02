@@ -29,7 +29,7 @@ module Simple.Pure where
    times the argument of f is used in the body.
 -}
 
-linearIdentity :: a #-> a
+linearIdentity :: a %1-> a
 linearIdentity x = x
 
 {-
@@ -43,7 +43,7 @@ linearIdentity x = x
 -}
 
 
-linearSwap :: (a,a) #-> (a,a)
+linearSwap :: (a,a) %1-> (a,a)
 linearSwap (x,y) = (y,x)
 
 {-
@@ -52,7 +52,7 @@ linearSwap (x,y) = (y,x)
    in linear haskell is linear -- i.e., notice the type of the
    constructor:
 
-   (,) :: a #-> b #-> (a,b)
+   (,) :: a %1-> b %1-> (a,b)
 
    Now, this does not mean that if we have some non-linear function with
    an argument (a,b) that `a` and `b` have to be consumed exactly once.
@@ -82,7 +82,7 @@ nonLinearSubsume (x,_) = (x,x)
    the first argument would be linear, and the constructor is linear in both
    components.
 
-   (,) :: a #-> b #-> (a,b)
+   (,) :: a %1-> b %1-> (a,b)
 
    Again, in a linear function, this means the `a` and `b` must be used
    linearly.
@@ -91,14 +91,14 @@ nonLinearSubsume (x,_) = (x,x)
    zero times.
 -}
 
-linearPairIdentity :: (a,a) #-> (a,a)
+linearPairIdentity :: (a,a) %1-> (a,a)
 linearPairIdentity (x,y) = (x,y)
 
 {-
    Here, notice that `(a,a)` is linear, and since `(,)` is linear
    on both arguments, both `a`s must be used linearly, and indeed
    they are. Each is consumed exactly once in a linear input
-   to the constructor `(,) :: a #-> b #-> (a,b)`.
+   to the constructor `(,) :: a %1-> b %1-> (a,b)`.
 
    Notice the general pattern: we consumed `(a,b)` linearly by pattern matching
    into `Constructor arg1 ... argn` and consumed the linearly bound arguments
@@ -107,7 +107,7 @@ linearPairIdentity (x,y) = (x,y)
 -}
 
 
-linearIdentity2 :: a #-> a
+linearIdentity2 :: a %1-> a
 linearIdentity2 x = linearIdentity x
 
 {-
@@ -149,7 +149,7 @@ nonLinearTriple x = (linearIdentity x, linearIdentity (nonLinearPair2 x))
 
    DEFINITION.
    ==========
-   Let f :: A #-> B.  Suppose that we don't have the identity, "f x = x"
+   Let f :: A %1-> B.  Suppose that we don't have the identity, "f x = x"
    which is trivially linear. Then, the thunk (f x) is basically a tree
    composed of function applications, data constructors and case
    statements.
@@ -197,10 +197,10 @@ regularIdentity x = linearIdentity x
 -}
 
 
-(#.) :: (b #-> c) -> (a #-> b) -> (a #-> c)
+(#.) :: (b %1-> c) -> (a %1-> b) -> (a %1-> c)
 g #. f = \a -> g (f a)
 
-linearCompose :: (a,a) #-> (a,a)
+linearCompose :: (a,a) %1-> (a,a)
 linearCompose = linearIdentity #. linearSwap
 
 {-
@@ -209,7 +209,7 @@ linearCompose = linearIdentity #. linearSwap
    functions.  Notice that we cannot write a function of the following
    type:
 
-   (##.) :: (b -> c) -> (a #-> b) -> (a #-> c)
+   (##.) :: (b -> c) -> (a %1-> b) -> (a %1-> c)
 -}
 
 
@@ -223,22 +223,22 @@ linearCompose = linearIdentity #. linearSwap
 -}
 
 data LinearHolder a where
-  LinearHolder :: a #-> LinearHolder a
+  LinearHolder :: a %1-> LinearHolder a
 
-linearHold :: a #-> LinearHolder a
+linearHold :: a %1-> LinearHolder a
 linearHold x = LinearHolder x
 
 {-
-   Note that if the constructor LinearHolder did not have the #-> then
+   Note that if the constructor LinearHolder did not have the %1-> then
    linearHold would not compile, because then you could use the value
    non-linearly.
 -}
 
 
-linearHoldExtract :: LinearHolder a #-> a
+linearHoldExtract :: LinearHolder a %1-> a
 linearHoldExtract (LinearHolder x) = x
 
-linearIdentity3 :: a #-> a
+linearIdentity3 :: a %1-> a
 linearIdentity3 = linearHoldExtract #. linearHold
 
 {-
@@ -246,19 +246,19 @@ linearIdentity3 = linearHoldExtract #. linearHold
    Here, linearHoldExtract must use the inner component linearly.
    Therefore, it's impossible to implement the following function:
 
-   linearHoldPair :: LinearHolder a #-> (a,a)
+   linearHoldPair :: LinearHolder a %1-> (a,a)
    linearHoldPair (LinearHolder x) = (x,x)
 
    In fact, we have the following equivalence:
 
-   (LinearHolder a  #-> b) ≅ (a #-> b)
+   (LinearHolder a  %1-> b) ≅ (a %1-> b)
 -}
 
 
 data LinearHolder2 where
-  LinearHolder2 :: a #-> b -> LinearHolder2
+  LinearHolder2 :: a %1-> b -> LinearHolder2
 
-linearHold' :: a #-> LinearHolder2
+linearHold' :: a %1-> LinearHolder2
 linearHold' x = LinearHolder2 x "hello"
 --linearHold' x = LinearHolder2 "hi" x -- fails to type check
 
@@ -272,7 +272,7 @@ linearHold' x = LinearHolder2 x "hello"
 data ForcedUnlinear a where
   ForcedUnlinear :: a -> ForcedUnlinear a
 
-forcedLinearPair :: ForcedUnlinear a #-> (a,a)
+forcedLinearPair :: ForcedUnlinear a %1-> (a,a)
 forcedLinearPair (ForcedUnlinear x) = (x,x)
 
 {-
@@ -282,14 +282,14 @@ forcedLinearPair (ForcedUnlinear x) = (x,x)
    Hence, we can write the function above but could not write something
    the following type:
 
-   linearPair :: a #-> (a,a)
+   linearPair :: a %1-> (a,a)
 -}
 
 
-demote :: (ForcedUnlinear a #-> b) -> (a -> b)
+demote :: (ForcedUnlinear a %1-> b) -> (a -> b)
 demote f x = f (ForcedUnlinear x)
 
-promote :: (a -> b) -> (ForcedUnlinear a #-> b)
+promote :: (a -> b) -> (ForcedUnlinear a %1-> b)
 promote f (ForcedUnlinear x) = f x
 
 
@@ -297,7 +297,7 @@ promote f (ForcedUnlinear x) = f x
    Another way of saying this is the following equivalence proven by the
    two functions above:
 
-   (ForcedUnlinear a  #-> b) ≅ (a -> b)
+   (ForcedUnlinear a  %1-> b) ≅ (a -> b)
 
    In the Linear Haskell POPL '18 paper, this datatype is called
    Unrestricted.

@@ -30,7 +30,7 @@ import qualified Prelude
 -- order. Dually, they are harder to consume as they will supply their elements
 -- in an unknown order, and allocation is generally required for consumption.
 data Array a where
-  Array :: (forall b. (a #-> b) -> DArray b #-> ()) #-> Int -> Array a
+  Array :: (forall b. (a %1-> b) -> DArray b %1-> ()) %1-> Int -> Array a
   deriving Prelude.Semigroup via NonLinear (Array a)
   -- A note on implementation: `exists b. ((a -> b), DArray b)` adjoins freely
   -- the structure of contravariant functor to `DArray`. Because it appears to
@@ -41,7 +41,7 @@ data Array a where
   -- arrays of size @n@ (the second parameter, which is the length of the
   -- array).
   --
-  -- TODO: Consider changing DArray b #-> () to something more general
+  -- TODO: Consider changing DArray b %1-> () to something more general
 
 instance Data.Functor Array where
   fmap f (Array k n) = Array (\g dest -> k (g . f) dest) n
@@ -52,7 +52,7 @@ instance Semigroup (Array a) where
 -- XXX: the use of Vector in the type of alloc is temporary (see also "Data.Array.Destination")
 -- | Convert a PushArray into a Vector by allocating. This would be a common
 -- end to a fusion pipeline.
-alloc :: Array a #-> Vector a
+alloc :: Array a %1-> Vector a
 alloc (Array k n) = DArray.alloc n (k id)
 
 -- | @`make` x n@ creates a PushArray of length @n@ in which every element is
@@ -61,11 +61,11 @@ make :: a -> Int -> Array a
 make x n = Array (\k -> DArray.replicate (k x)) n
 
 -- | Concatenate two PushArrays.
-append :: Array a #-> Array a #-> Array a
+append :: Array a %1-> Array a %1-> Array a
 append (Array kl nl) (Array kr nr) =
     Array
       (\f dest -> parallelApply f kl kr (DArray.split nl dest))
       (nl+nr)
   where
-    parallelApply :: (a #-> b) -> ((a #-> b) -> DArray b #-> ()) #-> ((a #-> b) -> DArray b #-> ()) #-> (DArray b, DArray b) #-> ()
+    parallelApply :: (a %1-> b) -> ((a %1-> b) -> DArray b %1-> ()) %1-> ((a %1-> b) -> DArray b %1-> ()) %1-> (DArray b, DArray b) %1-> ()
     parallelApply f' kl' kr' (dl, dr) = kl' f' dl <> kr' f' dr

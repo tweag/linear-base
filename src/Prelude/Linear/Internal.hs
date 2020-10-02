@@ -18,47 +18,47 @@ import qualified Unsafe.Linear as Unsafe
 
 -- | Beware: @($)@ is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
-($) :: (a #-> b) #-> a #-> b
+($) :: (a %1-> b) %1-> a %1-> b
 -- XXX: Temporary as `($)` should get its typing rule directly from the type
 -- inference mechanism.
 ($) f x = f x
 infixr 0 $
 
-(&) :: a #-> (a #-> b) #-> b
+(&) :: a %1-> (a %1-> b) %1-> b
 x & f = f x
 infixl 1 &
 
-id :: a #-> a
+id :: a %1-> a
 id x = x
 
-const :: a #-> b -> a
+const :: a %1-> b -> a
 const x _ = x
 
-asTypeOf :: a #-> a -> a
+asTypeOf :: a %1-> a -> a
 asTypeOf = const
 
 -- | @seq x y@ only forces @x@ to head normal form, therefore is not guaranteed
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
-seq :: a -> b #-> b
+seq :: a -> b %1-> b
 seq x = Unsafe.toLinear (Prelude.seq x)
 
-($!) :: (a #-> b) #-> a #-> b
+($!) :: (a %1-> b) %1-> a %1-> b
 ($!) f !a = f a
 
 -- | Beware, 'curry' is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
-curry :: ((a, b) #-> c) #-> a #-> b #-> c
+curry :: ((a, b) %1-> c) %1-> a %1-> b %1-> c
 curry f x y = f (x, y)
 
 -- | Beware, 'uncurry' is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
-uncurry :: (a #-> b #-> c) #-> (a, b) #-> c
+uncurry :: (a %1-> b %1-> c) %1-> (a, b) %1-> c
 uncurry f (x,y) = f x y
 
 -- | Beware: @(.)@ is not compatible with the standard one because it is
 -- higher-order and we don't have multiplicity polymorphism yet.
-(.) :: (b #-> c) #-> (a #-> b) #-> a #-> c
+(.) :: (b %1-> c) %1-> (a %1-> b) %1-> a %1-> c
 f . g = \x -> f (g x)
 
 -- XXX: temporary: with multiplicity polymorphism functions expecting a
@@ -66,5 +66,5 @@ f . g = \x -> f (g x)
 -- redundant
 -- | Convenience operator when a higher-order function expects a non-linear
 -- arrow but we have a linear arrow.
-forget :: (a #-> b) #-> a -> b
+forget :: (a %1-> b) %1-> a -> b
 forget f a = f a

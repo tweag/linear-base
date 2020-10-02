@@ -107,7 +107,7 @@ import GHC.Stack
 -- that can add an element to the functor that is itself a stream.
 -- Basically `consFirstChunk 42 [[1,2,3],[4,5]] = [[42,1,2,3],[4,5]]`.
 consFirstChunk :: Control.Monad m =>
-  a -> Stream (Stream (Of a) m) m r #-> Stream (Stream (Of a) m) m r
+  a -> Stream (Stream (Of a) m) m r %1-> Stream (Stream (Of a) m) m r
 consFirstChunk a stream = stream & \case
     Return r -> Step (Step (a :> Return (Return r)))
     Effect m -> Effect $ Control.fmap (consFirstChunk a) m
@@ -118,11 +118,11 @@ consFirstChunk a stream = stream & \case
 -- Here it's adapted to consume the stream linearly.
 destroyExposed
   :: forall f m r b. (Control.Functor f, Control.Monad m) =>
-     Stream f m r #-> (f b #-> b) -> (m b #-> b) -> (r #-> b) -> b
+     Stream f m r %1-> (f b %1-> b) -> (m b %1-> b) -> (r %1-> b) -> b
 destroyExposed stream0 construct theEffect done = loop stream0
   where
     loop :: (Control.Functor f, Control.Monad m) =>
-      Stream f m r #-> b
+      Stream f m r %1-> b
     loop stream = stream & \case
       Return r -> done r
       Effect m -> theEffect (Control.fmap loop m)
@@ -141,14 +141,14 @@ destroyExposed stream0 construct theEffect done = loop stream0
      There is no reason to prefer @inspect@ since, if the @Right@ case is exposed,
      the first element in the pair will have been evaluated to whnf.
 
-> next    :: Control.Monad m => Stream (Of a) m r #-> m (Either r    (a, Stream (Of a) m r))
-> inspect :: Control.Monad m => Stream (Of a) m r #-> m (Either r (Of a (Stream (Of a) m r)))
+> next    :: Control.Monad m => Stream (Of a) m r %1-> m (Either r    (a, Stream (Of a) m r))
+> inspect :: Control.Monad m => Stream (Of a) m r %1-> m (Either r (Of a (Stream (Of a) m r)))
 -}
 next :: forall a m r. Control.Monad m =>
-  Stream (Of a) m r #-> m (Either r (Ur a, Stream (Of a) m r))
+  Stream (Of a) m r %1-> m (Either r (Ur a, Stream (Of a) m r))
 next stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> m (Either r (Ur a, Stream (Of a) m r))
+    loop :: Stream (Of a) m r %1-> m (Either r (Ur a, Stream (Of a) m r))
     loop stream = stream & \case
       Return r -> Control.return $ Left r
       Effect ms -> ms Control.>>= next
@@ -159,10 +159,10 @@ next stream = loop stream
 
 -}
 uncons :: forall a m r. (Consumable r, Control.Monad m) =>
-  Stream (Of a) m r #-> m (Maybe (a, Stream (Of a) m r))
+  Stream (Of a) m r %1-> m (Maybe (a, Stream (Of a) m r))
 uncons  stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> m (Maybe (a, Stream (Of a) m r))
+    loop :: Stream (Of a) m r %1-> m (Maybe (a, Stream (Of a) m r))
     loop stream = stream & \case
       Return r -> lseq r $ Control.return Nothing
       Effect ms -> ms Control.>>= uncons
@@ -174,13 +174,13 @@ uncons  stream = loop stream
     @Streaming@ module, but since this module is imported qualified, it can
     usurp a Prelude name. It specializes to:
 
->  splitAt :: Control.Monad m => Int -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+>  splitAt :: Control.Monad m => Int -> Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
 
 -}
 splitAt :: forall f m r. (Control.Monad m, Control.Functor f) =>
-  Int -> Stream f m r #-> Stream f m (Stream f m r)
+  Int -> Stream f m r %1-> Stream f m (Stream f m r)
 splitAt n stream = loop n stream where
-  loop :: Int -> Stream f m r #-> Stream f m (Stream f m r)
+  loop :: Int -> Stream f m r %1-> Stream f m (Stream f m r)
   loop n stream = case Prelude.compare n 0 of
     GT -> stream & \case
       Return r -> Return (Return r)
@@ -199,10 +199,10 @@ world
 @
 -}
 split :: forall a m r. (Eq a, Control.Monad m) =>
-  a -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+  a -> Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
 split x stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+    loop :: Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ m Control.>>= (Control.return . split x)
@@ -224,10 +224,10 @@ split x stream = loop stream
 @
 -}
 break :: forall a m r. Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
 break f stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
     loop stream = stream & \case
       Return r -> Return (Return r)
       Effect m -> Effect $ Control.fmap (break f) m
@@ -250,10 +250,10 @@ break f stream = loop stream
 @
 -}
 breaks :: forall a m r. Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
 breaks f stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+    loop :: Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (breaks f) m
@@ -287,10 +287,10 @@ breaks f stream = loop stream
 -}
 breakWhen :: forall m a x b r. Control.Monad m
           => (x -> a -> x) -> x -> (x -> b) -> (b -> Bool)
-          -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+          -> Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
 breakWhen step x end pred stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
     loop stream = stream & \case
       Return r -> Return (Return r)
       Effect m -> Effect $ Control.fmap (breakWhen step x end pred) m
@@ -301,13 +301,13 @@ breakWhen step x end pred stream = loop stream
 
 -- | Breaks on the first element to satisfy the predicate
 breakWhen' :: Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
 breakWhen' f stream = breakWhen (\_ a -> f a) True id id stream
 {-# INLINE breakWhen' #-}
 
 -- | Stream elements until one fails the condition, return the rest.
 span :: Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m (Stream (Of a) m r)
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Of a) m (Stream (Of a) m r)
 span f = break (Prelude.not Prelude.. f)
 {-# INLINE span #-}
 
@@ -325,10 +325,10 @@ span f = break (Prelude.not Prelude.. f)
 @
 -}
 groupBy :: forall a m r. Control.Monad m =>
-  (a -> a -> Bool) -> Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+  (a -> a -> Bool) -> Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
 groupBy equals stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+    loop :: Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (groupBy equals) m
@@ -356,7 +356,7 @@ groupBy equals stream = loop stream
 @
 -}
 group :: (Control.Monad m, Eq a) =>
-  Stream (Of a) m r #-> Stream (Stream (Of a) m) m r
+  Stream (Of a) m r %1-> Stream (Stream (Of a) m) m r
 group = groupBy (==)
 {-# INLINE group #-}
 
@@ -453,7 +453,7 @@ separate :: forall m f g r.
   Stream (Sum f g) m r -> Stream f (Stream g m) r
 separate stream = destroyExposed stream fromSum (Effect . Control.lift) Return
   where
-    fromSum :: Sum f g (Stream f (Stream g m) r) #-> (Stream f (Stream g m) r)
+    fromSum :: Sum f g (Stream f (Stream g m) r) %1-> (Stream f (Stream g m) r)
     fromSum x = x & \case
       InL fss -> Step fss
       InR gss -> Effect (Step $ Control.fmap Return gss)
@@ -473,10 +473,10 @@ unseparate stream =
 
  -}
 partition :: forall a m r. Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Of a) (Stream (Of a) m) r
 partition pred = loop
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) (Stream (Of a) m) r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect (Control.fmap loop (Control.lift m))
@@ -494,11 +494,11 @@ partition pred = loop
 
 -}
 partitionEithers :: Control.Monad m =>
-  Stream (Of (Either a b)) m r #-> Stream (Of a) (Stream (Of b) m) r
+  Stream (Of (Either a b)) m r %1-> Stream (Of a) (Stream (Of b) m) r
 partitionEithers = loop
   where
     loop :: Control.Monad m =>
-      Stream (Of (Either a b)) m r #-> Stream (Of a) (Stream (Of b) m) r
+      Stream (Of (Either a b)) m r %1-> Stream (Of a) (Stream (Of b) m) r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop (Control.lift m)
@@ -513,10 +513,10 @@ partitionEithers = loop
     a 'Stream' of all of the 'Just' values. 'concat' has the same behavior,
     but is more general; it works for any foldable container type.
 -}
-catMaybes :: Control.Monad m => Stream (Of (Maybe a)) m r #-> Stream (Of a) m r
+catMaybes :: Control.Monad m => Stream (Of (Maybe a)) m r %1-> Stream (Of a) m r
 catMaybes stream = loop stream
   where
-    loop :: Control.Monad m => Stream (Of (Maybe a)) m r #-> Stream (Of a) m r
+    loop :: Control.Monad m => Stream (Of (Maybe a)) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap catMaybes m
@@ -531,10 +531,10 @@ catMaybes stream = loop stream
 
 -}
 mapMaybe :: forall a b m r. Control.Monad m =>
-  (a -> Maybe b) -> Stream (Of a) m r #-> Stream (Of b) m r
+  (a -> Maybe b) -> Stream (Of a) m r %1-> Stream (Of b) m r
 mapMaybe f stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Of b) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of b) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect ms -> Effect $ ms Control.>>= (Control.return . mapMaybe f)
@@ -550,10 +550,10 @@ mapMaybe f stream = loop stream
 -- | Map monadically over a stream, producing a new stream
 --   only containing the 'Just' values.
 mapMaybeM :: forall a m b r. Control.Monad m =>
-  (a -> m (Maybe (Ur b))) -> Stream (Of a) m r #-> Stream (Of b) m r
+  (a -> m (Maybe (Ur b))) -> Stream (Of a) m r %1-> Stream (Of b) m r
 mapMaybeM f stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Of b) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of b) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (mapMaybeM f) m
@@ -571,15 +571,15 @@ mapMaybeM f stream = loop stream
     This is one of the fundamental transformations on streams.
     Compare with 'maps':
 
-> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x #-> g x) -> Stream f m r #-> Stream g m r
-> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a #-> n a) -> Stream f m r #-> Stream f n r
+> maps  :: (Control.Monad m, Control.Functor f) => (forall x. f x %1-> g x) -> Stream f m r %1-> Stream g m r
+> hoist :: (Control.Monad m, Control.Functor f) => (forall a. m a %1-> n a) -> Stream f m r %1-> Stream f n r
 
 -}
 hoist :: forall f m n r. (Control.Monad m, Control.Functor f) =>
-  (forall a. m a #-> n a) ->
-  Stream f m r #-> Stream f n r
+  (forall a. m a %1-> n a) ->
+  Stream f m r %1-> Stream f n r
 hoist f stream = loop stream where
-  loop :: Stream f m r #-> Stream f n r
+  loop :: Stream f m r %1-> Stream f n r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ f $ Control.fmap loop m
@@ -594,7 +594,7 @@ ahpla
 ateb
 @
 -}
-map :: Control.Monad m => (a -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
+map :: Control.Monad m => (a -> b) -> Stream (Of a) m r %1-> Stream (Of b) m r
 map f = maps (\(x :> rest) -> f x :> rest)
 {-# INLINABLE map #-}
 
@@ -612,10 +612,10 @@ map f = maps (\(x :> rest) -> f x :> rest)
 
 -}
 maps :: forall f g m r . (Control.Monad m, Control.Functor f) =>
-  (forall x . f x #-> g x) -> Stream f m r #-> Stream g m r
+  (forall x . f x %1-> g x) -> Stream f m r %1-> Stream g m r
 maps phi = loop
   where
-    loop :: Stream f m r #-> Stream g m r
+    loop :: Stream f m r %1-> Stream g m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (maps phi) m
@@ -643,11 +643,11 @@ maps phi = loop
 See also 'chain' for a variant of this which ignores the return value of the function and just uses the side effects.
 -}
 mapM :: Control.Monad m =>
-  (a -> m (Ur b)) -> Stream (Of a) m r #-> Stream (Of b) m r
+  (a -> m (Ur b)) -> Stream (Of a) m r %1-> Stream (Of b) m r
 mapM f s = loop f s
   where
     loop :: Control.Monad m =>
-      (a -> m (Ur b)) -> Stream (Of a) m r #-> Stream (Of b) m r
+      (a -> m (Ur b)) -> Stream (Of a) m r %1-> Stream (Of b) m r
     loop f stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (loop f) m
@@ -668,10 +668,10 @@ mapM f s = loop f s
      is cheaper for the target functor than for the source functor.
 -}
 mapsPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
-  (forall x. f x #-> g x) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> g x) -> Stream f m r %1-> Stream g m r
 mapsPost phi = loop
   where
-    loop :: Stream f m r #-> Stream g m r
+    loop :: Stream f m r %1-> Stream g m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -718,10 +718,10 @@ mapped :: (forall x. Stream (Of a) IO x -> IO (Of b x)) -> Stream (Stream (Of a)
 
 -}
 mapped :: forall f g m r . (Control.Monad m, Control.Functor f) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mapped phi = loop
   where
-  loop :: Stream f m r #-> Stream g m r
+  loop :: Stream f m r %1-> Stream g m r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap loop m
@@ -744,10 +744,10 @@ mapped phi = loop
 {-# INLINABLE mapped #-}
 
 mapsMPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mapsMPost phi = loop
   where
-  loop :: Stream f m r #-> Stream g m r
+  loop :: Stream f m r %1-> Stream g m r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap loop m
@@ -760,10 +760,10 @@ mapsMPost phi = loop
 
 -}
 mappedPost :: forall m f g r. (Control.Monad m, Control.Functor g) =>
-  (forall x. f x #-> m (g x)) -> Stream f m r #-> Stream g m r
+  (forall x. f x %1-> m (g x)) -> Stream f m r %1-> Stream g m r
 mappedPost phi = loop
   where
-  loop :: Stream f m r #-> Stream g m r
+  loop :: Stream f m r %1-> Stream g m r
   loop stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap loop m
@@ -773,10 +773,10 @@ mappedPost phi = loop
 -- | @for@ replaces each element of a stream with an associated stream. Note that the
 -- associated stream may layer any control functor.
 for :: forall f m r a x . (Control.Monad m, Control.Functor f, Consumable x) =>
-  Stream (Of a) m r #-> (a -> Stream f m x) -> Stream f m r
+  Stream (Of a) m r %1-> (a -> Stream f m x) -> Stream f m r
 for stream expand = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream f m r
+    loop :: Stream (Of a) m r %1-> Stream f m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -806,10 +806,10 @@ for stream expand = loop stream
 @
  -}
 with :: forall f m r a x . (Control.Monad m, Control.Functor f, Consumable x) =>
-  Stream (Of a) m r #-> (a -> f x) -> Stream f m r
+  Stream (Of a) m r %1-> (a -> f x) -> Stream f m r
 with s f = loop s
   where
-    loop :: Stream (Of a) m r #-> Stream f m r
+    loop :: Stream (Of a) m r %1-> Stream f m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -827,9 +827,9 @@ with s f = loop s
 
 -}
 subst :: (Control.Monad m, Control.Functor f, Consumable x) =>
-  (a -> f x) -> Stream (Of a) m r #-> Stream f m r
+  (a -> f x) -> Stream (Of a) m r %1-> Stream f m r
 subst = flip with where
-  flip :: (a #-> b -> c) -> b -> a #-> c
+  flip :: (a %1-> b -> c) -> b -> a %1-> c
   flip f b a = f a b
 {-# INLINE subst #-}
 
@@ -932,10 +932,10 @@ If 'Of' were an instance of 'Control.Comonad.Comonad', then one could write
 @
 -}
 copy :: forall a m r . Control.Monad m =>
-     Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
+     Stream (Of a) m r %1-> Stream (Of a) (Stream (Of a) m) r
 copy = Effect . Control.return . loop
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) (Stream (Of a) m) r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop (Control.lift m)
@@ -945,7 +945,7 @@ copy = Effect . Control.return . loop
 {-| An alias for @copy@.
 -}
 duplicate :: forall a m r . Control.Monad m =>
-     Stream (Of a) m r #-> Stream (Of a) (Stream (Of a) m) r
+     Stream (Of a) m r %1-> Stream (Of a) (Stream (Of a) m) r
 duplicate = copy
 {-# INLINE duplicate#-}
 
@@ -1008,8 +1008,8 @@ duplicate = copy
    It would conceivably be clearer to import a series of specializations of 'store'.
    It is intended to be used at types like this:
 
-> storeM ::  (forall s m . Control.Monad m => Stream (Of a) m s #-> m (Of b s))
->         -> (Control.Monad n => Stream (Of a) n r #-> Stream (Of a) n (Of b r))
+> storeM ::  (forall s m . Control.Monad m => Stream (Of a) m s %1-> m (Of b s))
+>         -> (Control.Monad n => Stream (Of a) n r %1-> Stream (Of a) n (Of b r))
 > storeM = store
 
     It is clear from this type that we are just using the general instance:
@@ -1034,7 +1034,7 @@ goodbye
 
 -}
 store :: Control.Monad m =>
-  (Stream (Of a) (Stream (Of a) m) r #-> t) -> Stream (Of a) m r #-> t
+  (Stream (Of a) (Stream (Of a) m) r %1-> t) -> Stream (Of a) m r %1-> t
 store f x = f (copy x)
 {-# INLINE store #-}
 
@@ -1057,10 +1057,10 @@ store f x = f (copy x)
 See also 'mapM' for a variant of this which uses the return value of the function to transorm the values in the stream.
 -}
 chain :: forall a m r y . (Control.Monad m, Consumable y) =>
-  (a -> m y) -> Stream (Of a) m r #-> Stream (Of a) m r
+  (a -> m y) -> Stream (Of a) m r %1-> Stream (Of a) m r
 chain f = loop
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m  -> Effect $ Control.fmap loop m
@@ -1078,14 +1078,14 @@ chain f = loop
     of the original stream are interleaved in the resulting stream. Compare:
 
 > sequence :: Monad m =>         [m a]                 ->  m [a]
-> sequence :: Control.Monad m => Stream (Of (m a)) m r #-> Stream (Of a) m r
+> sequence :: Control.Monad m => Stream (Of (m a)) m r %1-> Stream (Of a) m r
 
 -}
 sequence :: forall a m r . Control.Monad m =>
-  Stream (Of (m (Ur a))) m r #-> Stream (Of a) m r
+  Stream (Of (m (Ur a))) m r %1-> Stream (Of a) m r
 sequence = loop
   where
-    loop :: Stream (Of (m (Ur a))) m r #-> Stream (Of a) m r
+    loop :: Stream (Of (m (Ur a))) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -1098,16 +1098,16 @@ sequence = loop
     elements that have already been seen and should thus be used with care.
 
 -}
-nubOrd :: (Control.Monad m, Ord a) => Stream (Of a) m r #-> Stream (Of a) m r
+nubOrd :: (Control.Monad m, Ord a) => Stream (Of a) m r %1-> Stream (Of a) m r
 nubOrd = nubOrdOn id
 {-# INLINE nubOrd #-}
 
 {-|  Use 'nubOrdOn' to have a custom ordering function for your elements. -}
 nubOrdOn :: forall m a b r . (Control.Monad m, Ord b) =>
-  (a -> b) -> Stream (Of a) m r #-> Stream (Of a) m r
+  (a -> b) -> Stream (Of a) m r %1-> Stream (Of a) m r
 nubOrdOn f xs = loop Set.empty xs
   where
-  loop :: Set.Set b -> Stream (Of a) m r #-> Stream (Of a) m r
+  loop :: Set.Set b -> Stream (Of a) m r %1-> Stream (Of a) m r
   loop !set stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap (loop set) m
@@ -1116,15 +1116,15 @@ nubOrdOn f xs = loop Set.empty xs
          False-> Step (a :> loop (Set.insert (f a) set) as)
 
 {-| More efficient versions of above when working with 'Int's that use 'Data.IntSet.IntSet'. -}
-nubInt :: Control.Monad m => Stream (Of Int) m r #-> Stream (Of Int) m r
+nubInt :: Control.Monad m => Stream (Of Int) m r %1-> Stream (Of Int) m r
 nubInt = nubIntOn id
 {-# INLINE nubInt #-}
 
 nubIntOn :: forall m a r . (Control.Monad m) =>
-  (a -> Int) -> Stream (Of a) m r #-> Stream (Of a) m r
+  (a -> Int) -> Stream (Of a) m r %1-> Stream (Of a) m r
 nubIntOn f xs = loop IntSet.empty xs
   where
-  loop :: IntSet.IntSet -> Stream (Of a) m r #-> Stream (Of a) m r
+  loop :: IntSet.IntSet -> Stream (Of a) m r %1-> Stream (Of a) m r
   loop !set stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap (loop set) m
@@ -1134,10 +1134,10 @@ nubIntOn f xs = loop IntSet.empty xs
 
 -- | Skip elements of a stream that fail a predicate
 filter  :: forall a m r . Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m r
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Of a) m r
 filter pred = loop
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -1148,10 +1148,10 @@ filter pred = loop
 
 -- | Skip elements of a stream that fail a monadic test
 filterM  :: forall a m r . Control.Monad m =>
-  (a -> m Bool) -> Stream (Of a) m r #-> Stream (Of a) m r
+  (a -> m Bool) -> Stream (Of a) m r %1-> Stream (Of a) m r
 filterM pred = loop
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m-> Effect $ Control.fmap loop m
@@ -1175,7 +1175,7 @@ filterM pred = loop
 
 -}
 intersperse :: forall a m r . Control.Monad m =>
-  a -> Stream (Of a) m r #-> Stream (Of a) m r
+  a -> Stream (Of a) m r %1-> Stream (Of a) m r
 intersperse x stream = stream & \case
     Return r -> Return r
     Effect m -> Effect $ Control.fmap (intersperse x) m
@@ -1183,7 +1183,7 @@ intersperse x stream = stream & \case
   where
     -- Given the first element of a stream, intersperse the bound
     -- element named 'x'
-    loop :: a -> Stream (Of a) m r #-> Stream (Of a) m r
+    loop :: a -> Stream (Of a) m r %1-> Stream (Of a) m r
     loop !a stream = stream & \case
       Return r -> Step (a :> Return r)
       Effect m -> Effect $ Control.fmap (loop a) m
@@ -1211,12 +1211,12 @@ e<Enter>
 @
   -}
 drop :: forall a m r. (HasCallStack, Control.Monad m) =>
-  Int -> Stream (Of a) m r #-> Stream (Of a) m r
+  Int -> Stream (Of a) m r %1-> Stream (Of a) m r
 drop n stream = case compare n 0 of
   LT -> Prelude.error "drop called with negative int" $ stream
   EQ -> stream
   GT -> loop stream where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (drop n) m
@@ -1238,10 +1238,10 @@ four<Enter>
 
 -}
 dropWhile :: forall a m r . Control.Monad m =>
-  (a -> Bool) -> Stream (Of a) m r #-> Stream (Of a) m r
+  (a -> Bool) -> Stream (Of a) m r %1-> Stream (Of a) m r
 dropWhile pred = loop
   where
-    loop :: Stream (Of a) m r #-> Stream (Of a) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of a) m r
     loop stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap loop m
@@ -1273,10 +1273,10 @@ dropWhile pred = loop
 @
 -}
 scan :: forall a x b m r . Control.Monad m =>
-  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> Stream (Of b) m r
+  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r %1-> Stream (Of b) m r
 scan step begin done stream = Step (done begin :> loop begin stream)
   where
-    loop :: x -> Stream (Of a) m r #-> Stream (Of b) m r
+    loop :: x -> Stream (Of a) m r %1-> Stream (Of b) m r
     loop !acc stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (loop acc) m
@@ -1303,14 +1303,14 @@ scan step begin done stream = Step (done begin :> loop begin stream)
 @
 -}
 scanM :: forall a x b m r . Control.Monad m =>
-  (x #-> a -> m (Ur x)) ->
+  (x %1-> a -> m (Ur x)) ->
   m (Ur x) ->
-  (x #-> m (Ur b)) ->
-  Stream (Of a) m r #->
+  (x %1-> m (Ur b)) ->
+  Stream (Of a) m r %1->
   Stream (Of b) m r
 scanM step mx done stream = loop stream
   where
-    loop :: Stream (Of a) m r #-> Stream (Of b) m r
+    loop :: Stream (Of a) m r %1-> Stream (Of b) m r
     loop stream = stream & \case
       Return r -> Effect $ Control.do
         Ur x <- mx
@@ -1340,10 +1340,10 @@ scanM step mx done stream = loop stream
 @
 -}
 scanned :: forall a x b m r . Control.Monad m =>
-  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r #-> Stream (Of (a,b)) m r
+  (x -> a -> x) -> x -> (x -> b) -> Stream (Of a) m r %1-> Stream (Of (a,b)) m r
 scanned step begin done = loop begin
   where
-    loop :: x -> Stream (Of a) m r #-> Stream (Of (a,b)) m r
+    loop :: x -> Stream (Of a) m r %1-> Stream (Of (a,b)) m r
     loop !x stream = stream & \case
       Return r -> Return r
       Effect m -> Effect $ Control.fmap (loop x) m
@@ -1368,17 +1368,17 @@ total<Enter>
 
 -}
 read :: (Control.Monad m, Read a) =>
-  Stream (Of String) m r #-> Stream (Of a) m r
+  Stream (Of String) m r %1-> Stream (Of a) m r
 read = mapMaybe readMaybe
 {-# INLINE read #-}
 
 {-| Interpolate a delay of n seconds between yields.
 -}
-delay :: forall a r. Double -> Stream (Of a) IO r #-> Stream (Of a) IO r
+delay :: forall a r. Double -> Stream (Of a) IO r %1-> Stream (Of a) IO r
 delay seconds = loop
   where
     pico = Prelude.truncate (seconds * 1000000)
-    loop :: Stream (Of a) IO r #-> Stream (Of a) IO r
+    loop :: Stream (Of a) IO r %1-> Stream (Of a) IO r
     loop stream = Control.do
       e <- Control.lift $ next stream
       e & \case
@@ -1390,7 +1390,7 @@ delay seconds = loop
 {-# INLINABLE delay #-}
 
 show :: (Control.Monad m, Prelude.Show a) =>
-  Stream (Of a) m r #-> Stream (Of String) m r
+  Stream (Of a) m r %1-> Stream (Of String) m r
 show = map Prelude.show
 {-# INLINE show #-}
 
@@ -1406,7 +1406,7 @@ show = map Prelude.show
 
     and so on.
 -}
-cons :: Control.Monad m => a -> Stream (Of a) m r #-> Stream (Of a) m r
+cons :: Control.Monad m => a -> Stream (Of a) m r %1-> Stream (Of a) m r
 cons a str = Step (a :> str)
 {-# INLINE cons #-}
 
@@ -1419,7 +1419,7 @@ cons a str = Step (a :> str)
 
 -}
 wrapEffect :: (Control.Monad m, Control.Functor f, Consumable y) =>
-  m a -> (a #-> m y) -> Stream f m r #-> Stream f m r
+  m a -> (a %1-> m y) -> Stream f m r %1-> Stream f m r
 wrapEffect ma action stream = stream & \case
   Return r -> Return r
   Effect m -> Effect $ Control.do
@@ -1444,12 +1444,12 @@ fromList "3456"
 @
 -}
 slidingWindow :: forall a b m. Control.Monad m => Int -> Stream (Of a) m b
-              #-> Stream (Of (Seq.Seq a)) m b
+              %1-> Stream (Of (Seq.Seq a)) m b
 slidingWindow n = setup (max 1 n :: Int) Seq.empty
   where
     -- Given the current sliding window, yield it and then recurse with
     -- updated sliding window
-    window :: Seq.Seq a -> Stream (Of a) m b #-> Stream (Of (Seq.Seq a)) m b
+    window :: Seq.Seq a -> Stream (Of a) m b %1-> Stream (Of (Seq.Seq a)) m b
     window !sequ str = Control.do
       e <- Control.lift (next str)
       e & \case
@@ -1459,7 +1459,7 @@ slidingWindow n = setup (max 1 n :: Int) Seq.empty
           window (Seq.drop 1 sequ Seq.|> a) rest
     -- Collect the first n elements in a sequence and call 'window'
     setup ::
-      Int -> Seq.Seq a -> Stream (Of a) m b #-> Stream (Of (Seq.Seq a)) m b
+      Int -> Seq.Seq a -> Stream (Of a) m b %1-> Stream (Of (Seq.Seq a)) m b
     setup 0 !sequ str = Control.do
        Step (sequ :> Return ()) -- same as yield
        window (Seq.drop 1 sequ) str

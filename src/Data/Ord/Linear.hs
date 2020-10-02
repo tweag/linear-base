@@ -44,18 +44,18 @@ class Eq a => Ord a where
   -- | @compare x y@ returns an @Ordering@ which is
   -- one of @GT@ (greater than), @EQ@ (equal), or @LT@ (less than)
   -- which should be understood as \"x is @(compare x y)@ y\".
-  compare :: a #-> a #-> Ordering
+  compare :: a %1-> a %1-> Ordering
 
-  (<=) :: a #-> a #-> Bool
+  (<=) :: a %1-> a %1-> Bool
   x <= y = not (x > y)
 
-  (<) :: a #-> a #-> Bool
+  (<) :: a %1-> a %1-> Bool
   x < y = compare x y == LT
 
-  (>) :: a #-> a #-> Bool
+  (>) :: a %1-> a %1-> Bool
   x > y = compare x y == GT
 
-  (>=) :: a #-> a #-> Bool
+  (>=) :: a %1-> a %1-> Bool
   x >= y = not (x < y)
 
   infix 4 <=, <, >, >=
@@ -63,7 +63,7 @@ class Eq a => Ord a where
 
 -- | @max x y@ returns the larger input, or  'y'
 -- in case of a tie.
-max :: (Dupable a, Ord a) =>  a #-> a #-> a
+max :: (Dupable a, Ord a) =>  a %1-> a %1-> a
 max x y =
   dup2 x & \(x', x'') ->
     dup2 y & \(y', y'') ->
@@ -73,7 +73,7 @@ max x y =
 
 -- | @min x y@ returns the smaller input, or 'y'
 -- in case of a tie.
-min :: (Dupable a, Ord a) =>  a #-> a #-> a
+min :: (Dupable a, Ord a) =>  a %1-> a %1-> a
 min x y =
   dup2 x & \(x', x'') ->
     dup2 y & \(y', y'') ->
@@ -132,14 +132,14 @@ newtype MovableOrd a = MovableOrd a
 
 instance (Prelude.Eq a, Movable a) => Eq (MovableOrd a) where
   MovableOrd ar == MovableOrd br
-    | Ur a <- move ar , Ur b <- move br
-    = a Prelude.== b
+    = move (ar, br) & \(Ur (a, b)) ->
+        a Prelude.== b
 
   MovableOrd ar /= MovableOrd br
-    | Ur a <- move ar , Ur b <- move br
-    = a Prelude./= b
+    = move (ar, br) & \(Ur (a, b)) ->
+        a Prelude./= b
 
 instance (Prelude.Ord a, Movable a) => Ord (MovableOrd a) where
   MovableOrd ar `compare` MovableOrd br
-    | Ur a <- move ar , Ur b <- move br
-    = a `Prelude.compare` b
+    = move (ar, br) & \(Ur (a, b)) ->
+        a `Prelude.compare` b

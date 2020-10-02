@@ -56,24 +56,24 @@ topsort = reverse . postOrder . fmap (  \(n,nbrs) -> (n,(nbrs,0))  )
         \hm -> postOrderHM nodes (HMap.insertAll xs hm)
 
 
-postOrderHM :: [Node] -> InDegGraph #-> Ur [Node]
+postOrderHM :: [Node] -> InDegGraph %1-> Ur [Node]
 postOrderHM nodes dag = findSources nodes (computeInDeg nodes dag) & \case
   (dag, Ur sources) -> pluckSources sources [] dag
  where
    -- O(V + N)
-  computeInDeg :: [Node] -> InDegGraph #-> InDegGraph
+  computeInDeg :: [Node] -> InDegGraph %1-> InDegGraph
   computeInDeg nodes dag = Linear.foldl incChildren dag (map Ur nodes)
 
   -- Increment in-degree of all neighbors
-  incChildren :: InDegGraph #-> Ur Node #-> InDegGraph
+  incChildren :: InDegGraph %1-> Ur Node %1-> InDegGraph
   incChildren dag (Ur node) = HMap.lookup node dag & \case
      (Ur Nothing, dag) -> dag
      (Ur (Just (xs,i)), dag) -> incNodes (move xs) dag
     where
-      incNodes :: Ur [Node] #-> InDegGraph #-> InDegGraph
+      incNodes :: Ur [Node] %1-> InDegGraph %1-> InDegGraph
       incNodes (Ur ns) dag = Linear.foldl incNode dag (map Ur ns)
 
-      incNode :: InDegGraph #-> Ur Node #-> InDegGraph
+      incNode :: InDegGraph %1-> Ur Node %1-> InDegGraph
       incNode dag (Ur node) = HMap.lookup node dag & \case
         (Ur Nothing, dag') -> dag'
         (Ur (Just (n,d)), dag') ->
@@ -81,7 +81,7 @@ postOrderHM nodes dag = findSources nodes (computeInDeg nodes dag) & \case
         --HMap.alter dag (\(Just (n,d)) -> Just (n,d+1)) node
 
 -- pluckSources sources postOrdSoFar dag
-pluckSources :: [Node] -> [Node] -> InDegGraph #-> Ur [Node]
+pluckSources :: [Node] -> [Node] -> InDegGraph %1-> Ur [Node]
 pluckSources [] postOrd dag = lseq dag (move postOrd)
 pluckSources (s:ss) postOrd dag = HMap.lookup s dag & \case
   (Ur Nothing, dag) -> pluckSources ss (s:postOrd) dag
@@ -90,12 +90,12 @@ pluckSources (s:ss) postOrd dag = HMap.lookup s dag & \case
         pluckSources (newSrcs ++ ss) (s:postOrd) dag'
   where
     -- decrement degree of children, save newly made sources
-    walk :: [Node] -> InDegGraph #-> (InDegGraph, Ur [Node])
+    walk :: [Node] -> InDegGraph %1-> (InDegGraph, Ur [Node])
     walk children dag =
       second (Data.fmap catMaybes) (mapAccum decDegree children dag)
 
     -- Decrement the degree of a node, save it if it is now a source
-    decDegree :: Node -> InDegGraph #-> (InDegGraph, Ur (Maybe Node))
+    decDegree :: Node -> InDegGraph %1-> (InDegGraph, Ur (Maybe Node))
     decDegree node dag = HMap.lookup node dag & \case
         (Ur Nothing, dag') -> (dag', Ur Nothing)
         (Ur (Just (n,d)), dag') ->
@@ -103,13 +103,13 @@ pluckSources (s:ss) postOrd dag = HMap.lookup s dag & \case
 
 
 -- Given a list of nodes, determines which are sources
-findSources :: [Node] -> InDegGraph #-> (InDegGraph, Ur [Node])
+findSources :: [Node] -> InDegGraph %1-> (InDegGraph, Ur [Node])
 findSources nodes dag =
   second (Data.fmap catMaybes) (mapAccum checkSource nodes dag)
 
 
 -- | Check if a node is a source, and if so return it
-checkSource :: Node -> InDegGraph #-> (InDegGraph, Ur (Maybe Node))
+checkSource :: Node -> InDegGraph %1-> (InDegGraph, Ur (Maybe Node))
 checkSource node dag = HMap.lookup node dag & \case
   (Ur Nothing, dag) -> (dag, Ur Nothing)
   (Ur (Just (xs,0)), dag) ->  (dag, Ur (Just node))
@@ -117,7 +117,7 @@ checkSource node dag = HMap.lookup node dag & \case
 
 
 mapAccum ::
-  (a -> b #-> (b, Ur c)) -> [a] -> b #-> (b, Ur [c])
+  (a -> b %1-> (b, Ur c)) -> [a] -> b %1-> (b, Ur [c])
 mapAccum f [] b =  (b, Ur [])
 mapAccum f (x:xs) b = mapAccum f xs b & \case
   (b, Ur cs) -> second (Data.fmap (:cs)) (f x b)

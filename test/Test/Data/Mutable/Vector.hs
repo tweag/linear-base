@@ -68,7 +68,7 @@ group =
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type VectorTester = Vector.Vector Int #-> Ur (TestT IO ())
+type VectorTester = Vector.Vector Int %1-> Ur (TestT IO ())
 
 nonEmptyList :: Gen [Int]
 nonEmptyList = Gen.list (Range.linear 1 1000) val
@@ -80,13 +80,13 @@ val :: Gen Int
 val = Gen.int (Range.linear (-1000) 1000)
 
 compInts ::
-  Ur Int #->
-  Ur Int #->
+  Ur Int %1->
+  Ur Int %1->
   Ur (TestT IO ())
 compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getFst :: Consumable b => (a, b) #-> a
+getFst :: Consumable b => (a, b) %1-> a
 getFst (a, b) = lseq b a
 
 
@@ -140,7 +140,7 @@ readWrite2 = property $ do
 readWrite2Test :: Int -> Int -> Int -> VectorTester
 readWrite2Test ix jx val vec = fromRead (Vector.read vec ix)
   where
-    fromRead :: (Ur Int, Vector.Vector Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Vector.Vector Int) %1-> Ur (TestT IO ())
     fromRead (val1, vec) =
       compInts
         val1
@@ -158,7 +158,7 @@ readPush1 = property $ do
 readPush1Test :: Int -> Int -> VectorTester
 readPush1Test val ix vec = fromRead (Vector.read vec ix)
   where
-    fromRead :: (Ur Int, Vector.Vector Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Vector.Vector Int) %1-> Ur (TestT IO ())
     fromRead (val', vec) =
       compInts (getFst (Vector.get ix (Vector.push val vec))) val'
 
@@ -174,7 +174,7 @@ readPush2Test :: Int -> VectorTester
 readPush2Test val vec = fromLen (Vector.size vec)
   where
     fromLen ::
-      (Ur Int, Vector.Vector Int) #->
+      (Ur Int, Vector.Vector Int) %1->
       Ur (TestT IO ())
     fromLen (Ur len, vec) =
       compInts (getFst (Vector.get len (Vector.push val vec))) (move val)
@@ -215,7 +215,7 @@ lenPushTest :: Int -> VectorTester
 lenPushTest val vec = fromLen Linear.$ Vector.size vec
   where
     fromLen ::
-      (Ur Int, Vector.Vector Int) #->
+      (Ur Int, Vector.Vector Int) %1->
       Ur (TestT IO ())
     fromLen (Ur len, vec) =
       compInts (move (len+1)) (getFst (Vector.size (Vector.push val vec)))
@@ -266,7 +266,7 @@ refToListViaPop = property $ do
         Vector.fromList xs (popAll [])
   xs === actual
  where
-   popAll :: [a] -> Vector.Vector a #-> Ur [a]
+   popAll :: [a] -> Vector.Vector a %1-> Ur [a]
    popAll acc vec =
      Vector.pop vec Linear.& \case
        (Ur Nothing, vec') -> vec' `lseq` Ur acc
@@ -280,7 +280,7 @@ refFromListViaPush = property $ do
           Vector.toList Linear.. pushAll xs
   xs === actual
  where
-   pushAll :: [a] -> Vector.Vector a #-> Vector.Vector a
+   pushAll :: [a] -> Vector.Vector a %1-> Vector.Vector a
    pushAll [] vec = vec
    pushAll (x:xs) vec = Vector.push x vec Linear.& pushAll xs
 
@@ -311,7 +311,7 @@ refFmap :: Property
 refFmap = property $ do
   xs <- forAll list
   let -- An arbitrary function
-      f :: Int #-> Bool
+      f :: Int %1-> Bool
       f = (Linear.> 0)
       expected = map (Linear.forget f) xs
       Ur actual =
@@ -371,7 +371,7 @@ readAndWriteTest :: Property
 readAndWriteTest = withTests 1 . property $
   unur (Vector.fromList "a" test) === 'a'
   where
-    test :: Vector.Vector Char #-> Ur Char
+    test :: Vector.Vector Char %1-> Ur Char
     test vec =
       Vector.read vec 0 Linear.& \(before, vec') ->
         Vector.write vec' 0 'b' Linear.& \vec'' ->

@@ -51,41 +51,41 @@ type Keyed a = Linear.Keyed a
 -- # Constructors and Mutators
 -------------------------------------------------------------------------------
 
-empty :: Keyed a => Int -> (Set a #-> Ur b) #-> Ur b
-empty s (f :: Set a #-> Ur b) =
+empty :: Keyed a => Int -> (Set a %1-> Ur b) %1-> Ur b
+empty s (f :: Set a %1-> Ur b) =
   Linear.empty s (\hm -> f (Set hm))
 
-toList :: Keyed a => Set a #-> Ur [a]
+toList :: Keyed a => Set a %1-> Ur [a]
 toList (Set hm) =
   Linear.toList hm
     Linear.& \(Ur xs) -> Ur (Prelude.map Prelude.fst xs)
 
-insert :: Keyed a => a -> Set a #-> Set a
+insert :: Keyed a => a -> Set a %1-> Set a
 insert a (Set hmap) = Set (Linear.insert a () hmap)
 
-delete :: Keyed a => a -> Set a #-> Set a
+delete :: Keyed a => a -> Set a %1-> Set a
 delete a (Set hmap) = Set (Linear.delete a hmap)
 
-union :: Keyed a => Set a #-> Set a #-> Set a
+union :: Keyed a => Set a %1-> Set a %1-> Set a
 union (Set hm1) (Set hm2) =
   Set (Linear.unionWith (\_ _ -> ()) hm1 hm2)
 
-intersection :: Keyed a => Set a #-> Set a #-> Set a
+intersection :: Keyed a => Set a %1-> Set a %1-> Set a
 intersection (Set hm1) (Set hm2) =
   Set (Linear.intersectionWith (\_ _ -> ()) hm1 hm2)
 
 -- # Accessors
 -------------------------------------------------------------------------------
 
-size :: Keyed a => Set a #-> (Ur Int, Set a)
+size :: Keyed a => Set a %1-> (Ur Int, Set a)
 size (Set hm) =
   Linear.size hm Linear.& \(s, hm') -> (s, Set hm')
 
-member :: Keyed a => a -> Set a #-> (Ur Bool, Set a)
+member :: Keyed a => a -> Set a %1-> (Ur Bool, Set a)
 member a (Set hm) =
   Linear.member a hm Linear.& \(b, hm') -> (b, Set hm')
 
-fromList :: Keyed a => [a] -> (Set a #-> Ur b) #-> Ur b
+fromList :: Keyed a => [a] -> (Set a %1-> Ur b) %1-> Ur b
 fromList xs f =
   Linear.fromList (Prelude.map (,()) xs) (\hm -> f (Set hm))
 

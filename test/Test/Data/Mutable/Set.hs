@@ -43,7 +43,7 @@ group =
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type SetTester = Set.Set Int #-> Ur (TestT IO ())
+type SetTester = Set.Set Int %1-> Ur (TestT IO ())
 
 -- | A random list
 nonemptyList :: Gen [Int]
@@ -57,13 +57,13 @@ value :: Gen Int
 value = Gen.int (Range.linear (-100) 100)
 
 testEqual :: (Show a, Eq a) =>
-  Ur a #->
-  Ur a #->
+  Ur a %1->
+  Ur a %1->
   Ur (TestT IO ())
 testEqual (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getFst :: Consumable b => (a, b) #-> a
+getFst :: Consumable b => (a, b) %1-> a
 getFst (a, b) = lseq b a
 
 -- # Tests
@@ -93,7 +93,7 @@ memberInsert2 = property $ do
 memberInsert2Test :: Int -> Int -> SetTester
 memberInsert2Test val1 val2 set = fromRead (Set.member val2 set)
   where
-    fromRead :: (Ur Bool, Set.Set Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Bool, Set.Set Int) %1-> Ur (TestT IO ())
     fromRead (memberVal2, set) =
       testEqual
         memberVal2
@@ -123,7 +123,7 @@ memberDelete2 = property $ do
 memberDelete2Test :: Int -> Int -> SetTester
 memberDelete2Test val1 val2 set = fromRead (Set.member val2 set)
   where
-    fromRead :: (Ur Bool, Set.Set Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Bool, Set.Set Int) %1-> Ur (TestT IO ())
     fromRead (memberVal2, set) =
       testEqual
         memberVal2
@@ -139,7 +139,7 @@ sizeInsert1 = property $ do
 sizeInsert1Test :: Int -> SetTester
 sizeInsert1Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         sizeOriginal
@@ -155,7 +155,7 @@ sizeInsert2 = property $ do
 sizeInsert2Test :: Int -> SetTester
 sizeInsert2Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         ((Linear.+ 1) Data.<$> sizeOriginal)
@@ -171,7 +171,7 @@ sizeDelete1 = property $ do
 sizeDelete1Test :: Int -> SetTester
 sizeDelete1Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         ((Linear.- 1) Data.<$> sizeOriginal)
@@ -187,7 +187,7 @@ sizeDelete2 = property $ do
 sizeDelete2Test :: Int -> SetTester
 sizeDelete2Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) #-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         sizeOriginal

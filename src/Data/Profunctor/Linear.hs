@@ -33,15 +33,15 @@ import Control.Arrow (Kleisli(..))
 class Profunctor (arr :: Type -> Type -> Type) where
   {-# MINIMAL dimap | lmap, rmap #-}
 
-  dimap :: (s #-> a) -> (b #-> t) -> a `arr` b -> s `arr` t
+  dimap :: (s %1-> a) -> (b %1-> t) -> a `arr` b -> s `arr` t
   dimap f g x = lmap f (rmap g x)
   {-# INLINE dimap #-}
 
-  lmap :: (s #-> a) -> a `arr` t -> s `arr` t
+  lmap :: (s %1-> a) -> a `arr` t -> s `arr` t
   lmap f = dimap f id
   {-# INLINE lmap #-}
 
-  rmap :: (b #-> t) -> s `arr` b -> s `arr` t
+  rmap :: (b %1-> t) -> s `arr` b -> s `arr` t
   rmap = dimap id
   {-# INLINE rmap #-}
 
@@ -64,15 +64,15 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
   -- | Equivalently but less efficient in general:
   --
   -- > wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
-  wander :: forall s t a b. (forall f. Control.Applicative f => (a #-> f b) -> s #-> f t) -> a `arr` b -> s `arr` t
+  wander :: forall s t a b. (forall f. Control.Applicative f => (a %1-> f b) -> s %1-> f t) -> a `arr` b -> s `arr` t
 
 ---------------
 -- Instances --
 ---------------
 
-newtype LinearArrow a b = LA (a #-> b)
+newtype LinearArrow a b = LA (a %1-> b)
 -- | Temporary deconstructor since inference doesn't get it right
-getLA :: LinearArrow a b #-> a #-> b
+getLA :: LinearArrow a b %1-> a %1-> b
 getLA (LA f) = f
 
 instance Profunctor LinearArrow where
@@ -108,7 +108,7 @@ instance Monoidal Either Void (->) where
   f *** g = Prelude.bimap f g
   unit = \case {}
 
-data Exchange a b s t = Exchange (s #-> a) (b #-> t)
+data Exchange a b s t = Exchange (s %1-> a) (b %1-> t)
 instance Profunctor (Exchange a b) where
   dimap f g (Exchange p q) = Exchange (p . f) (g . q)
 
@@ -134,8 +134,8 @@ instance Prelude.Functor f => Monoidal Either Void (Kleisli f) where
     Right b -> Right Prelude.<$> g b
   unit = Kleisli $ \case {}
 
-data Market a b s t = Market (b #-> t) (s #-> Either t a)
-runMarket :: Market a b s t #-> (b #-> t, s #-> Either t a)
+data Market a b s t = Market (b %1-> t) (s %1-> Either t a)
+runMarket :: Market a b s t %1-> (b %1-> t, s %1-> Either t a)
 runMarket (Market f g) = (f, g)
 
 instance Profunctor (Market a b) where

@@ -96,11 +96,11 @@ each' xs = Prelude.foldr (\a stream -> Step $ a :> stream) (Return ()) xs
 
 -}
 unfoldr :: Control.Monad m =>
-  (s #-> m (Either r (Ur a, s))) -> s #-> Stream (Of a) m r
+  (s %1-> m (Either r (Ur a, s))) -> s %1-> Stream (Of a) m r
 unfoldr step s = unfoldr' step s
   where
     unfoldr' :: Control.Monad m =>
-      (s #-> m (Either r (Ur a, s))) -> s #-> Stream (Of a) m r
+      (s %1-> m (Either r (Ur a, s))) -> s %1-> Stream (Of a) m r
     unfoldr' step s = Effect $ step s Control.>>= \case
       Left r -> Control.return $ Return r
       Right (Ur a,s') ->
@@ -109,10 +109,10 @@ unfoldr step s = unfoldr' step s
 
 -- Note: we use the RIO monad from linear base to enforce
 -- the protocol of file handles and file I/O
-fromHandle :: Handle #-> Stream (Of Text) RIO ()
+fromHandle :: Handle %1-> Stream (Of Text) RIO ()
 fromHandle h = loop h
   where
-    loop :: Handle #-> Stream (Of Text) RIO ()
+    loop :: Handle %1-> Stream (Of Text) RIO ()
     loop h = Control.do
       (Ur isEOF, h') <- Control.lift $ hIsEOF h
       case isEOF of
@@ -194,30 +194,30 @@ untilRight mEither = Effect loop
 -------------------------------------------------------------------------------
 
 -- | An *affine stream is represented with a state of type @x@,
--- a possibly terminating step function of type @(x #-> m (Either (f x) r))@,
--- and a stop-short function @(x #-> m r)@.
+-- a possibly terminating step function of type @(x %1-> m (Either (f x) r))@,
+-- and a stop-short function @(x %1-> m r)@.
 --
 -- This mirrors the unfold of a normal stream:
 --
 -- > data Stream f m r where
--- >   Stream :: x #-> (x #-> m (Either (f x) r)) -> Stream f m r
+-- >   Stream :: x %1-> (x %1-> m (Either (f x) r)) -> Stream f m r
 --
 -- *Though referred to as an \"affine stream\" this might not be the correct
 -- definition for affine streams. Sorting this out requires a bit more
 -- careful thought.
 data AffineStream f m r where
   AffineStream ::
-    x #->
-    (x #-> m (Either (f x) r)) ->
-    (x #-> m r) ->
+    x %1->
+    (x %1-> m (Either (f x) r)) ->
+    (x %1-> m r) ->
     AffineStream f m r
 
 -- | Take @n@ number of elements from the affine stream, for non-negative
 -- @n@. (Negative @n@ is treated as 0.)
 take :: forall f m r. (Control.Monad m, Control.Functor f) =>
-  Int -> AffineStream f m r #-> Stream f m r
+  Int -> AffineStream f m r %1-> Stream f m r
 take = loop where
-  loop :: Int -> AffineStream f m r #-> Stream f m r
+  loop :: Int -> AffineStream f m r %1-> Stream f m r
   loop n (AffineStream s step end)
     | n <= 0 = Effect $ Control.fmap Control.return $ end s
     | otherwise = Effect $ Control.do
@@ -231,9 +231,9 @@ take = loop where
 -- | Run an affine stream until it ends or a monadic test succeeds.
 -- Drop the element it succeeds on.
 untilM :: forall a m r. Control.Monad m =>
-  (a -> m Bool) -> AffineStream (Of a) m r #-> Stream (Of a) m r
+  (a -> m Bool) -> AffineStream (Of a) m r %1-> Stream (Of a) m r
 untilM = loop where
-  loop :: (a -> m Bool) -> AffineStream (Of a) m r #-> Stream (Of a) m r
+  loop :: (a -> m Bool) -> AffineStream (Of a) m r %1-> Stream (Of a) m r
   loop test (AffineStream s step end) = Effect $ Control.do
     next <- step s
     next & \case
@@ -248,9 +248,9 @@ untilM = loop where
 
 -- | Like 'untilM' but without the monadic test.
 until :: forall a m r. Control.Monad m =>
-  (a -> Bool) -> AffineStream (Of a) m r #-> Stream (Of a) m r
+  (a -> Bool) -> AffineStream (Of a) m r %1-> Stream (Of a) m r
 until = loop where
-  loop :: (a -> Bool) -> AffineStream (Of a) m r #-> Stream (Of a) m r
+  loop :: (a -> Bool) -> AffineStream (Of a) m r %1-> Stream (Of a) m r
   loop test (AffineStream s step end) = Effect $ Control.do
     next <- step s
     next & \case
@@ -263,13 +263,13 @@ until = loop where
 
 -- | Zip a finite stream with an affine stream.
 zip :: forall a x m r1 r2. Control.Monad m =>
-  Stream (Of x) m r1 #->
-  AffineStream (Of a) m r2 #->
+  Stream (Of x) m r1 %1->
+  AffineStream (Of a) m r2 %1->
   Stream (Of (x,a)) m (r1,r2)
 zip = loop where
   loop ::
-    Stream (Of x) m r1 #->
-    AffineStream (Of a) m r2 #->
+    Stream (Of x) m r1 %1->
+    AffineStream (Of a) m r2 %1->
     Stream (Of (x,a)) m (r1,r2)
   loop stream (AffineStream s step end) = stream & \case
     Return r1 -> Effect $
@@ -289,7 +289,7 @@ zip = loop where
 -- | An affine stream of standard input lines.
 stdinLn :: AffineStream (Of Text) IO ()
 stdinLn = AffineStream () getALine Control.pure where
-  getALine :: () #-> IO (Either (Of Text ()) ())
+  getALine :: () %1-> IO (Either (Of Text ()) ())
   getALine () = Control.do
     Ur line <- fromSystemIOU System.getLine
     Control.return $ Left (Text.pack line :> ())
@@ -297,7 +297,7 @@ stdinLn = AffineStream () getALine Control.pure where
 -- | An affine stream of reading lines, crashing on failed parse.
 readLn :: Read a => AffineStream (Of a) IO ()
 readLn = AffineStream () readALine Control.pure where
-  readALine :: Read a => () #-> IO (Either (Of a ()) ())
+  readALine :: Read a => () %1-> IO (Either (Of a ()) ())
   readALine () = Control.do
     Ur line <- fromSystemIOU System.getLine
     Control.return $ Left (Prelude.read line :> ())
@@ -308,7 +308,7 @@ iterate :: forall a m.
 iterate a step =
   AffineStream (Ur a) stepper (\x -> Control.return $ consume x)
   where
-    stepper :: Ur a #-> m (Either (Of a (Ur a)) ())
+    stepper :: Ur a %1-> m (Either (Of a (Ur a)) ())
     stepper (Ur a) = Control.return $
       Left $ a :> Ur (step a)
 
@@ -318,7 +318,7 @@ iterateM :: forall a m. Control.Monad m =>
 iterateM ma step =
   AffineStream ma stepper (Control.fmap consume)
   where
-    stepper :: m (Ur a) #-> m (Either (Of a (m (Ur a))) ())
+    stepper :: m (Ur a) %1-> m (Either (Of a (m (Ur a))) ())
     stepper ma = Control.do
       Ur a <- ma
       Control.return $ Left $ a :> (step a)
@@ -335,11 +335,11 @@ cycle stream =
   AffineStream (Ur stream, stream) stepStream leftoverEffects
   where
     leftoverEffects ::
-      (Ur (Stream (Of a) m r), Stream (Of a) m r) #-> m r
+      (Ur (Stream (Of a) m r), Stream (Of a) m r) %1-> m r
     leftoverEffects (Ur _, str) = effects str
 
     stepStream :: Control.Functor f =>
-      (Ur (Stream f m r), Stream f m r) #->
+      (Ur (Stream f m r), Stream f m r) %1->
       m (Either (f (Ur (Stream f m r), Stream f m r)) r)
     stepStream (Ur s, str) = str & \case
       Return r -> lseq r $ stepStream (Ur s, s)
@@ -386,7 +386,7 @@ stdinLnUntil test = until test stdinLn
 
 -- | Given a finite stream, provide a stream of lines of standard input
 -- zipped with that finite stream
-stdinLnZip :: Stream (Of x) IO r #-> Stream (Of (x, Text)) IO r
+stdinLnZip :: Stream (Of x) IO r %1-> Stream (Of (x, Text)) IO r
 stdinLnZip stream = Control.fmap (\(r,()) -> r) $ zip stream stdinLn
 {-# INLINE stdinLnZip #-}
 
@@ -402,7 +402,7 @@ readLnUntil :: Read a => (a -> Bool) -> Stream (Of a) IO ()
 readLnUntil test = until test readLn
 {-# INLINE readLnUntil #-}
 
-readLnZip :: Read a => Stream (Of x) IO r #-> Stream (Of (x, a)) IO r
+readLnZip :: Read a => Stream (Of x) IO r %1-> Stream (Of (x, a)) IO r
 readLnZip stream = Control.fmap (\(r,()) -> r) $ zip stream readLn
 {-# INLINE readLnZip #-}
 
@@ -426,7 +426,7 @@ iterateMN n step ma = take n $ iterateM ma step
 {-# INLINE iterateMN #-}
 
 iterateMZip :: Control.Monad m =>
-  Stream (Of x) m r #->
+  Stream (Of x) m r %1->
   (a -> m (Ur a)) -> m (Ur a) -> Stream (Of (x,a)) m r
 iterateMZip stream step ma =
   Control.fmap (\(r,()) -> r) $ zip stream $ iterateM ma step
@@ -443,7 +443,7 @@ cycleN n stream = take n $ cycle stream
 -- cycled stream @s2@. That is, we consume @s2@ the smallest natural number of
 -- times we need to zip.
 cycleZip :: (Control.Monad m, Consumable s) =>
-  Stream (Of a) m r #-> Stream (Of b) m s -> Stream (Of (a,b)) m (r,s)
+  Stream (Of a) m r %1-> Stream (Of b) m s -> Stream (Of (a,b)) m (r,s)
 cycleZip str stream = zip str $ cycle stream
 {-# INLINE cycleZip #-}
 
@@ -465,7 +465,7 @@ enumFromThenN n e e' = take n $ enumFromThen e e'
 -- by the first and second values. The length is limited by zipping
 -- with a given finite stream, i.e., the first argument.
 enumFromThenZip :: (Control.Monad m, Enum e) =>
-  Stream (Of a) m r #-> e -> e -> Stream (Of (a,e)) m r
+  Stream (Of a) m r %1-> e -> e -> Stream (Of (a,e)) m r
 enumFromThenZip stream e e'=
   Control.fmap (\(r,()) -> r) $ zip stream $ enumFromThen e e'
 {-# INLINE enumFromThenZip #-}
@@ -479,7 +479,7 @@ enumFromN n e = take n $ enumFrom e
 -- | Like 'enumFromThenZip' but where the next element in the enumeration is just
 -- the successor @succ n@ for a given enum @n@.
 enumFromZip :: (Control.Monad m, Enum e) =>
-  Stream (Of a) m r #-> e -> Stream (Of (a,e)) m r
+  Stream (Of a) m r %1-> e -> Stream (Of (a,e)) m r
 enumFromZip str e =
   Control.fmap (\(r,()) -> r) $ zip str $ enumFrom e
 {-# INLINE enumFromZip #-}

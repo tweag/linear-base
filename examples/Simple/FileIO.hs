@@ -95,7 +95,7 @@ linearPrintFirstLine fp = do
     for the multiplicity, as descibed in the paper is a work in progress.
     This will hopefully result in using
 
-    `(>>==) RIO 'Many a #-> (a -> RIO p b) #-> RIO p b`
+    `(>>==) RIO 'Many a %1-> (a -> RIO p b) %1-> RIO p b`
 
     as the non-linear bind operation.
     See https://github.com/tweag/linear-base/issues/83.
@@ -111,21 +111,21 @@ type LinHandle = Linear.Handle
 
 -- | Linear bind
 -- Notice the continuation has a linear arrow,
--- i.e., (a #-> RIO b)
-(>>#=) :: RIO a #-> (a #-> RIO b) #-> RIO b
+-- i.e., (a %1-> RIO b)
+(>>#=) :: RIO a %1-> (a %1-> RIO b) %1-> RIO b
 (>>#=) = (Control.>>=)
 
 -- | Non-linear bind
 -- Notice the continuation has a non-linear arrow,
 -- i.e., (() -> RIO b). For simplicity, we don't use
 -- a more general type, like the following:
--- (>>==) :: RIO (Ur a) #-> (a -> RIO b) #-> RIO b
-(>>==) :: RIO () #-> (() -> RIO b) #-> RIO b
+-- (>>==) :: RIO (Ur a) %1-> (a -> RIO b) %1-> RIO b
+(>>==) :: RIO () %1-> (() -> RIO b) %1-> RIO b
 (>>==) ma f = ma Control.>>= (\() -> f ())
 
 -- | Inject
 -- provided just to make the type explicit
-inject :: a #-> RIO a
+inject :: a %1-> RIO a
 inject = Control.return
 
 -- * The explicit example
@@ -139,10 +139,10 @@ getFirstLineExplicit path =
   where
     openFileForReading :: FilePath -> RIO LinHandle
     openFileForReading fp = Linear.openFile fp System.ReadMode
-    readOneLine :: LinHandle #-> RIO (Ur Text, LinHandle)
+    readOneLine :: LinHandle %1-> RIO (Ur Text, LinHandle)
     readOneLine = Linear.hGetLine
     closeAndReturnLine ::
-      (Ur Text, LinHandle) #-> RIO (Ur Text)
+      (Ur Text, LinHandle) %1-> RIO (Ur Text)
     closeAndReturnLine (unrText, handle) =
       Linear.hClose handle >>#= (\() -> inject unrText)
 

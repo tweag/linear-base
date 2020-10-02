@@ -18,13 +18,13 @@ import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 
 -- | Linear Data Functors should be thought of as containers holding values of
--- type @a@ over which you are able to apply a linear function of type @a #->
+-- type @a@ over which you are able to apply a linear function of type @a %1->
 -- b@ __on each__ value of type @a@ in the functor and consume a given functor
 -- of type @f a@.
 class Functor f where
-  fmap :: (a #-> b) -> f a #-> f b
+  fmap :: (a %1-> b) -> f a %1-> f b
 
-(<$>) :: Functor f => (a #-> b) -> f a #-> f b
+(<$>) :: Functor f => (a %1-> b) -> f a %1-> f b
 (<$>) = fmap
 
 -- | Data 'Applicative'-s can be seen as containers which can be zipped
@@ -33,7 +33,7 @@ class Functor f where
 -- drops values, which we are not allowed to do in a linear container).
 --
 -- In fact, an applicative functor is precisely a functor equipped with (pure
--- and) @liftA2 :: (a #-> b #-> c) -> f a #-> f b #-> f c@. In the case where
+-- and) @liftA2 :: (a %1-> b %1-> c) -> f a %1-> f b %1-> f c@. In the case where
 -- @f = []@, the signature of 'liftA2' would specialise to that of 'zipWith'.
 --
 -- Intuitively, the type of 'liftA2' means that 'Applicative's can be seen as
@@ -48,8 +48,8 @@ class Functor f where
 -- An 'Applicative' is, as in the restricted case, a lax monoidal endofunctor of
 -- the category of linear types. That is, it is equipped with
 --
--- * a (linear) function @() #-> f ()@
--- * a (linear) natural transformation @(f a, f b) #-> f (a, b)@
+-- * a (linear) function @() %1-> f ()@
+-- * a (linear) natural transformation @(f a, f b) %1-> f (a, b)@
 --
 -- It is a simple exercise to verify that these are equivalent to the definition
 -- of 'Applicative'. Hence that the choice of linearity of the various arrow is
@@ -57,9 +57,9 @@ class Functor f where
 class Functor f => Applicative f where
   {-# MINIMAL pure, (liftA2 | (<*>)) #-}
   pure :: a -> f a
-  (<*>) :: f (a #-> b) #-> f a #-> f b
+  (<*>) :: f (a %1-> b) %1-> f a %1-> f b
   f <*> x = liftA2 ($) f x
-  liftA2 :: (a #-> b #-> c) -> f a #-> f b #-> f c
+  liftA2 :: (a %1-> b %1-> c) -> f a %1-> f b %1-> f c
   liftA2 f x y = f <$> x <*> y
 
 ---------------
