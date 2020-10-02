@@ -1,102 +1,97 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
--- | This module provides converters and documentation for polarized arrays.
+-- | This module documents polarized arrays and top-level conversions
 --
--- There are two polarities or \"directions\": push arrays and pull arrays.
+-- == What are polarized arrays and what are they good for?
 --
--- You should use push an pull arrays if you want to explicity control
--- when GHC allocates space in the garbage-collector heap for arrays.
--- The point of doing this is to reduce the amount of memory used
--- and improve the performance of your program.
+-- Polarized arrays aim to offer an API to replace that of @Data.Vector@
+-- with mechanisms to explicitly control when memory is allocated for
+-- an array. The current status quo is to use some array or vector type
+-- and rely on a good implementation and GHC's fusion capabilities
+-- to avoid unnecessary allocations (and thus save memory and improve
+-- the performance).
 --
--- The performance of your program is improved because linear types enable the
--- API which does not allow operations on push or pull arrays that cannot be
--- fused. That is, for some subtle and complicated reasons, we can be sure that
--- only one function allocates memory (and it's called 'alloc') and all other
--- compositions do not allocate memory.
+-- Polarized arrays are arrays with one of two polarities or directions: push
+-- or pull. Push and pull arrays are two array types that do not allocate
+-- memory with conversions to and from @Data.Vector@. The only API function
+-- that allocates space for an array is @Push.alloc@. Nothing else allocates
+-- memory and hence we are not relying on GHC to fuse according to a
+-- particular implementation of our vector API and program.
 --
--- == How to use push and pull arrays
+-- === What is a pull array?
 --
--- __The trifecta of controlling allocation:__
+-- A pull array is one that it's easy to "pull" from and read. These arrays
+-- work nicely as arguments to functions and we can fold, map, zip, and split
+-- these easily.
 --
--- \[ \texttt{Vector a} \]
--- \[ \text{fromVector}~~ { \Huge \swarrow  ~~~~ \nwarrow } ~~~ \text{alloc} \]
--- \[ \texttt{Pull a} {\Huge ~~~ \longrightarrow ~~~} \texttt{Push a}\]
--- \[ \text{transfer}\]
+-- A typical use of polarized arrays would construct a pull array to begin
+-- a computation using arrays.
 --
--- Pull arrays are good as arguments to functions, because they are easy to
--- \"pull\" from, map over and zip with.
+-- === What is a push array?
 --
--- Push arrays are good as values returned from functions, and are easy to
--- \"write\" to and modify.
+-- A push array is a finished result that we do not want to allocate just yet.
+-- We can concatenate two push arrays, convert a pull array into a push array
+-- (without any memory allocation), create constant push arrays and when
+-- we desire allocate a push array to a @Data.Vector@:
 --
--- A typical application starts with concrete lists as @Vector@s (which are
--- inputs), goes to @Pull@ arrays, then to @Push@ arrays and ends with
--- @Vector@s (which are outputs).  All the computations inbetween the
--- "fromVector" and "alloc" are fused and no memory from the GC heap is
--- allocated when they are executed.
+-- > Push.alloc :: Push.Array a %1-> Vector a
 --
--- Such a combination of functions that controls fusion is called 
--- a __fusion pipeline__.
+-- A push array is typically created towards the end of a computation that uses
+-- arrays and passed along until we are ready to allocate.
 --
--- == A toy example
+-- === What does using polarized arrays look like?
 --
--- > import Data.Array.Polarized
--- > import qualified Data.Array.Polarized.Push as Push
--- > import qualified Data.Array.Polarized.Pull as Pull
--- > import qualified Data.Functor.Linear as Linear
--- > import Data.Vector (Vector, (!), fromList)
--- > import Prelude
--- >
--- > type Pull a = Pull.Array a
--- > type Push a = Push.Array a
--- >
--- > pipeline :: Vector Int -> Vector Int -> Vector Int
--- > pipeline coeff =
--- >   pushToVector .
--- >   diff .
--- >   addCoeffVector .
--- >   multThree .
--- >   fromVector'
--- >   where
--- >     pushToVector :: Pull Int -> Vector Int
--- >     pushToVector arr = Push.alloc (transfer arr)
--- >
--- >     fromVector' :: Vector Int -> Pull Int
--- >     fromVector' arr = Pull.fromVector arr
--- >
--- >     addCoeffVector :: Pull Int -> Pull Int
--- >     addCoeffVector arr = addCoeff (Pull.fromVector coeff) arr
--- >
--- > multThree :: Pull Int -> Pull Int
--- > multThree arr = Linear.fmap (* 3) arr
--- >
--- > addCoeff :: Pull Int -> Pull Int %1-> Pull Int
--- > addCoeff arr = Pull.zipWith (+) arr
--- >
--- > -- | Takes the difference between elements
--- > -- which is common in differentials
--- > diff :: Pull Int -> Pull Int
--- > diff arr = withLen (Pull.findLength arr)
--- >   where
--- >     withLen :: (Int, Pull Int) -> Pull Int
--- >     withLen (len, arr) =
--- >       case (Pull.split 1 arr, Pull.split (len - 1) arr) of
--- >         ((_, tail), (top,_)) -> Pull.zipWith (-) tail top
--- >
+-- A typical computation would start by constructing a pull array,
+-- computing over it, converting it to a push array while other computations
+-- occur and then finally finishing the computation by allocating the push
+-- array (or arrays).
 --
+-- A simple example is a one-time allocating filter on vectors:
+--
+-- @
+-- vecfilter :: Vector a -> (a -> Bool) -> Vector a
+-- vecfilter vec f = Push.alloc (transfer (loop (Pull.fromVector vec) f))
+--   where
+--     loop :: Pull.Array a -> (a -> Bool) -> Pull.Array a
+--     loop arr f = case Pull.findLength arr of
+--       (0,_) -> Pull.fromFunction (error "empty") 0
+--       (n,_) -> case Pull.split 1 arr of
+--         (head, tail) -> case Pull.index head 0 of
+--           (a,_) ->
+--             if f a
+--             then Pull.append (Pull.singleton a) (loop tail f)
+--             else loop tail f
+-- @
+--
+--
+-- == Aside: why do we need linear types?
+--
+-- To correctly represent a push array, we need a way of specifying a
+-- computation that writes to and fills an array.
+--
+-- @
+-- data Array a where
+--   Array :: (forall b. (a %1-> b) -> DArray b %1-> ()) %1-> Int -> Array a
+-- @
+--
+-- As documented with destination arrays in @Data.Array.Destination@,
+-- any computation of type @DArray b %1-> ()@ must fill the array. Now,
+-- since the @b@ is completely abstract due to the rank2 type
+-- (read about -XRankNTypes for more) this computation must fill the array
+-- by wrapping writes of values of type @a@ with the given linear conversion
+-- function of type @a %1-> b@. This prevents the computation from being 
+-- evaluated until we are sure we want to allocate.
 --
 -- == Background for the interested
 --
--- To understand a bit more about why and how these work, see these:
+-- To understand how polarized arrays work in greater depth, these links
+-- may be of some help:
 --
 -- * http://www.cse.chalmers.se/~josefs/talks/LinArrays.pdf
--- * https://www.sciencedirect.com/science/article/pii/030439759090147A
 -- * http://jyp.github.io/posts/controlled-fusion.html
--- * http://lopezjuan.com/limestone/vectorcomp.pdf -- find this on an
--- internet archive like https://archive.org/web/
---
+-- * https://www.sciencedirect.com/science/article/pii/030439759090147A
 --
 module Data.Array.Polarized
   ( transfer
@@ -109,9 +104,7 @@ import qualified Data.Array.Polarized.Pull.Internal as Pull
 import qualified Data.Array.Polarized.Pull as Pull
 import qualified Data.Array.Polarized.Push as Push
 import Prelude.Linear
-
 import Data.Vector (Vector)
-
 
 -- DEVELOPER NOTE:
 --
@@ -133,13 +126,12 @@ import Data.Vector (Vector)
 -- In such a pipeline converting one allocated array to another, it would be
 -- common to begin with Pull.fromVector, and end with Push.alloc.
 
-
--- | Convert a PullArray into a PushArray.
+-- | Convert a pull array into a push array.
 -- NOTE: this does NOT require allocation and can be in-lined.
 transfer :: Pull.Array a %1-> Push.Array a
 transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i))) n
 
--- | This is a shortcut convenience function, which does
--- the same thing as `transfer` . `Pull.fromVector`
+-- | This is a shortcut convenience function
+-- for @transfer . Pull.fromVector@.
 walk :: Vector a %1-> Push.Array a
 walk = transfer . Pull.fromVector

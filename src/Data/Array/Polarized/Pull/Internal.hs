@@ -16,14 +16,14 @@ import qualified Data.Vector as Vector
 
 import qualified Unsafe.Linear as Unsafe
 
--- | A pull array is an array from which it is easy to extract elements,
--- and this can be done in any order.
--- The linear consumption of a pull array means each element is consumed
--- exactly once, but the length can be accessed freely.
+-- | A pull array is an array from which it is easy to extract elements, and
+-- this can be done in any order. The linear consumption of a pull array means
+-- each element is consumed exactly once, but the length can be accessed
+-- freely.
 data Array a where
   Array :: (Int -> a) -> Int -> Array a
   deriving Prelude.Semigroup via NonLinear (Array a)
-  -- In the linear consumption of a PullArray f n, (f i) should be consumed
+  -- In the linear consumption of a pull array f n, (f i) should be consumed
   -- linearly for every 0 <= i < n. The exported functions (from non-internal
   -- modules) should enforce this invariant, but the current type of PullArray
   -- does not.
@@ -32,7 +32,7 @@ instance Data.Functor Array where
   fmap f (Array g n) = fromFunction (\x -> f (g x)) n
 
 -- XXX: This should be well-typed without the unsafe, but it isn't accepted:
--- the PullArray type probably isn't the ideal choice (making Array linear in
+-- the pull array type probably isn't the ideal choice (making Array linear in
 -- (Int -> a) would mean only one value could be taken out of the Array (which
 -- is interesting in and of itself: I think this is like an n-ary With), and
 -- changing the other arrows makes no difference)
@@ -42,8 +42,8 @@ instance Data.Functor Array where
 singleton :: a %1-> Array a
 singleton = Unsafe.toLinear (\x -> fromFunction (\_ -> x) 1)
 
--- | @zip [x1, x2, ...] [y1, y2, ...] == [(x1,y1), (x2,y2), ...]@
--- __Partial__ Only works if both arrays have the same length.
+-- | @zip [x1, ..., xn] [y1, ..., yn] = [(x1,y1), ..., (xn,yn)]@
+-- __Partial:__ `zip [x1,x2,...,xn] [y1,y2,...,yp]` is an error if @n ≠ p@.
 zip :: Array a %1-> Array b %1-> Array (a,b)
 zip (Array g n) (Array h m)
   | n /= m    = error "Polarized.zip: size mismatch"
@@ -75,7 +75,7 @@ foldr f z (Array g n) = go f z g n
 findLength :: Array a %1-> (Int, Array a)
 findLength (Array f n) = (n, Array f n)
 
--- | @fromFunction arrIndexer len@ constructs a pull array given a function
+-- | @'fromFunction' arrIndexer len@ constructs a pull array given a function
 -- @arrIndexer@ that goes from an array index to array values and a specified
 -- length @len@.
 fromFunction :: (Int -> a) -> Int -> Array a
@@ -89,8 +89,7 @@ fromFunction f n = Array f' n
 -- is unnecessary if the input function can be assumed to already have bounded
 -- domain, for instance in `append`.
 
--- | This is a shortcut function, which does the same thing as
--- `alloc` . `transfer`
+-- | This is a convenience function for @alloc . transfer@
 toVector :: Array a %1-> Vector a
 toVector (Array f n) = Vector.generate n f
 -- TODO: A test to make sure alloc . transfer == toVector
@@ -105,3 +104,7 @@ split k (Array f n) = (fromFunction f (min k n), fromFunction (\x -> f (x+k)) (m
 -- | Reverse a pull array.
 reverse :: Array a %1-> Array a
 reverse (Array f n) = Array (\x -> f (n+1-x)) n
+
+-- | Index a pull array (without checking bounds)
+index :: Array a %1-> Int -> (a, Array a)
+index (Array f n) ix = (f ix, Array f n)
