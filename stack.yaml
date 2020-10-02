@@ -1,6 +1,6 @@
 # See https://hub.docker.com/r/tweag/linear-types/
 resolver: lts-16.15
-compiler: ghc-8.11
+compiler: ghc-9.1
 allow-newer: true
 system-ghc: true
 
