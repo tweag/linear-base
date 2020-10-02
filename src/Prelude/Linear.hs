@@ -145,7 +145,6 @@ import Data.Ord.Linear
 import Data.Tuple.Linear
 import Data.List.Linear
 import qualified Prelude
-import GHC.Exts (FUN)
 import Prelude.Linear.Internal
 import Data.Eq.Linear
 import Data.String
