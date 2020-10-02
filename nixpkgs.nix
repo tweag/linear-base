@@ -1,7 +1,7 @@
 let
   # https://github.com/tweag/nixpkgs/tree/update-ghchead-20201001
-  rev = "647a878e061b1b63efd2094eb9e546c2a7aa0d58";
-  sha256 = "1cfn53nls9kfh4ql8bn94zgvajm93bd390927fi345d943hnph84";
+  rev = "60a06c5a2ec88392c1eb5e252367dde4e0ead16c";
+  sha256 = "0952kxb7zlw81vwk72dm4cxs01ygqgbxsy0ibqsj7khr7xp115jh";
 in
 import (fetchTarball {
   inherit sha256;
