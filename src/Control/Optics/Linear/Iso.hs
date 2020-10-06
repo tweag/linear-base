@@ -22,6 +22,12 @@
 -- import Data.Vector (Vector)
 -- import Data.Unrestricted.Linear
 --
+-- -- We can use an isomorphism to apply a mutable quicksort implementation
+-- -- on immutable vectors
+-- quickSort :: Vector Int -> Vector Int
+-- quickSort v = unur $
+--   withIso isoListArray (\_ onVecs -> onVecs (Array.freeze . arrQuicksort)) v
+--
 -- isoListArray :: Iso' (Vector a -> Ur b) (Array a %1-> Ur b)
 -- isoListArray = iso byVecs byArrays where
 --   byVecs :: (Vector a -> Ur b) %1-> Array a %1-> Ur b
@@ -29,11 +35,6 @@
 --
 --   byArrays :: (Array a %1-> Ur b) %1-> Vector a -> Ur b
 --   byArrays onArrs vec = Array.fromList (Vector.toList vec) onArrs
---
--- -- | Apply a mutable quicksort implementation on immutable vectors
--- quickSort :: Vector Int -> Vector Int
--- quickSort v = unur $
---   withIso isoListArray (\_ onVecs -> onVecs (Array.freeze . arrQuicksort)) v
 --
 -- -- Not important to know the details for this example of optics ...
 -- -- but here is an imperative representation of quicksort:

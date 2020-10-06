@@ -19,6 +19,16 @@
 -- import Prelude.Linear ((&))
 -- import qualified Data.Functor.Linear as Data
 --
+-- -- We can use a prism to do operations on one branch of a sum-type
+-- formatLiscenceName :: PersonId %1-> PersonId
+-- formatLiscenceName personId =
+--   Data.fmap modLisc (match pIdLiscPrism personId) & \case
+--     Left personId' -> personId'
+--     Right lisc -> build pIdLiscPrism lisc
+--   where
+--     modLisc :: Liscence %1-> Liscence
+--     modLisc (Liscence nm x) = Liscence (nm ++ "\n") x
+--
 -- data PersonId where
 --   IdLiscence :: Liscence %1-> PersonId
 --   SSN :: Int %1-> PersonId
@@ -34,15 +44,6 @@
 --   decompose :: PersonId %1-> Either PersonId Liscence
 --   decompose (IdLiscence l) = Right l
 --   decompose x = Left x
---
--- formatLiscenceName :: PersonId %1-> PersonId
--- formatLiscenceName personId =
---   Data.fmap modLisc (match pIdLiscPrism personId) & \case
---     Left personId' -> personId'
---     Right lisc -> build pIdLiscPrism lisc
---   where
---     modLisc :: Liscence %1-> Liscence
---     modLisc (Liscence nm x) = Liscence (nm ++ "\n") x
 -- @
 --
 module Control.Optics.Linear.Prism

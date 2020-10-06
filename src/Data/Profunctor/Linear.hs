@@ -34,8 +34,10 @@ module Data.Profunctor.Linear
   ) where
 
 import qualified Control.Monad.Linear as Control
+import Control.Monad.Linear.Internal (runIdentity')
 import Data.Bifunctor.Linear hiding (first, second)
 import qualified Data.Bifunctor as Prelude
+import Data.Functor.Identity
 import Prelude.Linear
 import Data.Kind (Type)
 import Data.Void
@@ -135,12 +137,9 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
 -- Instances --
 ---------------
 
-<<<<<<< ca1ae741a3e2fb9718edf13f32c45f82e397623c
-newtype LinearArrow a b = LA (a %1-> b)
-=======
 -- | This newtype is needed to implement 'Profunctor' instances of @#->@.
-newtype LinearArrow a b = LA (a #-> b)
->>>>>>> Profunctor and Kleisli documentation
+newtype LinearArrow a b = LA (a %1-> b)
+
 -- | Temporary deconstructor since inference doesn't get it right
 getLA :: LinearArrow a b %1-> a %1-> b
 getLA (LA f) = f
@@ -155,6 +154,9 @@ instance Strong (,) () LinearArrow where
 instance Strong Either Void LinearArrow where
   first  (LA f) = LA $ either (Left . f) Right
   second (LA g) = LA $ either Left (Right . g)
+
+instance Wandering LinearArrow where
+  wander f (LA a_to_b) = LA $ \s -> runIdentity' $ f (Identity . a_to_b) s
 
 instance Monoidal (,) () LinearArrow where
   LA f *** LA g = LA $ \(a,x) -> (f a, g x)

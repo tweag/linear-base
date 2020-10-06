@@ -24,6 +24,7 @@ module Data.List.Linear
   , NonLinear.lookup
   , length
   , NonLinear.null
+  , traverse'
     -- * Extracting sublists
   , take
   , drop
@@ -91,6 +92,7 @@ import Data.Num.Linear
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import GHC.Stack
 import qualified Data.List as NonLinear
+import qualified Data.Functor.Linear as Data
 
 -- # Basic functions
 --------------------------------------------------
@@ -203,6 +205,10 @@ intercalate sep = Unsafe.toLinear (NonLinear.intercalate sep)
 -- | The transpose function transposes the rows and columns of its argument.
 transpose :: [[a]] %1-> [[a]]
 transpose = Unsafe.toLinear NonLinear.transpose
+
+traverse' :: Data.Applicative f => (a %1-> f b) -> [a] %1-> f [b]
+traverse' _ [] = Data.pure []
+traverse' f (a:as) = (:) <$> f a <*> traverse' f as
 
 -- # Folds
 --------------------------------------------------

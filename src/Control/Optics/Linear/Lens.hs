@@ -14,6 +14,13 @@
 --
 -- import qualified Data.Num.Linear as Linear
 --
+-- -- We can use a lens to, for instance, linearly modify a sub-piece in
+-- -- a nested record
+-- modPersonZip :: Person %1-> Person
+-- modPersonZip = over personZipLens addOne where
+--   addOne :: Int %1-> Int
+--   addOne x = x Linear.+ 1
+--
 -- -- A person has a name and location
 -- data Person = Person String Location
 --
@@ -23,11 +30,6 @@
 -- personZipLens :: Lens' Person Int
 -- personZipLens = lens $ \(Person nm (Location zip adr)) ->
 --   (zip, \z -> Person nm (Location z adr))
---
--- modPersonZip :: Person %1-> Person
--- modPersonZip = over personZipLens addOne where
---   addOne :: Int %1-> Int
---   addOne x = x Linear.+ 1
 -- @
 --
 module Control.Optics.Linear.Lens
