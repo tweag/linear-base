@@ -6,14 +6,37 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TupleSections #-}
 
--- | This module is intended to be imported qualified
-
+-- | This module provides (linear) Kleisli and CoKleisli arrows
+--
+-- This module is meant to be imported qualified, perhaps as below.
+--
+-- > import qualified Data.Productor.Kleisli as Linear
+--
+-- == What are Kleisli arrows?
+--
+-- The basic idea is that a Kleisli arrow is like a function arrow
+-- and @Kleisli m a b@ is similar to a function from @a@ to @b@. Basically:
+--
+-- > type Kleisili m a b = a #-> m b
+--
+-- == Why make this definition?
+--
+-- It let's us view @Kleisili m@ for a certain @m@ as a certain kind of
+-- function arrow, give it instances, abstract over it an so on.
+--
+-- For instance, if @m@ is any functor, @Kleisli m@ is a @Profunctor@.
+--
+-- == CoKleisli
+--
+-- A CoKleisli arrow is just one that represents a computation from
+-- a @m a@ to an @a@ via a linear arrow. (It's a Co-something because it
+-- reverses the order of the function arrows in the something.)
+--
 module Data.Profunctor.Kleisli.Linear
   ( Kleisli(..)
   , CoKleisli(..)
   )
   where
-
 
 import Data.Profunctor.Linear
 import Data.Void
