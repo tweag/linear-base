@@ -8,6 +8,28 @@
 --
 -- = Example
 --
+-- @
+-- {-# LANGUAGE LinearTypes #-}
+-- {-# LANGUAGE FlexibleContexts #-}
+--
+-- import qualified Data.Num.Linear as Linear
+--
+-- -- A person has a name and location
+-- data Person = Person String Location
+--
+-- -- A location is a zip code and address
+-- data Location = Location Int String
+--
+-- personZipLens :: Lens' Person Int
+-- personZipLens = lens $ \(Person nm (Location zip adr)) ->
+--   (zip, \z -> Person nm (Location z adr))
+--
+-- modPersonZip :: Person %1-> Person
+-- modPersonZip = over personZipLens addOne where
+--   addOne :: Int %1-> Int
+--   addOne x = x Linear.+ 1
+-- @
+--
 module Control.Optics.Linear.Lens
   ( -- * Types
     Lens, Lens'
