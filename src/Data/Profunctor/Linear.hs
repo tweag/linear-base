@@ -9,6 +9,20 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeOperators #-}
 
+-- | This module provides profunctor classes and instances.
+--
+-- Please import this module qualified.
+--
+-- Some of the definitions in this module are heavily connected to and
+-- motivated by linear optics. Please see @Control.Optics.Linear@ and other
+-- optics modules for motivations for the definitions provided here.
+--
+-- == Connections to Linear Optics
+--
+-- * @Strong@ and @Wandering@ are classes drawn from
+-- [this paper](https://www.cs.ox.ac.uk/jeremy.gibbons/publications/proyo.pdf)
+-- * 'Exchange' and 'Market' are ways of encoding isomorphisms and prisms
+--
 module Data.Profunctor.Linear
   ( Profunctor(..)
   , Monoidal(..)
@@ -20,16 +34,31 @@ module Data.Profunctor.Linear
   ) where
 
 import qualified Control.Monad.Linear as Control
+import Control.Monad.Linear.Internal (runIdentity')
 import Data.Bifunctor.Linear hiding (first, second)
 import qualified Data.Bifunctor as Prelude
+import Data.Functor.Identity
 import Prelude.Linear
 import Data.Kind (Type)
 import Data.Void
 import qualified Prelude
 import Control.Arrow (Kleisli(..))
 
--- TODO: write laws
 
+-- | A Profunctor can be thought of as a computation that involves taking
+-- @a@(s) as input and returning @b@(s). These computations compose with
+-- (linear) functions. Profunctors generalize the function arrow @->@.
+--
+-- Hence, think of a value of type @x `arr` y@ for profunctor @arr@ to be
+-- something like a function from @x@ to @y@.
+--
+-- Laws:
+--
+-- > lmap id = id
+-- > lmap (f . g) = lmap f . lmap g
+-- > rmap id = id
+-- > rmap (f . g) = rmap f . rmap g
+--
 class Profunctor (arr :: Type -> Type -> Type) where
   {-# MINIMAL dimap | lmap, rmap #-}
 
@@ -45,10 +74,30 @@ class Profunctor (arr :: Type -> Type -> Type) where
   rmap = dimap id
   {-# INLINE rmap #-}
 
+-- | A @(Monoidal m u arr)@ is a profunctor @arr@ that can be sequenced
+-- with the bifunctor @m@. In rough terms, you can combine two function-like
+-- things to one function-like thing that holds both input and output types
+-- with the bifunctor @m@.
 class (SymmetricMonoidal m u, Profunctor arr) => Monoidal m u arr where
   (***) :: a `arr` b -> x `arr` y -> (a `m` x) `arr` (b `m` y)
   unit :: u `arr` u
 
+-- | A @(Strong m u arr)@ instance means that the function-like thing
+-- of type @a `arr` b@ can be extended to pass along a value of type @c@
+-- as a constant via the bifunctor of type @m@.
+--
+-- This typeclass is used primarily to generalize common patterns
+-- and instances that are defined when defining optics. The two uses
+-- below are used in defining lenses and prisms respectively in
+-- "Control.Optics.Linear.Internal":
+--
+-- If @m@ is the tuple
+-- type constructor @(,)@ then we can create a function-like thing
+-- of type @(a,c) `arr` (b,c)@ passing along @c@ as a constant.
+--
+-- If @m@ is @Either@ then we can create a function-like thing of type
+-- @Either a c `arr` Either b c@ that either does the original function
+-- or behaves like the constant function.
 class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   {-# MINIMAL first | second #-}
 
@@ -60,6 +109,24 @@ class (SymmetricMonoidal m u, Profunctor arr) => Strong m u arr where
   second arr = dimap swap swap (first arr)
   {-# INLINE second #-}
 
+-- | A @Wandering arr@ instance means that there is a @wander@ function
+-- which is the traversable generalization of the classic lens function:
+--
+-- > forall f. Functor f => (a -> f b) -> (s -> f t)
+--
+-- in our notation:
+--
+-- > forall arr. (HasKleisliFunctor arr) => (a `arr` b) -> (s `arr` t)
+--
+-- @wander@ specializes the @Functor@ constraint to a control applicative:
+--
+-- > forall f. Applicative f => (a -> f b) -> (s -> f t)
+-- > forall arr. (HasKleisliApplicative arr) => (a `arr` b) -> (s `arr` t)
+--
+-- where @HasKleisliFunctor@ or @HasKleisliApplicative@ are some constraints
+-- which allow for the @arr@ to be @Kleisli f@ for control functors
+-- or applicatives @f@.
+--
 class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
   -- | Equivalently but less efficient in general:
   --
@@ -70,7 +137,9 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
 -- Instances --
 ---------------
 
+-- | This newtype is needed to implement 'Profunctor' instances of @#->@.
 newtype LinearArrow a b = LA (a %1-> b)
+
 -- | Temporary deconstructor since inference doesn't get it right
 getLA :: LinearArrow a b %1-> a %1-> b
 getLA (LA f) = f
@@ -85,6 +154,9 @@ instance Strong (,) () LinearArrow where
 instance Strong Either Void LinearArrow where
   first  (LA f) = LA $ either (Left . f) Right
   second (LA g) = LA $ either Left (Right . g)
+
+instance Wandering LinearArrow where
+  wander f (LA a_to_b) = LA $ \s -> runIdentity' $ f (Identity . a_to_b) s
 
 instance Monoidal (,) () LinearArrow where
   LA f *** LA g = LA $ \(a,x) -> (f a, g x)
@@ -108,6 +180,8 @@ instance Monoidal Either Void (->) where
   f *** g = Prelude.bimap f g
   unit = \case {}
 
+-- | An exchange is a pair of translation functions that encode an
+-- isomorphism; an @Exchange a b s t@ is equivalent to a @Iso a b s t@.
 data Exchange a b s t = Exchange (s %1-> a) (b %1-> t)
 instance Profunctor (Exchange a b) where
   dimap f g (Exchange p q) = Exchange (p . f) (g . q)
@@ -134,6 +208,8 @@ instance Prelude.Functor f => Monoidal Either Void (Kleisli f) where
     Right b -> Right Prelude.<$> g b
   unit = Kleisli $ \case {}
 
+-- | A market is a pair of constructor and deconstructor functions that encode
+-- a prism; a @Market a b s t@ is equivalent to a @Prism a b s t@.
 data Market a b s t = Market (b %1-> t) (s %1-> Either t a)
 runMarket :: Market a b s t %1-> (b %1-> t, s %1-> Either t a)
 runMarket (Market f g) = (f, g)
