@@ -9,13 +9,13 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeOperators #-}
 
--- | This module provides profunctor classes and instances
+-- | This module provides profunctor classes and instances.
 --
 -- Please import this module qualified.
 --
--- This module is heavily connected to and motivated by linear optics.
--- Please see @Control.Optics.Linear@ and other optics modules
--- for motivations for the definitions provided here.
+-- Some of the definitions in this module are heavily connected to and
+-- motivated by linear optics. Please see @Control.Optics.Linear@ and other
+-- optics modules for motivations for the definitions provided here.
 --
 -- == Connections to Linear Optics
 --

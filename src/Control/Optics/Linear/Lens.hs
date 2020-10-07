@@ -1,4 +1,7 @@
--- | This module provides linear lenses
+{-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE FlexibleContexts #-}
+-- | This module provides linear lenses.
 --
 -- A @Lens s t a b@ is equivalent to a @(s \#-> (a,b \#-> t)@.  It is a way to
 -- cut up an instance of a /product type/ @s@ into an @a@ and a way to take a
@@ -11,15 +14,17 @@
 -- @
 -- {-# LANGUAGE LinearTypes #-}
 -- {-# LANGUAGE FlexibleContexts #-}
+-- {-# LANGUAGE NoImplicitPrelude #-}
 --
--- import qualified Data.Num.Linear as Linear
+-- import Control.Optics.Linear.Internal
+-- import Prelude.Linear
 --
+-- import Control.Optics.Linear.Internal
+-- import Prelude.Linear
 -- -- We can use a lens to, for instance, linearly modify a sub-piece in
 -- -- a nested record
 -- modPersonZip :: Person %1-> Person
--- modPersonZip = over personZipLens addOne where
---   addOne :: Int %1-> Int
---   addOne x = x Linear.+ 1
+-- modPersonZip = over (personLocL .> locZipL)  (\x -> x + 1)
 --
 -- -- A person has a name and location
 -- data Person = Person String Location
@@ -27,9 +32,11 @@
 -- -- A location is a zip code and address
 -- data Location = Location Int String
 --
--- personZipLens :: Lens' Person Int
--- personZipLens = lens $ \(Person nm (Location zip adr)) ->
---   (zip, \z -> Person nm (Location z adr))
+-- personLocL :: Lens' Person Location
+-- personLocL = lens (\(Person s l) -> (l, \l' -> Person s l'))
+--
+-- locZipL :: Lens' Location Int
+-- locZipL = lens (\(Location i s) -> (i, \i' -> Location i' s))
 -- @
 --
 module Control.Optics.Linear.Lens

@@ -10,18 +10,18 @@
 --
 -- This module is meant to be imported qualified, perhaps as below.
 --
--- > import qualified Data.Productor.Kleisli as Linear
+-- > import qualified Data.Profunctor.Kleisli as Linear
 --
 -- == What are Kleisli arrows?
 --
 -- The basic idea is that a Kleisli arrow is like a function arrow
 -- and @Kleisli m a b@ is similar to a function from @a@ to @b@. Basically:
 --
--- > type Kleisili m a b = a #-> m b
+-- > type Kleisli m a b = a #-> m b
 --
 -- == Why make this definition?
 --
--- It let's us view @Kleisili m@ for a certain @m@ as a certain kind of
+-- It let's us view @Kleisli m@ for a certain @m@ as a certain kind of
 -- function arrow, give it instances, abstract over it an so on.
 --
 -- For instance, if @m@ is any functor, @Kleisli m@ is a @Profunctor@.

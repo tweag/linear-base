@@ -1,4 +1,4 @@
--- | This module provides linear prisms
+-- | This module provides linear prisms.
 --
 -- A @Prism s t a b@ is equivalent to @(s \#-> Either a t, b \#-> t)@ for some
 -- /sum type/ @s@. In the non-polymorphic version, this is a @(s \#-> Either a
@@ -12,37 +12,37 @@
 -- {-# LANGUAGE LinearTypes #-}
 -- {-# LANGUAGE LambdaCase #-}
 -- {-# LANGUAGE FlexibleContexts #-}
+-- {-# LANGUAGE NoImplicitPrelude #-}
 -- {-# LANGUAGE GADTs #-}
 --
--- import Prelude hiding ((++))
--- import Data.List.Linear ((++))
--- import Prelude.Linear ((&))
+-- import Control.Optics.Linear.Internal
+-- import Prelude.Linear
 -- import qualified Data.Functor.Linear as Data
 --
 -- -- We can use a prism to do operations on one branch of a sum-type
--- formatLiscenceName :: PersonId %1-> PersonId
--- formatLiscenceName personId =
+-- -- (This is a bit of a toy example since we could use @over@ for this.)
+-- formatLicenceName :: PersonId %1-> PersonId
+-- formatLicenceName personId =
 --   Data.fmap modLisc (match pIdLiscPrism personId) & \case
 --     Left personId' -> personId'
 --     Right lisc -> build pIdLiscPrism lisc
 --   where
---     modLisc :: Liscence %1-> Liscence
---     modLisc (Liscence nm x) = Liscence (nm ++ "\n") x
+--     modLisc :: Licence %1-> Licence
+--     modLisc (Licence nm x) = Licence (nm ++ "\n") x
 --
 -- data PersonId where
---   IdLiscence :: Liscence %1-> PersonId
+--   IdLicence :: Licence %1-> PersonId
 --   SSN :: Int %1-> PersonId
 --   BirthCertif :: String %1-> PersonId
---   StateVoterId :: Int %1-> PersonId
---   CensusId :: Int %1-> PersonId
+--   -- And there could be many more constructors ...
 --
--- -- A Liscence is a name and number
--- data Liscence = Liscence String Int
+-- -- A Licence is a name and number
+-- data Licence = Licence String Int
 --
--- pIdLiscPrism :: Prism' PersonId Liscence
--- pIdLiscPrism = prism IdLiscence decompose where
---   decompose :: PersonId %1-> Either PersonId Liscence
---   decompose (IdLiscence l) = Right l
+-- pIdLiscPrism :: Prism' PersonId Licence
+-- pIdLiscPrism = prism IdLicence decompose where
+--   decompose :: PersonId %1-> Either PersonId Licence
+--   decompose (IdLicence l) = Right l
 --   decompose x = Left x
 -- @
 --

@@ -1,4 +1,4 @@
--- | This module provides linear optics
+-- | This module provides linear optics.
 --
 -- Documentation for specific optics (lenses, prisms, traversals and
 -- isomorphisms) are provided in their respective modules.

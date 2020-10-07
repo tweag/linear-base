@@ -1,4 +1,4 @@
--- | This module provides linear isomorphisms
+-- | This module provides linear isomorphisms.
 --
 -- An @Iso a b s t@ is equivalent to a @(s \#-> a, b \#-> t)@.  In the simple
 -- case of an @Iso' a s@, this is equivalent to inverse functions
@@ -10,63 +10,32 @@
 --
 -- @
 -- {-# LANGUAGE LinearTypes #-}
--- {-# LANGUAGE LambdaCase #-}
--- {-# LANGUAGE FlexibleContexts #-}
+-- {-# LANGUAGE NoImplicitPrelude #-}
 -- {-# LANGUAGE GADTs #-}
--- import qualified Data.Array.Mutable.Linear as Array
--- import Data.Array.Mutable.Linear (Array)
--- import Prelude.Linear (($), (&), Int, Bool(..), (.))
--- import qualified Prelude as Ur
--- import Prelude ((+), (-), Ord(..))
--- import qualified Data.Vector as Vector
--- import Data.Vector (Vector)
--- import Data.Unrestricted.Linear
 --
--- -- We can use an isomorphism to apply a mutable quicksort implementation
--- -- on immutable vectors
--- quickSort :: Vector Int -> Vector Int
--- quickSort v = unur $
---   withIso isoListArray (\_ onVecs -> onVecs (Array.freeze . arrQuicksort)) v
+-- import Control.Optics.Linear.Internal
+-- import Prelude.Linear
+-- import qualified Data.Functor.Linear as Data
 --
--- isoListArray :: Iso' (Vector a -> Ur b) (Array a %1-> Ur b)
--- isoListArray = iso byVecs byArrays where
---   byVecs :: (Vector a -> Ur b) %1-> Array a %1-> Ur b
---   byVecs onVecs arr = Array.freeze arr & \(Ur vec) -> onVecs vec
+-- -- A toy example of operating over two isomorphic linear types
+-- closureFmap :: (a %1-> b) -> ClosureEither x a %1-> ClosureEither x b
+-- closureFmap f = over isoEithers (Data.fmap f)
 --
---   byArrays :: (Array a %1-> Ur b) %1-> Vector a -> Ur b
---   byArrays onArrs vec = Array.fromList (Vector.toList vec) onArrs
+-- data ClosureEither a b where
+--   CLeft :: x %1-> (x %1-> a) %1-> ClosureEither a b
+--   CRight :: x %1-> (x %1-> b) %1-> ClosureEither a b
 --
--- -- Not important to know the details for this example of optics ...
--- -- but here is an imperative representation of quicksort:
+-- isoEithers ::
+--   Iso (ClosureEither a b) (ClosureEither a b') (Either a b) (Either a b')
+-- isoEithers = iso fromClosure fromEither
+--   where
+--     fromEither :: Either a b %1-> ClosureEither a b
+--     fromEither (Left a) = CLeft () (\() -> a)
+--     fromEither (Right b) = CRight () (\() -> b)
 --
--- arrQuicksort :: Array Int %1-> Array Int
--- arrQuicksort arr = Array.size arr & \case
---   (Ur len, arr') -> go 0 (len-1) arr' where
---     go :: Int -> Int -> Array Int %1-> Array Int
---     go lo hi arr = case lo >= hi of
---       True -> arr
---       False -> Array.read arr lo & \case
---         (Ur pivot, arr0) -> partition arr0 pivot lo hi & \case
---           (arr1, Ur ix) -> swapix arr1 lo ix & \case
---             arr2 -> go lo ix arr2 & \case
---               arr3 -> go (ix+1) hi arr3
---
--- partition :: Array Int %1-> Int -> Int -> Int -> (Array Int, Ur Int)
--- partition arr pivot lx rx
---   | (rx < lx) = (arr, Ur rx)
---   | True = Array.read arr lx & \case
---       (Ur lVal, arr1) -> Array.read arr1 rx & \case
---         (Ur rVal, arr2) -> case (lVal <= pivot, pivot < rVal) of
---           (True, True) -> partition arr2 pivot (lx+1) (rx-1)
---           (True, False) -> partition arr2 pivot (lx+1) rx
---           (False, True) -> partition arr2 pivot (lx-1) (rx-1)
---           (False, False) -> swapix arr2 lx rx & \case
---             arr3 -> partition arr3 pivot (lx+1) (rx-1)
---
--- swapix :: Array Int %1-> Int -> Int -> Array Int
--- swapix arr i j = Array.read arr i & \case
---   (Ur ival, arr1) -> Array.read arr1 j & \case
---     (Ur jval, arr2) -> Array.write (Array.write arr2 i jval) j ival
+--     fromClosure :: ClosureEither a b %1-> Either a b
+--     fromClosure (CLeft x f) = Left (f x)
+--     fromClosure (CRight x f) = Right (f x)
 -- @
 --
 module Control.Optics.Linear.Iso
