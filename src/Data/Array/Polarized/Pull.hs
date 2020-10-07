@@ -1,23 +1,31 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
--- | This module is intended to be imported qualified, e.g.
--- > import qualified Data.Array.Polarized.Pull as Pull
+-- | This module provides pull arrays.
+--
+-- These are part of a larger framework for controlling when memory is
+-- allocated for an array. See @Data.Array.Polarized@.
+--
 module Data.Array.Polarized.Pull
   ( Array
-  , zip, zipWith
-  , append
+    -- * Construction
+  , fromFunction
+  , fromVector
   , make
+  , singleton
+    -- * Consumption
+  , toVector
+  , asList
+    -- * Operations
+  , zip
+  , zipWith
+  , append
   , foldr
   , foldMap
   , findLength
-  , asList
-  , singleton
-  , fromFunction
-  , fromVector
-  , toVector
   , split
   , reverse
+  , index
   )
   where
 
@@ -42,11 +50,13 @@ import qualified Unsafe.Linear as Unsafe
 asList :: Array a %1-> [a]
 asList = foldr (\x xs -> x:xs) []
 
--- | /!\ Partial! Only works if both arrays have the same length.
+-- | @zipWith f [x1,x2,...,xn] [y1,y2,...,yn] = [f x1 y1, ..., f xn yn]@
+-- __Partial:__ `zipWith f [x1,x2,...,xn] [y1,y2,...,yp]` is an error
+-- if @n ≠ p@.
 zipWith :: (a %1-> b %1-> c) -> Array a %1-> Array b %1-> Array c
 zipWith f x y = Data.fmap (uncurry f) (zip x y)
 
--- | Fold a pull array into a monoid.
+-- | Fold a pull array using a monoid.
 foldMap :: Monoid m => (a %1-> m) -> Array a %1-> m
 foldMap f = foldr ((<>) . f) mempty
 
