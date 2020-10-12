@@ -1,13 +1,12 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-{-|
-A thin wrapper on top of "Debug.Trace", providing linear versions of
-tracing functions.
-
-It only contains minimal amount of documentation; you should consult
-the original "Debug.Trace" module for more detailed information.
--}
+-- |
+-- A thin wrapper on top of "Debug.Trace", providing linear versions of
+-- tracing functions.
+--
+-- It only contains minimal amount of documentation; you should consult
+-- the original "Debug.Trace" module for more detailed information.
 module Debug.Trace.Linear
   ( -- * Tracing
     trace
@@ -89,4 +88,3 @@ traceMarker = Unsafe.toLinear2 NonLinear.traceMarker
 -- eventlog profiling is available and enabled at runtime.
 traceMarkerIO :: String %1-> IO ()
 traceMarkerIO s = fromSystemIO (Unsafe.toLinear NonLinear.traceMarkerIO s)
-
