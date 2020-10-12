@@ -39,7 +39,7 @@ library
     Data.Functor.Linear
     Data.Functor.Linear.Internal
     Data.Functor.Linear.Internal.Traversable
-    Data.HashMap.Linear
+    Data.HashMap.Mutable.Linear
     Data.List.Linear
     Data.Maybe.Linear
     Data.Monoid.Linear

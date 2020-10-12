@@ -18,7 +18,7 @@
 --
 -- It is implemented with Robin Hood hashing which has amortized
 -- constant time lookups and updates.
-module Data.HashMap.Linear
+module Data.HashMap.Mutable.Linear
   ( -- * A mutable hashmap
     HashMap,
     Keyed,

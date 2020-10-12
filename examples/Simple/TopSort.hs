@@ -11,8 +11,8 @@ module Simple.TopSort where
 import qualified Prelude.Linear as Linear
 import Prelude.Linear ((&))
 import Data.Unrestricted.Linear
-import qualified Data.HashMap.Linear as HMap
-import Data.HashMap.Linear (HashMap)
+import qualified Data.HashMap.Mutable.Linear as HMap
+import Data.HashMap.Mutable.Linear (HashMap)
 import Data.Bifunctor.Linear (second)
 import Data.Maybe.Linear (catMaybes)
 import qualified Data.Functor.Linear as Data

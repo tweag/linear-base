@@ -13,7 +13,7 @@ module Test.Data.Mutable.HashMap
 where
 
 import qualified Data.Functor.Linear as Linear
-import qualified Data.HashMap.Linear as HashMap
+import qualified Data.HashMap.Mutable.Linear as HashMap
 import Data.Unrestricted.Linear
 import Data.Function ((&))
 import Hedgehog
