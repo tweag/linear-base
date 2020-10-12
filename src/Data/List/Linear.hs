@@ -3,13 +3,11 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-
-{-|
-Linear versions of 'Data.List' functions.
-
-This module only contains minimal amount of documentation; consult the
-original "Data.List" module for more detailed information.
--}
+-- |
+-- Linear versions of 'Data.List' functions.
+--
+-- This module only contains minimal amount of documentation; consult the
+-- original "Data.List" module for more detailed information.
 module Data.List.Linear
   ( -- * Basic functions
     (++)

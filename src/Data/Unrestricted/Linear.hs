@@ -96,8 +96,6 @@ import Data.List.NonEmpty
 import qualified Prelude
 import qualified Unsafe.Linear as Unsafe
 
-
-
 -- | @Ur a@ represents unrestricted values of type @a@ in a linear
 -- context. The key idea is that because the contructor holds @a@ with a
 -- regular arrow, a function that uses @Ur a@ linearly can use @a@
