@@ -47,6 +47,7 @@ library
     Data.Ord.Linear
     Data.Profunctor.Kleisli.Linear
     Data.Profunctor.Linear
+    Data.Semigroup.Linear
     Data.Set.Mutable.Linear
     Data.Tuple.Linear
     Data.Unrestricted.Linear
