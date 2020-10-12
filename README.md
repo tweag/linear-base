@@ -41,11 +41,13 @@ the top:
 {-# LANGUAGE LinearTypes #-}
 ```
 
-## User Guide
+## Documentation and User Guide
 
-If you already know what `-XLinearTypes` does and what the linear
-arrow `a #-> b` means, then read the [User Guide] and explore the
-[`examples/`](./examples) folder to know how to use `linear-base`.
+ * If you already know what `-XLinearTypes` does and what the linear
+   arrow `a #-> b` means, then read the [User Guide] and explore the
+   [`examples/`](./examples) folder to know how to use `linear-base`.
+ * Each public module has haddock documentation usually with examples
+   of use.
 
 ## Learning about `-XLinearTypes`
 
