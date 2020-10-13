@@ -73,6 +73,7 @@ There are plenty of excellent resources and examples to help you.
  * [Practical Linearity in a higher-order polymorphic language -- Curry on 2018](https://www.youtube.com/watch?v=t0mhvd3-60Y&t=3s)
  * [Practical Linearity in a higher-order polymorphic language -- Haskell Exchange 2018](https://skillsmatter.com/skillscasts/11067-keynote-linear-haskell-practical-linearity-in-a-higher-order-polymorphic-language)
  * [Implementing Linear Haskell](https://www.youtube.com/watch?v=uxv62QQajx8)
+ * [In-place array update with linear types -- ZuriHac 2020](https://www.youtube.com/watch?v=I7-JuVNvz78)
 
 ## Contributing
 
