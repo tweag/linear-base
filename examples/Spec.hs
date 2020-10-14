@@ -18,8 +18,10 @@ import Foreign.Marshal.Pure (Pool)
 import qualified Foreign.Marshal.Pure as Manual
 import Prelude (return)
 import qualified Prelude
+import Simple.Quicksort (testQuicksort)
 import Prelude.Linear hiding (void)
 import Test.Hspec
+import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
 
 eqList :: forall a. (Manual.Representable a, Movable a, Eq a) => List a %1-> List a %1-> Ur Bool
@@ -32,6 +34,7 @@ instance Exception InjectedError
 
 main :: IO ()
 main = hspec Prelude.$ do
+  prop "Quicksort tests" testQuicksort
   describe "Off-heap lists" Prelude.$ do
     describe "ofList" Prelude.$ do
       it "is invertible" Prelude.$
