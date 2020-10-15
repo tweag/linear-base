@@ -1,6 +1,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+-- | This module implements quicksort with mutable arrays from linear-base
 module Simple.Quicksort
   ( testQuicksort
   , quickSort
@@ -40,6 +41,12 @@ go lo hi arr
         \arr3 -> go lo (ix-1) arr3 &
           \arr4 -> go (ix+1) hi arr4
 
+-- | @partition arr pivot lo hi = (arr', Ur ix)@ such that
+-- @arr'[i] <= pivot@ for @lo <= i <= ix@,
+-- @arr'[j] > pivot@ for @ix < j <= hi@,
+-- @arr'[k] = arr[k]@ for @k < lo@ and @k > hi@, and
+-- @arr'@ is a permutation of @arr@ (which means basically only the slice
+-- from indicies @lo@ to @hi@ are permuted).
 partition :: Array Int %1-> Int -> Int -> Int -> (Array Int, Ur Int)
 partition arr pivot lx rx
   | (rx < lx) = (arr, Ur (lx-1))
@@ -52,6 +59,7 @@ partition arr pivot lx rx
           (False, False) -> swap arr2 lx rx &
             \arr3 -> partition arr3 pivot (lx+1) (rx-1)
 
+-- | @swap a i j@ exchanges the positions of values at @i@ and @j@ of @a@.
 swap :: HasCallStack => Array Int %1-> Int -> Int -> Array Int
 swap arr i j = Array.read arr i &
   \(Ur ival, arr1) -> Array.read arr1 j &
