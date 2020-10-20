@@ -45,8 +45,7 @@ go lo hi arr
 -- @arr'[i] <= pivot@ for @lo <= i <= ix@,
 -- @arr'[j] > pivot@ for @ix < j <= hi@,
 -- @arr'[k] = arr[k]@ for @k < lo@ and @k > hi@, and
--- @arr'@ is a permutation of @arr@ (which means basically only the slice
--- from indicies @lo@ to @hi@ are permuted).
+-- @arr'@ is a permutation of @arr@.
 partition :: Array Int %1-> Int -> Int -> Int -> (Array Int, Ur Int)
 partition arr pivot lx rx
   | (rx < lx) = (arr, Ur (lx-1))
