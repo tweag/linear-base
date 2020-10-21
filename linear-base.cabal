@@ -110,6 +110,7 @@ test-suite examples
     Foreign.Heap
     Simple.FileIO
     Simple.Pure
+    Simple.Quicksort
     Simple.TopSort
   build-depends:
     base,
