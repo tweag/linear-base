@@ -4,7 +4,43 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 -- |
 -- Tests for mutable sets.
-
+--
+-- = How we designed the tests
+--
+-- We use hedgehog to test properties that are axioms that fully define the
+-- behavior of sets. There is at least one axiom per each combination of
+-- accessor and constructor/mutator. So for the accessor @f@, and
+-- constructor/mutator @g@, we have one axiom of the form @f (g (...)) = ...@.
+--
+-- If however, this is cumbersome, we can often just test against an existing
+-- implementation. This is like a homomorphism test (but it's not quite a
+-- homomorphism). For unions, this is like saying if we have two lists A and B,
+-- and we take their union as lists, then sort and nub (remove duplicates)
+-- this is the same as using @Set.fromList@ to make them into sets, taking
+-- the union as sets, converting back with @Set.toList@ and then sorting
+-- the output list.
+--
+-- To have such a test replace an axiom, however, we need to have "homomorphisms"
+-- for each accessor. E.g., for all x and l, @member x (fromList l) = elem x l@.
+--
+-- So now, for instance, we can prove
+--
+-- >  member x (intersect set1 set2) = member x set1 && member x set2
+--
+-- Thusly:
+--
+-- >  member x (intersect set1 set2) =
+-- >  member x (intersect (fromList l1) (fromList l2)) =  -- for some l1, l2
+-- >  member x (fromList (intersect l1 l2)) =
+-- >  elem x (intersect l1 l2)) =
+-- >  elem x l1 && elem x l2 =
+-- >  member x (fromList l1) && member x (fromList l2) =
+-- >  member x set1 && member x set2
+--
+-- See https://softwarefoundations.cis.upenn.edu/vfa-current/ADT.html
+-- for more about how ADT axioms work.
+--
+-- Remark: we are not testing @empty@ since it is trivial.
 module Test.Data.Mutable.Set
   ( mutSetTests,
   )
@@ -14,6 +50,7 @@ import qualified Data.Set.Mutable.Linear as Set
 import Data.Set.Mutable.Linear (Set)
 import Data.Unrestricted.Linear
 import Hedgehog
+import Data.Containers.ListUtils (nubOrd)
 import qualified Data.List as List
 import qualified Data.Functor.Linear as Data
 import qualified Hedgehog.Gen as Gen
@@ -24,27 +61,6 @@ import Test.Tasty.Hedgehog (testProperty)
 
 -- # Exported Tests
 --------------------------------------------------------------------------------
-
-{- How we designed the tests.
-
-We use hedgehog to test properties that are axioms that fully define the
-behavior of sets. There is typically one axiom per each combination of
-accessor and constructor/mutator. So one defintion for accessor @f@, and
-constructor/mutator @g@, we have one axiom of the form @f (g (...)) = ...@.
-
-If however, this is cumbersome, we can often just test against an existing
-implementation. This is like a homomorphism test (but not an exact
-homomorphism). For unions, this is like saying if we have two lists A and B,
-and we take their union as lists, then sort and nub (remove duplicates)
-this is the same as using @Set.fromList@ to make them into sets, taking
-the union as sets, converting back with @Set.toList@ and then sorting
-the output list. Note that this can replace an axiom (though seeing this is
-not trivial).
-
-See https://softwarefoundations.cis.upenn.edu/vfa-current/ADT.html
-for more about how ADT axioms work.
--}
-
 
 mutSetTests :: TestTree
 mutSetTests = testGroup "Mutable set tests" group
@@ -60,7 +76,10 @@ group =
   , testProperty "∀ s, x \\notin s. size (insert s x) = size s + 1" sizeInsert2
   , testProperty "∀ s, x \\in s. size (delete s x) = size s - 1" sizeDelete1
   , testProperty "∀ s, x \\notin s. size (delete s x) = size s" sizeDelete2
+  -- Homomorphism tests
   , testProperty "sort . nub = sort . toList . fromList" toListFromList
+  , testProperty "member x (fromList l) = elem x l" memberHomomorphism
+  , testProperty "size . fromList = length . nub" sizeHomomorphism
   , testProperty
       "sort . nub (l ∪ m) = sort . toList (fromList l ∪ fromList m)"
       unionHomomorphism
@@ -225,14 +244,14 @@ sizeDelete2Test val set = fromRead (Set.size set)
 toListFromList :: Property
 toListFromList = property $ do
   l <- forAll list
-  let outsideSet = List.nub . List.sort $ l
+  let outsideSet = nubOrd . List.sort $ l
   List.sort (unur (Set.fromList l Set.toList)) === outsideSet
 
 unionHomomorphism :: Property
 unionHomomorphism = property $ do
   l <- forAll list
   l' <- forAll list
-  let listUnion = List.nub $ List.sort $ List.union l l'
+  let listUnion = nubOrd $ List.sort $ List.union l l'
   let setUnion = List.sort $ unur (fromLists l l' doUnion)
   setUnion === listUnion
   where
@@ -246,7 +265,7 @@ intersectHomomorphism :: Property
 intersectHomomorphism = property $ do
   l <- forAll list
   l' <- forAll list
-  let listIntersect = List.nub $ List.sort $ List.intersect l l'
+  let listIntersect = nubOrd $ List.sort $ List.intersect l l'
   let setIntersect = List.sort $ unur (fromLists l l' doIntersect)
   setIntersect === listIntersect
   where
@@ -255,4 +274,15 @@ intersectHomomorphism = property $ do
 
     doIntersect :: Set Int %1-> Set Int %1-> Ur [Int]
     doIntersect s s' = Set.toList (Set.intersection s s')
+
+memberHomomorphism :: Property
+memberHomomorphism = property $ do
+  l <- forAll list
+  x <- forAll value
+  elem x l === (unur Linear.$ Set.fromList l (getFst Linear.. Set.member x))
+
+sizeHomomorphism :: Property
+sizeHomomorphism = property $ do
+  l <- forAll list
+  length (nubOrd l) === (unur (Set.fromList l (getFst Linear.. Set.size)))
 
