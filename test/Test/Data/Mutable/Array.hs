@@ -8,6 +8,9 @@
 --
 -- See the testing framework explained in Test.Data.Mutable.Set.
 --
+-- The combiniation of axioms and homormorphisms provided fully specify
+-- the behavior of arrays.
+--
 -- Remarks:
 --  * We don't test for failure on out-of-bound access (it's trivial)
 module Test.Data.Mutable.Array
@@ -20,6 +23,7 @@ import Data.Unrestricted.Linear
 import qualified Data.Functor.Linear as Data
 import qualified Data.Ord.Linear as Linear
 import Hedgehog
+import qualified Data.List as List
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
@@ -46,6 +50,9 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed
   -- Tests against a reference implementation
+  , testProperty "∀ a,ix. write a ix . fromList = fromList . write a ix" writeRef
+  , testProperty "∀ ix. read ix (fromList l) = l !! i" readRef
+  , testProperty "size . fromList = length" sizeRef
   , testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef
   , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
   , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
@@ -203,6 +210,25 @@ lenResizeSeedTest newSize val arr =
   compInts
     (move newSize)
     (getFst Linear.$ Array.size (Array.resize newSize val arr))
+
+writeRef :: Property
+writeRef = property $ do
+  l <- forAll nonEmptyList
+  v <- forAll value
+  ix <- forAll $ Gen.int $ Range.linear 0 (List.length l - 1)
+  let l' = List.take ix l ++ [v] ++ List.drop (ix+1) l
+  l' === unur (Array.fromList l (Array.toList Linear.. Array.set ix v))
+
+readRef :: Property
+readRef = property $ do
+  l <- forAll nonEmptyList
+  ix <- forAll $ Gen.int $ Range.linear 0 (length l - 1)
+  (l List.!! ix) === (unur (Array.fromList l (getFst Linear.. Array.get ix)))
+
+sizeRef :: Property
+sizeRef = property $ do
+  l <- forAll list
+  length l === (unur (Array.fromList l (getFst Linear.. Array.size)))
 
 resizeRef :: Property
 resizeRef = property $ do

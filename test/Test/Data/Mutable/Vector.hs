@@ -8,6 +8,9 @@
 -- Tests for mutable vectors.
 --
 -- See the testing framework explained in Test.Data.Mutable.Set.
+--
+-- The combiniation of axioms and homormorphisms provided fully specify
+-- the behavior of arrays.
 module Test.Data.Mutable.Vector
   ( mutVecTests,
   )
