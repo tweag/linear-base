@@ -5,8 +5,8 @@
 
 -- |
 -- Tests for mutable hashmaps
--- We are excluding tests for alter because it's assumed that alter is
--- implemented parametrically around insert and delete.
+--
+-- See the testing framework explained in Test.Data.Mutable.Set.
 module Test.Data.Mutable.HashMap
   ( mutHMTests,
   )

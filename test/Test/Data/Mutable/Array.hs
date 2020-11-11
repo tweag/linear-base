@@ -6,31 +6,10 @@
 -- |
 -- Tests for mutable arrays.
 --
--- The API is basically 4 mutators or constructors: alloc, write, resize,
--- resizeSeed and 2 accessors: length, read.
+-- See the testing framework explained in Test.Data.Mutable.Set.
 --
--- We test arrays behave properly with properties that axiomatically define
--- arrays.  Basically, using these properties, the behavior of any use of
--- arrays should be fully specified without having to look at the
--- implementation.
---
--- An example of such a property would be the following:
---
--- for all i, j, arr, s.t. i /= j and 0 <= i,j < (length arr),
---             read (write arr j x) i == read arr i
---
--- In general, most uses of arrays are of the form
--- \[  accessor (constructor (...)) \].
---
--- Hence, we define properties that allow you to "simplyfy" or "rewrite"
--- any such combination into a simpler form. (More formally,
--- we're defining term re-write rules.) For now, constructor-constructor
--- re-writes are skipped (e.g., write (write a i x) i y = write a i y).
---
--- TODO:
---  * Test failures for out of bound access
---  * Constructor - constructor rules, like
---                write (write a i x) i y = write a i y
+-- Remarks:
+--  * We don't test for failure on out-of-bound access (it's trivial)
 module Test.Data.Mutable.Array
   ( mutArrTests,
   )

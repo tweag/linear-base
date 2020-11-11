@@ -7,10 +7,7 @@
 -- |
 -- Tests for mutable vectors.
 --
--- TODO:
---  * Test failures for out of bound access
---  * Constructor - constructor rules, like
---                write (write v i x) i y = write v i y
+-- See the testing framework explained in Test.Data.Mutable.Set.
 module Test.Data.Mutable.Vector
   ( mutVecTests,
   )
