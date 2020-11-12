@@ -8,11 +8,12 @@
 --
 -- See the testing framework explained in Test.Data.Mutable.Set.
 --
--- The combiniation of axioms and homormorphisms provided fully specify
+-- The combination of axioms and homomorphisms provided fully specify
 -- the behavior of arrays.
 --
 -- Remarks:
 --  * We don't test for failure on out-of-bound access (it's trivial)
+--  * We don't test the empty constructor because it's trivial
 module Test.Data.Mutable.Array
   ( mutArrTests,
   )

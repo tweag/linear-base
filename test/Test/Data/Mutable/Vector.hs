@@ -9,8 +9,12 @@
 --
 -- See the testing framework explained in Test.Data.Mutable.Set.
 --
--- The combiniation of axioms and homormorphisms provided fully specify
--- the behavior of arrays.
+-- The combination of axioms and homomorphisms provided fully specify
+-- the behavior of vectors.
+--
+-- Remarks:
+--  * We don't test for failure on out-of-bound access (it's trivial)
+--  * We don't test the empty constructor because it's trivial
 module Test.Data.Mutable.Vector
   ( mutVecTests,
   )
@@ -22,6 +26,7 @@ import qualified Data.Functor.Linear as Data
 import Hedgehog
 import Data.Ord.Linear as Linear
 import Data.Maybe (mapMaybe)
+import qualified Data.List as List
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
@@ -48,6 +53,16 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,x. len (push a x) = 1 + len a" lenPush
   -- Tests against a reference implementation
+  , testProperty "write ix a (fromList l) = fromList (update l ix a)" refWrite
+  , testProperty "fst $ modify f ix (fromList l) = snd $ f (l !! ix)" refModify1
+  , testProperty
+      "snd (modify f i (fromList l)) = fromList (update l i (fst (f (l !! i))))"
+      refModify2
+  , testProperty "push x . fromList = fromList . snoc x" refPush
+  , testProperty "pop . fromList = fromList . init" refPop
+  , testProperty "read ix (fromList l) = l !! ix" refRead
+  , testProperty "size . fromList = length" refSize
+  , testProperty "toList . shrinkToFit . fromList = id" refShrinkToFit
   , testProperty "pop . push _ = id" refPopPush
   , testProperty "push . pop = id" refPushPop
   , testProperty "slice s n = take s . drop n" refSlice
@@ -88,6 +103,9 @@ compInts (Ur x) (Ur y) = Ur (x === y)
 -- XXX: This is a terrible name
 getFst :: Consumable b => (a, b) %1-> a
 getFst (a, b) = lseq b a
+
+getSnd :: Consumable a => (a, b) %1-> b
+getSnd (a, b) = lseq a b
 
 
 -- # Tests
@@ -219,6 +237,79 @@ lenPushTest val vec = fromLen Linear.$ Vector.size vec
       Ur (TestT IO ())
     fromLen (Ur len, vec) =
       compInts (move (len+1)) (getFst (Vector.size (Vector.push val vec)))
+
+refWrite :: Property
+refWrite = property $ do
+  l <- forAll nonEmptyList
+  ix <- forAll $ Gen.element [0..(length l - 1)]
+  v <- forAll val
+  let l' = listWrite ix v l
+  l' === unur (Vector.fromList l (Vector.toList Linear.. Vector.set ix v))
+  where
+
+    listWrite :: Int -> a -> [a] -> [a]
+    listWrite n _ _ | n Prelude.< 0 = error "Index negative"
+    listWrite _ _ [] = error "Index too big"
+    listWrite 0 a (_:xs) = a:xs
+    listWrite n a (x:xs) = x : listWrite (n-1) a xs
+
+refModify1 :: Property
+refModify1 = property $ do
+  l <- forAll nonEmptyList
+  let f x = (mod x 5, (mod x 5) Prelude.< 3)
+  ix <- forAll $ Gen.element [0..(length l - 1)]
+  let (_,result) = listApp ix f l
+  result === unur (Vector.fromList l (getFst Linear.. Vector.modify f ix))
+  where
+    listApp :: Int -> (a -> (a,b)) -> [a] -> (a,b)
+    listApp n _ _ | n Prelude.< 0 = error "Index negative"
+    listApp _ _ [] = error "Index too big"
+    listApp 0 f (x:_) = f x
+    listApp n f (_:xs) = listApp (n-1) f xs
+
+refModify2 :: Property
+refModify2 = property $ do
+  l <- forAll nonEmptyList
+  let f x = 3*x*x - 2*x + 4
+  ix <- forAll $ Gen.element [0..(length l - 1)]
+  let l' = listMod ix f l
+  l' === unur (Vector.fromList l (Vector.toList Linear.. Vector.modify_ f ix))
+  where
+    listMod :: Int -> (a -> a) -> [a] -> [a]
+    listMod n _ _ | n Prelude.< 0 = error "Index negative"
+    listMod _ _ [] = error "Index too big"
+    listMod 0 f (x:xs) = f x : xs
+    listMod n f (x:xs) = x : listMod (n-1) f xs
+
+refPush :: Property
+refPush = property $ do
+  l <- forAll list
+  v <- forAll val
+  let l' = l ++ [v]
+  l' === unur (Vector.fromList l (Vector.toList Linear.. Vector.push v))
+
+refPop :: Property
+refPop = property $ do
+  l <- forAll nonEmptyList
+  let v = Vector.fromList l (Vector.toList Linear.. getSnd Linear.. Vector.pop)
+  List.init l === unur v
+
+refRead :: Property
+refRead = property $ do
+  l <- forAll nonEmptyList
+  ix <- forAll $ Gen.element [0..(length l - 1)]
+  let value = l List.!! ix
+  value === unur (Vector.fromList l (getFst Linear.. Vector.get ix))
+
+refSize :: Property
+refSize = property $ do
+  l <- forAll list
+  length l === unur (Vector.fromList l (getFst Linear.. Vector.size))
+
+refShrinkToFit :: Property
+refShrinkToFit = property $ do
+  l <- forAll list
+  l === unur (Vector.fromList l (Vector.toList Linear.. Vector.shrinkToFit))
 
 refToListFromList :: Property
 refToListFromList = property $ do
