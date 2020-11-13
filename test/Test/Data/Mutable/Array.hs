@@ -8,12 +8,12 @@
 --
 -- See the testing framework explained in Test.Data.Mutable.Set.
 --
--- The combination of axioms and homomorphisms provided fully specify
+-- The combination of axioms and homomorphisms provided functionally specify
 -- the behavior of arrays.
 --
 -- Remarks:
---  * We don't test for failure on out-of-bound access (it's trivial)
---  * We don't test the empty constructor because it's trivial
+--  * We don't test for failure on out-of-bound access
+--  * We don't test the empty constructor because
 module Test.Data.Mutable.Array
   ( mutArrTests,
   )
@@ -51,9 +51,11 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed
   -- Tests against a reference implementation
-  , testProperty "∀ a,ix. write a ix . fromList = fromList . write a ix" writeRef
-  , testProperty "∀ ix. read ix (fromList l) = l !! i" readRef
-  , testProperty "size . fromList = length" sizeRef
+  , testProperty
+      "∀ a,ix. toList . write a ix = (\\l -> take ix l ++ [a] ++ drop (ix+1) l) . toList"
+      writeRef
+  , testProperty "∀ ix. read ix a = (toList a) !! i" readRef
+  , testProperty "size = length . toList" sizeRef
   , testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef
   , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
   , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap

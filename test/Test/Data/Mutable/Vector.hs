@@ -9,12 +9,12 @@
 --
 -- See the testing framework explained in Test.Data.Mutable.Set.
 --
--- The combination of axioms and homomorphisms provided fully specify
+-- The combination of axioms and homomorphisms provided functionally specify
 -- the behavior of vectors.
 --
 -- Remarks:
---  * We don't test for failure on out-of-bound access (it's trivial)
---  * We don't test the empty constructor because it's trivial
+--  * We don't test for failure on out-of-bound access
+--  * We don't test the empty constructor
 module Test.Data.Mutable.Vector
   ( mutVecTests,
   )
@@ -53,16 +53,18 @@ group =
   , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
   , testProperty "∀ a,x. len (push a x) = 1 + len a" lenPush
   -- Tests against a reference implementation
-  , testProperty "write ix a (fromList l) = fromList (update l ix a)" refWrite
-  , testProperty "fst $ modify f ix (fromList l) = snd $ f (l !! ix)" refModify1
   , testProperty
-      "snd (modify f i (fromList l)) = fromList (update l i (fst (f (l !! i))))"
+      "write ix a v = (\\l -> take ix l ++ [a] ++ drop (ix+1) l) . toList"
+      refWrite
+  , testProperty "fst $ modify f ix v = snd $ f ((toList v) !! ix)" refModify1
+  , testProperty
+      "snd (modify f i v) = write (toList v) i (fst (f ((toList v) !! i))))"
       refModify2
-  , testProperty "push x . fromList = fromList . snoc x" refPush
-  , testProperty "pop . fromList = fromList . init" refPop
-  , testProperty "read ix (fromList l) = l !! ix" refRead
-  , testProperty "size . fromList = length" refSize
-  , testProperty "toList . shrinkToFit . fromList = id" refShrinkToFit
+  , testProperty "toList . push x = snoc x . toList" refPush
+  , testProperty "toList . pop = init . toList" refPop
+  , testProperty "read ix v = (toList v) !! ix" refRead
+  , testProperty "size = length . toList" refSize
+  , testProperty "toList . shrinkToFit = toList" refShrinkToFit
   , testProperty "pop . push _ = id" refPopPush
   , testProperty "push . pop = id" refPushPop
   , testProperty "slice s n = take s . drop n" refSlice
@@ -258,14 +260,7 @@ refModify1 = property $ do
   l <- forAll nonEmptyList
   let f x = (mod x 5, (mod x 5) Prelude.< 3)
   ix <- forAll $ Gen.element [0..(length l - 1)]
-  let (_,result) = listApp ix f l
-  result === unur (Vector.fromList l (getFst Linear.. Vector.modify f ix))
-  where
-    listApp :: Int -> (a -> (a,b)) -> [a] -> (a,b)
-    listApp n _ _ | n Prelude.< 0 = error "Index negative"
-    listApp _ _ [] = error "Index too big"
-    listApp 0 f (x:_) = f x
-    listApp n f (_:xs) = listApp (n-1) f xs
+  snd (f (l !! ix)) === unur (Vector.fromList l (getFst Linear.. Vector.modify f ix))
 
 refModify2 :: Property
 refModify2 = property $ do
