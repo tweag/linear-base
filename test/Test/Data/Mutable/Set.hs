@@ -7,8 +7,8 @@
 --
 -- = How we designed the tests
 --
--- We use hedgehog to test properties that are axioms that fully define the
--- behavior of sets. There is at least one axiom per each combination of
+-- We use hedgehog to test properties that are axioms that funtionally define
+-- the behavior of sets. There is at least one axiom per each combination of
 -- accessor and constructor/mutator. So for the accessor @f@, and
 -- constructor/mutator @g@, we have one axiom of the form @f (g (...)) = ...@.
 --
@@ -20,10 +20,22 @@
 -- the union as sets, converting back with @Set.toList@ and then sorting
 -- the output list.
 --
--- To have such a test replace an axiom, however, we need to have "homomorphisms"
--- for each accessor. E.g., for all x and l, @member x (fromList l) = elem x l@.
+-- To have such a test replace an axiom, however, we need to have
+-- "homomorphisms" for each accessor or modifier. In general, we want to be
+-- able to say for any modifier or accessor @f@,
 --
--- So now, for instance, we can prove
+-- >  toList (f set) = f' (toList set)
+--
+-- where @f'@ is some reference implementation we know. The key idea is a kind
+-- of "homomorphism" between @f@ and a reference implementation @f'@ that
+-- holds across the conversion function @toList@.
+--
+-- Note: We could also formulate this in terms of @fromList@.
+--
+-- For example, we'd want to have @member x (fromList l) = elem x l@
+-- for any @x@ and @l@.
+--
+-- With this we can prove
 --
 -- >  member x (intersect set1 set2) = member x set1 && member x set2
 --
@@ -77,14 +89,14 @@ group =
   , testProperty "∀ s, x \\in s. size (delete s x) = size s - 1" sizeDelete1
   , testProperty "∀ s, x \\notin s. size (delete s x) = size s" sizeDelete2
   -- Homomorphism tests
-  , testProperty "sort . nub = sort . toList . fromList" toListFromList
-  , testProperty "member x (fromList l) = elem x l" memberHomomorphism
-  , testProperty "size . fromList = length . nub" sizeHomomorphism
+  , testProperty "sort . nub = sort . toList" toListFromList
+  , testProperty "member x s = elem x (toList s)" memberHomomorphism
+  , testProperty "size = length . toList" sizeHomomorphism
   , testProperty
-      "sort . nub (l ∪ m) = sort . toList (fromList l ∪ fromList m)"
+      "sort . nub ((toList s) ∪ (toList s')) = sort . toList (s ∪ s')"
       unionHomomorphism
   , testProperty
-      "sort . nub (l ∩ m) = sort . toList (fromList l ∩ fromList m)"
+      "sort . nub ((toList s) ∩ (toList s')) = sort . toList (s ∩ s')"
       intersectHomomorphism
   ]
 
