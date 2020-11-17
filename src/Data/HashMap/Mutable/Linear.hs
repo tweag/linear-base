@@ -61,7 +61,6 @@ import Prelude ((+))
 import qualified Data.Maybe as NonLinear
 import qualified Data.Function as NonLinear
 import qualified Prelude
-import qualified Unsafe.Linear as Unsafe
 
 -- # Implementation Notes
 -- This is a simple implementatation of robin hood hashing.
@@ -270,56 +269,77 @@ mapMaybe f = mapMaybeWithKey (\_k v -> f v)
 
 -- | Same as 'mapMaybe', but also has access to the keys.
 mapMaybeWithKey :: Keyed k => (k -> v -> Maybe v') -> HashMap k v %1-> HashMap k v'
-mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr') =
-  Array.size arr' & \case
-    (Ur 0, arr'') ->
-      recurOrReturn True 0 0 0 0 arr'' & \(arr''', Ur _) ->
-        HashMap 0 arr'''
-    (Ur sz, arr'') ->
-      numSpillovers arr'' & \(Ur spillovers, arr''') ->
-        go
-          spillovers
-          ((sz - 1 + spillovers) `mod` sz)
-          sz
-          0
-          arr'''
-          & \(arr'''', Ur b) -> HashMap b arr''''
- where
-  go :: Int -- ^ Current index
-     -> Int -- ^ Last index to check
-     -> Int -- ^ Size of the array
-     -> Int -- ^ Accumulated count of pairs that are present after the map.
-     -> RobinArr k v
-     %1-> (RobinArr k v', Ur Int)
-  go curr end sz ret arr =
-    Array.read arr curr & \case
-      (Ur Nothing, arr') ->
-        recurOrReturn True curr end sz ret arr'
-      (Ur (Just (RobinVal psl k v)), arr') ->
-        case f k v of
-          Just v' ->
-           Array.write arr' curr
-             (Just (RobinVal psl k (Unsafe.coerce @v' @v v')))
-             & recurOrReturn True curr end sz (ret + 1)
-          Nothing ->
-            Array.write arr' curr Nothing
-              & \arr'' -> shiftSegmentBackward sz arr'' ((curr + 1) `mod` sz)
-              & recurOrReturn False curr end sz ret
+mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr) = Array.size arr &
+  \(Ur size, arr1) -> countAliveCells 0 (size-1) 0 (Array.map f' arr1) & \case
+    (Ur 0, arr2) -> HashMap 0 arr2
+    (Ur n, arr2) -> HashMap n (cleanUpDeletes arr2)
+  where
+    f' :: Maybe (RobinVal k v) -> Maybe (RobinVal k v')
+    f' Nothing = Nothing
+    f' (Just (RobinVal p k v)) = Prelude.fmap (RobinVal p k) (f k v)
 
-  -- Takes the same parameter as 'go', used to control when to end
-  -- the recursion.
-  recurOrReturn :: Bool -- ^ Whether the curr should be increased
-                -> Int -> Int -> Int -> Int
-                -> RobinArr k v %1-> (RobinArr k v', Ur Int)
-  recurOrReturn incr curr end sz ret arr
-    | curr == end =
-      ( Unsafe.coerce @(RobinArr k v) @(RobinArr k v') arr
-      , Ur ret
-      )
-    | otherwise =
-      go
-        (if incr then (curr + 1) `mod` sz else curr)
-        end sz ret arr
+    -- | Shift cells back as appropriate
+    cleanUpDeletes :: RobinArr k v' %1-> RobinArr k v'
+    cleanUpDeletes arr0 = arr0 & Array.size &
+      \(Ur size, arr1) -> adjustOneCell 0 size arr1 &
+      \(Ur ix, arr2) -> moveUntilValid 0 size ix ((ix+1) `mod` size) False arr2
+
+    -- | @adjustOneCell ix size@
+    -- Move a cell back until it has PSL 0 or a filled cell before it
+    -- and return its new index. If that cell is empty, find
+    -- the next cell after index @ix@ and move it back as appropriate.
+    adjustOneCell :: Int  -> Int -> RobinArr k v' %1-> (Ur Int, RobinArr k v')
+    adjustOneCell ix size arr = Array.read arr ix & \case
+      (Ur Nothing, arr1) -> adjustOneCell ((ix+1) `mod` size) size arr1
+      (Ur (Just (RobinVal 0 _ _)), arr2) -> (Ur ix, arr2)
+      (Ur (Just rv), arr2) ->
+        Array.read arr2 ((ix-1+size) `mod` size) & \case
+        (Ur Nothing, arr3) ->
+          Array.write arr3 ((ix-1+size) `mod` size) (Just (decRobinValPSL rv)) &
+            \arr4 -> Array.write arr4 ix Nothing &
+              \arr5 -> adjustOneCell ((ix-1+size) `mod` size) size arr5
+        (Ur (Just _), arr3) -> (Ur ix, arr3)
+
+    -- | Recursive algorithm for shifting back cells as appropriate
+    -- for a *non-empty* robin array. Given that we've already moved one
+    -- key-value pair backward as needed at index @hab@,
+    -- @moveUntilValid count size hab ix prev_empty arr@ walks from
+    -- @ix@ until all cells have been moved back and it's done one
+    -- cycle of walking through all elements where nothing is moved.
+    --
+    -- Conjecture: this is O(n) for a non-empty array of length n.
+    moveUntilValid ::
+      Int -> -- ^ Number of cells inspected and _unmoved_
+      Int -> -- ^ The size or total number of cells
+      Int -> -- ^ The last visited habited index
+      Int -> -- ^ The current index
+      Bool -> -- ^ Whether the previous index was _uninhabited_
+      RobinArr k v' %1->
+      RobinArr k v'
+    moveUntilValid count size hab ix prev_empty arr
+      | (count == size) = arr
+      | otherwise = Array.read arr ix & \case
+          (Ur Nothing, arr1) ->
+            moveUntilValid (count+1) size hab ((ix+1) `mod` size) True arr1
+          (Ur (Just (RobinVal 0 _ _)), arr1) ->
+            moveUntilValid (count+1) size ix ((ix+1) `mod` size) False arr1
+          (Ur (Just rv), arr1) -> case prev_empty of
+            True ->
+              Array.write arr1 ((hab+1) `mod` size) (Just (decRobinValPSL rv)) &
+              \arr2 -> Array.write arr2 ix Nothing &
+              \arr3 ->
+                moveUntilValid 0 size ((hab+1) `mod` size) ((ix+1) `mod` size) True arr3
+            False ->
+              moveUntilValid (count+1) size ix ((ix+1) `mod` size) False arr1
+
+    -- | @countAliveCells lo hi a@ counts the number of non-Nothing cells from
+    -- @lo@ to @hi@.
+    countAliveCells :: Int -> Int -> Int -> RobinArr k v' %1-> (Ur Int, RobinArr k v')
+    countAliveCells lo hi acc arr
+      | lo > hi = (Ur acc, arr)
+      | otherwise = Array.read arr lo & \case
+        (Ur Nothing, arr1) -> countAliveCells (lo+1) hi acc arr1
+        (Ur (Just _), arr1) -> countAliveCells (lo+1) hi (acc+1) arr1
 
 -- | Complexity: O(capacity hm)
 filterWithKey :: Keyed k => (k -> v -> Bool) -> HashMap k v %1-> HashMap k v
@@ -483,28 +503,6 @@ instance Keyed k => Semigroup (HashMap k v) where
 _debugShow :: (Show k, Show v) => HashMap k v %1-> String
 _debugShow (HashMap _ robinArr) =
   Array.toList robinArr & \(Ur xs) -> show xs
-
--- | When using Robin-Hood hashing, the beginning of the array
--- can contain elements "spilled over" from the end of the array.
---
--- This function finds the number of spillovers. The spillovers can
--- be determined by the length of the prefix of the array where
--- PSL > index. This works since they form a contiguous segment.
-numSpillovers :: RobinArr k v %1-> (Ur Int, RobinArr k v)
-numSpillovers arr =
-  Array.size arr & \(Ur sz, arr') ->
-    go 0 sz arr'
- where
-  go :: Int -> Int -> RobinArr k v %1-> (Ur Int, RobinArr k v)
-  go curr sz arr
-    | curr == sz = (Ur 0, arr) -- This should only happen when the
-                               -- Array is empty.
-    | otherwise =
-      Array.read arr curr & \case
-        (Ur Nothing, arr') -> (Ur curr, arr')
-        (Ur (Just (RobinVal (PSL psl) _ _)), arr')
-          | psl <= curr -> (Ur curr, arr')
-          | otherwise -> go (curr+1) sz arr'
 
 idealIndexForKey
   :: Keyed k

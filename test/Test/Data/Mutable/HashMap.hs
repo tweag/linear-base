@@ -5,8 +5,19 @@
 
 -- |
 -- Tests for mutable hashmaps
--- We are excluding tests for alter because it's assumed that alter is
--- implemented parametrically around insert and delete.
+--
+-- See the testing framework explained in Test.Data.Mutable.Set.
+--
+-- The combination of axioms and homomorphisms provided (for the most part)
+-- functionally specify the behavior of hashmaps. There are a few things
+-- we leave out and mention below.
+--
+-- Remarks:
+-- * We don't test trivial things like: empty, capacity
+-- * We don't test member since we test lookup
+-- * We don't test alter and hope insert and delete tests suffice
+-- * We don't test filterWithKey and hope the test for filter suffices
+-- * We don't test mapMaybe since mapMaybeWithKey is more general
 module Test.Data.Mutable.HashMap
   ( mutHMTests,
   )
@@ -21,7 +32,10 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear
 import qualified Data.Map.Lazy as Map
+import Data.Containers.ListUtils (nubOrd)
 import Data.List (sort)
+import qualified Data.List as List
+import Data.Maybe (mapMaybe)
 import Test.Tasty
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -33,23 +47,32 @@ mutHMTests = testGroup "Mutable hashmap tests" group
 
 group :: [TestTree]
 group =
-  [ testProperty "∀ k,v,m. lookup k (insert m k v) = Just v" lookupInsert1,
-    testProperty
+  [ -- Axiomatic tests
+    testProperty "∀ k,v,m. lookup k (insert m k v) = Just v" lookupInsert1
+  , testProperty
       "∀ k,v,m,k'/=k. lookup k'(insert m k v) = lookup k' m"
-      lookupInsert2,
-    testProperty "∀ k,m. lookup k (delete m k) = Nothing" lookupDelete1,
-    testProperty
+      lookupInsert2
+  , testProperty "∀ k,m. lookup k (delete m k) = Nothing" lookupDelete1
+  , testProperty
       "∀ k,m,k'/=k. lookup k' (delete m k) = lookup k' m"
-      lookupDelete2,
-    testProperty "∀ k,v,m. member k (insert m k v) = True" memberInsert,
-    testProperty "∀ k,m. member k (delete m k) = False" memberDelete,
-    testProperty "∀ k,v,m. size (insert (m-k) k v) = 1+ size (m-k)" sizeInsert,
-    testProperty "∀ k,m with k. size (delete m k) + 1 = size m" deleteSize,
-    testProperty "toList . fromList = id" refToListFromList,
-    testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter,
-    testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend,
-    testProperty "unionWith reference" refUnionWith,
-    testProperty "intersectionWith reference" refIntersectionWith
+      lookupDelete2
+  , testProperty "∀ k,v,m. member k (insert m k v) = True" memberInsert
+  , testProperty "∀ k,m. member k (delete m k) = False" memberDelete
+  , testProperty "∀ k,v,m. size (insert (m-k) k v) = 1+ size (m-k)" sizeInsert
+  , testProperty "∀ k,m with k. size (delete m k) + 1 = size m" deleteSize
+  -- Homorphism tests against a reference implementation
+  , testProperty "insert k v h = fromList (toList h ++ [(k,v)])" refInsert
+  , testProperty "delete k h = fromList (filter (!= k . fst) (toList h))" refDelete
+  , testProperty "fst . lookup k h = lookup k (toList h)" refLookup
+  , testProperty "mapMaybe f h = fromList . mapMaybe (uncurry f) . toList" refMap
+  , testProperty "size = length . toList" refSize
+  , testProperty "toList . fromList = id" refToListFromList
+  , testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter
+  , testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend
+  , testProperty "unionWith reference" refUnionWith
+  , testProperty "intersectionWith reference" refIntersectionWith
+  -- Misc
+  , testProperty "toList . shrinkToFit = toList" shrinkToFitTest
   ]
 
 -- # Internal Library
@@ -135,14 +158,14 @@ val = do
   let strSize = Range.singleton 3
   Gen.string strSize Gen.alpha
 
--- | Random pairs
+-- | Random pairs with no duplicate keys
 keyVals :: Gen [(Int, String)]
 keyVals = do
   size <- Gen.int $ Range.linear 0 maxSize
   let sizeGen = Range.singleton size
   keys <- Gen.list sizeGen key
   vals <- Gen.list sizeGen val
-  return $ zip keys vals
+  return $ zip (nubOrd keys) vals
 
 -- # Tests
 --------------------------------------------------------------------------------
@@ -233,6 +256,49 @@ checkSizeAfterDelete key hmap = fromSize (HashMap.size hmap)
     compSizes (Ur orgSize) (Ur newSize) =
       Ur ((newSize + 1) == orgSize)
 
+refInsert :: Property
+refInsert = defProperty $ do
+  k <- forAll key
+  v <- forAll val
+  kvs <- forAll keyVals
+  let listInsert = HashMap.fromList (kvs ++ [(k,v)]) HashMap.toList
+  let hmInsert = HashMap.fromList kvs (HashMap.toList Linear.. HashMap.insert k v)
+  sort (unur listInsert) === sort (unur hmInsert)
+
+refDelete :: Property
+refDelete = defProperty $ do
+  k <- forAll key
+  kvs <- forAll keyVals
+  let kvs' = filter ((/= k) . fst) kvs
+  let listInsert = HashMap.fromList kvs' HashMap.toList
+  let hmInsert = HashMap.fromList kvs (HashMap.toList Linear.. HashMap.delete k)
+  sort (unur listInsert) === sort (unur hmInsert)
+
+refLookup :: Property
+refLookup = defProperty $ do
+  kvs <- forAll keyVals
+  k <- forAll key
+  let listLookup = List.lookup k kvs
+  let (#.) = (Linear..)
+  let hmLookup = HashMap.fromList kvs (getFst #. HashMap.lookup k)
+  listLookup === unur hmLookup
+
+refMap :: Property
+refMap = defProperty $ do
+  let f k v = if mod k 5 < 3 then Just (show k ++ v) else Nothing
+  let f' (k,v) = fmap ((,) k) (f k v)
+  kvs <- forAll keyVals
+  let (#.) = (Linear..)
+  let mappedList = mapMaybe f' kvs
+  let mappedHm = HashMap.fromList kvs (HashMap.toList #. HashMap.mapMaybeWithKey f)
+  sort mappedList === sort (unur mappedHm)
+
+refSize :: Property
+refSize = defProperty $ do
+  kvs <- forAll keyVals
+  let (#.) = (Linear..)
+  length kvs === unur (HashMap.fromList kvs (getFst #. HashMap.size))
+
 refToListFromList :: Property
 refToListFromList = defProperty $ do
   xs <- forAll keyVals
@@ -312,3 +378,11 @@ refIntersectionWith = defProperty $ do
               Linear.& HashMap.toList
 
   sort expected === sort actual
+
+shrinkToFitTest :: Property
+shrinkToFitTest = defProperty $ do
+  kvs <- forAll keyVals
+  let (#.) = (Linear..)
+  let shrunk = (HashMap.fromList kvs (HashMap.toList #. HashMap.shrinkToFit))
+  sort kvs === sort (unur shrunk)
+
