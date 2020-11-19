@@ -32,7 +32,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear
 import qualified Data.Map.Lazy as Map
-import Data.Containers.ListUtils (nubOrd)
+import Data.Containers.ListUtils (nubOrdOn)
 import Data.List (sort)
 import qualified Data.List as List
 import Data.Maybe (mapMaybe)
@@ -165,7 +165,7 @@ keyVals = do
   let sizeGen = Range.singleton size
   keys <- Gen.list sizeGen key
   vals <- Gen.list sizeGen val
-  return $ zip (nubOrd keys) vals
+  return $ zip keys vals
 
 -- # Tests
 --------------------------------------------------------------------------------
@@ -278,7 +278,7 @@ refLookup :: Property
 refLookup = defProperty $ do
   kvs <- forAll keyVals
   k <- forAll key
-  let listLookup = List.lookup k kvs
+  let listLookup = List.lookup k (List.reverse kvs)
   let (#.) = (Linear..)
   let hmLookup = HashMap.fromList kvs (getFst #. HashMap.lookup k)
   listLookup === unur hmLookup
@@ -289,7 +289,7 @@ refMap = defProperty $ do
   let f' (k,v) = fmap ((,) k) (f k v)
   kvs <- forAll keyVals
   let (#.) = (Linear..)
-  let mappedList = mapMaybe f' kvs
+  let mappedList = mapMaybe f' (nubOrdOn fst (List.reverse kvs))
   let mappedHm = HashMap.fromList kvs (HashMap.toList #. HashMap.mapMaybeWithKey f)
   sort mappedList === sort (unur mappedHm)
 
@@ -297,7 +297,7 @@ refSize :: Property
 refSize = defProperty $ do
   kvs <- forAll keyVals
   let (#.) = (Linear..)
-  length kvs === unur (HashMap.fromList kvs (getFst #. HashMap.size))
+  length (nubOrdOn fst kvs) === unur (HashMap.fromList kvs (getFst #. HashMap.size))
 
 refToListFromList :: Property
 refToListFromList = defProperty $ do
@@ -384,5 +384,5 @@ shrinkToFitTest = defProperty $ do
   kvs <- forAll keyVals
   let (#.) = (Linear..)
   let shrunk = (HashMap.fromList kvs (HashMap.toList #. HashMap.shrinkToFit))
-  sort kvs === sort (unur shrunk)
+  sort (nubOrdOn fst (List.reverse kvs)) === sort (unur shrunk)
 

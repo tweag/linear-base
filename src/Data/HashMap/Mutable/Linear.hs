@@ -61,6 +61,8 @@ import Prelude ((+))
 import qualified Data.Maybe as NonLinear
 import qualified Data.Function as NonLinear
 import qualified Prelude
+import Unsafe.Coerce (unsafeCoerce)
+import qualified Unsafe.Linear as Unsafe
 
 -- # Implementation Notes
 -- This is a simple implementatation of robin hood hashing.
@@ -204,7 +206,7 @@ alterF f key hm =
             -- We need to delete it.
             Ur Nothing ->
               Array.write arr ix Nothing & \arr' ->
-                shiftSegmentBackward cap arr' ((ix + 1) `mod` cap) & \arr'' ->
+                shiftSegmentBackward 1 cap arr' ((ix + 1) `mod` cap) & \arr'' ->
                   HashMap
                     (count - 1)
                     arr''
@@ -268,78 +270,52 @@ mapMaybe :: Keyed k => (v -> Maybe v') -> HashMap k v %1-> HashMap k v'
 mapMaybe f = mapMaybeWithKey (\_k v -> f v)
 
 -- | Same as 'mapMaybe', but also has access to the keys.
-mapMaybeWithKey :: Keyed k => (k -> v -> Maybe v') -> HashMap k v %1-> HashMap k v'
-mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr) = Array.size arr &
-  \(Ur size, arr1) -> countAliveCells 0 (size-1) 0 (Array.map f' arr1) & \case
-    (Ur 0, arr2) -> HashMap 0 arr2
-    (Ur n, arr2) -> HashMap n (cleanUpDeletes arr2)
-  where
-    f' :: Maybe (RobinVal k v) -> Maybe (RobinVal k v')
-    f' Nothing = Nothing
-    f' (Just (RobinVal p k v)) = Prelude.fmap (RobinVal p k) (f k v)
+mapMaybeWithKey :: forall k v v' .
+  Keyed k => (k -> v -> Maybe v') -> HashMap k v %1-> HashMap k v'
+mapMaybeWithKey _ (HashMap 0 arr) = HashMap 0 (Unsafe.coerce arr)
+mapMaybeWithKey f (HashMap _ arr) = Array.size arr & \(Ur size, arr1) ->
+  mapAndPushBack 0 (size-1) (False,0) 0 arr1 & \(Ur c, arr2) ->
+    HashMap c (Unsafe.coerce arr2) where
 
-    -- | Shift cells back as appropriate
-    cleanUpDeletes :: RobinArr k v' %1-> RobinArr k v'
-    cleanUpDeletes arr0 = arr0 & Array.size &
-      \(Ur size, arr1) -> adjustOneCell 0 size arr1 &
-      \(Ur ix, arr2) -> moveUntilValid 0 size ix ((ix+1) `mod` size) False arr2
+  f' :: k -> v -> Maybe v
+  f' k v = unsafeCoerce (f k v)
 
-    -- | @adjustOneCell ix size@
-    -- Move a cell back until it has PSL 0 or a filled cell before it
-    -- and return its new index. If that cell is empty, find
-    -- the next cell after index @ix@ and move it back as appropriate.
-    adjustOneCell :: Int  -> Int -> RobinArr k v' %1-> (Ur Int, RobinArr k v')
-    adjustOneCell ix size arr = Array.read arr ix & \case
-      (Ur Nothing, arr1) -> adjustOneCell ((ix+1) `mod` size) size arr1
-      (Ur (Just (RobinVal 0 _ _)), arr2) -> (Ur ix, arr2)
-      (Ur (Just rv), arr2) ->
-        Array.read arr2 ((ix-1+size) `mod` size) & \case
-        (Ur Nothing, arr3) ->
-          Array.write arr3 ((ix-1+size) `mod` size) (Just (decRobinValPSL rv)) &
-            \arr4 -> Array.write arr4 ix Nothing &
-              \arr5 -> adjustOneCell ((ix-1+size) `mod` size) size arr5
-        (Ur (Just _), arr3) -> (Ur ix, arr3)
-
-    -- | Recursive algorithm for shifting back cells as appropriate
-    -- for a *non-empty* robin array. Given that we've already moved one
-    -- key-value pair backward as needed at index @hab@,
-    -- @moveUntilValid count size hab ix prev_empty arr@ walks from
-    -- @ix@ until all cells have been moved back and it's done one
-    -- cycle of walking through all elements where nothing is moved.
-    --
-    -- Conjecture: this is O(n) for a non-empty array of length n.
-    moveUntilValid ::
-      Int -> -- ^ Number of cells inspected and _unmoved_
-      Int -> -- ^ The size or total number of cells
-      Int -> -- ^ The last visited habited index
-      Int -> -- ^ The current index
-      Bool -> -- ^ Whether the previous index was _uninhabited_
-      RobinArr k v' %1->
-      RobinArr k v'
-    moveUntilValid count size hab ix prev_empty arr
-      | (count == size) = arr
-      | otherwise = Array.read arr ix & \case
-          (Ur Nothing, arr1) ->
-            moveUntilValid (count+1) size hab ((ix+1) `mod` size) True arr1
-          (Ur (Just (RobinVal 0 _ _)), arr1) ->
-            moveUntilValid (count+1) size ix ((ix+1) `mod` size) False arr1
-          (Ur (Just rv), arr1) -> case prev_empty of
-            True ->
-              Array.write arr1 ((hab+1) `mod` size) (Just (decRobinValPSL rv)) &
-              \arr2 -> Array.write arr2 ix Nothing &
-              \arr3 ->
-                moveUntilValid 0 size ((hab+1) `mod` size) ((ix+1) `mod` size) True arr3
-            False ->
-              moveUntilValid (count+1) size ix ((ix+1) `mod` size) False arr1
-
-    -- | @countAliveCells lo hi a@ counts the number of non-Nothing cells from
-    -- @lo@ to @hi@.
-    countAliveCells :: Int -> Int -> Int -> RobinArr k v' %1-> (Ur Int, RobinArr k v')
-    countAliveCells lo hi acc arr
-      | lo > hi = (Ur acc, arr)
-      | otherwise = Array.read arr lo & \case
-        (Ur Nothing, arr1) -> countAliveCells (lo+1) hi acc arr1
-        (Ur (Just _), arr1) -> countAliveCells (lo+1) hi (acc+1) arr1
+  -- Going from arr[0] to arr[size-1] map each element while
+  -- simultaneously pushing elements back if some earlier element(s)
+  -- were deleted in a contiguous segment and if the current
+  -- element has PSL > 0. Maintain a counter of how
+  -- far to push elements back. At arr[size-1] if needed, call
+  -- shiftSegmentBackward with the counter at arr[0].
+  mapAndPushBack ::
+    Int -> -- ^ Current index
+    Int -> -- ^ Last index fo array which is (size-1)
+    (Bool, Int) -> -- ^ Are we in a contiguous segment after a delete?
+    Int -> -- ^ Count of present key-value pairs
+    RobinArr k v %1->
+    (Ur Int, RobinArr k v) -- ^ The new count and fully mapped array
+  mapAndPushBack ix end (shift,dec) count arr
+    | (ix > end) =
+        if shift
+        then (Ur count, shiftSegmentBackward dec (end+1) arr 0)
+        else (Ur count, arr)
+    | otherwise = Array.read arr ix & \case
+        (Ur Nothing, arr1) ->
+          mapAndPushBack (ix+1) end (False,0) count arr1
+        (Ur (Just (RobinVal (PSL p) k v)), arr1) -> case f' k v of
+          Nothing -> Array.write arr1 ix Nothing &
+            \arr2 -> mapAndPushBack (ix+1) end (True,dec+1) count arr2
+          Just v' -> case shift of
+            False -> Array.write arr1 ix (Just (RobinVal (PSL p) k v')) &
+              \arr2 -> mapAndPushBack (ix+1) end (False,0) (count+1) arr2
+            True -> case dec <= p of
+              False -> Array.write arr1 (ix-p) (Just (RobinVal 0 k v')) &
+                \arr2 -> case p == 0 of
+                  False -> Array.write arr2 ix Nothing &
+                    \arr3 -> mapAndPushBack (ix+1) end (True,p) (count+1) arr3
+                  True -> mapAndPushBack (ix+1) end (False,0) (count+1) arr2
+              True -> Array.write arr1 (ix-dec) (Just (RobinVal (PSL (p-dec)) k v')) &
+                \arr2 -> Array.write arr2 ix Nothing &
+                  \arr3 -> mapAndPushBack (ix+1) end (True,dec) (count+1) arr3
 
 -- | Complexity: O(capacity hm)
 filterWithKey :: Keyed k => (k -> v -> Bool) -> HashMap k v %1-> HashMap k v
@@ -550,15 +526,16 @@ tryInsertAtIndex hmap ix (RobinVal psl key val) =
 -- following the deleted cell, backwards by one and decrement
 -- their PSLs.
 shiftSegmentBackward :: Keyed k =>
-  Int -> RobinArr k v %1-> Int -> RobinArr k v
-shiftSegmentBackward s arr ix = Array.read arr ix & \case
+  Int -> Int -> RobinArr k v %1-> Int -> RobinArr k v
+shiftSegmentBackward dec s arr ix = Array.read arr ix & \case
   (Ur Nothing, arr') -> arr'
   (Ur (Just (RobinVal 0 _ _)), arr') -> arr'
   (Ur (Just val), arr') ->
     Array.write arr' ix Nothing & \arr'' ->
       shiftSegmentBackward
+        dec
         s
-        (Array.write arr'' ((ix-1) `mod` s) (Just $ decRobinValPSL val))
+        (Array.write arr'' ((ix-dec+s) `mod` s) (Just $ decRobinValPSL val))
         ((ix+1) `mod` s)
 -- TODO: This does twice as much writes than necessary, it first empties
 -- the cell, just to update it again at the next call. We can save some
