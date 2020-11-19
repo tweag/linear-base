@@ -61,6 +61,7 @@ import Prelude ((+))
 import qualified Data.Maybe as NonLinear
 import qualified Data.Function as NonLinear
 import qualified Prelude
+import Unsafe.Coerce (unsafeCoerce)
 import qualified Unsafe.Linear as Unsafe
 
 -- # Implementation Notes
@@ -205,7 +206,7 @@ alterF f key hm =
             -- We need to delete it.
             Ur Nothing ->
               Array.write arr ix Nothing & \arr' ->
-                shiftSegmentBackward cap arr' ((ix + 1) `mod` cap) & \arr'' ->
+                shiftSegmentBackward 1 cap arr' ((ix + 1) `mod` cap) & \arr'' ->
                   HashMap
                     (count - 1)
                     arr''
@@ -269,57 +270,52 @@ mapMaybe :: Keyed k => (v -> Maybe v') -> HashMap k v %1-> HashMap k v'
 mapMaybe f = mapMaybeWithKey (\_k v -> f v)
 
 -- | Same as 'mapMaybe', but also has access to the keys.
-mapMaybeWithKey :: Keyed k => (k -> v -> Maybe v') -> HashMap k v %1-> HashMap k v'
-mapMaybeWithKey (f :: k -> v -> Maybe v') (HashMap _ arr') =
-  Array.size arr' & \case
-    (Ur 0, arr'') ->
-      recurOrReturn True 0 0 0 0 arr'' & \(arr''', Ur _) ->
-        HashMap 0 arr'''
-    (Ur sz, arr'') ->
-      numSpillovers arr'' & \(Ur spillovers, arr''') ->
-        go
-          spillovers
-          ((sz - 1 + spillovers) `mod` sz)
-          sz
-          0
-          arr'''
-          & \(arr'''', Ur b) -> HashMap b arr''''
- where
-  go :: Int -- ^ Current index
-     -> Int -- ^ Last index to check
-     -> Int -- ^ Size of the array
-     -> Int -- ^ Accumulated count of pairs that are present after the map.
-     -> RobinArr k v
-     %1-> (RobinArr k v', Ur Int)
-  go curr end sz ret arr =
-    Array.read arr curr & \case
-      (Ur Nothing, arr') ->
-        recurOrReturn True curr end sz ret arr'
-      (Ur (Just (RobinVal psl k v)), arr') ->
-        case f k v of
-          Just v' ->
-           Array.write arr' curr
-             (Just (RobinVal psl k (Unsafe.coerce @v' @v v')))
-             & recurOrReturn True curr end sz (ret + 1)
-          Nothing ->
-            Array.write arr' curr Nothing
-              & \arr'' -> shiftSegmentBackward sz arr'' ((curr + 1) `mod` sz)
-              & recurOrReturn False curr end sz ret
+mapMaybeWithKey :: forall k v v' .
+  Keyed k => (k -> v -> Maybe v') -> HashMap k v %1-> HashMap k v'
+mapMaybeWithKey _ (HashMap 0 arr) = HashMap 0 (Unsafe.coerce arr)
+mapMaybeWithKey f (HashMap _ arr) = Array.size arr & \(Ur size, arr1) ->
+  mapAndPushBack 0 (size-1) (False,0) 0 arr1 & \(Ur c, arr2) ->
+    HashMap c (Unsafe.coerce arr2) where
 
-  -- Takes the same parameter as 'go', used to control when to end
-  -- the recursion.
-  recurOrReturn :: Bool -- ^ Whether the curr should be increased
-                -> Int -> Int -> Int -> Int
-                -> RobinArr k v %1-> (RobinArr k v', Ur Int)
-  recurOrReturn incr curr end sz ret arr
-    | curr == end =
-      ( Unsafe.coerce @(RobinArr k v) @(RobinArr k v') arr
-      , Ur ret
-      )
-    | otherwise =
-      go
-        (if incr then (curr + 1) `mod` sz else curr)
-        end sz ret arr
+  f' :: k -> v -> Maybe v
+  f' k v = unsafeCoerce (f k v)
+
+  -- Going from arr[0] to arr[size-1] map each element while
+  -- simultaneously pushing elements back if some earlier element(s)
+  -- were deleted in a contiguous segment and if the current
+  -- element has PSL > 0. Maintain a counter of how
+  -- far to push elements back. At arr[size-1] if needed, call
+  -- shiftSegmentBackward with the counter at arr[0].
+  mapAndPushBack ::
+    Int -> -- ^ Current index
+    Int -> -- ^ Last index fo array which is (size-1)
+    (Bool, Int) -> -- ^ Are we in a contiguous segment after a delete?
+    Int -> -- ^ Count of present key-value pairs
+    RobinArr k v %1->
+    (Ur Int, RobinArr k v) -- ^ The new count and fully mapped array
+  mapAndPushBack ix end (shift,dec) count arr
+    | (ix > end) =
+        if shift
+        then (Ur count, shiftSegmentBackward dec (end+1) arr 0)
+        else (Ur count, arr)
+    | otherwise = Array.read arr ix & \case
+        (Ur Nothing, arr1) ->
+          mapAndPushBack (ix+1) end (False,0) count arr1
+        (Ur (Just (RobinVal (PSL p) k v)), arr1) -> case f' k v of
+          Nothing -> Array.write arr1 ix Nothing &
+            \arr2 -> mapAndPushBack (ix+1) end (True,dec+1) count arr2
+          Just v' -> case shift of
+            False -> Array.write arr1 ix (Just (RobinVal (PSL p) k v')) &
+              \arr2 -> mapAndPushBack (ix+1) end (False,0) (count+1) arr2
+            True -> case dec <= p of
+              False -> Array.write arr1 (ix-p) (Just (RobinVal 0 k v')) &
+                \arr2 -> case p == 0 of
+                  False -> Array.write arr2 ix Nothing &
+                    \arr3 -> mapAndPushBack (ix+1) end (True,p) (count+1) arr3
+                  True -> mapAndPushBack (ix+1) end (False,0) (count+1) arr2
+              True -> Array.write arr1 (ix-dec) (Just (RobinVal (PSL (p-dec)) k v')) &
+                \arr2 -> Array.write arr2 ix Nothing &
+                  \arr3 -> mapAndPushBack (ix+1) end (True,dec) (count+1) arr3
 
 -- | Complexity: O(capacity hm)
 filterWithKey :: Keyed k => (k -> v -> Bool) -> HashMap k v %1-> HashMap k v
@@ -484,28 +480,6 @@ _debugShow :: (Show k, Show v) => HashMap k v %1-> String
 _debugShow (HashMap _ robinArr) =
   Array.toList robinArr & \(Ur xs) -> show xs
 
--- | When using Robin-Hood hashing, the beginning of the array
--- can contain elements "spilled over" from the end of the array.
---
--- This function finds the number of spillovers. The spillovers can
--- be determined by the length of the prefix of the array where
--- PSL > index. This works since they form a contiguous segment.
-numSpillovers :: RobinArr k v %1-> (Ur Int, RobinArr k v)
-numSpillovers arr =
-  Array.size arr & \(Ur sz, arr') ->
-    go 0 sz arr'
- where
-  go :: Int -> Int -> RobinArr k v %1-> (Ur Int, RobinArr k v)
-  go curr sz arr
-    | curr == sz = (Ur 0, arr) -- This should only happen when the
-                               -- Array is empty.
-    | otherwise =
-      Array.read arr curr & \case
-        (Ur Nothing, arr') -> (Ur curr, arr')
-        (Ur (Just (RobinVal (PSL psl) _ _)), arr')
-          | psl <= curr -> (Ur curr, arr')
-          | otherwise -> go (curr+1) sz arr'
-
 idealIndexForKey
   :: Keyed k
   => k -> HashMap k v %1-> (Ur Int, HashMap k v)
@@ -552,15 +526,16 @@ tryInsertAtIndex hmap ix (RobinVal psl key val) =
 -- following the deleted cell, backwards by one and decrement
 -- their PSLs.
 shiftSegmentBackward :: Keyed k =>
-  Int -> RobinArr k v %1-> Int -> RobinArr k v
-shiftSegmentBackward s arr ix = Array.read arr ix & \case
+  Int -> Int -> RobinArr k v %1-> Int -> RobinArr k v
+shiftSegmentBackward dec s arr ix = Array.read arr ix & \case
   (Ur Nothing, arr') -> arr'
   (Ur (Just (RobinVal 0 _ _)), arr') -> arr'
   (Ur (Just val), arr') ->
     Array.write arr' ix Nothing & \arr'' ->
       shiftSegmentBackward
+        dec
         s
-        (Array.write arr'' ((ix-1) `mod` s) (Just $ decRobinValPSL val))
+        (Array.write arr'' ((ix-dec+s) `mod` s) (Just $ decRobinValPSL val))
         ((ix+1) `mod` s)
 -- TODO: This does twice as much writes than necessary, it first empties
 -- the cell, just to update it again at the next call. We can save some
