@@ -288,8 +288,8 @@ mapMaybeWithKey f (HashMap _ arr) = Array.size arr & \(Ur size, arr1) ->
   -- shiftSegmentBackward with the counter at arr[0].
   mapAndPushBack ::
     Int -> -- ^ Current index
-    Int -> -- ^ Last index fo array which is (size-1)
-    (Bool, Int) -> -- ^ Are we in a contiguous segment after a delete?
+    Int -> -- ^ Last index of array which is (size-1)
+    (Bool, Int) -> -- ^ (b,n) s.t. b iff open space n cells before current cell
     Int -> -- ^ Count of present key-value pairs
     RobinArr k v %1->
     (Ur Int, RobinArr k v) -- ^ The new count and fully mapped array
