@@ -48,7 +48,7 @@ import Data.Void
 import GHC.Exts (FUN)
 import GHC.Types
 import Prelude.Linear
-import qualified Prelude as P
+import qualified Prelude
 
 newtype Optic_ arr s t a b = Optical (a `arr` b -> s `arr` t)
 
@@ -71,7 +71,7 @@ assoc :: SymmetricMonoidal m u => Iso (a `m` (b `m` c)) (d `m` (e `m` f)) ((a `m
 assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 
 (.>) :: Optic_ arr s t a b -> Optic_ arr a b x y -> Optic_ arr s t x y
-Optical f .> Optical g = Optical (f P.. g)
+Optical f .> Optical g = Optical (f Prelude.. g)
 
 
 lens :: (s %1-> (a, b %1-> t)) -> Lens s t a b
@@ -114,10 +114,10 @@ toListOf :: Optic_ (NonLinear.Kleisli (Const [a])) s t a b -> s -> [a]
 toListOf l = gets l (\a -> [a])
 
 get :: Optic_ (NonLinear.Kleisli (Const a)) s t a b -> s -> a
-get l = gets l P.id
+get l = gets l Prelude.id
 
 gets :: Optic_ (NonLinear.Kleisli (Const r)) s t a b -> (a -> r) -> s -> r
-gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Const P.. f))) s)
+gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Const Prelude.. f))) s)
 
 set :: Optic_ (->) s t a b -> b -> s -> t
 set (Optical l) x = l (const x)
@@ -126,7 +126,7 @@ setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) s t a b -> 
 setSwap (Optical l) s = getLA (getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (LA (\b -> (a,b)))))) s))
 
 match :: Optic_ (Market a b) s t a b -> s %1-> Either t a
-match (Optical l) = P.snd (runMarket (l (Market id Right)))
+match (Optical l) = Prelude.snd (runMarket (l (Market id Right)))
 
 build :: Optic_ (Linear.CoKleisli (Const b)) s t a b -> b %1-> t
 build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Const x)
