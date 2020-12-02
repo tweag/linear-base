@@ -81,7 +81,7 @@ module Foreign.Marshal.Pure
   ) where
 
 import Control.Exception
-import qualified Data.Functor.Linear as Data
+import qualified Data.Applicative.Linear as Data
 import Data.Kind (Constraint, Type)
 import Data.Word (Word8)
 import Foreign.Marshal.Alloc

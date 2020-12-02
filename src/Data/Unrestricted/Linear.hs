@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -85,7 +86,9 @@ module Data.Unrestricted.Linear
   , dup3
   ) where
 
+import Data.Unrestricted.Consumable
 import qualified Data.Functor.Linear.Internal as Data
+import qualified Data.Applicative.Linear as Data
 import Data.Type.Equality
 import Data.V.Linear (V)
 import qualified Data.V.Linear as V
@@ -127,20 +130,6 @@ lift2 :: (a -> b -> c) -> Ur a %1-> Ur b %1-> Ur c
 lift2 f (Ur a) (Ur b) = Ur (f a b)
 
 
-class Consumable a where
-  consume :: a %1-> ()
-
--- | Consume the unit and return the second argument.
--- This is like 'seq' but since the first argument is restricted to be of type
--- @()@ it is consumed, hence @seqUnit@ is linear in its first argument.
-seqUnit :: () %1-> b %1-> b
-seqUnit () b = b
-
--- | Consume the first argument and return the second argument.
--- This is like 'seq' but the first argument is restricted to be 'Consumable'.
-lseq :: Consumable a => a %1-> b %1-> b
-lseq a b = seqUnit (consume a) b
-
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
 --
 -- * @first consume (dup2 a) ≃ a ≃ second consume (dup2 a)@ (neutrality)
@@ -177,18 +166,11 @@ dup3 x = V.elim (dupV @_ @3 x) (,,)
 dup :: Dupable a => a %1-> (a, a)
 dup = dup2
 
-instance Consumable () where
-  consume () = ()
-
 instance Dupable () where
   dupV () = Data.pure ()
 
 instance Movable () where
   move () = Ur ()
-
-instance Consumable Bool where
-  consume True = ()
-  consume False = ()
 
 instance Dupable Bool where
   dupV True = Data.pure True
@@ -197,13 +179,6 @@ instance Dupable Bool where
 instance Movable Bool where
   move True = Ur True
   move False = Ur False
-
-instance Consumable Int where
-  -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
-  -- linear values hidden in a closure anywhere. Therefore it is safe to call
-  -- non-linear functions linearly on this type: there is no difference between
-  -- copying an 'Int#' and using it several times. /!\
-  consume (I# i) = Unsafe.toLinear (\_ -> ()) i
 
 instance Dupable Int where
   -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -219,13 +194,6 @@ instance Movable Int where
   -- copying an 'Int#' and using it several times. /!\
   move (I# i) = Unsafe.toLinear (\j -> Ur (I# j)) i
 
-instance Consumable Double where
-  -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
-  -- linear values hidden in a closure anywhere. Therefore it is safe to call
-  -- non-linear functions linearly on this type: there is no difference between
-  -- copying an 'Double#' and using it several times. /!\
-  consume (D# i) = Unsafe.toLinear (\_ -> ()) i
-
 instance Dupable Double where
   -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
   -- linear values hidden in a closure anywhere. Therefore it is safe to call
@@ -239,9 +207,6 @@ instance Movable Double where
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Double#' and using it several times. /!\
   move (D# i) = Unsafe.toLinear (\j -> Ur (D# j)) i
-
-instance Consumable Char where
-  consume (C# c) = Unsafe.toLinear (\_ -> ()) c
 
 instance Dupable Char where
   dupV (C# c) = Unsafe.toLinear (\x -> Data.pure (C# x)) c
@@ -267,27 +232,17 @@ instance Movable Ordering where
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
 
-instance (Consumable a, Consumable b) => Consumable (a, b) where
-  consume (a, b) = consume a `lseq` consume b
-
 instance (Dupable a, Dupable b) => Dupable (a, b) where
   dupV (a, b) = (,) Data.<$> dupV a Data.<*> dupV b
 
 instance (Movable a, Movable b) => Movable (a, b) where
   move (a, b) = (,) Data.<$> move a Data.<*> move b
 
-instance (Consumable a, Consumable b, Consumable c) => Consumable (a, b, c) where
-  consume (a, b, c) = consume a `lseq` consume b `lseq` consume c
-
 instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
   dupV (a, b, c) = (,,) Data.<$> dupV a Data.<*> dupV b Data.<*> dupV c
 
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
-
-instance Consumable a => Consumable (Prelude.Maybe a) where
-  consume Prelude.Nothing = ()
-  consume (Prelude.Just x) = consume x
 
 instance Dupable a => Dupable (Prelude.Maybe a) where
   dupV Prelude.Nothing = Data.pure Prelude.Nothing
@@ -297,10 +252,6 @@ instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
   move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
 
-instance (Consumable a, Consumable b) => Consumable (Prelude.Either a b) where
-  consume (Prelude.Left a) = consume a
-  consume (Prelude.Right b) = consume b
-
 instance (Dupable a, Dupable b) => Dupable (Prelude.Either a b) where
   dupV (Prelude.Left a) = Data.fmap Prelude.Left (dupV a)
   dupV (Prelude.Right b) = Data.fmap Prelude.Right (dupV b)
@@ -309,10 +260,6 @@ instance (Movable a, Movable b) => Movable (Prelude.Either a b) where
   move (Prelude.Left a) = Data.fmap Prelude.Left (move a)
   move (Prelude.Right b) = Data.fmap Prelude.Right (move b)
 
-instance Consumable a => Consumable [a] where
-  consume [] = ()
-  consume (a:l) = consume a `lseq` consume l
-
 instance Dupable a => Dupable [a] where
   dupV [] = Data.pure []
   dupV (a:l) = (:) Data.<$> dupV a Data.<*> dupV l
@@ -320,9 +267,6 @@ instance Dupable a => Dupable [a] where
 instance Movable a => Movable [a] where
   move [] = Ur []
   move (a:l) = (:) Data.<$> move a Data.<*> move l
-
-instance Consumable a => Consumable (NonEmpty a) where
-  consume (x :| xs) = consume x `lseq` consume xs
 
 instance Dupable a => Dupable (NonEmpty a) where
   dupV (x :| xs) = (:|) Data.<$> dupV x Data.<*> dupV xs
@@ -359,9 +303,6 @@ instance Prelude.Foldable Ur where
 instance Prelude.Traversable Ur where
   sequenceA (Ur x) = Prelude.fmap Ur x
 
--- | Discard a consumable value stored in a data functor.
-void :: (Data.Functor f, Consumable a) => f a %1-> f ()
-void = Data.fmap consume
 
 -- Some stock instances
 deriving instance Consumable a => Consumable (Sum a)

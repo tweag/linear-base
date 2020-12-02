@@ -70,6 +70,7 @@ module System.IO.Resource
 import Control.Exception (onException, mask, finally)
 import qualified Control.Monad as Ur (fmap)
 import qualified Data.Functor.Linear as Data
+import qualified Data.Applicative.Linear as Data
 import qualified Control.Monad.Linear as Control
 import Data.Coerce
 import qualified Data.IORef as System

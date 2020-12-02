@@ -17,23 +17,17 @@
 -- containers which store a finite number of values.
 --
 module Data.Functor.Linear
-  ( -- * Data Functor Hierarchy
+  ( -- * Data Functors
     Functor(..)
-  , Applicative(..)
   , (<$>)
   , (<$)
   , Const(..)
-    -- * Linear traversable hierarchy
-    -- $ traversable
-  , Traversable(..)
-  , mapM, sequenceA, for, forM
   )
   where
 
 import Data.Functor.Linear.Internal
-import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
-import Data.Unrestricted.Linear
+import Data.Unrestricted.Consumable
 
 -- | Replace all occurances of @b@ with the given @a@
 -- and consume the functor @f b@.

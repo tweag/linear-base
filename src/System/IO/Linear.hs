@@ -58,6 +58,7 @@ import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
 import qualified Control.Monad.Linear as Control
 import qualified Data.Functor.Linear as Data
+import qualified Data.Applicative.Linear as Data
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)
 import qualified Unsafe.Linear as Unsafe

@@ -51,6 +51,7 @@ import Data.Functor.Identity
 import Data.Unrestricted.Linear
 import Prelude.Linear.Internal ((.), ($))
 import qualified Data.Functor.Linear.Internal as Data
+import qualified Data.Applicative.Linear as Data
 
 
 -- $stateT

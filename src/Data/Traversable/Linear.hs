@@ -1,4 +1,3 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
@@ -9,7 +8,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Data.Functor.Linear.Internal.Traversable
+module Data.Traversable.Linear
   ( -- * Linear traversable hierarchy
     -- $ traversable
     Traversable(..)
@@ -19,6 +18,7 @@ module Data.Functor.Linear.Internal.Traversable
 
 import qualified Control.Monad.Linear.Internal as Control
 import qualified Data.Functor.Linear.Internal as Data
+import qualified Data.Applicative.Linear as Data
 import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
@@ -123,3 +123,4 @@ instance Traversable (Const a) where
 instance Traversable (Either a) where
   sequence (Left x) = Control.pure (Left x)
   sequence (Right x) = Right Control.<$> x
+

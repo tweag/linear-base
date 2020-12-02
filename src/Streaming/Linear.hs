@@ -64,7 +64,7 @@ import Prelude (Ordering(..), Ord(..), Num(..), Int, Either(..), Double,
                Maybe(..), fromInteger)
 import qualified Prelude
 import qualified Control.Monad.Linear as Control
-import qualified Data.Functor.Linear as Data
+import qualified Data.Applicative.Linear as Data
 import Data.Unrestricted.Linear
 import Control.Concurrent (threadDelay)
 import GHC.Stack

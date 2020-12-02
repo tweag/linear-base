@@ -25,6 +25,7 @@ library
     Control.Optics.Linear.Lens
     Control.Optics.Linear.Prism
     Control.Optics.Linear.Traversal
+    Data.Applicative.Linear
     Data.Array.Destination
     Data.Array.Mutable.Linear
     Data.Array.Mutable.Unlifted.Linear
@@ -38,7 +39,6 @@ library
     Data.Eq.Linear
     Data.Functor.Linear
     Data.Functor.Linear.Internal
-    Data.Functor.Linear.Internal.Traversable
     Data.HashMap.Mutable.Linear
     Data.List.Linear
     Data.Maybe.Linear
@@ -49,8 +49,10 @@ library
     Data.Profunctor.Linear
     Data.Semigroup.Linear
     Data.Set.Mutable.Linear
+    Data.Traversable.Linear
     Data.Tuple.Linear
     Data.Unrestricted.Linear
+    Data.Unrestricted.Consumable
     Data.V.Linear
     Data.Vector.Mutable.Linear
     Debug.Trace.Linear

@@ -91,6 +91,7 @@ import Data.List.NonEmpty (NonEmpty ((:|)))
 import GHC.Stack
 import qualified Data.List as NonLinear
 import qualified Data.Functor.Linear as Data
+import qualified Data.Applicative.Linear as Data
 
 -- # Basic functions
 --------------------------------------------------
@@ -206,7 +207,7 @@ transpose = Unsafe.toLinear NonLinear.transpose
 
 traverse' :: Data.Applicative f => (a %1-> f b) -> [a] %1-> f [b]
 traverse' _ [] = Data.pure []
-traverse' f (a:as) = (:) <$> f a <*> traverse' f as
+traverse' f (a:as) = (:) Data.<$> f a Data.<*> traverse' f as
 
 -- # Folds
 --------------------------------------------------

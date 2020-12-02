@@ -135,6 +135,7 @@ module Prelude.Linear
   ) where
 
 import qualified Data.Functor.Linear as Data
+import qualified Data.Applicative.Linear as Data
 import Data.Unrestricted.Linear
 import Data.Monoid.Linear
 import Data.Num.Linear

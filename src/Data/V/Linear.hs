@@ -60,7 +60,8 @@ module Data.V.Linear
   ) where
 
 import qualified Data.Functor.Linear.Internal as Data
-import qualified Data.Functor.Linear.Internal.Traversable as Data
+import qualified Data.Applicative.Linear as Data
+import qualified Data.Traversable.Linear as Data
 import Data.Kind (Type)
 import Data.Proxy
 import Data.Type.Equality

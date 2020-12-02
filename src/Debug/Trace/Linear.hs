@@ -27,7 +27,7 @@ module Debug.Trace.Linear
 import qualified Debug.Trace as NonLinear
 import qualified Unsafe.Linear as Unsafe
 import System.IO.Linear
-import Data.Functor.Linear
+import Data.Applicative.Linear
 import Data.Unrestricted.Linear
 import Prelude (String, Show(..))
 import Prelude.Linear.Internal
