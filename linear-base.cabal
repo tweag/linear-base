@@ -50,6 +50,11 @@ library
     Data.Semigroup.Linear
     Data.Set.Mutable.Linear
     Data.Tuple.Linear
+    Data.Unrestricted.Internal.Consumable
+    Data.Unrestricted.Internal.Dupable
+    Data.Unrestricted.Internal.Movable
+    Data.Unrestricted.Internal.Instances
+    Data.Unrestricted.Internal.Ur
     Data.Unrestricted.Linear
     Data.V.Linear
     Data.Vector.Mutable.Linear
