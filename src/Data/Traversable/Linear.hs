@@ -18,8 +18,8 @@ module Data.Traversable.Linear
   ) where
 
 import qualified Control.Monad.Linear.Internal as Control
-import qualified Data.Functor.Internal.Functor as Data
-import qualified Data.Functor.Internal.Applicative as Data
+import qualified Data.Functor.Internal.Linear.Functor as Data
+import qualified Data.Functor.Internal.Linear.Applicative as Data
 import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))

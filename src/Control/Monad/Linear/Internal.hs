@@ -16,8 +16,8 @@ import Data.Functor.Identity
 import Data.Functor.Sum
 import Data.Functor.Compose
 import Data.Monoid.Linear hiding (Sum)
-import qualified Data.Functor.Internal.Functor as Data
-import qualified Data.Functor.Internal.Applicative as Data
+import qualified Data.Functor.Internal.Linear.Functor as Data
+import qualified Data.Functor.Internal.Linear.Applicative as Data
 import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as NonLinear
 

@@ -59,8 +59,8 @@ module Data.V.Linear
   , caseNat
   ) where
 
-import qualified Data.Functor.Internal.Functor as Data
-import qualified Data.Functor.Internal.Applicative as Data
+import qualified Data.Functor.Internal.Linear.Functor as Data
+import qualified Data.Functor.Internal.Linear.Applicative as Data
 import qualified Data.Traversable.Linear as Data
 import Data.Kind (Type)
 import Data.Proxy

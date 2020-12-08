@@ -50,8 +50,8 @@ import Control.Monad.Linear.Internal
 import Data.Functor.Identity
 import Data.Unrestricted.Linear
 import Prelude.Linear.Internal ((.), ($))
-import qualified Data.Functor.Internal.Functor as Data
-import qualified Data.Functor.Internal.Applicative as Data
+import qualified Data.Functor.Internal.Linear.Functor as Data
+import qualified Data.Functor.Internal.Linear.Applicative as Data
 
 
 -- $stateT

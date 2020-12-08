@@ -1,7 +1,7 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-module Data.Functor.Internal.Functor
+module Data.Functor.Internal.Linear.Functor
   (
     Functor(..)
   , (<$>)

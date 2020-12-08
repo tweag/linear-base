@@ -18,12 +18,15 @@
 --
 module Data.Functor.Linear
   ( -- * Data Functor Hierarchy
-    module Data.Functor.Internal.Functor
-  , module Data.Functor.Internal.Applicative
+    Functor(..)
+  , (<$>)
+  , (<$)
+  , void
+  , Applicative(..)
   , Const(..)
   )
   where
 
-import Data.Functor.Internal.Functor
-import Data.Functor.Internal.Applicative
+import Data.Functor.Internal.Linear.Functor
+import Data.Functor.Internal.Linear.Applicative
 import Data.Functor.Const
