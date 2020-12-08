@@ -9,7 +9,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Data.Functor.Linear.Internal.Traversable
+module Data.Traversable.Linear
   ( -- * Linear traversable hierarchy
     -- $ traversable
     Traversable(..)

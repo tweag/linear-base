@@ -23,15 +23,10 @@ module Data.Functor.Linear
   , (<$>)
   , (<$)
   , Const(..)
-    -- * Linear traversable hierarchy
-    -- $ traversable
-  , Traversable(..)
-  , mapM, sequenceA, for, forM
   )
   where
 
 import Data.Functor.Linear.Internal
-import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
 import Data.Unrestricted.Internal.Consumable
 
