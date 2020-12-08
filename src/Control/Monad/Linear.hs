@@ -50,7 +50,8 @@ import Control.Monad.Linear.Internal
 import Data.Functor.Identity
 import Data.Unrestricted.Linear
 import Prelude.Linear.Internal ((.), ($))
-import qualified Data.Functor.Linear.Internal as Data
+import qualified Data.Functor.Internal.Functor as Data
+import qualified Data.Functor.Internal.Applicative as Data
 
 
 -- $stateT
@@ -148,7 +149,7 @@ get :: (Applicative m, Dupable s) => StateT s m s
 get = state dup
 
 put :: (Applicative m, Consumable s) => s %1-> StateT s m ()
-put = void . replace
+put = Data.void . replace
 
 gets :: (Applicative m, Dupable s) => (s %1-> a) %1-> StateT s m a
 gets f = state ((\(s1,s2) -> (f s1, s2)) . dup)

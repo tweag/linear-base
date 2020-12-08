@@ -18,19 +18,12 @@
 --
 module Data.Functor.Linear
   ( -- * Data Functor Hierarchy
-    Functor(..)
-  , Applicative(..)
-  , (<$>)
-  , (<$)
+    module Data.Functor.Internal.Functor
+  , module Data.Functor.Internal.Applicative
   , Const(..)
   )
   where
 
-import Data.Functor.Linear.Internal
+import Data.Functor.Internal.Functor
+import Data.Functor.Internal.Applicative
 import Data.Functor.Const
-import Data.Unrestricted.Internal.Consumable
-
--- | Replace all occurances of @b@ with the given @a@
--- and consume the functor @f b@.
-(<$) :: (Functor f, Consumable b) => a -> f b %1-> f a
-a <$ fb = fmap (`lseq` a) fb

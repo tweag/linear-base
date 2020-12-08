@@ -19,7 +19,7 @@ import qualified Foreign.Marshal.Pure as Manual
 import Prelude (return)
 import qualified Prelude
 import Simple.Quicksort (testQuicksort)
-import Prelude.Linear hiding (void)
+import Prelude.Linear
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck

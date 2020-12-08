@@ -127,7 +127,6 @@ module Prelude.Linear
   , Consumable(..)
   , Dupable(..)
   , Movable(..)
-  , void
   , lseq
   , dup
   , dup3
