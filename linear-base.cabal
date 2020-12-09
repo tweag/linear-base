@@ -37,8 +37,9 @@ library
     Data.Either.Linear
     Data.Eq.Linear
     Data.Functor.Linear
-    Data.Functor.Linear.Internal
-    Data.Functor.Linear.Internal.Traversable
+    Data.Functor.Internal.Linear.Functor
+    Data.Functor.Internal.Linear.Applicative
+    Data.Functor.Internal.Linear.Traversable
     Data.HashMap.Mutable.Linear
     Data.List.Linear
     Data.Maybe.Linear

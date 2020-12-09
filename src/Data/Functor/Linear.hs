@@ -19,23 +19,19 @@
 module Data.Functor.Linear
   ( -- * Data Functor Hierarchy
     Functor(..)
-  , Applicative(..)
   , (<$>)
   , (<$)
+  , void
+  , Applicative(..)
   , Const(..)
-    -- * Linear traversable hierarchy
-    -- $ traversable
+  -- * Linear traversable hierarchy
   , Traversable(..)
   , mapM, sequenceA, for, forM
+  , mapAccumL, mapAccumR
   )
   where
 
-import Data.Functor.Linear.Internal
-import Data.Functor.Linear.Internal.Traversable
+import Data.Functor.Internal.Linear.Functor
+import Data.Functor.Internal.Linear.Applicative
+import Data.Functor.Internal.Linear.Traversable
 import Data.Functor.Const
-import Data.Unrestricted.Internal.Consumable
-
--- | Replace all occurances of @b@ with the given @a@
--- and consume the functor @f b@.
-(<$) :: (Functor f, Consumable b) => a -> f b %1-> f a
-a <$ fb = fmap (`lseq` a) fb

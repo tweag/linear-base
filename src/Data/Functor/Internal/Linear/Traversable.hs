@@ -9,7 +9,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Data.Functor.Linear.Internal.Traversable
+module Data.Functor.Internal.Linear.Traversable
   ( -- * Linear traversable hierarchy
     -- $ traversable
     Traversable(..)
@@ -18,7 +18,8 @@ module Data.Functor.Linear.Internal.Traversable
   ) where
 
 import qualified Control.Monad.Linear.Internal as Control
-import qualified Data.Functor.Linear.Internal as Data
+import qualified Data.Functor.Internal.Linear.Functor as Data
+import qualified Data.Functor.Internal.Linear.Applicative as Data
 import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
