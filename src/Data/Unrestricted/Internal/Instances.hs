@@ -12,6 +12,13 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 
+-- | This module exports instances of Consumable, Dupable and Movable
+--
+-- We export instances in this module to avoid a circular dependence
+-- and keep things clean. Movable depends on the defintion of Ur yet
+-- many instances of Movable which we might have put in the module with
+-- Movable depend on Ur. So, we just put the instances of Movable and the
+-- other classes (for cleanness) in this module to avoid this dependence.
 module Data.Unrestricted.Internal.Instances where
 
 import Data.Unrestricted.Internal.Consumable
