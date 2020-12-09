@@ -33,7 +33,7 @@ module Data.Functor.Linear
 import Data.Functor.Linear.Internal
 import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
-import Data.Unrestricted.Linear
+import Data.Unrestricted.Internal.Consumable
 
 -- | Replace all occurances of @b@ with the given @a@
 -- and consume the functor @f b@.
