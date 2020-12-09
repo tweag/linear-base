@@ -39,6 +39,7 @@ library
     Data.Functor.Linear
     Data.Functor.Internal.Linear.Functor
     Data.Functor.Internal.Linear.Applicative
+    Data.Functor.Internal.Linear.Traversable
     Data.HashMap.Mutable.Linear
     Data.List.Linear
     Data.Maybe.Linear
@@ -49,7 +50,6 @@ library
     Data.Profunctor.Linear
     Data.Semigroup.Linear
     Data.Set.Mutable.Linear
-    Data.Traversable.Linear
     Data.Tuple.Linear
     Data.Unrestricted.Internal.Consumable
     Data.Unrestricted.Internal.Dupable

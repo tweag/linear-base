@@ -15,7 +15,7 @@ import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
 
--- # Applicative Defintion
+-- # Applicative definition
 -------------------------------------------------------------------------------
 
 -- | Data 'Applicative'-s can be seen as containers which can be zipped

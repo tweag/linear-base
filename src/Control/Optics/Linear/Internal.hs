@@ -43,7 +43,6 @@ import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Profunctor.Linear
 import Data.Functor.Compose hiding (getCompose)
 import Data.Functor.Linear
-import Data.Traversable.Linear
 import qualified Data.Profunctor.Kleisli.Linear as Linear
 import Data.Void
 import GHC.Exts (FUN)

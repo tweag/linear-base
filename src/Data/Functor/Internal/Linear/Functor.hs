@@ -22,7 +22,7 @@ import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Unrestricted.Internal.Consumable
 
--- # Functor Defintion
+-- # Functor definition
 -------------------------------------------------------------------------------
 
 -- | Linear Data Functors should be thought of as containers holding values of

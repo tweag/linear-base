@@ -24,9 +24,14 @@ module Data.Functor.Linear
   , void
   , Applicative(..)
   , Const(..)
+  -- * Linear traversable hierarchy
+  , Traversable(..)
+  , mapM, sequenceA, for, forM
+  , mapAccumL, mapAccumR
   )
   where
 
 import Data.Functor.Internal.Linear.Functor
 import Data.Functor.Internal.Linear.Applicative
+import Data.Functor.Internal.Linear.Traversable
 import Data.Functor.Const

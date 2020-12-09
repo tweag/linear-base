@@ -61,7 +61,7 @@ module Data.V.Linear
 
 import qualified Data.Functor.Internal.Linear.Functor as Data
 import qualified Data.Functor.Internal.Linear.Applicative as Data
-import qualified Data.Traversable.Linear as Data
+import qualified Data.Functor.Internal.Linear.Traversable as Data
 import Data.Kind (Type)
 import Data.Proxy
 import Data.Type.Equality
