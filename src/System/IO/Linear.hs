@@ -56,7 +56,7 @@ import Data.IORef (IORef)
 import qualified Data.IORef as System
 import Control.Exception (Exception)
 import qualified Control.Exception as System (throwIO, catch, mask_)
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import qualified Data.Functor.Linear as Data
 import GHC.Exts (State#, RealWorld)
 import Prelude.Linear hiding (IO)

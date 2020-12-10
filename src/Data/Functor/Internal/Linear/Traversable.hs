@@ -17,7 +17,9 @@ module Data.Functor.Internal.Linear.Traversable
   , mapAccumL, mapAccumR
   ) where
 
-import qualified Control.Monad.Linear.Internal as Control
+import qualified Control.Functor.Internal.Linear.Class as Control
+import qualified Control.Functor.Internal.Linear.State as Control
+import qualified Control.Functor.Internal.Linear.Instances as Control
 import qualified Data.Functor.Internal.Linear.Functor as Data
 import qualified Data.Functor.Internal.Linear.Applicative as Data
 import Data.Functor.Const

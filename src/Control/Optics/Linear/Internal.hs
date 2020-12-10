@@ -37,7 +37,7 @@ module Control.Optics.Linear.Internal
   where
 
 import qualified Control.Arrow as NonLinear
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import qualified Data.Bifunctor.Linear as Bifunctor
 import Data.Bifunctor.Linear (SymmetricMonoidal)
 import Data.Profunctor.Linear

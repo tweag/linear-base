@@ -49,7 +49,7 @@ module Data.HashMap.Mutable.Linear
   )
 where
 
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import Data.Array.Mutable.Linear (Array)
 import Data.Functor.Identity hiding (runIdentity)
 import qualified Data.Functor.Linear as Data

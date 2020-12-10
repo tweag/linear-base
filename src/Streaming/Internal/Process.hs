@@ -88,7 +88,7 @@ import Prelude (Maybe(..), Either(..), Bool(..), Int,
                String, Double)
 import qualified Prelude
 import Data.Unrestricted.Linear
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import System.IO.Linear
 import Data.Functor.Sum
 import Data.Functor.Compose

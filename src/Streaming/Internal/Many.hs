@@ -37,7 +37,7 @@ import Streaming.Internal.Type
 import Streaming.Internal.Consume
 import Prelude (Either(..), Ord(..), Ordering(..))
 import Prelude.Linear (($), (&))
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 
 
 -- # Zips and Unzip

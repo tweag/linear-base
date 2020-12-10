@@ -29,7 +29,7 @@ module Simple.FileIO where
 
 import Control.Monad ()
 -- Linear Base Imports
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import Data.Text
 import Data.Unrestricted.Linear
 import qualified System.IO as System

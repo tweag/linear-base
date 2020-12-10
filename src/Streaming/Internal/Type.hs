@@ -16,7 +16,7 @@ module Streaming.Internal.Type
   ) where
 
 import qualified Data.Functor.Linear as Data
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import qualified Prelude.Linear as Linear
 import Prelude.Linear (($), (.))
 

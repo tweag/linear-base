@@ -33,12 +33,12 @@ module Data.Profunctor.Linear
   , Market(..), runMarket
   ) where
 
-import qualified Control.Monad.Linear as Control
-import Control.Monad.Linear.Internal (runIdentity')
+import qualified Control.Functor.Linear as Control
 import Data.Bifunctor.Linear hiding (first, second)
 import qualified Data.Bifunctor as Prelude
 import Data.Functor.Identity
 import Prelude.Linear
+import Prelude.Linear.Internal (runIdentity')
 import Data.Kind (Type)
 import Data.Void
 import qualified Prelude

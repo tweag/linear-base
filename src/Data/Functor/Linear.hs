@@ -8,7 +8,7 @@
 -- which represent containers, and control functors which represent effects.
 -- Please read this
 -- [blog post](https://www.tweag.io/posts/2020-01-16-data-vs-control.html).
--- For more details, see "Control.Monad.Linear".
+-- For more details, see "Control.Functor.Linear".
 --
 -- * Linear data functors should be thought of as containers of data.
 -- * Linear data applicative functors should be thought of as containers

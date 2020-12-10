@@ -32,6 +32,7 @@ import Data.Monoid.Linear
 import Data.List.NonEmpty
 import qualified Prelude
 import qualified Unsafe.Linear as Unsafe
+import Data.V.Linear ()
 
 instance Consumable () where
   consume () = ()

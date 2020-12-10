@@ -17,7 +17,7 @@ import Streaming.Internal.Produce
 import Data.Unrestricted.Linear
 import Prelude.Linear (($))
 import Prelude (Maybe(..))
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 
 {-| Read an @IORef (Maybe a)@ or a similar device until it reads @Nothing@.
     @reread@ provides convenient exit from the @io-streams@ library
