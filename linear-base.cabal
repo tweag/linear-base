@@ -33,6 +33,8 @@ library
     Data.Array.Polarized.Pull.Internal
     Data.Array.Polarized.Push
     Data.Bifunctor.Linear
+    Data.Bifunctor.Internal.Linear.Bifunctor
+    Data.Bifunctor.Internal.Linear.SymmetricMonoidal
     Data.Bool.Linear
     Data.Either.Linear
     Data.Eq.Linear
