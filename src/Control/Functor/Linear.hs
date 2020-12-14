@@ -3,19 +3,14 @@
 
 -- | = The control functor hierarchy
 --
--- It's critical to know that @Control.Functor@s are different from
--- "Data.Functor"s.  To understand the differences see this [blog
--- post](https://www.tweag.io/posts/2020-01-16-data-vs-control.html).
+-- The functors in this module are called control functors, which
+-- are different from the data functors in @Data.Functor.Linear@.
 --
--- == New to monads?
+-- This distinction and the use-cases of each group of functors is explained in
+-- [this blog post](https://tweag.io/posts/2020-01-16-data-vs-control.html).
 --
--- If you are unfamiliar with monads, we recommend [these](https://mmhaskell.com/monads/)
--- tutorials on functors, monads, reader and writer monads, state monads and
--- monad transformers for what's featured in this module. (Of course, there are
--- a plethora of resources on monads in the Haskell community; find what works
--- best for you!)
 module Control.Functor.Linear
-  ( -- * Linear monad hierarchy
+  ( -- * Control functor hierarchy
     Functor(..)
   , (<$>)
   , (<&>)

@@ -1,6 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-module Control.Functor.IO.Class.Linear where
+module Control.Monad.IO.Class.Linear where
 
 import qualified Control.Functor.Linear as Linear
 import Prelude.Linear
