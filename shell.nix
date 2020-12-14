@@ -1,4 +1,6 @@
-with import ./nixpkgs.nix {};
+{ system ? builtins.currentSystem }:
+
+with import ./nixpkgs.nix { inherit system; };
 
 mkShell {
   # Set UTF-8 local so that run-tests can parse GHC's unicode output.
