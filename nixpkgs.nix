@@ -1,9 +1,10 @@
 let
-  # https://github.com/tweag/nixpkgs/tree/update-ghchead-20201001
-  rev = "60a06c5a2ec88392c1eb5e252367dde4e0ead16c";
-  sha256 = "0952kxb7zlw81vwk72dm4cxs01ygqgbxsy0ibqsj7khr7xp115jh";
+  # https://github.com/tweag/nixpkgs/tree/ud/update-ghchead-20201001
+  rev = "78d9696f5d1524fcf2fd947f012ffc08fcba4dd1";
+  sha256 = "146rahqm2rkbz2hl689rqc04wcfdrghbjzxzynbzsc3xi5if59bh";
 in
 import (fetchTarball {
   inherit sha256;
-  url = "https://github.com/utdemir/nixpkgs/archive/${rev}.tar.gz";
+  url = "https://github.com/tweag/nixpkgs/archive/${rev}.tar.gz";
 })
+
