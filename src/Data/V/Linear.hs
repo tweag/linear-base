@@ -68,8 +68,8 @@ can make sure that Data.Unrestricted.Internal.Dupable only depends on the data
 type defintion in Data.V.Linear.V and does not require any of the dependencies
 of the instances.
 
-Remark: We tried to create Data.V.Internal.Linear.Instances but for some
-reason GHC couldn't export the instances from there.
+Remark: ideally the instances below would be in an internal `Instances`
+module. But we haven't got around to it yet.
 -}
 
 

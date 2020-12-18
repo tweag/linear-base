@@ -7,11 +7,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
--- | This module contains all the control functor classes
---
--- Namely, this module contains all classes @C@ such that if we have a @C x@
--- instance then we have a @Control.Functor x@ instance. It also contains
--- related operations on any of these classes.
+-- | This module contains all the classes eventually exported by
+-- "Control.Functor.Linear". Together with related operations.
 module Control.Functor.Internal.Linear.Class
   (
   -- * Functors

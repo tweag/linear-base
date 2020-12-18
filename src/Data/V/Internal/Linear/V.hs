@@ -47,7 +47,8 @@ import qualified Unsafe.Linear as Unsafe
 
 {- Developers Note
 
-See the "Developers Note" in Data.V.Linear to understand this module structure.
+See the "Developers Note" in Data.V.Linear for an explanation of this module
+structure.
 
 -}
 
