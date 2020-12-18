@@ -49,7 +49,7 @@ import Prelude.Linear (($), (&))
 import Prelude (Either(..), Read, Bool(..), FilePath, Enum, otherwise,
                Num(..), Int, otherwise, Eq(..), Ord(..), fromEnum, toEnum)
 import qualified Prelude
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import Data.Unrestricted.Linear
 import System.IO.Linear
 import System.IO.Resource

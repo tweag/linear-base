@@ -16,9 +16,13 @@ description: Please see README.md.
 library
   hs-source-dirs: src
   exposed-modules:
+    Control.Functor.Internal.Linear.Class
+    Control.Functor.Internal.Linear.Instances
+    Control.Functor.Internal.Linear.MonadTrans
+    Control.Functor.Internal.Linear.Reader
+    Control.Functor.Internal.Linear.State
     Control.Monad.IO.Class.Linear
-    Control.Monad.Linear
-    Control.Monad.Linear.Internal
+    Control.Functor.Linear
     Control.Optics.Linear
     Control.Optics.Linear.Internal
     Control.Optics.Linear.Iso
@@ -59,6 +63,7 @@ library
     Data.Unrestricted.Internal.Instances
     Data.Unrestricted.Internal.Ur
     Data.Unrestricted.Linear
+    Data.V.Internal.Linear.V
     Data.V.Linear
     Data.Vector.Mutable.Linear
     Debug.Trace.Linear

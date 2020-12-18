@@ -42,7 +42,7 @@ import Data.Profunctor.Linear
 import Data.Void
 import Prelude.Linear (Either(..), either)
 import Prelude.Linear.Internal
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 import qualified Data.Functor.Linear as Data
 
 -- Ideally, there would only be one Kleisli arrow, parametrised by

@@ -11,6 +11,7 @@ module Prelude.Linear.Internal where
 
 import qualified Prelude as Prelude
 import qualified Unsafe.Linear as Unsafe
+import Data.Functor.Identity
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
 -- simply reimplemented here. For harder function, we reuse the Prelude
@@ -68,3 +69,8 @@ f . g = \x -> f (g x)
 -- arrow but we have a linear arrow.
 forget :: (a %1-> b) %1-> a -> b
 forget f a = f a
+
+-- XXX: Temporary, until newtype record projections are linear.
+runIdentity' :: Identity a %1-> a
+runIdentity' (Identity x) = x
+

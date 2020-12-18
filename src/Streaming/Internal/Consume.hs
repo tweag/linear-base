@@ -72,7 +72,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Data.Functor.Identity
 import qualified System.IO as System
-import qualified Control.Monad.Linear as Control
+import qualified Control.Functor.Linear as Control
 
 
 -- #  IO Consumers
