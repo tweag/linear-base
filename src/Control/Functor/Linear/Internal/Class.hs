@@ -9,7 +9,7 @@
 
 -- | This module contains all the classes eventually exported by
 -- "Control.Functor.Linear". Together with related operations.
-module Control.Functor.Internal.Linear.Class
+module Control.Functor.Linear.Internal.Class
   (
   -- * Functors
     Functor(..)
@@ -32,8 +32,8 @@ module Control.Functor.Internal.Linear.Class
 import Prelude (String)
 import Prelude.Linear.Internal
 import qualified Control.Monad as NonLinear ()
-import qualified Data.Functor.Internal.Linear.Functor as Data
-import qualified Data.Functor.Internal.Linear.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Unrestricted.Internal.Consumable
 
 

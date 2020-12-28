@@ -3,7 +3,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Control.Functor.Internal.Linear.Reader
+module Control.Functor.Linear.Internal.Reader
   (
   --  ReaderT monad transformer
     Reader, reader, runReader, mapReader, withReader
@@ -14,11 +14,11 @@ module Control.Functor.Internal.Linear.Reader
 import Prelude.Linear.Internal ((.), ($), runIdentity')
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
-import Control.Functor.Internal.Linear.Class
-import Control.Functor.Internal.Linear.MonadTrans
-import Control.Functor.Internal.Linear.Instances ()
-import qualified Data.Functor.Internal.Linear.Functor as Data
-import qualified Data.Functor.Internal.Linear.Applicative as Data
+import Control.Functor.Linear.Internal.Class
+import Control.Functor.Linear.Internal.MonadTrans
+import Control.Functor.Linear.Internal.Instances ()
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Functor.Identity
 import qualified Control.Monad as NonLinear ()
 import qualified Control.Monad.Trans.Reader as NonLinear

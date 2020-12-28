@@ -48,12 +48,12 @@ module Data.V.Linear
   , caseNat
   ) where
 
-import Data.V.Internal.Linear.V
+import Data.V.Linear.Internal.V
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
-import qualified Data.Functor.Internal.Linear.Functor as Data
-import qualified Data.Functor.Internal.Linear.Applicative as Data
-import qualified Data.Functor.Internal.Linear.Traversable as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Traversable as Data
 import GHC.TypeLits
 import qualified Data.Vector as Vector
 

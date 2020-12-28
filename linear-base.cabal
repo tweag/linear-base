@@ -16,13 +16,13 @@ description: Please see README.md.
 library
   hs-source-dirs: src
   exposed-modules:
-    Control.Functor.Internal.Linear.Class
-    Control.Functor.Internal.Linear.Instances
-    Control.Functor.Internal.Linear.MonadTrans
-    Control.Functor.Internal.Linear.Reader
-    Control.Functor.Internal.Linear.State
     Control.Monad.IO.Class.Linear
     Control.Functor.Linear
+    Control.Functor.Linear.Internal.Class
+    Control.Functor.Linear.Internal.Instances
+    Control.Functor.Linear.Internal.MonadTrans
+    Control.Functor.Linear.Internal.Reader
+    Control.Functor.Linear.Internal.State
     Control.Optics.Linear
     Control.Optics.Linear.Internal
     Control.Optics.Linear.Iso
@@ -37,15 +37,15 @@ library
     Data.Array.Polarized.Pull.Internal
     Data.Array.Polarized.Push
     Data.Bifunctor.Linear
-    Data.Bifunctor.Internal.Linear.Bifunctor
-    Data.Bifunctor.Internal.Linear.SymmetricMonoidal
+    Data.Bifunctor.Linear.Internal.Bifunctor
+    Data.Bifunctor.Linear.Internal.SymmetricMonoidal
     Data.Bool.Linear
     Data.Either.Linear
     Data.Eq.Linear
     Data.Functor.Linear
-    Data.Functor.Internal.Linear.Functor
-    Data.Functor.Internal.Linear.Applicative
-    Data.Functor.Internal.Linear.Traversable
+    Data.Functor.Linear.Internal.Functor
+    Data.Functor.Linear.Internal.Applicative
+    Data.Functor.Linear.Internal.Traversable
     Data.HashMap.Mutable.Linear
     Data.List.Linear
     Data.Maybe.Linear
@@ -63,8 +63,8 @@ library
     Data.Unrestricted.Internal.Instances
     Data.Unrestricted.Internal.Ur
     Data.Unrestricted.Linear
-    Data.V.Internal.Linear.V
     Data.V.Linear
+    Data.V.Linear.Internal.V
     Data.Vector.Mutable.Linear
     Debug.Trace.Linear
     Foreign.Marshal.Pure

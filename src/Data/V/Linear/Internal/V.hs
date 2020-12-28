@@ -13,7 +13,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Data.V.Internal.Linear.V
+module Data.V.Linear.Internal.V
   ( V(..)
   , FunN
   , theLength

@@ -26,6 +26,6 @@ module Data.Bifunctor.Linear
   )
   where
 
-import Data.Bifunctor.Internal.Linear.Bifunctor
-import Data.Bifunctor.Internal.Linear.SymmetricMonoidal
+import Data.Bifunctor.Linear.Internal.Bifunctor
+import Data.Bifunctor.Linear.Internal.SymmetricMonoidal
 

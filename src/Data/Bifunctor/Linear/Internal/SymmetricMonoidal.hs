@@ -4,11 +4,11 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Data.Bifunctor.Internal.Linear.SymmetricMonoidal
+module Data.Bifunctor.Linear.Internal.SymmetricMonoidal
   ( SymmetricMonoidal(..)
   ) where
 
-import Data.Bifunctor.Internal.Linear.Bifunctor
+import Data.Bifunctor.Linear.Internal.Bifunctor
 import Prelude.Linear
 import Data.Kind (Type)
 import Data.Void

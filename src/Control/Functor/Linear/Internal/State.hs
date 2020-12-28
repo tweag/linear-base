@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module Control.Functor.Internal.Linear.State
+module Control.Functor.Linear.Internal.State
   ( StateT(..)
   , State
   , state
@@ -24,11 +24,11 @@ module Control.Functor.Internal.Linear.State
 import Prelude.Linear.Internal
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
-import Control.Functor.Internal.Linear.MonadTrans
-import Control.Functor.Internal.Linear.Class
-import Control.Functor.Internal.Linear.Instances ( Data(..) )
-import qualified Data.Functor.Internal.Linear.Functor as Data
-import qualified Data.Functor.Internal.Linear.Applicative as Data
+import Control.Functor.Linear.Internal.MonadTrans
+import Control.Functor.Linear.Internal.Class
+import Control.Functor.Linear.Internal.Instances ( Data(..) )
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Control.Monad.Trans.State.Strict as NonLinear
 import qualified Control.Monad as NonLinear ()
 import Data.Functor.Identity

@@ -2,12 +2,12 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Data.Functor.Internal.Linear.Applicative
+module Data.Functor.Linear.Internal.Applicative
   (
     Applicative(..)
   ) where
 
-import Data.Functor.Internal.Linear.Functor
+import Data.Functor.Linear.Internal.Functor
 import Prelude.Linear.Internal
 import qualified Control.Monad.Trans.Reader as NonLinear
 import Data.Monoid.Linear hiding (Sum)

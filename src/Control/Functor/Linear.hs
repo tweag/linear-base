@@ -37,14 +37,14 @@ module Control.Functor.Linear
   , StateT(..), runStateT, execStateT, mapStateT, withStateT
   , get, put, modify, gets
   , MonadTrans(..)
-  , module Control.Functor.Internal.Linear.Instances
+  , module Control.Functor.Linear.Internal.Instances
   ) where
 
-import Control.Functor.Internal.Linear.Class
-import Control.Functor.Internal.Linear.Reader
-import Control.Functor.Internal.Linear.State
-import Control.Functor.Internal.Linear.MonadTrans
-import Control.Functor.Internal.Linear.Instances
+import Control.Functor.Linear.Internal.Class
+import Control.Functor.Linear.Internal.Reader
+import Control.Functor.Linear.Internal.State
+import Control.Functor.Linear.Internal.MonadTrans
+import Control.Functor.Linear.Internal.Instances
 
 -- $readerT
 -- See [here](https://mmhaskell.com/monads/reader-writer) to learn about

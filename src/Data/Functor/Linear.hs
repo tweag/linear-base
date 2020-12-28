@@ -31,7 +31,7 @@ module Data.Functor.Linear
   )
   where
 
-import Data.Functor.Internal.Linear.Functor
-import Data.Functor.Internal.Linear.Applicative
-import Data.Functor.Internal.Linear.Traversable
+import Data.Functor.Linear.Internal.Functor
+import Data.Functor.Linear.Internal.Applicative
+import Data.Functor.Linear.Internal.Traversable
 import Data.Functor.Const
