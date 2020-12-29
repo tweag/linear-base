@@ -37,7 +37,6 @@ module Prelude.Linear
   , curry
   , uncurry
     -- ** Basic type classes
-  , module Data.Eq.Linear
   , module Data.Ord.Linear
   , Prelude.Enum (..)
   , Prelude.Bounded (..)
@@ -145,7 +144,6 @@ import Data.Tuple.Linear
 import Data.List.Linear
 import qualified Prelude
 import Prelude.Linear.Internal
-import Data.Eq.Linear
 import Data.String
 
 -- | Replacement for the flip function with generalized multiplicities.
