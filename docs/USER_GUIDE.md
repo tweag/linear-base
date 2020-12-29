@@ -52,10 +52,17 @@ Interfacing linear code with regular Haskell is done, for instance, through the 
 The data type `Ur`, short for _unrestricted_ lets you store an
 unrestricted value inside a linear value.
 
+### Import Conventions
+
+We've designed `linear-base` to work nicely with the following import conventions:
+
+1. `import qualified Data.Functor.Linear as Data`
+2. `import qualified Control.Functor.Linear as Control`
+
 ### Importing linear and non-linear code
 
 Most modules with `{-# LANGUAGE LinearHaskell #-}` will want to have a mix of
-linear and non-linear code and hence, import linear modules like
+linear and non-linear code and, for example, import linear modules like
 `Data.Functor.Linear` and unrestricted modules from `base` like `Data.List`.
 The pattern we've followed internally is to import the non-linear module
 qualified. For instance:
