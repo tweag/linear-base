@@ -2,7 +2,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Data.Bifunctor.Internal.Linear.Bifunctor
+module Data.Bifunctor.Linear.Internal.Bifunctor
   ( Bifunctor(..)
   ) where
 

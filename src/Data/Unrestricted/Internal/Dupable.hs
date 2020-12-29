@@ -14,8 +14,8 @@ module Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Consumable
 import GHC.TypeLits
 import Data.Type.Equality
-import Data.V.Internal.Linear.V (V)
-import qualified Data.V.Internal.Linear.V as V
+import Data.V.Linear.Internal.V (V)
+import qualified Data.V.Linear.Internal.V as V
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
 --

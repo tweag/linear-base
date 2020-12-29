@@ -25,8 +25,8 @@ import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
-import qualified Data.Functor.Internal.Linear.Functor as Data
-import qualified Data.Functor.Internal.Linear.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
 import GHC.Types hiding (Any)
 import Data.Monoid.Linear
 import Data.List.NonEmpty

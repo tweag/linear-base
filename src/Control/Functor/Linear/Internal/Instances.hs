@@ -8,14 +8,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module Control.Functor.Internal.Linear.Instances
+module Control.Functor.Linear.Internal.Instances
   ( Data(..)
   ) where
 
 import Prelude.Linear.Internal
-import Control.Functor.Internal.Linear.Class
-import qualified Data.Functor.Internal.Linear.Functor as Data
-import qualified Data.Functor.Internal.Linear.Applicative as Data
+import Control.Functor.Linear.Internal.Class
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Monoid.Linear hiding (Sum)
 import Data.Functor.Sum
 import Data.Functor.Compose
