@@ -90,7 +90,7 @@
 --
 -- > type Kleisli f a b = a #-> f b
 --
--- /Note: We abbreviate Control for Control.Monad.Linear./
+-- /Note: We abbreviate Control for Control.Functor.Linear./
 --
 -- +-----------------+------------+---------------+--------------------+-----------+
 -- |                 | Profunctor | Strong (,) () | Strong Either Void | Wandering |
