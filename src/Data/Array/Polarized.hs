@@ -99,11 +99,11 @@ module Data.Array.Polarized
   )
   where
 
-import qualified Data.Array.Destination as DArray
 import qualified Data.Array.Polarized.Pull.Internal as Pull
 import qualified Data.Array.Polarized.Pull as Pull
 import qualified Data.Array.Polarized.Push as Push
 import Prelude.Linear
+import qualified Prelude
 import Data.Vector (Vector)
 
 -- DEVELOPER NOTE:
@@ -129,7 +129,9 @@ import Data.Vector (Vector)
 -- | Convert a pull array into a push array.
 -- NOTE: this does NOT require allocation and can be in-lined.
 transfer :: Pull.Array a %1-> Push.Array a
-transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i))) n
+transfer (Pull.Array f n) =
+  Push.Array
+    (\k -> Prelude.foldl (\m i -> m <> (k (f i))) mempty [0..(n-1)])
 
 -- | This is a shortcut convenience function
 -- for @transfer . Pull.fromVector@.
