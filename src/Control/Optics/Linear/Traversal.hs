@@ -17,8 +17,8 @@
 -- {-# LANGUAGE GADTs #-}
 --
 -- import Control.Optics.Linear.Internal
--- import qualified Control.Monad.Linear as Control
--- import Control.Monad.Linear ((<$>), (<*>), pure)
+-- import qualified Control.Functor.Linear as Control
+-- import Control.Functor.Linear ((<$>), (<*>), pure)
 -- import Prelude.Linear
 --
 -- -- We can use a traversal to append a string only to the

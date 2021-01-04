@@ -24,7 +24,7 @@
 -- >>> :set -XQualifiedDo
 -- >>> :set -XNoImplicitPrelude
 -- >>> import qualified System.IO.Resource as Linear
--- >>> import qualified Control.Monad.Linear as Control
+-- >>> import qualified Control.Functor.Linear as Control
 -- >>> import qualified Data.Text as Text
 -- >>> import Prelude.Linear
 -- >>> import qualified Prelude
