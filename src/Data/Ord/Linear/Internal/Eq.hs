@@ -5,7 +5,7 @@
 
 -- | This module provides a linear 'Eq' class for testing equality between
 -- values, along with standard instances.
-module Data.Eq.Linear
+module Data.Ord.Linear.Internal.Eq
   ( Eq(..)
   )
   where
@@ -84,3 +84,4 @@ instance (Prelude.Eq a, Movable a) => Eq (MovableEq a) where
   MovableEq ar /= MovableEq br
     = move (ar, br) & \(Ur (a, b)) ->
         a Prelude./= b
+

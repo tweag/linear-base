@@ -24,7 +24,7 @@ import qualified Data.Vector.Mutable.Linear as Vector
 import Data.Unrestricted.Linear
 import qualified Data.Functor.Linear as Data
 import Hedgehog
-import Data.Ord.Linear as Linear
+import Data.Ord.Linear as Linear hiding (Eq(..))
 import Data.Maybe (mapMaybe)
 import qualified Data.List as List
 import qualified Hedgehog.Gen as Gen

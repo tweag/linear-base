@@ -7,8 +7,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- | This module provides a linear version of 'Semigroup'.
-
-module Data.Semigroup.Linear
+module Data.Monoid.Linear.Internal.Semigroup
   ( -- * Semigroup
     Semigroup(..)
     -- * Endo
@@ -87,3 +86,4 @@ instance Semigroup Ordering where
     GT <> EQ = GT
     -- We can not use `lseq` above because of an import loop.
     -- So it's easier to just expand the cases here.
+
