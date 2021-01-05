@@ -56,8 +56,8 @@ unrestricted value inside a linear value.
 
 We've designed `linear-base` to work nicely with the following import conventions:
 
-1. `import qualified Data.Functor.Linear as Data`
-2. `import qualified Control.Functor.Linear as Control`
+- `import qualified Data.Functor.Linear as Data`
+- `import qualified Control.Functor.Linear as Control`
 
 ### Importing linear and non-linear code
 
