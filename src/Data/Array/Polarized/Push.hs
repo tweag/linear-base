@@ -11,9 +11,17 @@
 --
 -- This module is designed to be imported qualified as @Push@.
 module Data.Array.Polarized.Push
-  ( Array(..)
-  , alloc
+  (
+  -- * Construction
+    Array(..)
   , make
+  , singleton
+  , cons
+  , snoc
+  -- * Operations
+  , alloc
+  , foldMap
+  , unzip
   )
 where
 
@@ -22,7 +30,7 @@ import qualified Data.Array.Destination as DArray
 import Data.Array.Destination (DArray)
 import Data.Vector (Vector)
 import qualified Prelude
-import Prelude.Linear
+import Prelude.Linear hiding (unzip, foldMap)
 import GHC.Stack
 
 
@@ -65,6 +73,21 @@ make :: HasCallStack => a -> Int -> Array a
 make x n
   | n < 0 = error "Making a negative length push array"
   | otherwise = Array (\makeA -> mconcat $ Prelude.replicate n (makeA x))
+
+singleton :: a -> Array a
+singleton x = Array (\writeA -> writeA x)
+
+snoc :: a -> Array a %1-> Array a
+snoc x (Array k) = Array (\writeA -> (k writeA) <> (writeA x))
+
+cons :: a -> Array a %1-> Array a
+cons x (Array k) = Array (\writeA -> (writeA x) <> (k writeA))
+
+foldMap :: Monoid b => (a -> b) -> Array a %1-> b
+foldMap f (Array k) = k f
+
+unzip :: Array (a,b) %1-> (Array a, Array b)
+unzip (Array k) = k (\(a,b) -> (singleton a, singleton b))
 
 
 -- # Instances
