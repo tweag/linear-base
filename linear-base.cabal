@@ -65,6 +65,7 @@ library
     Data.Unrestricted.Linear
     Data.V.Linear
     Data.V.Linear.Internal.V
+    Data.V.Linear.Internal.Instances
     Data.Vector.Mutable.Linear
     Debug.Trace.Linear
     Foreign.Marshal.Pure
