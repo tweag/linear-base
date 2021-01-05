@@ -22,7 +22,6 @@ import qualified Data.Array.Destination as DArray
 import Data.Array.Destination (DArray)
 import Data.Vector (Vector)
 import qualified Prelude
-import qualified Unsafe.Linear as Unsafe
 import Prelude.Linear
 import GHC.Stack
 
@@ -64,7 +63,7 @@ alloc (Array k) = allocArrayWriter $ k singletonWriter where
 -- element is @x@.
 make :: HasCallStack => a -> Int -> Array a
 make x n
-  | n < 0 = error "Making negative length push array"
+  | n < 0 = error "Making a negative length push array"
   | otherwise = Array (\makeA -> mconcat $ Prelude.replicate n (makeA x))
 
 
@@ -110,13 +109,8 @@ addWriters (ArrayWriter k1 l1) (ArrayWriter k2 l2) =
     (\darr ->
       (DArray.split l1 darr) & \(darr1,darr2) -> consume (k1 darr1, k2 darr2))
     (l1+l2)
--- Remark. In order for the function above to work, consume must forcibly
--- evaluate both tuples. If it was lazy, then we might not actually perform
--- @k1@ or @k2@ and the unsafe IO won't get done. In general, this makes me
--- think we haven't spelled out the careful rules of what consuming functions
--- must follow so that we can release a safe API.
 
 emptyWriter :: ArrayWriter a
-emptyWriter = ArrayWriter (Unsafe.toLinear (const ())) 0
+emptyWriter = ArrayWriter DArray.dropEmpty 0
 -- Remark. @emptyWriter@ assumes we can split a destination array at 0.
 

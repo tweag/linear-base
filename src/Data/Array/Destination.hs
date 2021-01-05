@@ -123,6 +123,7 @@ module Data.Array.Destination
   , mirror
   , fromFunction
   , fill
+  , dropEmpty
   )
   where
 
@@ -178,6 +179,14 @@ fill = Unsafe.toLinear2 unsafeFill
         error "Destination.fill: requires a destination of size 1"
       else
         unsafeDupablePerformIO Prelude.$ MVector.write ds 0 a
+
+-- | @dropEmpty dest@ consumes and empty array and fails otherwise.
+dropEmpty :: HasCallStack => DArray a %1-> ()
+dropEmpty = Unsafe.toLinear unsafeDrop where
+  unsafeDrop :: DArray a -> ()
+  unsafeDrop (DArray ds)
+    | MVector.length ds > 0 = error "Destination.dropEmpty on non-empty array."
+    | otherwise = ()
 
 -- | @'split' n dest = (destl, destr)@ such as @destl@ has length @n@.
 --
