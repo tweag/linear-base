@@ -99,10 +99,10 @@ module Data.Array.Polarized
   )
   where
 
-import qualified Data.Array.Destination as DArray
 import qualified Data.Array.Polarized.Pull.Internal as Pull
 import qualified Data.Array.Polarized.Pull as Pull
 import qualified Data.Array.Polarized.Push as Push
+import qualified Data.Foldable as NonLinear
 import Prelude.Linear
 import Data.Vector (Vector)
 
@@ -129,7 +129,8 @@ import Data.Vector (Vector)
 -- | Convert a pull array into a push array.
 -- NOTE: this does NOT require allocation and can be in-lined.
 transfer :: Pull.Array a %1-> Push.Array a
-transfer (Pull.Array f n) = Push.Array (\g -> DArray.fromFunction (\i -> g (f i))) n
+transfer (Pull.Array f n) =
+  Push.Array (\k -> NonLinear.foldMap' (\x -> k (f x)) [0..(n-1)])
 
 -- | This is a shortcut convenience function
 -- for @transfer . Pull.fromVector@.
