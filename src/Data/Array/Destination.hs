@@ -186,7 +186,7 @@ dropEmpty = Unsafe.toLinear unsafeDrop where
   unsafeDrop :: DArray a -> ()
   unsafeDrop (DArray ds)
     | MVector.length ds > 0 = error "Destination.dropEmpty on non-empty array."
-    | otherwise = ()
+    | otherwise = ds `seq` ()
 
 -- | @'split' n dest = (destl, destr)@ such as @destl@ has length @n@.
 --
