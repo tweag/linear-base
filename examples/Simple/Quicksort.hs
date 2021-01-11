@@ -2,25 +2,13 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module implements quicksort with mutable arrays from linear-base
-module Simple.Quicksort
-  ( testQuicksort
-  , quickSort
-  )
-where
+module Simple.Quicksort (quickSort) where
 
 import GHC.Stack
 import qualified Data.Array.Mutable.Linear as Array
 import Data.Array.Mutable.Linear (Array)
 import Data.Unrestricted.Linear
 import Prelude.Linear hiding (partition)
-
-
--- # Testing
--------------------------------------------------------------------------------
-
-testQuicksort :: [Int] -> Bool
-testQuicksort xs = sort xs == quickSort xs
-
 
 -- # Quicksort
 -------------------------------------------------------------------------------

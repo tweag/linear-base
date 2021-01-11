@@ -16,29 +16,6 @@ import Data.HashMap.Mutable.Linear (HashMap)
 import Data.Bifunctor.Linear (second)
 import Data.Maybe.Linear (catMaybes)
 import qualified Data.Functor.Linear as Data
-import Test.HUnit hiding (Node)
-
-
--- # All Tests
--------------------------------------------------------------------------------
-
-test1 :: Test
-test1 = topsort [(1,[2,3]), (2, [4]), (3,[4]), (4,[])] ~=?
-  [1,2,3,4]
-
-test2 :: Test
-test2 = topsort [(5,[2,0]), (4,[0,1]), (0,[]), (2,[3]), (3,[1]), (1,[])] ~=?
-  [5,2,3,4,0,1]
-
-test3 :: Test
-test3 = topsort
-  [ (1,[2]), (2,[4,5]), (3,[9,7]), (4,[7,8,10]), (5,[10]), (6,[10])
-  , (7,[]),(8,[]),(9,[]),(10,[])
-  ] ~=?
-    [1,2,4,8,5,3,9,7,6,10]
-
-topsortTests :: IO Counts
-topsortTests = runTestTT  $ TestList [test1, test2, test3]
 
 -- # The topological sort of a DAG
 -------------------------------------------------------------------------------

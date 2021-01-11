@@ -99,12 +99,14 @@ library
 test-suite test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
-  main-is: Spec.hs
+  main-is: Main.hs
   other-modules:
+    Test.Data.Destination
     Test.Data.Mutable.Array
     Test.Data.Mutable.Vector
     Test.Data.Mutable.HashMap
     Test.Data.Mutable.Set
+    Test.Data.Polarized
   build-depends:
     base,
     linear-base,
@@ -120,8 +122,10 @@ test-suite test
 test-suite examples
   type: exitcode-stdio-1.0
   hs-source-dirs: examples
-  main-is: Spec.hs
+  main-is: Main.hs
   other-modules:
+    Test.Foreign
+    Test.Quicksort
     Foreign.List
     Foreign.Heap
     Simple.FileIO
@@ -130,10 +134,10 @@ test-suite examples
     Simple.TopSort
   build-depends:
     base,
-    hspec,
-    HUnit,
     linear-base,
-    QuickCheck,
+    tasty,
+    tasty-hedgehog,
+    hedgehog,
     storable-tuple,
     vector,
     text
