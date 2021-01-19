@@ -45,13 +45,21 @@ data Array a where
   --
   -- Think of @(a -> m)@ as something that writes an @a@ and think of
   -- @((a -> m) -> m)@ as something that takes a way to write a single element
-  -- and writes and concatenates all elements.
+  -- and writes and concatenates all elements. The @m@ is something that
+  -- represents a writing of some elements to an array, a delayed write.
   --
   -- Also, note that in this formulation we don't know the length beforehand.
 
 data ArrayWriter a where
   ArrayWriter :: (DArray a %1-> ()) %1-> !Int -> ArrayWriter a
   -- The second parameter is the length of the @DArray@
+  --
+  -- Developer notes:
+  --
+  -- This is the linear monoid @m@ that we instantiate the above array with
+  -- in order to allocate. An @ArrayWriter a@ is something that holds the
+  -- ingredients to write some number of elements to an array, without
+  -- holding the space to do so.
 
 
 -- API
