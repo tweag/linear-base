@@ -58,7 +58,9 @@ library
     Data.Ord.Linear.Internal.Eq
     Data.Profunctor.Kleisli.Linear
     Data.Profunctor.Linear
+    Data.Queue.Mutable.Linear
     Data.Set.Mutable.Linear
+    Data.Stack.Mutable.Linear
     Data.Tuple.Linear
     Data.Unrestricted.Internal.Consumable
     Data.Unrestricted.Internal.Dupable
