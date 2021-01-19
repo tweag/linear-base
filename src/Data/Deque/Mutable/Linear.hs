@@ -119,20 +119,21 @@ isFull :: Deque a %1-> (Ur Bool, Deque a)
 isFull d =
   size d & \(Ur sz, Deque len ptr arr) -> (Ur (len == sz), Deque len ptr arr)
 
-peek :: HasCallStack => Face -> Deque a %1-> (Ur a, Deque a)
-peek _ (Deque 0 _ arr) = error "Peeking a zero-length deque." $ arr
+peek :: HasCallStack => Face -> Deque a %1-> (Ur (Maybe a), Deque a)
+peek _ (Deque 0 p arr) = (Ur Nothing, Deque 0 p arr)
 peek face (Deque len ptr@(Ptr p) arr) = case face of
-  Front -> Array.read arr p & \(val, arr0) -> (val, Deque len ptr arr0)
+  Front ->
+    Array.read arr p & \(Ur a, arr0) -> (Ur (Just a), Deque len ptr arr0)
   Back -> Array.size arr & \(Ur sz, arr0) ->
-    Array.read arr0 (backPtr 0 len sz ptr) & \(val, arr1) ->
-      (val, Deque len ptr arr1)
+    Array.read arr0 (backPtr 0 len sz ptr) & \(Ur a, arr1) ->
+      (Ur (Just a), Deque len ptr arr1)
 
 -- | View the top of the left queue
-peekFront :: HasCallStack => Deque a %1-> (Ur a, Deque a)
+peekFront :: HasCallStack => Deque a %1-> (Ur (Maybe a), Deque a)
 peekFront = peek Front
 
 -- | View the top of the right queue
-peekBack :: HasCallStack => Deque a %1-> (Ur a, Deque a)
+peekBack :: HasCallStack => Deque a %1-> (Ur (Maybe a), Deque a)
 peekBack = peek Back
 
 
@@ -159,22 +160,22 @@ pushFront = push Front
 pushBack :: HasCallStack => a -> Deque a %1-> Deque a
 pushBack = push Back
 
-pop :: HasCallStack => Face -> Deque a %1-> (Ur a, Deque a)
-pop _ (Deque 0 _ arr) = error "Popping from an empty deque" $ arr
+pop :: HasCallStack => Face -> Deque a %1-> (Ur (Maybe a), Deque a)
+pop _ (Deque 0 p arr) = (Ur Nothing, Deque 0 p arr)
 pop face (Deque len ptr@(Ptr p) arr) = case face of
   Front -> Array.size arr & \(Ur sz, arr0) ->
-    Array.read arr0 p & \(val, arr1) ->
-      (val, Deque (len-1) (Ptr $ nextPtr sz ptr) arr1)
+    Array.read arr0 p & \(Ur a, arr1) ->
+      (Ur (Just a), Deque (len-1) (Ptr $ nextPtr sz ptr) arr1)
   Back -> Array.size arr & \(Ur sz, arr0) ->
-    Array.read arr0 (backPtr 0 len sz ptr) & \(val, arr1) ->
-      (val, Deque (len-1) ptr arr1)
+    Array.read arr0 (backPtr 0 len sz ptr) & \(Ur a, arr1) ->
+      (Ur (Just a), Deque (len-1) ptr arr1)
 
 -- | Remove the last added element from the left queue
-popFront :: HasCallStack => Deque a %1-> (Ur a, Deque a)
+popFront :: Deque a %1-> (Ur (Maybe a), Deque a)
 popFront = pop Front
 
 -- | Remove the last added element from the right queue
-popBack :: HasCallStack => Deque a %1-> (Ur a, Deque a)
+popBack :: Deque a %1-> (Ur (Maybe a), Deque a)
 popBack = pop Back
 
 -- Note: We can't use a Prelude.Functor nor a Data.Functor
