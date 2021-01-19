@@ -7,8 +7,7 @@
 
 -- | Mutable Linear Deque
 --
--- This module provides a pure interface to a bounded mutable deque.
--- The deque has a maxiumum size and is represented with an array underneath.
+-- This module provides a pure interface to a mutable deque.
 --
 -- It is designed to be imported qualfied:
 --
@@ -22,7 +21,6 @@ module Data.Deque.Mutable.Linear
   -- * Querying
   , size
   , length
-  , isFull
   , peekFront
   , peekBack
   -- * Modification
@@ -40,7 +38,6 @@ import qualified Data.Array.Mutable.Linear as Array
 import Data.Unrestricted.Linear
 import Prelude.Linear hiding (length, map)
 import qualified Prelude
-import GHC.Stack
 
 
 -- # Types
@@ -90,14 +87,14 @@ nextPtr sz (Ptr p) = (p + 1) `mod` sz
 -------------------------------------------------------------------------------
 
 -- | Run a computation of an empty Deque with a given size
-alloc :: HasCallStack => Int -> (Deque a %1-> Ur b) %1-> Ur b
+alloc :: Int -> (Deque a %1-> Ur b) %1-> Ur b
 alloc k f = Array.alloc k err $ \arr -> f (Deque 0 0 arr) where
   err = Prelude.error "Accessing error element of a collection!"
 
 -- | Run a computation on a Deque that is deterimined by the given the list
 -- where we treat the start and end of the list as the left and right pointers,
 -- with the total capacity as the length of the list.
-fromList :: HasCallStack => [a] -> (Deque a %1-> Ur b) %1-> Ur b
+fromList :: [a] -> (Deque a %1-> Ur b) %1-> Ur b
 fromList xs f =
   Array.fromList xs $ \arr -> f (Deque (Prelude.length xs) 0 arr)
 
@@ -119,7 +116,7 @@ isFull :: Deque a %1-> (Ur Bool, Deque a)
 isFull d =
   size d & \(Ur sz, Deque len ptr arr) -> (Ur (len == sz), Deque len ptr arr)
 
-peek :: HasCallStack => Face -> Deque a %1-> (Ur (Maybe a), Deque a)
+peek :: Face -> Deque a %1-> (Ur (Maybe a), Deque a)
 peek _ (Deque 0 p arr) = (Ur Nothing, Deque 0 p arr)
 peek face (Deque len ptr@(Ptr p) arr) = case face of
   Front ->
@@ -129,20 +126,20 @@ peek face (Deque len ptr@(Ptr p) arr) = case face of
       (Ur (Just a), Deque len ptr arr1)
 
 -- | View the top of the left queue
-peekFront :: HasCallStack => Deque a %1-> (Ur (Maybe a), Deque a)
+peekFront :: Deque a %1-> (Ur (Maybe a), Deque a)
 peekFront = peek Front
 
 -- | View the top of the right queue
-peekBack :: HasCallStack => Deque a %1-> (Ur (Maybe a), Deque a)
+peekBack :: Deque a %1-> (Ur (Maybe a), Deque a)
 peekBack = peek Back
 
 
 -- # Modification
 -------------------------------------------------------------------------------
 
-push :: HasCallStack => Face -> a -> Deque a %1-> Deque a
+push :: Face -> a -> Deque a %1-> Deque a
 push face x deq = isFull deq & \case
-  (Ur True, deq0) -> error "Pushing to full deque" $ deq0
+  (Ur True, deq0) -> push face x (doubleSize deq0)
   (Ur False, Deque 0 _ arr) -> Array.write arr 0 x & \arr0 -> Deque 1 0 arr0
   (Ur False, Deque len (Ptr p) arr) -> case face of
     Front -> Array.size arr & \(Ur sz, arr0) ->
@@ -152,15 +149,28 @@ push face x deq = isFull deq & \case
       Array.write arr0 (backPtr 1 len sz (Ptr p)) x & \arr1 ->
         Deque (len+1) (Ptr p) arr1
 
+doubleSize :: Deque a %1-> Deque a
+doubleSize (Deque len ptr@(Ptr start) arr) =
+  Array.size arr & \(Ur sz, arr0) ->
+    Array.resize (sz*2) err arr0 & \arr1 ->
+      Deque len ptr (movePrefix 0 start arr1)
+  where
+    err = Prelude.error "Accessing error element of a collection!"
+    movePrefix :: Int -> Int -> Array.Array a %1-> Array.Array a
+    movePrefix ix p arr'
+      | ix == p = arr'
+      | otherwise = Array.read arr' ix & \(Ur a, arr0) ->
+          Array.write arr0 (p+ix+1) a & \arr1 -> movePrefix (ix+1) p arr1
+
 -- | Push to the front end
-pushFront :: HasCallStack => a -> Deque a %1-> Deque a
+pushFront :: a -> Deque a %1-> Deque a
 pushFront = push Front
 
 -- | Push to the back end
-pushBack :: HasCallStack => a -> Deque a %1-> Deque a
+pushBack :: a -> Deque a %1-> Deque a
 pushBack = push Back
 
-pop :: HasCallStack => Face -> Deque a %1-> (Ur (Maybe a), Deque a)
+pop :: Face -> Deque a %1-> (Ur (Maybe a), Deque a)
 pop _ (Deque 0 p arr) = (Ur Nothing, Deque 0 p arr)
 pop face (Deque len ptr@(Ptr p) arr) = case face of
   Front -> Array.size arr & \(Ur sz, arr0) ->
@@ -181,6 +191,8 @@ popBack = pop Back
 -- Note: We can't use a Prelude.Functor nor a Data.Functor
 -- because the mapped function need not be linear but we must
 -- consume the Deque linearly. The types don't align.
+-- Note: This could be more efficient if we only mapped the
+-- elements we care about and coerced the rest
 map :: (a -> b) -> Deque a %1-> Deque b
 map f (Deque len p arr) = Deque len p (Array.map f arr)
 
