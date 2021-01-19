@@ -7,7 +7,8 @@
 
 -- | Mutable Linear Deque
 --
--- This module provides a pure interface to a mutable deque.
+-- This module provides a pure interface to a bounded mutable deque.
+-- The deque has a maxiumum size and is represented with an array underneath.
 --
 -- It is designed to be imported qualfied:
 --
