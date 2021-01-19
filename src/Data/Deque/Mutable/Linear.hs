@@ -19,7 +19,6 @@ module Data.Deque.Mutable.Linear
   , alloc
   , fromList
   -- * Querying
-  , size
   , length
   , peekFront
   , peekBack
@@ -86,7 +85,7 @@ nextPtr sz (Ptr p) = (p + 1) `mod` sz
 -- # Allocation
 -------------------------------------------------------------------------------
 
--- | Run a computation of an empty Deque with a given size
+-- | Run a computation of an empty Deque with a given initial allocated size
 alloc :: Int -> (Deque a %1-> Ur b) %1-> Ur b
 alloc k f = Array.alloc k err $ \arr -> f (Deque 0 0 arr) where
   err = Prelude.error "Accessing error element of a collection!"
