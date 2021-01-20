@@ -46,6 +46,7 @@ library
     Data.Functor.Linear.Internal.Applicative
     Data.Functor.Linear.Internal.Traversable
     Data.HashMap.Mutable.Linear
+    Data.Heap.Mutable.Linear
     Data.List.Linear
     Data.Maybe.Linear
     Data.Monoid.Linear
