@@ -1,11 +1,15 @@
 packages: *.cabal
-
 allow-newer: all
 
 package linear-base
   ghc-options: -Wall -Werror
 
 -- If you update below, make sure to also update stack.yaml too
+source-repository-package
+  type: git
+  location: https://github.com/Divesh-Otwani/foundation.git
+  subdir: basement
+  tag: ad709f41a8c4671f2f96fdf9c93cd62d3e7bca9f
 
 source-repository-package
   -- https://github.com/nick8325/quickcheck/pull/314

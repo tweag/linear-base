@@ -135,7 +135,7 @@ newtype PSL = PSL Int
 
 -- | At minimum, we need to store hashable
 -- and identifiable keys
-type Keyed k = (Eq k, Hashable k)
+type Keyed k = (Prelude.Eq k, Hashable k)
 
 -- | The results of searching for where to insert a key.
 --
@@ -496,7 +496,7 @@ probeFrom (k, p) ix (HashMap ct arr) = Array.read arr ix & \case
   (Ur Nothing, arr') ->
     (HashMap ct arr', IndexToInsert p ix)
   (Ur (Just robinVal'@(RobinVal psl k' v')), arr') ->
-    case k == k' of
+    case k Prelude.== k' of
       -- Note: in the True case, we must have p == psl
       True -> (HashMap ct arr', IndexToUpdate v' psl ix)
       False -> case psl Prelude.< p of

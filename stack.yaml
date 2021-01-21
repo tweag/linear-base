@@ -9,6 +9,11 @@ packages:
 
 # If you update the extra-deps, make sure to also update cabal.project
 extra-deps:
+# To get the library gauge for benchmarks working:
+- git: https://github.com/Divesh-Otwani/foundation.git
+  commit: ad709f41a8c4671f2f96fdf9c93cd62d3e7bca9f
+  subdirs:
+    - basement
 # https://github.com/nick8325/quickcheck/pull/314
 - git: https://github.com/buggymcbugfix/quickcheck.git
   commit: f24fbd0d0f7a03da76c46b31d6fba9678ff5e71c
