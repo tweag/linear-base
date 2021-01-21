@@ -21,6 +21,7 @@ import qualified Data.Unrestricted.Linear as Linear
 import Data.List (foldl')
 import qualified Prelude.Linear as Linear
 import Control.Monad.ST (runST, ST)
+import Control.Exception (evaluate)
 
 import qualified Data.HashMap.Mutable.Linear as LMap
 import qualified Data.HashMap.Strict as Map
@@ -85,12 +86,12 @@ getHMInput = do
   g0 <- Random.getStdGen
   let (gx,gc) = Random.split g0
   let (ga,gb) = Random.split gx
-  let shuff1 = force $ Random.shuffle' keys num_keys ga
-  let shuff2 = force $ Random.shuffle' shuff1 num_keys gb
-  let shuff3 = force $ Random.shuffle' shuff2 num_keys gc
+  shuff1 <- evaluate $ force $ Random.shuffle' keys num_keys ga
+  shuff2 <- evaluate $ force $ Random.shuffle' shuff1 num_keys gb
+  shuff3 <- evaluate $ force $ Random.shuffle' shuff2 num_keys gc
   g1 <- Random.getStdGen
   let (vals :: [Int]) = Random.randomRs (0,num_keys) g1
-  let kv_pairs = force (zip keys vals)
+  kv_pairs <- evaluate $ force (zip keys vals)
   return $ BenchInput kv_pairs shuff1 shuff2 shuff3
 
 modVal :: Maybe Int -> Maybe Int
@@ -187,7 +188,7 @@ vanilla_hashmap_strict inp@(BenchInput {pairs=kvs}) =
       ([(Key,Int)] -> Map.HashMap Key Int -> Map.HashMap Key Int) ->
       Benchmark
     mkBench n f =
-      bench (descriptions!!n) $ nf (\xs -> rnf $ f xs Map.empty) kvs
+      bench (descriptions!!n) $ nf (\xs -> f xs Map.empty) kvs
 
     foldlx :: (b -> a -> b) -> [a] -> b -> b
     foldlx f xs b = foldl' f b xs
