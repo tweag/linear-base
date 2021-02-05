@@ -85,7 +85,7 @@ library
     System.IO.Resource
     Unsafe.Linear
   build-depends:
-    base >= 4.7 && < 5,
+    base >= 4.15 && < 5,
     containers,
     ghc-prim,
     hashable,

@@ -1,6 +1,5 @@
-# See https://hub.docker.com/r/tweag/linear-types/
-resolver: lts-16.15
-compiler: ghc-9.1
+resolver: lts-17.1
+compiler: ghc-9.0.1
 allow-newer: true
 system-ghc: true
 
@@ -14,23 +13,14 @@ extra-deps:
   commit: ad709f41a8c4671f2f96fdf9c93cd62d3e7bca9f
   subdirs:
     - basement
-# https://github.com/nick8325/quickcheck/pull/314
-- git: https://github.com/buggymcbugfix/quickcheck.git
-  commit: f24fbd0d0f7a03da76c46b31d6fba9678ff5e71c
 # https://github.com/hedgehogqa/haskell-hedgehog/pull/392
 - git: https://github.com/utdemir/haskell-hedgehog.git
   commit: c98aa9e33bf6871098d6f4ac94eeaac10383d696
   subdirs:
     - hedgehog
-# https://github.com/dreixel/syb/pull/25
-- git: https://github.com/utdemir/syb.git
-  commit: a072e20d7a5806779486646418fa20c5ffd99a4f
 # https://github.com/sol/doctest/pull/272
 - git: https://github.com/utdemir/doctest.git
   commit: 090cccaf12c5643ca80f8c2afe693a488277d365
-# below is required for getting quickcheck compile
-- random-1.2.0
-- splitmix-0.1.0.1
 
 nix:
   enable: true
