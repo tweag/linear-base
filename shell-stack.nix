@@ -1,5 +1,4 @@
 { pkgs ?  import ./nixpkgs.nix {}
-, ghc ? pkgs.haskell.compiler.ghcHEAD
 }:
 
 with pkgs;
@@ -7,6 +6,6 @@ with pkgs;
 haskell.lib.buildStackProject {
   name = "linear-base";
   buildInputs = [ git zlib ];
-  ghc = pkgs.haskell.compiler.ghcHEAD;
+  ghc = pkgs.haskell.compiler.ghc901;
   LANG = "en_US.utf8";
 }
