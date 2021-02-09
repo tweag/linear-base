@@ -4,7 +4,7 @@ This short guide assumes
 familiarity with linear types (see the [`README`] for resources about linear types
 if you are unfamiliar).
 
-#### Table of content
+#### Table of contents
 
   1. [How to navigate the library](#navigating-the-library)
   2. [Core concepts you need to know](#core-concepts)
