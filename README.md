@@ -28,7 +28,8 @@ _Why do you need `linear-base` to write linear projects?_
 
 ## Getting started
 
-`-XLinearTypes` is released with GHC 9.
+`-XLinearTypes` is released with GHC 9, and `linear-base` is released
+on [Hackage](https://hackage.haskell.org/package/linear-base).
 
 All source files with linear types need a language extension pragma at
 the top:
