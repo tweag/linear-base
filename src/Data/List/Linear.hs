@@ -295,17 +295,26 @@ scanl1 f (x:xs) = scanl f x xs
 scanr :: Dupable b => (a %1-> b %1-> b) -> b %1-> [a] %1-> [b]
 scanr _ b [] =  [b]
 scanr f b (a:as) =
-  scanr f b as & \(b':bs') ->
-    dup2 b' & \(b'', b''') ->
-      f a b'' : b''' : bs'
+  scanr f b as & \case
+    (b':bs') ->
+      dup2 b' & \(b'', b''') ->
+        f a b'' : b''' : bs'
+    [] ->
+      -- this branch is impossible since scanr never returns an empty list.
+      Prelude.error "impossible" a
 
 scanr1 :: Dupable a => (a %1-> a %1-> a) -> [a] %1-> [a]
 scanr1 _ [] =  []
 scanr1 _ [a] =  [a]
 scanr1 f (a:as) =
-  scanr1 f as & \(a':as') ->
-    dup2 a' & \(a'', a''') ->
-      f a a'' : a''' : as'
+  scanr1 f as & \case
+    (a':as') ->
+      dup2 a' & \(a'', a''') ->
+        f a a'' : a''' : as'
+    [] ->
+      -- this branch is impossible since we know that 'as' has at least one
+      -- element inside.
+      Prelude.error "impossible" a
 
 replicate :: Dupable a => Int -> a %1-> [a]
 replicate i a
