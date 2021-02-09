@@ -1,5 +1,5 @@
 name: linear-base
-version: 0.1.0.0
+version: 0.1.0
 cabal-version: >=1.10
 homepage: https://github.com/tweag/linear-base#README
 license: MIT
@@ -9,9 +9,12 @@ maintainer: arnaud.spiwack@tweag.io
 copyright: (c) Tweag Holding and affiliates
 category: Prelude
 build-type: Simple
-extra-source-files: README.md
 synopsis: Standard library for linear types.
 description: Please see README.md.
+
+extra-source-files:
+  README.md
+  CHANGELOG.md
 
 library
   hs-source-dirs: src

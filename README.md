@@ -28,11 +28,7 @@ _Why do you need `linear-base` to write linear projects?_
 
 ## Getting started
 
-`-XLinearTypes` is not yet part of any GHC release. We recommend using
-Stack and Nix together to pull in an experimental version of GHC into
-your project. Use [this `stack.yaml`](./stack.yaml) as a starting
-point for your project. To learn more about Stack+Nix integration, see
-[here](https://docs.haskellstack.org/en/stable/nix_integration/).
+`-XLinearTypes` is released with GHC 9.
 
 All source files with linear types need a language extension pragma at
 the top:
@@ -44,7 +40,7 @@ the top:
 ## User Guide
 
 If you already know what `-XLinearTypes` does and what the linear
-arrow `a #-> b` means, then read the [User Guide] and explore the
+arrow `a %1-> b` means, then read the [User Guide] and explore the
 [`examples/`](./examples) folder to know how to use `linear-base`.
 
 ## Learning about `-XLinearTypes`
