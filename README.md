@@ -65,12 +65,14 @@ There are plenty of excellent resources and examples to help you.
   * [Here is the paper](https://arxiv.org/pdf/1710.09756.pdf) behind `-XLinearTypes`.
 
 ### Talks
-
- * [Practical Linearity in a higher-order polymorphic language -- POPL 2018](https://www.youtube.com/watch?v=o0z-qlb5xbI)
- * [Practical Linearity in a higher-order polymorphic language -- Curry on 2018](https://www.youtube.com/watch?v=t0mhvd3-60Y&t=3s)
- * [Practical Linearity in a higher-order polymorphic language -- Haskell Exchange 2018](https://skillsmatter.com/skillscasts/11067-keynote-linear-haskell-practical-linearity-in-a-higher-order-polymorphic-language)
+–
+ * [Distributed Programming with Linear Types – Haskell Exchange 2017](https://skillsmatter.com/skillscasts/10637-distributed-programming-with-linear-types)
+ * [Practical Linearity in a higher-order polymorphic language – POPL 2018](https://www.youtube.com/watch?v=o0z-qlb5xbI)
+ * [Practical Linearity in a higher-order polymorphic language – Curry on 2018](https://www.youtube.com/watch?v=t0mhvd3-60Y)
+ * [Practical Linearity in a higher-order polymorphic language – Haskell Exchange 2018](https://skillsmatter.com/skillscasts/11067-keynote-linear-haskell-practical-linearity-in-a-higher-order-polymorphic-language)
  * [Implementing Linear Haskell](https://www.youtube.com/watch?v=uxv62QQajx8)
- * [In-place array update with linear types -- ZuriHac 2020](https://www.youtube.com/watch?v=I7-JuVNvz78)
+ * [In-place array update with linear types – ZuriHac 2020](https://www.youtube.com/watch?v=I7-JuVNvz78)
+ * [Typecheck Your Memory Management with Linear Types – Haskell Exchange 2017](https://skillsmatter.com/skillscasts/14896-typecheck-your-memory-management-with-linear-types)
 
 ## Contributing
 
