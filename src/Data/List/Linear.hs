@@ -312,8 +312,8 @@ scanr1 f (a:as) =
       dup2 a' & \(a'', a''') ->
         f a a'' : a''' : as'
     [] ->
-      -- this branch is impossible since we know that 'as' has at least one
-      -- element inside.
+      -- this branch is impossible since we know that the 'scanr1' result will
+      -- be non-empty since 'as' is also non-empty.
       Prelude.error "impossible" a
 
 replicate :: Dupable a => Int -> a %1-> [a]
