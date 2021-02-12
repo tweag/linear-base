@@ -245,7 +245,7 @@ map f (Array arr) = Array (Unlifted.map f arr)
 write :: HasCallStack => Array a %1-> Int -> a -> Array a
 write arr i a = set i a arr
 
--- | Same as 'unsafeSafe', but takes the 'Array' as the first parameter.
+-- | Same as 'unsafeSet', but takes the 'Array' as the first parameter.
 unsafeWrite ::  Array a %1-> Int -> a -> Array a
 unsafeWrite arr i a = unsafeSet i a arr
 
