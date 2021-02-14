@@ -1,10 +1,9 @@
 let
-  # https://github.com/tweag/nixpkgs/tree/ud/ghc9
-  rev = "17a21c9466ef77471f5181bc075d7fc2265bcc72";
-  sha256 = "12g4jn74az3plzlc8klhbgfjlg2kbxs1238aqymksbxzf2z2n1j3";
+  rev = "f9b3e78132eabde9d01c27b82c6102c87a2ea5a1";
+  sha256 = "00dkynb7p9vy511h9g8b6a4r8j26iwsrn0s3433nhcr4v93q17z1";
 in
 import (fetchTarball {
   inherit sha256;
-  url = "https://github.com/tweag/nixpkgs/archive/${rev}.tar.gz";
+  url = "https://github.com/nixos/nixpkgs/archive/${rev}.tar.gz";
 })
 
