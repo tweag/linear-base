@@ -17,7 +17,7 @@ import Data.Unrestricted.Internal.Dupable
 -- 'Ur' comonad. That is
 --
 -- * @unur (move x) = x@
--- * @move \@(Ur a) (move \@a x) = fmap (move \@a) $ move \@a x  
+-- * @move \@(Ur a) (move \@a x) = fmap (move \@a) $ move \@a x@
 --
 -- Additionally, a 'Movable' instance must be compatible with its 'Dupable' parent instance. That is:
 --
