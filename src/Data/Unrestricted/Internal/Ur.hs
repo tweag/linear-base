@@ -13,6 +13,7 @@ module Data.Unrestricted.Internal.Ur
 -- context. The key idea is that because the contructor holds @a@ with a
 -- regular arrow, a function that uses @Ur a@ linearly can use @a@
 -- however it likes.
+--
 -- > someLinear :: Ur a %1-> (a,a)
 -- > someLinear (Ur a) = (a,a)
 data Ur a where
