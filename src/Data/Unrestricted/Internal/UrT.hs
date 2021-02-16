@@ -31,7 +31,7 @@ instance Linear.Applicative m => Applicative (UrT m) where
 instance Linear.Monad m => Monad (UrT m) where
   UrT ma >>= f = UrT (ma Linear.>>= (\(Ur a) -> case f a of (UrT mb) -> mb))
 
--- | Lift a computation to the @UrT@ monad, provided that the type @a@ can be used unrestriced.
+-- | Lift a computation to the @UrT@ monad, provided that the type @a@ can be used unrestricted.
 liftUrT :: (Movable a, Linear.Functor m) => m a %1 -> UrT m a
 liftUrT ma = UrT (Linear.fmap move ma)
 
@@ -40,4 +40,3 @@ liftUrT ma = UrT (Linear.fmap move ma)
 -- > evalUrT (liftUrT m) = m
 evalUrT :: Linear.Functor m => UrT m a %1 -> m a
 evalUrT u = Linear.fmap unur (runUrT u)
-
