@@ -69,6 +69,7 @@ library
     Data.Unrestricted.Internal.Movable
     Data.Unrestricted.Internal.Instances
     Data.Unrestricted.Internal.Ur
+    Data.Unrestricted.Internal.UrT
     Data.Unrestricted.Linear
     Data.V.Linear
     Data.V.Linear.Internal.V
