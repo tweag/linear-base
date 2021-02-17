@@ -1,5 +1,6 @@
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
@@ -39,10 +40,11 @@ import qualified Data.Bifunctor as Prelude
 import Data.Functor.Identity
 import Prelude.Linear
 import Prelude.Linear.Internal (runIdentity')
-import Data.Kind (Type)
+import Data.Kind (FUN, Type)
 import Data.Void
 import qualified Prelude
 import Control.Arrow (Kleisli(..))
+import GHC.Types (Multiplicity(One))
 
 
 -- | A Profunctor can be thought of as a computation that involves taking
@@ -178,6 +180,22 @@ instance Monoidal (,) () (->) where
   unit () = ()
 instance Monoidal Either Void (->) where
   f *** g = Prelude.bimap f g
+  unit = \case {}
+
+instance Profunctor (FUN 'One) where
+  dimap f g h x = g (h (f x))
+instance Strong (,) () (FUN 'One) where
+  first f (x, y) = (f x, y)
+instance Strong Either Void (FUN 'One) where
+  first f (Left x) = Left (f x)
+  first _ (Right y) = Right y
+instance Monoidal (,) () (FUN 'One) where
+  (f *** g) (a,x) = (f a, g x)
+  unit () = ()
+instance Monoidal Either Void (FUN 'One) where
+  f *** g = \case
+    Left a -> Left (f a)
+    Right a -> Right (g a)
   unit = \case {}
 
 -- | An exchange is a pair of translation functions that encode an
