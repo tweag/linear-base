@@ -29,7 +29,6 @@ module Data.Profunctor.Linear
   , Monoidal(..)
   , Strong(..)
   , Wandering(..)
-  , LinearArrow(..), getLA
   , Exchange(..)
   , Market(..), runMarket
   ) where
@@ -139,34 +138,30 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
 -- Instances --
 ---------------
 
--- | This newtype is needed to implement 'Profunctor' instances of @#->@.
-newtype LinearArrow a b = LA (a %1-> b)
 
--- | Temporary deconstructor since inference doesn't get it right
-getLA :: LinearArrow a b %1-> a %1-> b
-getLA (LA f) = f
 
-instance Profunctor LinearArrow where
-  dimap f g (LA h) = LA $ g . h . f
+instance Profunctor (FUN 'One) where
+  dimap f g h = g . h . f
 
-instance Strong (,) () LinearArrow where
-  first  (LA f) = LA $ \(a,b) -> (f a, b)
-  second (LA g) = LA $ \(a,b) -> (a, g b)
+instance Strong (,) () (FUN 'One) where
+  first  f (a, b) = (f a, b)
+  second g (a, b) = (a, g b)
 
-instance Strong Either Void LinearArrow where
-  first  (LA f) = LA $ either (Left . f) Right
-  second (LA g) = LA $ either Left (Right . g)
+instance Strong Either Void (FUN 'One) where
+  first  f = either (Left . f) Right
+  second g = either Left (Right . g)
 
-instance Wandering LinearArrow where
-  wander f (LA a_to_b) = LA $ \s -> runIdentity' $ f (Identity . a_to_b) s
+instance Wandering (FUN 'One) where
+  wander f a_to_b s = runIdentity' $ f (Identity . a_to_b) s
 
-instance Monoidal (,) () LinearArrow where
-  LA f *** LA g = LA $ \(a,x) -> (f a, g x)
-  unit = LA id
+instance Monoidal (,) () (FUN 'One) where
+  (f *** g) (a,x) = (f a, g x)
+  unit = id
 
-instance Monoidal Either Void LinearArrow where
-  LA f *** LA g = LA $ bimap f g
-  unit = LA $ \case {}
+instance Monoidal Either Void (FUN 'One) where
+  f *** g = bimap f g
+  unit = \case {}
+
 
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))
@@ -180,22 +175,6 @@ instance Monoidal (,) () (->) where
   unit () = ()
 instance Monoidal Either Void (->) where
   f *** g = Prelude.bimap f g
-  unit = \case {}
-
-instance Profunctor (FUN 'One) where
-  dimap f g h x = g (h (f x))
-instance Strong (,) () (FUN 'One) where
-  first f (x, y) = (f x, y)
-instance Strong Either Void (FUN 'One) where
-  first f (Left x) = Left (f x)
-  first _ (Right y) = Right y
-instance Monoidal (,) () (FUN 'One) where
-  (f *** g) (a,x) = (f a, g x)
-  unit () = ()
-instance Monoidal Either Void (FUN 'One) where
-  f *** g = \case
-    Left a -> Left (f a)
-    Right a -> Right (g a)
   unit = \case {}
 
 -- | An exchange is a pair of translation functions that encode an
