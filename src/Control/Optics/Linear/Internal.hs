@@ -104,8 +104,8 @@ _Nothing = prism (\() -> Nothing) Left
 traversed :: Traversable t => Traversal (t a) (t b) a b
 traversed = Optical $ wander traverse
 
-over :: Optic_ LinearArrow s t a b -> (a %1-> b) -> s %1-> t
-over (Optical l) f = getLA (l (LA f))
+over :: Optic_ (FUN 'One) s t a b -> (a %1-> b) -> s %1-> t
+over (Optical l) f = l f
 
 traverseOf :: Optic_ (Linear.Kleisli f) s t a b -> (a %1-> f b) -> s %1-> f t
 traverseOf (Optical l) f = Linear.runKleisli (l (Linear.Kleisli f))
@@ -122,8 +122,8 @@ gets (Optical l) f s = getConst' (NonLinear.runKleisli (l (NonLinear.Kleisli (Co
 set :: Optic_ (->) s t a b -> b -> s -> t
 set (Optical l) x = l (const x)
 
-setSwap :: Optic_ (Linear.Kleisli (Compose (LinearArrow b) ((,) a))) s t a b -> s %1-> b %1-> (a, t)
-setSwap (Optical l) s = getLA (getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (LA (\b -> (a,b)))))) s))
+setSwap :: Optic_ (Linear.Kleisli (Compose (FUN 'One b) ((,) a))) s t a b -> s %1-> b %1-> (a, t)
+setSwap (Optical l) s = getCompose (Linear.runKleisli (l (Linear.Kleisli (\a -> Compose (\b -> (a,b))))) s)
 
 match :: Optic_ (Market a b) s t a b -> s %1-> Either t a
 match (Optical l) = Prelude.snd (runMarket (l (Market id Right)))
