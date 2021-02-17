@@ -1,5 +1,5 @@
 name: linear-base
-version: 0.1.0
+version: 0.1.1
 cabal-version: >=1.10
 homepage: https://github.com/tweag/linear-base#README
 license: MIT
@@ -35,7 +35,9 @@ library
     Control.Optics.Linear.Prism
     Control.Optics.Linear.Traversal
     Data.Array.Destination
+    Data.Array.Destination.Internal
     Data.Array.Mutable.Linear
+    Data.Array.Mutable.Linear.Internal
     Data.Array.Mutable.Unlifted.Linear
     Data.Array.Polarized
     Data.Array.Polarized.Pull
@@ -51,6 +53,7 @@ library
     Data.Functor.Linear.Internal.Applicative
     Data.Functor.Linear.Internal.Traversable
     Data.HashMap.Mutable.Linear
+    Data.HashMap.Mutable.Linear.Internal
     Data.List.Linear
     Data.Maybe.Linear
     Data.Monoid.Linear
@@ -63,6 +66,7 @@ library
     Data.Profunctor.Kleisli.Linear
     Data.Profunctor.Linear
     Data.Set.Mutable.Linear
+    Data.Set.Mutable.Linear.Internal
     Data.Tuple.Linear
     Data.Unrestricted.Internal.Consumable
     Data.Unrestricted.Internal.Dupable
@@ -74,8 +78,10 @@ library
     Data.V.Linear.Internal.V
     Data.V.Linear.Internal.Instances
     Data.Vector.Mutable.Linear
+    Data.Vector.Mutable.Linear.Internal
     Debug.Trace.Linear
     Foreign.Marshal.Pure
+    Foreign.Marshal.Pure.Internal
     Prelude.Linear
     Prelude.Linear.Internal
     Streaming.Linear
@@ -88,6 +94,7 @@ library
     Streaming.Internal.Type
     System.IO.Linear
     System.IO.Resource
+    System.IO.Resource.Internal
     Unsafe.Linear
   build-depends:
     base >= 4.15 && < 5,
