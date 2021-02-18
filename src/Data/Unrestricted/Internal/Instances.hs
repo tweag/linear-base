@@ -11,6 +11,9 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE TypeOperators #-}
 
 -- | This module exports instances of Consumable, Dupable and Movable
 --
@@ -27,12 +30,14 @@ import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
+import GHC.Generics
 import GHC.Types hiding (Any)
 import Data.Monoid.Linear
 import Data.List.NonEmpty
 import qualified Prelude
 import qualified Unsafe.Linear as Unsafe
 import Data.V.Linear ()
+import Prelude.Linear.Internal ((&))
 
 instance Consumable () where
   consume () = ()
@@ -68,6 +73,7 @@ instance Dupable Int where
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Int#' and using it several times. /!\
   dupV (I# i) = Unsafe.toLinear (\j -> Data.pure (I# j)) i
+  dup2 (I# i) = Unsafe.toLinear (\j -> (I# j, I# j)) i
 
 instance Movable Int where
   -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -89,6 +95,7 @@ instance Dupable Double where
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Double#' and using it several times. /!\
   dupV (D# i) = Unsafe.toLinear (\j -> Data.pure (D# j)) i
+  dup2 (D# i) = Unsafe.toLinear (\j -> (D# j, D# j)) i
 
 instance Movable Double where
   -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -102,6 +109,7 @@ instance Consumable Char where
 
 instance Dupable Char where
   dupV (C# c) = Unsafe.toLinear (\x -> Data.pure (C# x)) c
+  dup2 (C# c) = Unsafe.toLinear (\x -> (C# x, C# x)) c
 
 instance Movable Char where
   move (C# c) = Unsafe.toLinear (\x -> Ur (C# x)) c
@@ -122,7 +130,6 @@ instance Movable Ordering where
   move EQ = Ur EQ
 
 -- TODO: instances for longer primitive tuples
--- TODO: default instances based on the Generic framework
 
 instance (Consumable a, Consumable b) => Consumable (a, b) where
   consume (a, b) = consume a `lseq` consume b
@@ -192,6 +199,7 @@ instance Consumable (Ur a) where
 
 instance Dupable (Ur a) where
   dupV (Ur a) = Data.pure (Ur a)
+  dup2 (Ur a) = (Ur a, Ur a)
 
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
@@ -239,3 +247,49 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
           combine (Ur x) (Ur y) = x Prelude.<> y
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)
 
+
+instance GConsumable V1 where
+  gconsume = \case
+instance GConsumable U1 where
+  gconsume U1 = ()
+instance (GConsumable f, GConsumable g) => GConsumable (f :+: g) where
+  gconsume (L1 a) = gconsume a
+  gconsume (R1 a) = gconsume a
+instance (GConsumable f, GConsumable g) => GConsumable (f :*: g) where
+  gconsume (a :*: b) = gconsume a `seqUnit` gconsume b
+instance Consumable c => GConsumable (K1 i c) where
+  gconsume (K1 c) = consume c
+instance GConsumable f => GConsumable (M1 i t f) where
+  gconsume (M1 a) = gconsume a
+
+instance GDupable V1 where
+  gdup2 = \case
+instance GDupable U1 where
+  gdup2 U1 = (U1, U1)
+instance (GDupable f, GDupable g) => GDupable (f :+: g) where
+  gdup2 (L1 a) = gdup2 a & \case (x, y) -> (L1 x, L1 y)
+  gdup2 (R1 a) = gdup2 a & \case (x, y) -> (R1 x, R1 y)
+instance (GDupable f, GDupable g) => GDupable (f :*: g) where
+  gdup2 (a :*: b) = gdup2 a & \case
+    (a1, a2) -> gdup2 b & \case
+      (b1, b2) -> (a1 :*: b1, a2 :*: b2)
+instance Dupable c => GDupable (K1 i c) where
+  gdup2 (K1 c) = dup2 c & \case (x, y) -> (K1 x, K1 y)
+instance GDupable f => GDupable (M1 i t f) where
+  gdup2 (M1 a) = gdup2 a & \case (x, y) -> (M1 x, M1 y)
+
+instance GMovable V1 where
+  gmove = \case
+instance GMovable U1 where
+  gmove U1 = Ur U1
+instance (GMovable f, GMovable g) => GMovable (f :+: g) where
+  gmove (L1 a) = gmove a & \case (Ur x) -> Ur (L1 x)
+  gmove (R1 a) = gmove a & \case (Ur x) -> Ur (R1 x)
+instance (GMovable f, GMovable g) => GMovable (f :*: g) where
+  gmove (a :*: b) = gmove a & \case
+    (Ur x) -> gmove b & \case
+      (Ur y) -> Ur (x :*: y)
+instance Movable c => GMovable (K1 i c) where
+  gmove (K1 c) = move c & \case (Ur x) -> Ur (K1 x)
+instance GMovable f => GMovable (M1 i t f) where
+  gmove (M1 a) = gmove a & \case (Ur x) -> Ur (M1 x)
