@@ -46,9 +46,15 @@ instance Prelude.Monoid (Endo a) where
   mempty = Endo id
 instance Monoid (Endo a)
 
+instance Monoid ()
+
 instance (Monoid a, Monoid b) => Monoid (a,b)
 
 instance Monoid a => Monoid (Dual a)
+
+instance Monoid All
+
+instance Monoid Any
 
 instance Monoid Ordering where
     mempty = EQ
