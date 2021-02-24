@@ -48,7 +48,7 @@ This is the strategy that we've followed so far for developing
    Example:
 
    ```haskell
-   foldr :: (a #-> b #-> b) -> b #-> [a] #-> b
+   foldr :: (a %1-> b %1-> b) -> b %1-> [a] %1-> b
    foldr f z = \case
      [] -> z
      x:xs -> f x (foldr f z xs)
