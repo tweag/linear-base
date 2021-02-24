@@ -17,7 +17,7 @@
 -- The basic idea is that a Kleisli arrow is like a function arrow
 -- and @Kleisli m a b@ is similar to a function from @a@ to @b@. Basically:
 --
--- > type Kleisli m a b = a #-> m b
+-- > type Kleisli m a b = a %1-> m b
 --
 -- == Why make this definition?
 --
