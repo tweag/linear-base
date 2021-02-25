@@ -1,6 +1,11 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE TypeOperators #-}
 module Data.Functor.Linear.Internal.Functor
   (
     Functor(..)
@@ -21,6 +26,8 @@ import qualified Control.Monad.Trans.Maybe as NonLinear
 import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Unrestricted.Internal.Consumable
+import GHC.Generics
+import qualified Unsafe.Linear as Unsafe
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -31,6 +38,8 @@ import Data.Unrestricted.Internal.Consumable
 -- of type @f a@.
 class Functor f where
   fmap :: (a %1-> b) -> f a %1-> f b
+  default fmap :: (Generic1 f, Functor (Rep1 f)) => (a %1-> b) -> f a %1-> f b
+  fmap f = Unsafe.toLinear to1 . fmap f . Unsafe.toLinear from1
 
 (<$>) :: Functor f => (a %1-> b) -> f a %1-> f b
 (<$>) = fmap
@@ -103,3 +112,26 @@ instance Functor (NonLinear.ContT r m) where
 instance Functor m => Functor (Strict.StateT s m) where
   fmap f (Strict.StateT x) = Strict.StateT (\s -> fmap (\(a, s') -> (f a, s')) (x s))
 
+------------------------
+-- Generics instances --
+------------------------
+
+instance Functor U1 where
+  fmap _ U1 = U1
+instance Functor V1 where
+  fmap _ = \case
+instance (Functor f, Functor g) => Functor (f :*: g) where
+  fmap f (l :*: r) = fmap f l :*: fmap f r
+instance (Functor f, Functor g) => Functor (f :+: g) where
+  fmap f (L1 a) = L1 (fmap f a)
+  fmap f (R1 a) = R1 (fmap f a)
+instance Functor (K1 i v) where
+  fmap _ (K1 c) = K1 c
+instance Functor f => Functor (M1 i c f) where
+  fmap f (M1 a) = M1 (fmap f a)
+instance Functor Par1 where
+  fmap f (Par1 a) = Par1 (f a)
+instance Functor f => Functor (Rec1 f) where
+  fmap f (Rec1 a) = Rec1 (fmap f a)
+instance (Functor f, Functor g) => Functor (f :.: g) where
+  fmap f (Comp1 a) = Comp1 (fmap (fmap f) a)
