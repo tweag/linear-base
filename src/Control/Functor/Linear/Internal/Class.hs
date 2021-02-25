@@ -6,6 +6,16 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 -- | This module contains all the classes eventually exported by
 -- "Control.Functor.Linear". Together with related operations.
@@ -35,6 +45,8 @@ import qualified Control.Monad as NonLinear ()
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Unrestricted.Internal.Consumable
+import GHC.Generics
+import qualified Unsafe.Linear as Unsafe
 
 
 -- # Control Functors
@@ -60,6 +72,9 @@ class Data.Functor f => Functor f where
   -- | Map a linear function @g@ over a control functor @f a@.
   -- Note that @g@ is used linearly over the single @a@ in @f a@.
   fmap :: (a %1-> b) %1-> f a %1-> f b
+  default fmap :: (Generic1 f, GFunctor One Zero (Rep1 f)) => (a %1-> b) %1-> f a %1-> f b
+  fmap f fa = gmap (One f) (Unsafe.toLinear from1 fa) & \case
+    (r, Zero) -> Unsafe.toLinear to1 r
 
 -- | Apply the control @fmap@ over a data functor.
 dataFmapDefault :: Functor f => (a %1-> b) -> f a %1-> f b
@@ -147,3 +162,28 @@ foldM :: forall m a b. Monad m => (b %1-> a %1-> m b) -> b %1-> [a] %1-> m b
 foldM _ i [] = return i
 foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 
+
+data Zero a = Zero
+data One a = One a
+class GFunctor i o f where
+  gmap :: i (a %1-> b) %1-> f a %1-> (f b, o (a %1-> b))
+
+instance (i ~ o) => GFunctor i o U1 where
+  gmap f U1 = (U1, f)
+instance (GFunctor i m l, GFunctor m o r) => GFunctor i o (l :*: r) where
+  gmap f (l :*: r) = gmap @i @m f l & \case
+    (l1, f') -> gmap @m @o f' r & \case
+      (r1, f'') -> (l1 :*: r1, f'')
+instance (GFunctor i o l, GFunctor i o r) => GFunctor i o (l :+: r) where
+  gmap f (L1 a) = gmap f a & \case (b, f') -> (L1 b, f')
+  gmap f (R1 a) = gmap f a & \case (b, f') -> (R1 b, f')
+instance (i ~ o) => GFunctor i o (K1 j v) where
+  gmap f (K1 c) = (K1 c, f)
+instance GFunctor i o f => GFunctor i o (M1 j c f) where
+  gmap f (M1 a) = gmap f a & \case (b, f') -> (M1 b, f')
+instance GFunctor One Zero Par1 where
+  gmap (One f) (Par1 a) = (Par1 (f a), Zero)
+instance (Generic1 f, GFunctor i o (Rep1 f)) => GFunctor i o (Rec1 f) where
+  gmap f (Rec1 a) = gmap f (Unsafe.toLinear from1 a) & \case (b, f') -> (Rec1 (Unsafe.toLinear to1 b), f')
+instance (Functor f, GFunctor i Zero g) => GFunctor i Zero (f :.: g) where
+  gmap f (Comp1 fga) = (Comp1 (fmap (\a -> gmap f a & \case (b, Zero) -> b) fga), Zero)
