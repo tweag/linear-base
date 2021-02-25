@@ -8,11 +8,14 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE EmptyCase #-}
 
 module Data.Functor.Linear.Internal.Traversable
   ( -- * Linear traversable hierarchy
     -- $ traversable
     Traversable(..)
+  , genericTraverse
   , mapM, sequenceA, for, forM
   , mapAccumL, mapAccumR
   ) where
@@ -25,6 +28,8 @@ import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
+import GHC.Generics
+import qualified Unsafe.Linear as Unsafe
 
 -- $traversable
 
@@ -126,3 +131,38 @@ instance Traversable (Const a) where
 instance Traversable (Either a) where
   sequence (Left x) = Control.pure (Left x)
   sequence (Right x) = Right Control.<$> x
+
+------------------------
+-- Generics instances --
+------------------------
+
+-- | Use this function to derive @Traversable@ when your datatype is an instance of @Generic1@, for example:
+--
+-- > data T a = ... deriving (Generic1)
+-- > instance Traversable T where traverse = genericTraverse
+genericTraverse :: (Generic1 t, Traversable (Rep1 t), Control.Applicative f) => (a %1-> f b) -> t a %1-> f (t b)
+genericTraverse f = Control.fmap (Unsafe.toLinear to1) . traverse f . Unsafe.toLinear from1
+
+instance Traversable U1 where
+  traverse _ U1 = Data.pure U1
+instance Traversable V1 where
+  traverse _ = \case
+instance (Traversable f, Traversable g) => Traversable (f :*: g) where
+  traverse f (l :*: r) = Data.liftA2 (:*:) (traverse f l) (traverse f r)
+instance (Traversable f, Traversable g) => Traversable (f :+: g) where
+  traverse f (L1 a) = L1 Data.<$> traverse f a
+  traverse f (R1 a) = R1 Data.<$> traverse f a
+instance Traversable f => Traversable (M1 i c f) where
+  traverse f (M1 a) = M1 Data.<$> traverse f a
+instance Traversable Par1 where
+  traverse f (Par1 a) = Par1 Data.<$> f a
+instance Traversable f => Traversable (Rec1 f) where
+  traverse f (Rec1 a) = Rec1 Data.<$> traverse f a
+instance (Traversable f, Traversable g) => Traversable (f :.: g) where
+  traverse f (Comp1 a) = Comp1 Data.<$> traverse (traverse f) a
+-- This is the only instance where we need @Control.Applicative@.
+instance Traversable (K1 i v) where
+  traverse _ (K1 c) = Control.pure (K1 c)
+-- For the Data.Applicative variant we'd have
+-- instance Moveable v => Traversable (K1 i v) where
+--   traverse _ (K1 c) = move c & \case (Ur u) -> Data.pure (K1 u)
