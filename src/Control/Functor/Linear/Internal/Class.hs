@@ -6,14 +6,12 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
@@ -39,13 +37,15 @@ module Control.Functor.Linear.Internal.Class
   , foldM
   ) where
 
-import Prelude (String)
+import Prelude (String, Bool(..))
 import Prelude.Linear.Internal
 import qualified Control.Monad as NonLinear ()
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Unrestricted.Internal.Consumable
 import GHC.Generics
+import GHC.Types (Type)
+import GHC.TypeLits
 import qualified Unsafe.Linear as Unsafe
 
 
@@ -72,9 +72,8 @@ class Data.Functor f => Functor f where
   -- | Map a linear function @g@ over a control functor @f a@.
   -- Note that @g@ is used linearly over the single @a@ in @f a@.
   fmap :: (a %1-> b) %1-> f a %1-> f b
-  default fmap :: (Generic1 f, GFunctor One Zero (Rep1 f)) => (a %1-> b) %1-> f a %1-> f b
-  fmap f fa = gmap (One f) (Unsafe.toLinear from1 fa) & \case
-    (r, Zero) -> Unsafe.toLinear to1 r
+  default fmap :: (Generic1 f, Functor (Rep1 f)) => (a %1-> b) %1-> f a %1-> f b
+  fmap f = Unsafe.toLinear to1 . fmap f . Unsafe.toLinear from1
 
 -- | Apply the control @fmap@ over a data functor.
 dataFmapDefault :: Functor f => (a %1-> b) -> f a %1-> f b
@@ -163,27 +162,61 @@ foldM _ i [] = return i
 foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 
 
-data Zero a = Zero
-data One a = One a
-class GFunctor i o f where
-  gmap :: i (a %1-> b) %1-> f a %1-> (f b, o (a %1-> b))
+type family (&&) (a :: Bool) (b :: Bool) :: Bool where
+  'True && 'True = 'True
+  a && b = 'False
 
-instance (i ~ o) => GFunctor i o U1 where
-  gmap f U1 = (U1, f)
-instance (GFunctor i m l, GFunctor m o r) => GFunctor i o (l :*: r) where
-  gmap f (l :*: r) = gmap @i @m f l & \case
-    (l1, f') -> gmap @m @o f' r & \case
-      (r1, f'') -> (l1 :*: r1, f'')
-instance (GFunctor i o l, GFunctor i o r) => GFunctor i o (l :+: r) where
-  gmap f (L1 a) = gmap f a & \case (b, f') -> (L1 b, f')
-  gmap f (R1 a) = gmap f a & \case (b, f') -> (R1 b, f')
-instance (i ~ o) => GFunctor i o (K1 j v) where
-  gmap f (K1 c) = (K1 c, f)
-instance GFunctor i o f => GFunctor i o (M1 j c f) where
-  gmap f (M1 a) = gmap f a & \case (b, f') -> (M1 b, f')
-instance GFunctor One Zero Par1 where
-  gmap (One f) (Par1 a) = (Par1 (f a), Zero)
-instance (Generic1 f, GFunctor i o (Rep1 f)) => GFunctor i o (Rec1 f) where
-  gmap f (Rec1 a) = gmap f (Unsafe.toLinear from1 a) & \case (b, f') -> (Rec1 (Unsafe.toLinear to1 b), f')
-instance (Functor f, GFunctor i Zero g) => GFunctor i Zero (f :.: g) where
-  gmap f (Comp1 fga) = (Comp1 (fmap (\a -> gmap f a & \case (b, Zero) -> b) fga), Zero)
+type family NoPar1 (f :: Type -> Type) :: Bool where
+  NoPar1 U1 = 'True
+  NoPar1 (K1 i v) = 'True
+  NoPar1 (l :*: r) = NoPar1 l && NoPar1 r
+  NoPar1 (l :+: r) = NoPar1 l && NoPar1 r
+  NoPar1 (l :.: r) = NoPar1 l
+  NoPar1 (M1 i c f) = NoPar1 f
+  NoPar1 (Rec1 f) = NoPar1 f
+  NoPar1 Par1 = 'False
+
+class NoPar1 f ~ 'True => Unused f where
+  unused :: f a %1-> f b
+instance Unused U1 where
+  unused U1 = U1
+instance Unused (K1 i v) where
+  unused (K1 c) = K1 c
+instance (Unused l, Unused r) => Unused (l :*: r) where
+  unused (l :*: r) = unused l :*: unused r
+instance (Unused l, Unused r) => Unused (l :+: r) where
+  unused (L1 l) = L1 (unused l)
+  unused (R1 r) = R1 (unused r)
+instance Unused l => Unused (l :.: r) where
+  unused (Comp1 a) = Comp1 (unused a)
+instance Unused f => Unused (M1 i c f) where
+  unused (M1 a) = M1 (unused a)
+instance Unused f => Unused (Rec1 f) where
+  unused (Rec1 a) = Rec1 (unused a)
+
+class (noPar1l ~ NoPar1 l, noPar1r ~ NoPar1 r) => EitherNoPar1 noPar1l noPar1r l r where
+  eitherNoPar1Map :: (a %1-> b) %1-> (l :*: r) a %1-> (l :*: r) b
+instance (Unused l, Functor r, NoPar1 r ~ 'False) => EitherNoPar1 'True 'False l r where
+  eitherNoPar1Map f (l :*: r) = unused l :*: fmap f r
+instance (Unused r, Functor l, NoPar1 l ~ 'False) => EitherNoPar1 'False 'True l r where
+  eitherNoPar1Map f (l :*: r) = fmap f l :*: unused r
+type MessageMany = 'Text "Can't derive an instance of Functor. One of the constructors of your datatype uses the type parameter more than once."
+instance ('False ~ NoPar1 l, 'False ~ NoPar1 r, TypeError MessageMany) => EitherNoPar1 'False 'False l r where
+  eitherNoPar1Map = eitherNoPar1Map
+type MessageZero = 'Text "Can't derive an instance of Functor. One of the constructors of your datatype does not use the type parameter."
+instance ('True ~ NoPar1 l, 'True ~ NoPar1 r, TypeError MessageZero) => EitherNoPar1 'True 'True l r where
+  eitherNoPar1Map = eitherNoPar1Map
+
+instance (Functor l, Functor r) => Functor (l :+: r) where
+  fmap f (L1 a) = L1 (fmap f a)
+  fmap f (R1 a) = R1 (fmap f a)
+instance Functor f => Functor (M1 j c f) where
+  fmap f (M1 a) = M1 (fmap f a)
+instance Functor Par1 where
+  fmap f (Par1 a) = Par1 (f a)
+instance Functor f => Functor (Rec1 f) where
+  fmap f (Rec1 a) = Rec1 (fmap f a)
+instance (Functor f, Functor g) => Functor (f :.: g) where
+  fmap f (Comp1 fga) = Comp1 (fmap (fmap f) fga)
+instance (Data.Functor l, Data.Functor r, EitherNoPar1 b1 b2 l r) => Functor (l :*: r) where
+  fmap = eitherNoPar1Map
