@@ -10,7 +10,7 @@
 module Prelude.Linear.Internal where
 
 import qualified Prelude as Prelude
-import qualified Unsafe.Linear as Unsafe
+import qualified Unsafe.Linear.Internal as Unsafe
 import Data.Functor.Identity
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are

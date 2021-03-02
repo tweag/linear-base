@@ -11,7 +11,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
@@ -46,8 +45,6 @@ import Data.Unrestricted.Internal.Consumable
 import GHC.Generics
 import GHC.Types (Type)
 import GHC.TypeLits
-import qualified Unsafe.Linear as Unsafe
-
 
 -- # Control Functors
 -------------------------------------------------------------------------------
@@ -72,8 +69,6 @@ class Data.Functor f => Functor f where
   -- | Map a linear function @g@ over a control functor @f a@.
   -- Note that @g@ is used linearly over the single @a@ in @f a@.
   fmap :: (a %1-> b) %1-> f a %1-> f b
-  default fmap :: (Generic1 f, Functor (Rep1 f)) => (a %1-> b) %1-> f a %1-> f b
-  fmap f = Unsafe.toLinear to1 . fmap f . Unsafe.toLinear from1
 
 -- | Apply the control @fmap@ over a data functor.
 dataFmapDefault :: Functor f => (a %1-> b) -> f a %1-> f b
@@ -161,6 +156,10 @@ foldM :: forall m a b. Monad m => (b %1-> a %1-> m b) -> b %1-> [a] %1-> m b
 foldM _ i [] = return i
 foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 
+
+------------------------
+-- Generics instances --
+------------------------
 
 type family (&&) (a :: Bool) (b :: Bool) :: Bool where
   'True && 'True = 'True

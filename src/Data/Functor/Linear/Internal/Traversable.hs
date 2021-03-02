@@ -15,7 +15,6 @@ module Data.Functor.Linear.Internal.Traversable
   ( -- * Linear traversable hierarchy
     -- $ traversable
     Traversable(..)
-  , genericTraverse
   , mapM, sequenceA, for, forM
   , mapAccumL, mapAccumR
   ) where
@@ -29,7 +28,6 @@ import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
 import GHC.Generics
-import qualified Unsafe.Linear as Unsafe
 
 -- $traversable
 
@@ -135,13 +133,6 @@ instance Traversable (Either a) where
 ------------------------
 -- Generics instances --
 ------------------------
-
--- | Use this function to derive @Traversable@ when your datatype is an instance of @Generic1@, for example:
---
--- > data T a = ... deriving (Generic1)
--- > instance Traversable T where traverse = genericTraverse
-genericTraverse :: (Generic1 t, Traversable (Rep1 t), Control.Applicative f) => (a %1-> f b) -> t a %1-> f (t b)
-genericTraverse f = Control.fmap (Unsafe.toLinear to1) . traverse f . Unsafe.toLinear from1
 
 instance Traversable U1 where
   traverse _ U1 = Data.pure U1

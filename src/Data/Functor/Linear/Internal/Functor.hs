@@ -1,7 +1,6 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE EmptyCase #-}
@@ -27,7 +26,6 @@ import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Unrestricted.Internal.Consumable
 import GHC.Generics
-import qualified Unsafe.Linear as Unsafe
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -38,8 +36,6 @@ import qualified Unsafe.Linear as Unsafe
 -- of type @f a@.
 class Functor f where
   fmap :: (a %1-> b) -> f a %1-> f b
-  default fmap :: (Generic1 f, Functor (Rep1 f)) => (a %1-> b) -> f a %1-> f b
-  fmap f = Unsafe.toLinear to1 . fmap f . Unsafe.toLinear from1
 
 (<$>) :: Functor f => (a %1-> b) -> f a %1-> f b
 (<$>) = fmap
