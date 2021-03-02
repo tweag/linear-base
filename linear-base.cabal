@@ -178,7 +178,7 @@ benchmark mutable-data
 custom-setup
  setup-depends:
    base >= 4 && <5,
-   Cabal >= 3.4.0.0,
+   Cabal,
    cabal-doctest
 
 test-suite doctests
