@@ -17,8 +17,15 @@ module Unsafe.Linear
     toLinear,
     toLinear2,
     toLinear3,
-    Generically(..), unGenerically,
-    Generically1(..), unGenerically1,
+    -- * Generics
+    Generically(..),
+    unGenerically,
+    to,
+    from,
+    Generically1(..),
+    unGenerically1,
+    to1,
+    from1,
   )
   where
 

@@ -11,7 +11,7 @@ module Data.V.Linear.Internal.Instances where
 
 import Data.V.Linear.Internal.V
 import Prelude.Linear.Internal
-import qualified Unsafe.Linear as Unsafe
+import qualified Unsafe.Linear.Internal as Unsafe
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Traversable as Data
