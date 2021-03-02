@@ -8,7 +8,7 @@ author: Tweag
 maintainer: arnaud.spiwack@tweag.io
 copyright: (c) Tweag Holding and affiliates
 category: Prelude
-build-type: Simple
+build-type: Custom
 synopsis: Standard library for linear types.
 description: Please see README.md.
 
@@ -175,38 +175,21 @@ benchmark mutable-data
   ghc-options: -rtsopts=ignore
   default-language: Haskell2010
 
--- TODO: Uncomment below block and set 'build-type' to 'Custom' to enable
--- doctests once cabal-install 3.4 is released.
---
--- Longer story:
---
--- cabal-install has a piece of code[1] which injects a Cabal upper bound to
--- packages with custom Setup.hs's. And this happens after the overrides,
--- so the usual mechanisms of overriding upper bounds does not work.
---
--- GHC 9 comes with Cabal 3.4, which is above that bound. So, when using
--- GHC 9 with cabal-install 3.2; `build-type: Custom` causes another Cabal
--- library to be built, and that causes a strange type error ("expecting IO,
--- but got IO"), which I suspect because it conflicts with the existing boot
--- packages.
---
--- [1]: https://github.com/haskell/cabal/blob/d28c80acc69b9e7fa992a0b2b7fced937734b238/cabal-install/src/Distribution/Client/ProjectPlanning.hs#L1132-L1149
+custom-setup
+ setup-depends:
+   base >= 4 && <5,
+   Cabal,
+   cabal-doctest
 
--- custom-setup
---  setup-depends:
---    base >= 4 && <5,
---    Cabal,
---    cabal-doctest
---
--- test-suite doctests
---   type:                 exitcode-stdio-1.0
---   hs-source-dirs:       test/
---   main-is:              Doctest.hs
---   build-depends:        base
---                       , doctest
---                       , linear-base
---   ghc-options:          -Wall -threaded
---   default-language:     Haskell2010
+test-suite doctests
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       test/
+  main-is:              Doctest.hs
+  build-depends:        base
+                      , doctest
+                      , linear-base
+  ghc-options:          -Wall -threaded
+  default-language:     Haskell2010
 
 source-repository head
   type: git

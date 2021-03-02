@@ -18,9 +18,6 @@ extra-deps:
   commit: c98aa9e33bf6871098d6f4ac94eeaac10383d696
   subdirs:
     - hedgehog
-# https://github.com/sol/doctest/pull/272
-- git: https://github.com/utdemir/doctest.git
-  commit: 090cccaf12c5643ca80f8c2afe693a488277d365
 
 nix:
   enable: true
