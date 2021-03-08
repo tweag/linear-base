@@ -279,8 +279,7 @@ refLookup = defProperty $ do
   kvs <- forAll keyVals
   k <- forAll key
   let listLookup = List.lookup k (List.reverse kvs)
-  let (#.) = (Linear..)
-  let hmLookup = HashMap.fromList kvs (getFst #. HashMap.lookup k)
+  let hmLookup = HashMap.fromList kvs (getFst Linear.. HashMap.lookup k)
   listLookup === unur hmLookup
 
 refMap :: Property
@@ -288,16 +287,14 @@ refMap = defProperty $ do
   let f k v = if mod k 5 < 3 then Just (show k ++ v) else Nothing
   let f' (k,v) = fmap ((,) k) (f k v)
   kvs <- forAll keyVals
-  let (#.) = (Linear..)
   let mappedList = mapMaybe f' (nubOrdOn fst (List.reverse kvs))
-  let mappedHm = HashMap.fromList kvs (HashMap.toList #. HashMap.mapMaybeWithKey f)
+  let mappedHm = HashMap.fromList kvs (HashMap.toList Linear.. HashMap.mapMaybeWithKey f)
   sort mappedList === sort (unur mappedHm)
 
 refSize :: Property
 refSize = defProperty $ do
   kvs <- forAll keyVals
-  let (#.) = (Linear..)
-  length (nubOrdOn fst kvs) === unur (HashMap.fromList kvs (getFst #. HashMap.size))
+  length (nubOrdOn fst kvs) === unur (HashMap.fromList kvs (getFst Linear.. HashMap.size))
 
 refToListFromList :: Property
 refToListFromList = defProperty $ do
@@ -382,7 +379,6 @@ refIntersectionWith = defProperty $ do
 shrinkToFitTest :: Property
 shrinkToFitTest = defProperty $ do
   kvs <- forAll keyVals
-  let (#.) = (Linear..)
-  let shrunk = (HashMap.fromList kvs (HashMap.toList #. HashMap.shrinkToFit))
+  let shrunk = (HashMap.fromList kvs (HashMap.toList Linear.. HashMap.shrinkToFit))
   sort (nubOrdOn fst (List.reverse kvs)) === sort (unur shrunk)
 

@@ -63,14 +63,14 @@ instance Exception InjectedError
 -------------------------------------------------------------------------------
 
 invertNonGCList :: Property
-invertNonGCList = property Prelude.$ do
+invertNonGCList = property $ do
   xs <- forAll list
   let xs' = unur $
         Manual.withPool (\p -> move $ List.toList $ List.ofList xs p)
   xs === xs'
 
 mapIdNonGCList :: Property
-mapIdNonGCList = property Prelude.$ do
+mapIdNonGCList = property $ do
   xs <- forAll list
   let boolTest = unur $ Manual.withPool $ \p ->
         dup3 p & \(p0,p1,p2) ->
@@ -78,7 +78,7 @@ mapIdNonGCList = property Prelude.$ do
   assert boolTest
 
 testExecptionOnMem :: Property
-testExecptionOnMem = property Prelude.$ do
+testExecptionOnMem = property $ do
   xs <- forAll list
   let bs = xs ++ (throw InjectedError)
   let writeBadList = Manual.withPool (move . List.toList . List.ofRList bs)
@@ -86,7 +86,7 @@ testExecptionOnMem = property Prelude.$ do
   evalIO (catch @InjectedError (void (evaluate writeBadList)) ignoreCatch)
 
 nonGCHeapSort :: Property
-nonGCHeapSort = property Prelude.$ do
+nonGCHeapSort = property $ do
   xs <- forAll list
   let ys :: [(Int,())] = zip xs $ Prelude.replicate (Prelude.length xs) ()
   (Heap.sort ys) === (reverse $ sort ys)

@@ -18,7 +18,7 @@
 -- >>> import qualified Prelude
 -- >>> :{
 --  linearWriteToFile :: IO ()
---  linearWriteToFile = Linear.run Prelude.$ Control.do
+--  linearWriteToFile = Linear.run $ Control.do
 --    handle1 <- Linear.openFile "/home/user/test.txt" Linear.WriteMode
 --    handle2 <- Linear.hPutStrLn handle1 (Text.pack "hello there")
 --    () <- Linear.hClose handle2
