@@ -31,8 +31,12 @@ import GHC.Types hiding (Any)
 import Data.Monoid.Linear
 import Data.List.NonEmpty
 import qualified Prelude
+import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import Data.V.Linear ()
+import Data.V.Linear.Internal.V (V(..), theLength)
+import qualified Data.Vector as Vector
+import GHC.TypeLits
 
 instance Consumable () where
   consume () = ()
@@ -141,6 +145,18 @@ instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
 
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
+
+-- XXX: The Consumable and Dupable instances for V will be easier to define (in
+-- fact direct, we may consider adding a deriving-via combinator) when we have a
+-- traversable-by-a-data-applicative class see #190.
+
+instance (KnownNat n, Consumable a) => Consumable (V n a) where
+  consume (V xs) = consume (Unsafe.toLinear Vector.toList xs)
+
+instance (KnownNat n, Dupable a) => Dupable (V n a) where
+  dupV (V xs) =
+    V . Unsafe.toLinear (Vector.fromListN (theLength @n)) Data.<$>
+    dupV (Unsafe.toLinear Vector.toList xs)
 
 instance Consumable a => Consumable (Prelude.Maybe a) where
   consume Prelude.Nothing = ()
