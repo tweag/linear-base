@@ -201,10 +201,10 @@ instance (Unused r, Functor l, NoPar1 l ~ 'False) => EitherNoPar1 'False 'True l
   eitherNoPar1Map f (l :*: r) = fmap f l :*: unused r
 type MessageMany = 'Text "Can't derive an instance of Functor. One of the constructors of your datatype uses the type parameter more than once."
 instance ('False ~ NoPar1 l, 'False ~ NoPar1 r, TypeError MessageMany) => EitherNoPar1 'False 'False l r where
-  eitherNoPar1Map = eitherNoPar1Map
+  eitherNoPar1Map = error "This method is never called because it causes a type error"
 type MessageZero = 'Text "Can't derive an instance of Functor. One of the constructors of your datatype does not use the type parameter."
 instance ('True ~ NoPar1 l, 'True ~ NoPar1 r, TypeError MessageZero) => EitherNoPar1 'True 'True l r where
-  eitherNoPar1Map = eitherNoPar1Map
+  eitherNoPar1Map = error "This method is never called because it causes a type error"
 
 instance (Functor l, Functor r) => Functor (l :+: r) where
   fmap f (L1 a) = L1 (fmap f a)
