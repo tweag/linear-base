@@ -359,7 +359,7 @@ enumFromThen :: forall e m. (Control.Monad m, Enum e) =>
   e -> e -> AffineStream (Of e) m ()
 enumFromThen e e' = iterate e enumStep where
   enumStep :: e -> e
-  enumStep enum = toEnum Prelude.$
+  enumStep enum = toEnum $
     (fromEnum enum) + ((fromEnum e') - (fromEnum e))
     -- Think:  \enum -> enum + stepSize where stepSize = (e1 - e0)
 
