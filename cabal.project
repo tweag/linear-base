@@ -1,5 +1,4 @@
 packages: *.cabal
-allow-newer: all
 
 package linear-base
   ghc-options: -Wall -Werror
