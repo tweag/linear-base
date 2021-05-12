@@ -1,4 +1,4 @@
-resolver: lts-17.1
+resolver: lts-17.11
 compiler: ghc-9.0.1
 allow-newer: true
 system-ghc: true
@@ -6,21 +6,8 @@ system-ghc: true
 packages:
 - '.'
 
-# If you update the extra-deps, make sure to also update cabal.project
 extra-deps:
-# To get the library gauge for benchmarks working:
-- git: https://github.com/Divesh-Otwani/foundation.git
-  commit: ad709f41a8c4671f2f96fdf9c93cd62d3e7bca9f
-  subdirs:
-    - basement
-# https://github.com/hedgehogqa/haskell-hedgehog/pull/392
-- git: https://github.com/utdemir/haskell-hedgehog.git
-  commit: c98aa9e33bf6871098d6f4ac94eeaac10383d696
-  subdirs:
-    - hedgehog
-# https://github.com/sol/doctest/pull/272
-- git: https://github.com/utdemir/doctest.git
-  commit: 090cccaf12c5643ca80f8c2afe693a488277d365
+- doctest-0.18.1
 
 nix:
   enable: true
