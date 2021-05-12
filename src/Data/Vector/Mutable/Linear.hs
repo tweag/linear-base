@@ -12,6 +12,7 @@
 -- == Example
 --
 -- >>> :set -XLinearTypes
+-- >>> :set -XNoImplicitPrelude
 -- >>> import Prelude.Linear
 -- >>> import qualified Data.Vector.Mutable.Linear as Vector
 -- >>> :{

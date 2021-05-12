@@ -24,7 +24,7 @@
 -- >>> import Data.Unrestricted.Linear
 -- >>> import qualified Foreign.Marshal.Pure as Manual
 -- >>> :{
---   nothingWith3 :: Pool %1-> Ur Int
+--   nothingWith3 :: Manual.Pool %1-> Ur Int
 --   nothingWith3 pool = move (Manual.deconstruct (Manual.alloc 3 pool))
 -- :}
 --
