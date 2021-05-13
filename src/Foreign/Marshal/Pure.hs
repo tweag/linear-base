@@ -1,5 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-
 -- | This module introduces primitives to /safely/ allocate and discard system
 -- heap memory (/not GC heap memory/) for storing  values /explicitly/.
 -- (Basically, a haskell program has a GC that at runtime, manages its own heap
