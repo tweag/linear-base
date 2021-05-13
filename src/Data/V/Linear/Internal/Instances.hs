@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS -Wno-orphans #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}

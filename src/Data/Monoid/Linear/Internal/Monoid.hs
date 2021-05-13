@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
