@@ -5,7 +5,7 @@
 -- Since @UrT@ is a regular monad it can be used with the regular do-notation.
 --
 -- A good use case is when you have a linear resource, then you can use @UrT (`Linear.State` s) a@
--- to monipulate the resource linearly with regular do-notation.
+-- to manipulate the resource linearly with regular do-notation.
 module Data.Unrestricted.Internal.UrT
   (
     UrT(..)
