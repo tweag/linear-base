@@ -1,5 +1,6 @@
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
@@ -28,7 +29,6 @@ module Data.Profunctor.Linear
   , Monoidal(..)
   , Strong(..)
   , Wandering(..)
-  , LinearArrow(..), getLA
   , Exchange(..)
   , Market(..), runMarket
   ) where
@@ -39,10 +39,11 @@ import qualified Data.Bifunctor as Prelude
 import Data.Functor.Identity
 import Prelude.Linear
 import Prelude.Linear.Internal (runIdentity')
-import Data.Kind (Type)
+import Data.Kind (FUN, Type)
 import Data.Void
 import qualified Prelude
 import Control.Arrow (Kleisli(..))
+import GHC.Types (Multiplicity(One))
 
 
 -- | A Profunctor can be thought of as a computation that involves taking
@@ -137,34 +138,30 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
 -- Instances --
 ---------------
 
--- | This newtype is needed to implement 'Profunctor' instances of @#->@.
-newtype LinearArrow a b = LA (a %1-> b)
 
--- | Temporary deconstructor since inference doesn't get it right
-getLA :: LinearArrow a b %1-> a %1-> b
-getLA (LA f) = f
 
-instance Profunctor LinearArrow where
-  dimap f g (LA h) = LA $ g . h . f
+instance Profunctor (FUN 'One) where
+  dimap f g h = g . h . f
 
-instance Strong (,) () LinearArrow where
-  first  (LA f) = LA $ \(a,b) -> (f a, b)
-  second (LA g) = LA $ \(a,b) -> (a, g b)
+instance Strong (,) () (FUN 'One) where
+  first  f (a, b) = (f a, b)
+  second g (a, b) = (a, g b)
 
-instance Strong Either Void LinearArrow where
-  first  (LA f) = LA $ either (Left . f) Right
-  second (LA g) = LA $ either Left (Right . g)
+instance Strong Either Void (FUN 'One) where
+  first  f = either (Left . f) Right
+  second g = either Left (Right . g)
 
-instance Wandering LinearArrow where
-  wander f (LA a_to_b) = LA $ \s -> runIdentity' $ f (Identity . a_to_b) s
+instance Wandering (FUN 'One) where
+  wander f a_to_b s = runIdentity' $ f (Identity . a_to_b) s
 
-instance Monoidal (,) () LinearArrow where
-  LA f *** LA g = LA $ \(a,x) -> (f a, g x)
-  unit = LA id
+instance Monoidal (,) () (FUN 'One) where
+  (f *** g) (a,x) = (f a, g x)
+  unit = id
 
-instance Monoidal Either Void LinearArrow where
-  LA f *** LA g = LA $ bimap f g
-  unit = LA $ \case {}
+instance Monoidal Either Void (FUN 'One) where
+  f *** g = bimap f g
+  unit = \case {}
+
 
 instance Profunctor (->) where
   dimap f g h x = g (h (f x))

@@ -135,6 +135,9 @@ maybeFlip i j (x,y) =  i < j & \case
 
 The `(&)` operator is like `($)` with the argument order flipped.
 
+This workaround will no longer be needed in GHC 9.2, where this limitation
+has been lifted and `case` can be used in a linear context.
+
 ### `let` and `where` bindings are not linear
 
 The following will **fail** to type check:
