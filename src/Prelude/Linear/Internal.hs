@@ -1,5 +1,5 @@
 -- | This is a very very simple prelude, which doesn't depend on anything else
--- in the linear-base library (except possibly "Unsafe.Linear").
+-- in the linear-base library.
 
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LambdaCase #-}
@@ -9,8 +9,6 @@
 
 module Prelude.Linear.Internal where
 
-import qualified Prelude as Prelude
-import qualified Unsafe.Linear as Unsafe
 import Data.Functor.Identity
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
@@ -41,7 +39,7 @@ asTypeOf = const
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
 seq :: a -> b %q-> b
-seq x y = Unsafe.toLinear (Prelude.seq x) y
+seq !_ y = y
 
 ($!) :: (a %p-> b) %q-> a %p-> b
 ($!) f !a = f a
