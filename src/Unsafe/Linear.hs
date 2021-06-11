@@ -1,5 +1,8 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE LinearTypes #-}
 
@@ -29,8 +32,11 @@ import qualified Unsafe.Coerce as NonLinear
 import GHC.Exts (TYPE, RuntimeRep)
 
 -- | Linearly typed @unsafeCoerce@
-coerce :: a %1-> b
-coerce = NonLinear.unsafeCoerce NonLinear.unsafeCoerce
+coerce :: forall a b. a %1-> b
+coerce a =
+  case NonLinear.unsafeEqualityProof @a @b of
+    NonLinear.UnsafeRefl -> a
+{-# INLINE coerce #-}
 
 -- | Converts an unrestricted function into a linear function
 toLinear
