@@ -4,8 +4,8 @@ env:
   # Bump this number to invalidate the Github-actions cache
   cache-invalidation-key: 0
 jobs:
-  tests:
-    name: Build & Test
+  cabal-test:
+    name: cabal test
     env:
       NIXSHELL: nix-shell --pure
     runs-on: ubuntu-latest
@@ -35,3 +35,17 @@ jobs:
       run: $NIXSHELL --run "cabal test"
     - name: Haddock
       run: $NIXSHELL --run "cabal haddock"
+  stack-build:
+    name: stack build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - name: Cache dependencies
+      uses: actions/cache@v2.1.6
+      with:
+        path: ~/.stack
+        key: stack-${{ runner.os }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}
+    - name: Upgrade stack
+      run: stack upgrade
+    - name: Build
+      run: stack build linear-base:test
