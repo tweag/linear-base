@@ -48,4 +48,4 @@ jobs:
     - name: Upgrade stack
       run: stack upgrade
     - name: Build
-      run: stack build linear-base:test
+      run: stack build --pedantic --test --bench --no-run-tests --no-run-benchmarks
