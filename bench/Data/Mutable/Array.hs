@@ -8,19 +8,23 @@ module Data.Mutable.Array (benchmarks) where
 import Gauge
 import Data.Function ((&))
 import qualified Data.Unrestricted.Linear as Linear
-import Data.List (foldl')
 import qualified Prelude.Linear as Linear
+import Control.DeepSeq (rnf)
 
 import qualified Data.Array.Mutable.Linear as Array.Linear
 import qualified Data.Vector
 
+dontFuse :: a -> a
+dontFuse a = a
+{-# NOINLINE dontFuse #-}
 
 arr_size :: Int
 arr_size = 10_000_000
 
 benchmarks :: Benchmark
 benchmarks = bgroup "arrays"
-  [ runImpls "map" bMap arr_size
+  [ runImpls "toList" bToList arr_size
+  , runImpls "map" bMap arr_size
   , runImpls "reads" bReads arr_size
   ]
 
@@ -47,6 +51,23 @@ runImpls name impls size =
 
 --------------------------------------------------------------------------------
 
+bToList :: Impls
+bToList = Impls linear dataVector
+  where
+   linear :: Array.Linear.Array Int %1-> ()
+   linear hm =
+     hm
+       Linear.& Array.Linear.toList
+       Linear.& Linear.lift rnf
+       Linear.& Linear.unur
+
+   dataVector :: Data.Vector.Vector Int -> ()
+   dataVector hm =
+     hm
+       & Data.Vector.toList
+       & rnf
+{-# NOINLINE bToList #-}
+
 bMap :: Impls
 bMap = Impls linear dataVector
   where
@@ -54,17 +75,18 @@ bMap = Impls linear dataVector
    linear hm =
      hm
        Linear.& Array.Linear.map (+1)
-       Linear.& Array.Linear.toList
-       Linear.& Linear.lift (foldl' (+) 0)
-       Linear.& Linear.unur
+       Linear.& Array.Linear.unsafeGet 5
        Linear.& (`Linear.lseq` ())
 
    dataVector :: Data.Vector.Vector Int -> ()
    dataVector hm =
      hm
        & Data.Vector.map (+1)
-       & Data.Vector.toList
-       & foldl' (+) 0
+       & dontFuse -- This looks like cheating, I know. But we're trying to measure
+                  -- the speed of `map`, and without this, `vector` fuses the `map`
+                  -- with the subsequent `index` to skip writing to the rest of the
+                  -- vector.
+       & (`Data.Vector.unsafeIndex` 5)
        & (`seq` ())
 {-# NOINLINE bMap #-}
 
