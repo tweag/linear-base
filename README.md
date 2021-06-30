@@ -2,7 +2,8 @@
 
 [![License MIT](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/tweag/linear-base/blob/master/LICENSE)
 [![Build status](https://badge.buildkite.com/5b60ab93dadba234a95e04e6568985918552dcc9e7685ede0d.svg?branch=master)](https://buildkite.com/tweag-1/linear-base)
-
+[![Hackage](https://img.shields.io/hackage/v/linear-base.svg?style=flat&color=brightgreen)][hackage-pkg]
+[![Stackage](https://stackage.org/package/linear-base/badge/nightly)][stackage-pkg]
 
 Linear base is a standard library for developing applications with linear
 types. It is named `linear-base` to be an analog to the original [`base`]
@@ -29,7 +30,7 @@ _Why do you need `linear-base` to write linear projects?_
 ## Getting started
 
 `-XLinearTypes` is released with GHC 9, and `linear-base` is released
-on [Hackage](https://hackage.haskell.org/package/linear-base).
+on [Hackage][hackage-pkg] and [Stackage][stackage-pkg].
 
 All source files with linear types need a language extension pragma at
 the top:
@@ -91,3 +92,5 @@ Copyright © Tweag Holding and its affiliates.
 [`base`]: https://hackage.haskell.org/package/base
 [User Guide]: ./docs/USER_GUIDE.md
 [Design Document]: ./docs/DESIGN.md
+[hackage-pkg]: https://hackage.haskell.org/package/linear-base
+[stackage-pkg]: https://www.stackage.org/nightly/package/linear-base
