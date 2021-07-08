@@ -44,7 +44,7 @@ import Prelude
   , (-))
 import qualified Prelude as Prelude
 import Prelude.Linear.Internal
-import qualified Unsafe.Linear as Unsafe
+import qualified Unsafe.Linear.Internal as Unsafe
 
 {- Developers Note
 
@@ -165,4 +165,3 @@ iterate dup init =
   -- An unsafe cast to prove the simple equality.
   pr1 :: forall k. 0 :~: (k - 1) -> k :~: 1
   pr1 Refl = Unsafe.coerce Refl
-

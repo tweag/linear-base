@@ -12,7 +12,7 @@ module Data.V.Linear.Internal.Instances where
 
 import Data.V.Linear.Internal.V
 import Prelude.Linear.Internal
-import qualified Unsafe.Linear as Unsafe
+import qualified Unsafe.Linear.Internal as Unsafe
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Traversable as Data
@@ -35,4 +35,3 @@ instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
     (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Data.<$>
     Data.traverse f (Unsafe.toLinear Vector.toList xs)
-

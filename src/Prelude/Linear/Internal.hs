@@ -63,4 +63,3 @@ forget f a = f a
 -- XXX: Temporary, until newtype record projections are linear.
 runIdentity' :: Identity a %p-> a
 runIdentity' (Identity x) = x
-

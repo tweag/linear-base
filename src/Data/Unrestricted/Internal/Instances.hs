@@ -33,7 +33,7 @@ import Data.Monoid.Linear
 import Data.List.NonEmpty
 import qualified Prelude
 import Prelude.Linear.Internal
-import qualified Unsafe.Linear as Unsafe
+import qualified Unsafe.Linear.Internal as Unsafe
 import Data.V.Linear ()
 import Data.V.Linear.Internal.V (V(..), theLength)
 import qualified Data.Vector as Vector
@@ -255,4 +255,3 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
     where combine :: Prelude.Semigroup a => Ur a %1-> Ur a %1-> a
           combine (Ur x) (Ur y) = x Prelude.<> y
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)
-
