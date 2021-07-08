@@ -165,6 +165,7 @@ type family (&&) (a :: Bool) (b :: Bool) :: Bool where
   'True && 'True = 'True
   a && b = 'False
 
+-- True if the generic type does not contain 'Par1', i.e. it does not use its parameter.
 type family NoPar1 (f :: Type -> Type) :: Bool where
   NoPar1 U1 = 'True
   NoPar1 (K1 i v) = 'True
@@ -175,6 +176,7 @@ type family NoPar1 (f :: Type -> Type) :: Bool where
   NoPar1 (Rec1 f) = NoPar1 f
   NoPar1 Par1 = 'False
 
+-- If the generic type does not use its parameter, we can linearly coerce the parameter to any other type.
 class NoPar1 f ~ 'True => Unused f where
   unused :: f a %1-> f b
 instance Unused U1 where
@@ -193,6 +195,8 @@ instance Unused f => Unused (M1 i c f) where
 instance Unused f => Unused (Rec1 f) where
   unused (Rec1 a) = Rec1 (unused a)
 
+-- A linear map on a pair is only possible if only one side uses its parameter.
+-- To get the right type, the other side can then be coerced (instead of mapped) using `unused`.
 class (noPar1l ~ NoPar1 l, noPar1r ~ NoPar1 r) => EitherNoPar1 noPar1l noPar1r l r where
   eitherNoPar1Map :: (a %1-> b) %1-> (l :*: r) a %1-> (l :*: r) b
 instance (Unused l, Functor r, NoPar1 r ~ 'False) => EitherNoPar1 'True 'False l r where

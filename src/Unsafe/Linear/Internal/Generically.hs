@@ -27,6 +27,12 @@ import qualified Unsafe.Linear.Internal as Unsafe
 import Prelude.Linear.Internal
 import Data.V.Linear ()
 
+-- | A datatype whose instances are defined generically, using the
+-- 'Generic' representation. 'Generically1' is a higher-kinded version
+-- of 'Generically' that uses 'Generic1'.
+--
+-- Generic instances can be derived via @'Generically' A@ using
+-- @-XDerivingVia@.
 newtype Generically a = Generically a
 
 unGenerically :: Generically a %1-> a
@@ -47,6 +53,12 @@ instance (Generic a, GDupable (Rep a)) => Dupable (Generically a) where
 instance (Generic a, GMovable (Rep a)) => Movable (Generically a) where
   move = Data.fmap (Generically . to) . gmove . from . unGenerically
 
+-- | A type whose instances are defined generically, using the
+-- 'Generic1' representation. 'Generically1' is a higher-kinded
+-- version of 'Generically' that uses 'Generic'.
+--
+-- Generic instances can be derived for type constructors via
+-- @'Generically1' F@ using @-XDerivingVia@.
 newtype Generically1 f a = Generically1 (f a)
 
 unGenerically1 :: Generically1 f a %1-> f a
