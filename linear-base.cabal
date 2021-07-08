@@ -109,6 +109,7 @@ library
     transformers,
     vector >= 0.12.2,
     primitive
+  ghc-options: -O
   default-language: Haskell2010
 
 test-suite test
@@ -165,8 +166,10 @@ benchmark mutable-data
   main-is: Main.hs
   other-modules:
     Data.Mutable.HashMap
+    Data.Mutable.Array
   build-depends:
     base,
+    vector,
     deepseq,
     gauge,
     hashtables,
@@ -175,7 +178,7 @@ benchmark mutable-data
     random,
     random-shuffle,
     unordered-containers
-  ghc-options: -rtsopts=ignore
+  ghc-options: -O
   default-language: Haskell2010
 
 -- TODO: Uncomment below block and set 'build-type' to 'Custom' to enable
