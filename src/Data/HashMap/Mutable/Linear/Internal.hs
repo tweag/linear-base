@@ -164,7 +164,7 @@ alterF f key hm =
           Ur (Just v)->
             HashMap
              (count+1)
-             (Array.write arr ix (Just (RobinVal psl key v)))
+             (Array.unsafeWrite arr ix (Just (RobinVal psl key v)))
              & growMapIfNecessary
       -- The key exists.
       (hm'', IndexToUpdate v psl ix) ->
@@ -172,7 +172,7 @@ alterF f key hm =
           f (Just v) Control.<&> \case
             -- We need to delete it.
             Ur Nothing ->
-              Array.write arr ix Nothing & \arr' ->
+              Array.unsafeWrite arr ix Nothing & \arr' ->
                 shiftSegmentBackward 1 cap arr' ((ix + 1) `mod` cap) & \arr'' ->
                   HashMap
                     (count - 1)
@@ -181,7 +181,7 @@ alterF f key hm =
             Ur (Just new)->
               HashMap
                 count
-                (Array.write arr ix (Just (RobinVal psl key new)))
+                (Array.unsafeWrite arr ix (Just (RobinVal psl key new)))
       -- The key does not exist, but there is a key to evict.
       (hm, IndexToSwap evicted psl ix) ->
         f Nothing Control.<&> \case
@@ -193,7 +193,7 @@ alterF f key hm =
               tryInsertAtIndex
                 (HashMap
                   count
-                  (Array.write arr ix (Just (RobinVal psl key v))))
+                  (Array.unsafeWrite arr ix (Just (RobinVal psl key v))))
                 ((ix + 1) `mod` cap)
                 (incRobinValPSL evicted)
               & growMapIfNecessary
@@ -265,23 +265,23 @@ mapMaybeWithKey f (HashMap _ arr) = Array.size arr & \(Ur size, arr1) ->
         if shift
         then (Ur count, shiftSegmentBackward dec (end+1) arr 0)
         else (Ur count, arr)
-    | otherwise = Array.read arr ix & \case
+    | otherwise = Array.unsafeRead arr ix & \case
         (Ur Nothing, arr1) ->
           mapAndPushBack (ix+1) end (False,0) count arr1
         (Ur (Just (RobinVal (PSL p) k v)), arr1) -> case f' k v of
-          Nothing -> Array.write arr1 ix Nothing &
+          Nothing -> Array.unsafeWrite arr1 ix Nothing &
             \arr2 -> mapAndPushBack (ix+1) end (True,dec+1) count arr2
           Just v' -> case shift of
-            False -> Array.write arr1 ix (Just (RobinVal (PSL p) k v')) &
+            False -> Array.unsafeWrite arr1 ix (Just (RobinVal (PSL p) k v')) &
               \arr2 -> mapAndPushBack (ix+1) end (False,0) (count+1) arr2
             True -> case dec <= p of
-              False -> Array.write arr1 (ix-p) (Just (RobinVal 0 k v')) &
+              False -> Array.unsafeWrite arr1 (ix-p) (Just (RobinVal 0 k v')) &
                 \arr2 -> case p == 0 of
-                  False -> Array.write arr2 ix Nothing &
+                  False -> Array.unsafeWrite arr2 ix Nothing &
                     \arr3 -> mapAndPushBack (ix+1) end (True,p) (count+1) arr3
                   True -> mapAndPushBack (ix+1) end (False,0) (count+1) arr2
-              True -> Array.write arr1 (ix-dec) (Just (RobinVal (PSL (p-dec)) k v')) &
-                \arr2 -> Array.write arr2 ix Nothing &
+              True -> Array.unsafeWrite arr1 (ix-dec) (Just (RobinVal (PSL (p-dec)) k v')) &
+                \arr2 -> Array.unsafeWrite arr2 ix Nothing &
                   \arr3 -> mapAndPushBack (ix+1) end (True,dec) (count+1) arr3
 
 -- | Complexity: O(capacity hm)
@@ -459,7 +459,7 @@ idealIndexForKey k hm =
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v %1-> (HashMap k v, ProbeResult k v)
-probeFrom (k, p) ix (HashMap ct arr) = Array.read arr ix & \case
+probeFrom (k, p) ix (HashMap ct arr) = Array.unsafeRead arr ix & \case
   (Ur Nothing, arr') ->
     (HashMap ct arr', IndexToInsert p ix)
   (Ur (Just robinVal'@(RobinVal psl k' v')), arr') ->
@@ -479,13 +479,13 @@ tryInsertAtIndex :: Keyed k =>
 tryInsertAtIndex hmap ix (RobinVal psl key val) =
   probeFrom (key, psl) ix hmap & \case
     (HashMap ct arr, IndexToUpdate _ psl' ix') ->
-      HashMap ct (Array.write arr ix' (Just $ RobinVal psl' key val))
+      HashMap ct (Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val))
     (HashMap c arr, IndexToInsert psl' ix') ->
-      HashMap (c + 1) (Array.write arr ix' (Just $ RobinVal psl' key val))
+      HashMap (c + 1) (Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val))
     (hm, IndexToSwap oldVal psl' ix') ->
       capacity hm  & \(Ur cap, HashMap ct arr) ->
         tryInsertAtIndex
-          (HashMap ct (Array.write arr ix' (Just $ RobinVal psl' key val)))
+          (HashMap ct (Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)))
           ((ix' + 1) `mod` cap)
           (incRobinValPSL oldVal)
 
@@ -494,15 +494,15 @@ tryInsertAtIndex hmap ix (RobinVal psl key val) =
 -- their PSLs.
 shiftSegmentBackward :: Keyed k =>
   Int -> Int -> RobinArr k v %1-> Int -> RobinArr k v
-shiftSegmentBackward dec s arr ix = Array.read arr ix & \case
+shiftSegmentBackward dec s arr ix = Array.unsafeRead arr ix & \case
   (Ur Nothing, arr') -> arr'
   (Ur (Just (RobinVal 0 _ _)), arr') -> arr'
   (Ur (Just val), arr') ->
-    Array.write arr' ix Nothing & \arr'' ->
+    Array.unsafeWrite arr' ix Nothing & \arr'' ->
       shiftSegmentBackward
         dec
         s
-        (Array.write arr'' ((ix-dec+s) `mod` s) (Just $ decRobinValPSL val))
+        (Array.unsafeWrite arr'' ((ix-dec+s) `mod` s) (Just $ decRobinValPSL val))
         ((ix+1) `mod` s)
 -- TODO: This does twice as much writes than necessary, it first empties
 -- the cell, just to update it again at the next call. We can save some
