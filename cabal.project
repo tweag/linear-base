@@ -1,25 +1,4 @@
 packages: *.cabal
-allow-newer: all
 
 package linear-base
   ghc-options: -Wall -Werror
-
--- If you update below, make sure to also update stack.yaml too
-source-repository-package
-  type: git
-  location: https://github.com/Divesh-Otwani/foundation.git
-  subdir: basement
-  tag: ad709f41a8c4671f2f96fdf9c93cd62d3e7bca9f
-
-source-repository-package
-  -- https://github.com/hedgehogqa/haskell-hedgehog/pull/392
-  type: git
-  location: https://github.com/utdemir/haskell-hedgehog.git
-  tag: c98aa9e33bf6871098d6f4ac94eeaac10383d696
-  subdir: hedgehog
-
-source-repository-package
-  -- https://github.com/sol/doctest/pull/272
-  type: git
-  location: https://github.com/utdemir/doctest.git
-  tag: 090cccaf12c5643ca80f8c2afe693a488277d365

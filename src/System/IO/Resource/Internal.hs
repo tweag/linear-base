@@ -52,7 +52,7 @@ run (RIO action) = do
         (restore (Linear.withLinearIO (action rrm)))
         (do -- release stray resources
            ReleaseMap releaseMap <- System.readIORef rrm
-           safeRelease Prelude.$ Ur.fmap snd Prelude.$ IntMap.toList releaseMap))
+           safeRelease $ Ur.fmap snd $ IntMap.toList releaseMap))
       -- Remarks: resources are guaranteed to be released on non-exceptional
       -- return. So, contrary to a standard bracket/ResourceT implementation, we
       -- only release exceptions in the release map upon exception.
@@ -103,7 +103,7 @@ newtype Handle = Handle (UnsafeResource System.Handle)
 openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = Control.do
     h <- unsafeAcquire
-      (Linear.fromSystemIOU Prelude.$ System.openFile path mode)
+      (Linear.fromSystemIOU $ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
     Control.return $ Handle h
 

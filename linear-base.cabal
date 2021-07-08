@@ -73,6 +73,7 @@ library
     Data.Unrestricted.Internal.Movable
     Data.Unrestricted.Internal.Instances
     Data.Unrestricted.Internal.Ur
+    Data.Unrestricted.Internal.UrT
     Data.Unrestricted.Linear
     Data.V.Linear
     Data.V.Linear.Internal.V
@@ -106,7 +107,7 @@ library
     storable-tuple,
     text,
     transformers,
-    vector,
+    vector >= 0.12.2,
     primitive
   default-language: Haskell2010
 

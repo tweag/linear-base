@@ -17,60 +17,51 @@ import Data.Functor.Identity
 -- simply reimplemented here. For harder function, we reuse the Prelude
 -- definition and make an unsafe cast.
 
--- | Beware: @($)@ is not compatible with the standard one because it is
--- higher-order and we don't have multiplicity polymorphism yet.
-($) :: (a %1-> b) %1-> a %1-> b
--- XXX: Temporary as `($)` should get its typing rule directly from the type
--- inference mechanism.
+-- XXX: Add runtime-representation polymorphism such that
+-- `($)`+`-XImpredicativeType` (starting with 9.2) has the complete behaviour of
+-- GHC's native `($)` rule.
+($) :: (a %p-> b) %q-> a %p-> b
 ($) f x = f x
 infixr 0 $
 
-(&) :: a %1-> (a %1-> b) %1-> b
+(&) :: a %p-> (a %p-> b) %q-> b
 x & f = f x
 infixl 1 &
 
-id :: a %1-> a
+id :: a %q-> a
 id x = x
 
-const :: a %1-> b -> a
+const :: a %q-> b -> a
 const x _ = x
 
-asTypeOf :: a %1-> a -> a
+asTypeOf :: a %q-> a -> a
 asTypeOf = const
 
 -- | @seq x y@ only forces @x@ to head normal form, therefore is not guaranteed
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.
-seq :: a -> b %1-> b
-seq x = Unsafe.toLinear (Prelude.seq x)
+seq :: a -> b %q-> b
+seq x y = Unsafe.toLinear (Prelude.seq x) y
 
-($!) :: (a %1-> b) %1-> a %1-> b
+($!) :: (a %p-> b) %q-> a %p-> b
 ($!) f !a = f a
 
--- | Beware, 'curry' is not compatible with the standard one because it is
--- higher-order and we don't have multiplicity polymorphism yet.
-curry :: ((a, b) %1-> c) %1-> a %1-> b %1-> c
+curry :: ((a, b) %p-> c) %q-> a %p-> b %p-> c
 curry f x y = f (x, y)
 
--- | Beware, 'uncurry' is not compatible with the standard one because it is
--- higher-order and we don't have multiplicity polymorphism yet.
-uncurry :: (a %1-> b %1-> c) %1-> (a, b) %1-> c
+uncurry :: (a %p-> b %p-> c) %q-> (a, b) %p-> c
 uncurry f (x,y) = f x y
 
 -- | Beware: @(.)@ is not compatible with the standard one because it is
--- higher-order and we don't have multiplicity polymorphism yet.
-(.) :: (b %1-> c) %1-> (a %1-> b) %1-> a %1-> c
+-- higher-order and we don't have sufficient multiplicity polymorphism yet.
+(.) :: (b %1-> c) %q-> (a %1-> b) %m-> a %n-> c
 f . g = \x -> f (g x)
 
--- XXX: temporary: with multiplicity polymorphism functions expecting a
--- non-linear arrow would allow a linear arrow passed, so this would be
--- redundant
 -- | Convenience operator when a higher-order function expects a non-linear
 -- arrow but we have a linear arrow.
 forget :: (a %1-> b) %1-> a -> b
 forget f a = f a
 
 -- XXX: Temporary, until newtype record projections are linear.
-runIdentity' :: Identity a %1-> a
+runIdentity' :: Identity a %p-> a
 runIdentity' (Identity x) = x
-

@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS -Wno-orphans #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -34,4 +35,3 @@ instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
     (V . Unsafe.toLinear (Vector.fromListN (theLength @n))) Data.<$>
     Data.traverse f (Unsafe.toLinear Vector.toList xs)
-

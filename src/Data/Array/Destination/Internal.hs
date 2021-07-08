@@ -30,7 +30,7 @@ data DArray a where
 -- module.  @`alloc` n k@ must be called with a non-negative value of @n@.
 alloc :: Int -> (DArray a %1-> ()) %1-> Vector a
 alloc n writer = (\(Ur dest, vec) -> writer (DArray dest) `lseq` vec) $
-  unsafeDupablePerformIO Prelude.$ do
+  unsafeDupablePerformIO $ do
     destArray <- MVector.unsafeNew n
     vec <- Vector.unsafeFreeze destArray
     Prelude.return (Ur destArray, vec)
@@ -78,7 +78,7 @@ mirror v f arr =
 
 -- | Fill a destination array using the given index-to-value function.
 fromFunction :: (Int -> b) -> DArray b %1-> ()
-fromFunction f (DArray mvec) = unsafeDupablePerformIO Prelude.$ do
+fromFunction f (DArray mvec) = unsafeDupablePerformIO $ do
   let n = MVector.length mvec
   Prelude.sequence_ [MVector.unsafeWrite mvec m (f m) | m <- [0..n-1]]
 -- The use of the mutable array is linear, since getting the length does not

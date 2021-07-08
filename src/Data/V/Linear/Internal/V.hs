@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
@@ -164,4 +165,3 @@ iterate dup init =
   -- An unsafe cast to prove the simple equality.
   pr1 :: forall k. 0 :~: (k - 1) -> k :~: 1
   pr1 Refl = Unsafe.coerce Refl
-
