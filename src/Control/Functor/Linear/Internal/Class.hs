@@ -36,7 +36,7 @@ module Control.Functor.Linear.Internal.Class
   , foldM
   ) where
 
-import Prelude (String, Bool(..))
+import Prelude (String, Bool(..), error)
 import Prelude.Linear.Internal
 import qualified Control.Monad as NonLinear ()
 import qualified Data.Functor.Linear.Internal.Functor as Data

@@ -33,7 +33,7 @@ import Data.Monoid.Linear
 import Data.List.NonEmpty
 import qualified Prelude
 import Prelude.Linear.Internal
-import qualified Unsafe.Linear as Unsafe
+import qualified Unsafe.Linear.Internal as Unsafe
 import Data.V.Linear ()
 import Data.V.Linear.Internal.V (V(..), theLength)
 import qualified Data.Vector as Vector
