@@ -129,21 +129,27 @@ copyInto start@(GHC.I# start#) = Unsafe.toLinear2 go
 {-# NOINLINE copyInto #-}  -- prevents the runRW# effect from being reordered
 
 map :: (a -> b) -> Array# a %1-> Array# b
-map (f :: a -> b) arr =
-  size arr
-    `chain2` \(# Ur s, arr' #) -> go 0 s arr'
- where
-  -- When we're mapping an array, we first insert `b`'s
-  -- inside an `Array# a` by unsafeCoerce'ing, and then we
-  -- unsafeCoerce the result to an `Array# b`.
-  go :: Int -> Int -> Array# a %1-> Array# b
-  go i s arr'
-    | i Prelude.== s =
-        Unsafe.toLinear GHC.unsafeCoerce# arr'
-    | Prelude.otherwise =
-        get i arr'
-          `chain2` \(# Ur a, arr'' #) -> set i (Unsafe.coerce (f a)) arr''
-          `chain` \arr''' -> go (i Prelude.+ 1) s arr'''
+map (f :: a -> b) = Unsafe.toLinear (\(Array# as) ->
+  let -- We alias the input array to write the resulting -- 'b's to,
+      -- just to make the typechecker happy. Care must be taken to
+      -- only read indices from 'as' that is not yet written to 'bs'.
+      bs :: GHC.MutableArray# GHC.RealWorld b
+      bs = GHC.unsafeCoerce# as
+      len :: GHC.Int#
+      len = GHC.sizeofMutableArray# as
+
+      -- For each index ([0..len]), we read the element on 'as', pass
+      -- it through 'f' and write to the same location on 'bs'.
+      go :: GHC.Int# -> GHC.State# GHC.RealWorld -> ()
+      go i st
+        | GHC.I# i Prelude.== GHC.I# len = ()
+        | Prelude.otherwise =
+          case GHC.readArray# as i st of
+            (# st', a #) ->
+              case GHC.writeArray# bs i (f a) st' of
+                !st'' -> go (i GHC.+# 1#) st''
+   in GHC.runRW# (go 0#) `GHC.seq` Array# bs
+  )
 {-# NOINLINE map #-}
 
 -- | Return the array elements as a lazy list.
@@ -178,20 +184,3 @@ dup2 = Unsafe.toLinear go
            (GHC.cloneMutableArray# arr 0# (GHC.sizeofMutableArray# arr)) of
       (# _, new #) -> (# Array# arr, Array# new #)
 {-# NOINLINE dup2 #-}
-
--- * Internal library
-
--- Below two are variants of (&) specialized for taking commonly used
--- unlifted values and returning a levity-polymorphic result.
---
--- They are not polymorphic on their first parameter since levity-polymorphism
--- disallows binding to levity-polymorphic values.
-
-chain :: forall (r :: GHC.RuntimeRep) a (b :: GHC.TYPE r).
-        Array# a %1-> (Array# a %1-> b) %1-> b
-chain a f = f a
-
-chain2 :: forall (r :: GHC.RuntimeRep) a b (c :: GHC.TYPE r).
-        (# b, Array# a #) %1-> ((# b, Array# a #) %1-> c) %1-> c
-chain2 a f = f a
-infixl 1 `chain`, `chain2`
