@@ -7,7 +7,6 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UnliftedNewtypes #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
@@ -75,9 +74,9 @@ data HashMap k v where
   -- - array is non-empty
   -- - (count / capacity) <= constMaxLoadFactor.
   HashMap
-    :: Int -- ^ The number of stored (key, value) pairs.
-    -> RobinArr k v -- ^ Underlying array.
+    :: !Int -- ^ The number of stored (key, value) pairs.
     -> !Int -- ^ Capacity of the underlying array (cached here)
+    -> !(RobinArr k v) -- ^ Underlying array.
     %1-> HashMap k v
 
 -- | An array of Robin values
