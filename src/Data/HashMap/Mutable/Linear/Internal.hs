@@ -202,6 +202,7 @@ alterF f key hm =
               ((ix + 1) `mod` cap)
               (incRobinValPSL evicted)
              & growMapIfNecessary
+{-# INLINE alterF #-}
 
 -- aspiwack: I'm implementing `alter` in terms of `alterF`, because, at this
 -- point, we may have some bug fixes and so on and so forth. And maintaining two
@@ -217,6 +218,7 @@ alter f key hm = runIdentity $ alterF (\v -> Identity (Ur (f v))) key hm
   where
     runIdentity :: Identity a %1-> a
     runIdentity (Identity x) = x
+{-# INLINE alter #-}
 
 -- | Insert a key value pair to a 'HashMap'. It overwrites the previous
 -- value if it exists.
