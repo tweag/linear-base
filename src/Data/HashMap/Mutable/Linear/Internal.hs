@@ -87,7 +87,7 @@ type RobinArr k v = Array (Maybe (RobinVal k v))
 
 -- | Robin values are triples of the key, value and PSL
 -- (the probe sequence length).
-data RobinVal k v = RobinVal {-# UNPACK #-} !PSL k v
+data RobinVal k v = RobinVal !PSL !k v
   deriving (Show)
 
 incRobinValPSL :: RobinVal k v -> RobinVal k v
