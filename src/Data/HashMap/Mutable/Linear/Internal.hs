@@ -2,6 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
@@ -156,9 +157,9 @@ fromList xs scope =
 alterF :: (Keyed k, Control.Functor f) => (Maybe v -> f (Ur (Maybe v))) -> k -> HashMap k v %1-> f (HashMap k v)
 alterF f key hm =
   idealIndexForKey key hm & \(Ur idx, hm') ->
-    probeFrom (key, 0) idx hm' & \case
+    case probeFrom key 0 idx hm' of
       -- The key does not exist, and there is an empty cell to insert.
-      (HashMap count cap arr, IndexToInsert psl ix) ->
+      (# HashMap count cap arr, IndexToInsert psl ix #) ->
         f Nothing Control.<&> \case
           -- We don't need to insert anything.
           Ur Nothing -> HashMap count cap arr
@@ -170,7 +171,7 @@ alterF f key hm =
              (Array.unsafeWrite arr ix (Just (RobinVal psl key v)))
              & growMapIfNecessary
       -- The key exists.
-      (HashMap count cap arr, IndexToUpdate v psl ix) ->
+      (# HashMap count cap arr, IndexToUpdate v psl ix #) ->
           f (Just v) Control.<&> \case
             -- We need to delete it.
             Ur Nothing ->
@@ -187,7 +188,7 @@ alterF f key hm =
                 cap
                 (Array.unsafeWrite arr ix (Just (RobinVal psl key new)))
       -- The key does not exist, but there is a key to evict.
-      (HashMap count cap arr, IndexToSwap evicted psl ix) ->
+      (# HashMap count cap arr, IndexToSwap evicted psl ix #) ->
         f Nothing Control.<&> \case
           -- We don't need to insert anything.
           Ur Nothing -> HashMap count cap arr
@@ -391,12 +392,12 @@ capacity (HashMap ct cap arr) = (Ur cap, HashMap ct cap arr)
 lookup :: Keyed k => k -> HashMap k v %1-> (Ur (Maybe v), HashMap k v)
 lookup k hm =
   idealIndexForKey k hm & \(Ur idx, hm') ->
-    probeFrom (k,0) idx hm' & \case
-      (h, IndexToUpdate v _ _) ->
+    case probeFrom k 0 idx hm' of
+      (# h, IndexToUpdate v _ _ #) ->
         (Ur (Just v), h)
-      (h, IndexToInsert _ _) ->
+      (# h, IndexToInsert _ _ #) ->
         (Ur Nothing, h)
-      (h, IndexToSwap _ _ _) ->
+      (# h, IndexToSwap _ _ _ #) ->
         (Ur Nothing, h)
 
 -- | Check if the given key exists.
@@ -459,32 +460,32 @@ idealIndexForKey k (HashMap sz cap arr) =
 -- a full hashmap, return a probe result: the place the key already
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
-  (k, PSL) -> Int -> HashMap k v %1-> (HashMap k v, ProbeResult k v)
-probeFrom (k, p) ix (HashMap ct cap arr) = Array.unsafeRead arr ix & \case
+  k -> PSL -> Int -> HashMap k v %1-> (# HashMap k v, ProbeResult k v #)
+probeFrom k p ix (HashMap ct cap arr) = case Array.unsafeRead arr ix of
   (Ur Nothing, arr') ->
-    (HashMap ct cap arr', IndexToInsert p ix)
+    (# HashMap ct cap arr', IndexToInsert p ix #)
   (Ur (Just robinVal'@(RobinVal psl k' v')), arr') ->
     case k Prelude.== k' of
       -- Note: in the True case, we must have p == psl
-      True -> (HashMap ct cap arr', IndexToUpdate v' psl ix)
+      True -> (# HashMap ct cap arr', IndexToUpdate v' psl ix #)
       False -> case psl Prelude.< p of
-        True -> (HashMap ct cap arr', IndexToSwap robinVal' p ix)
+        True -> (# HashMap ct cap arr', IndexToSwap robinVal' p ix #)
         False ->
-           probeFrom (k, p+1) ((ix+1)`mod` cap) (HashMap ct cap arr')
+           probeFrom k (p+1) ((ix+1)`mod` cap) (HashMap ct cap arr')
 
 -- | Try to insert at a given index with a given PSL. So the
 -- probing starts from the given index (with the given PSL).
 tryInsertAtIndex :: Keyed k =>
   HashMap k v %1-> Int -> RobinVal k v -> HashMap k v
 tryInsertAtIndex hmap ix (RobinVal psl key val) =
-  probeFrom (key, psl) ix hmap & \case
-    (HashMap ct cap arr, IndexToUpdate _ psl' ix') ->
+  case probeFrom key psl ix hmap of
+    (# HashMap ct cap arr, IndexToUpdate _ psl' ix' #) ->
       Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
         & HashMap ct cap
-    (HashMap ct cap arr, IndexToInsert psl' ix') ->
+    (# HashMap ct cap arr, IndexToInsert psl' ix' #) ->
       Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
         & HashMap (ct + 1) cap
-    (HashMap ct cap arr, IndexToSwap oldVal psl' ix') ->
+    (# HashMap ct cap arr, IndexToSwap oldVal psl' ix' #) ->
       Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
         & HashMap ct cap
         & \hm -> tryInsertAtIndex hm ((ix' + 1) `mod` cap) (incRobinValPSL oldVal)
