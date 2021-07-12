@@ -77,6 +77,7 @@ data HashMap k v where
   HashMap
     :: Int -- ^ The number of stored (key, value) pairs.
     -> RobinArr k v -- ^ Underlying array.
+    -> !Int -- ^ Capacity of the underlying array (cached here)
     %1-> HashMap k v
 
 -- | An array of Robin values
@@ -126,27 +127,29 @@ data ProbeResult k v where
 empty :: forall k v b.
   Keyed k => Int -> (HashMap k v %1-> Ur b) %1-> Ur b
 empty size scope =
-  Array.alloc
-    (max 1 size)
-    Nothing
-    (\arr -> scope (HashMap 0 arr))
+  let cap = max 1 size
+  in Array.alloc cap Nothing (\arr -> scope (HashMap 0 cap arr))
 
 -- | Create an empty HashMap, using another as a uniqueness proof.
 allocBeside :: Keyed k => Int -> HashMap k' v' %1-> (HashMap k v, HashMap k' v')
-allocBeside size (HashMap s' arr) =
-  Array.allocBeside (max 1 size) Nothing arr & \(arr', arr'') ->
-    (HashMap size arr', HashMap s' arr'')
+allocBeside size (HashMap s' c' arr) =
+  let cap = max 1 size
+  in  Array.allocBeside cap Nothing arr & \(arr', arr'') ->
+        (HashMap size cap arr', HashMap s' c' arr'')
 
 -- | Run a computation with an 'HashMap' containing given key-value pairs.
 fromList :: forall k v b.
   Keyed k => [(k, v)] -> (HashMap k v %1-> Ur b) %1-> Ur b
 fromList xs scope =
-  Array.alloc
-    (max
-      1
-      (ceiling @Float @Int (fromIntegral (Prelude.length xs) / constMaxLoadFactor)))
-    Nothing
-    (\arr -> scope (insertAll xs (HashMap 0 arr)))
+  let cap =
+        max
+          1
+          (ceiling @Float @Int (fromIntegral (Prelude.length xs) / constMaxLoadFactor))
+  in
+    Array.alloc
+      cap
+      Nothing
+      (\arr -> scope (insertAll xs (HashMap 0 cap arr)))
 
 -- | The most general modification function; which can insert, update or delete
 -- a value of the key, while collecting an effect in the form of an arbitrary
@@ -156,19 +159,19 @@ alterF f key hm =
   idealIndexForKey key hm & \(Ur idx, hm') ->
     probeFrom (key, 0) idx hm' & \case
       -- The key does not exist, and there is an empty cell to insert.
-      (HashMap count arr, IndexToInsert psl ix) ->
+      (HashMap count cap arr, IndexToInsert psl ix) ->
         f Nothing Control.<&> \case
           -- We don't need to insert anything.
-          Ur Nothing -> HashMap count arr
+          Ur Nothing -> HashMap count cap arr
           -- We need to insert a new key.
           Ur (Just v)->
             HashMap
              (count+1)
+             cap
              (Array.unsafeWrite arr ix (Just (RobinVal psl key v)))
              & growMapIfNecessary
       -- The key exists.
-      (hm'', IndexToUpdate v psl ix) ->
-        capacity hm'' & \(Ur cap, HashMap count arr) ->
+      (HashMap count cap arr, IndexToUpdate v psl ix) ->
           f (Just v) Control.<&> \case
             -- We need to delete it.
             Ur Nothing ->
@@ -176,27 +179,29 @@ alterF f key hm =
                 shiftSegmentBackward 1 cap arr' ((ix + 1) `mod` cap) & \arr'' ->
                   HashMap
                     (count - 1)
+                    cap
                     arr''
             -- We need to update it.
             Ur (Just new)->
               HashMap
                 count
+                cap
                 (Array.unsafeWrite arr ix (Just (RobinVal psl key new)))
       -- The key does not exist, but there is a key to evict.
-      (hm, IndexToSwap evicted psl ix) ->
+      (HashMap count cap arr, IndexToSwap evicted psl ix) ->
         f Nothing Control.<&> \case
           -- We don't need to insert anything.
-          Ur Nothing -> hm
+          Ur Nothing -> HashMap count cap arr
           -- We need to insert a new key.
           Ur (Just v)->
-            capacity hm & \(Ur cap, HashMap count arr) ->
-              tryInsertAtIndex
-                (HashMap
-                  count
-                  (Array.unsafeWrite arr ix (Just (RobinVal psl key v))))
-                ((ix + 1) `mod` cap)
-                (incRobinValPSL evicted)
-              & growMapIfNecessary
+            tryInsertAtIndex
+              (HashMap
+                count
+                cap
+                (Array.unsafeWrite arr ix (Just (RobinVal psl key v))))
+              ((ix + 1) `mod` cap)
+              (incRobinValPSL evicted)
+             & growMapIfNecessary
 
 -- aspiwack: I'm implementing `alter` in terms of `alterF`, because, at this
 -- point, we may have some bug fixes and so on and so forth. And maintaining two
@@ -239,10 +244,10 @@ mapMaybe f = mapMaybeWithKey (\_k v -> f v)
 -- | Same as 'mapMaybe', but also has access to the keys.
 mapMaybeWithKey :: forall k v v' .
   Keyed k => (k -> v -> Maybe v') -> HashMap k v %1-> HashMap k v'
-mapMaybeWithKey _ (HashMap 0 arr) = HashMap 0 (Unsafe.coerce arr)
-mapMaybeWithKey f (HashMap _ arr) = Array.size arr & \(Ur size, arr1) ->
+mapMaybeWithKey _ (HashMap 0 cap arr) = HashMap 0 cap (Unsafe.coerce arr)
+mapMaybeWithKey f (HashMap _ cap arr) = Array.size arr & \(Ur size, arr1) ->
   mapAndPushBack 0 (size-1) (False,0) 0 arr1 & \(Ur c, arr2) ->
-    HashMap c (Unsafe.coerce arr2) where
+    HashMap c cap (Unsafe.coerce arr2) where
 
   f' :: k -> v -> Maybe v
   f' k v = unsafeCoerce (f k v)
@@ -373,7 +378,7 @@ shrinkToFit hm =
 
 -- | Number of key-value pairs inside the 'HashMap'
 size :: HashMap k v %1-> (Ur Int, HashMap k v)
-size (HashMap ct arr) = (Ur ct, HashMap ct arr)
+size (HashMap ct cap arr) = (Ur ct, HashMap ct cap arr)
 
 -- | Maximum number of elements the HashMap can store without
 -- resizing. However, for performance reasons, the 'HashMap' might be
@@ -381,9 +386,7 @@ size (HashMap ct arr) = (Ur ct, HashMap ct arr)
 --
 -- Use 'shrinkToFit' to reduce the wasted space.
 capacity :: HashMap k v %1-> (Ur Int, HashMap k v)
-capacity (HashMap ct arr) =
-  Array.size arr & \(len, arr') ->
-    (len, HashMap ct arr')
+capacity (HashMap ct cap arr) = (Ur cap, HashMap ct cap arr)
 
 -- | Look up a value from a 'HashMap'.
 lookup :: Keyed k => k -> HashMap k v %1-> (Ur (Maybe v), HashMap k v)
@@ -406,7 +409,7 @@ member k hm =
 
 -- | Converts a HashMap to a lazy list.
 toList :: HashMap k v %1-> Ur [(k, v)]
-toList (HashMap _ arr) =
+toList (HashMap _ _ arr) =
   Array.toList arr & \(Ur elems) ->
     elems
       NonLinear.& NonLinear.catMaybes
@@ -418,15 +421,15 @@ toList (HashMap _ arr) =
 
 instance Consumable (HashMap k v) where
   consume :: HashMap k v %1-> ()
-  consume (HashMap _ arr) = consume arr
+  consume (HashMap _ _ arr) = consume arr
 
 instance Dupable (HashMap k v) where
-  dup2 (HashMap i arr) = dup2 arr & \(a1, a2) ->
-    (HashMap i a1, HashMap i a2)
+  dup2 (HashMap i c arr) = dup2 arr & \(a1, a2) ->
+    (HashMap i c a1, HashMap i c a2)
 
 instance Data.Functor (HashMap k) where
-  fmap f (HashMap c arr) =
-    HashMap c $
+  fmap f (HashMap s c arr) =
+    HashMap s c $
       Data.fmap
         (\case
           Nothing -> Nothing
@@ -444,33 +447,31 @@ instance Keyed k => Semigroup (HashMap k v) where
 --------------------------------------------------
 
 _debugShow :: (Show k, Show v) => HashMap k v %1-> String
-_debugShow (HashMap _ robinArr) =
+_debugShow (HashMap _ _ robinArr) =
   Array.toList robinArr & \(Ur xs) -> show xs
 
 idealIndexForKey
   :: Keyed k
   => k -> HashMap k v %1-> (Ur Int, HashMap k v)
-idealIndexForKey k hm =
-  capacity hm & \(Ur cap, hm') ->
-    (Ur (mod (hash k) cap), hm')
+idealIndexForKey k (HashMap sz cap arr) =
+  (Ur (mod (hash k) cap), HashMap sz cap arr)
 
 -- | Given a key, psl of the probe so far, current unread index, and
 -- a full hashmap, return a probe result: the place the key already
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
   (k, PSL) -> Int -> HashMap k v %1-> (HashMap k v, ProbeResult k v)
-probeFrom (k, p) ix (HashMap ct arr) = Array.unsafeRead arr ix & \case
+probeFrom (k, p) ix (HashMap ct cap arr) = Array.unsafeRead arr ix & \case
   (Ur Nothing, arr') ->
-    (HashMap ct arr', IndexToInsert p ix)
+    (HashMap ct cap arr', IndexToInsert p ix)
   (Ur (Just robinVal'@(RobinVal psl k' v')), arr') ->
     case k Prelude.== k' of
       -- Note: in the True case, we must have p == psl
-      True -> (HashMap ct arr', IndexToUpdate v' psl ix)
+      True -> (HashMap ct cap arr', IndexToUpdate v' psl ix)
       False -> case psl Prelude.< p of
-        True -> (HashMap ct arr', IndexToSwap robinVal' p ix)
+        True -> (HashMap ct cap arr', IndexToSwap robinVal' p ix)
         False ->
-          capacity (HashMap ct arr') & \(Ur cap, HashMap ct' arr'') ->
-            probeFrom (k, p+1) ((ix+1)`mod` cap) (HashMap ct' arr'')
+           probeFrom (k, p+1) ((ix+1)`mod` cap) (HashMap ct cap arr')
 
 -- | Try to insert at a given index with a given PSL. So the
 -- probing starts from the given index (with the given PSL).
@@ -478,16 +479,16 @@ tryInsertAtIndex :: Keyed k =>
   HashMap k v %1-> Int -> RobinVal k v -> HashMap k v
 tryInsertAtIndex hmap ix (RobinVal psl key val) =
   probeFrom (key, psl) ix hmap & \case
-    (HashMap ct arr, IndexToUpdate _ psl' ix') ->
-      HashMap ct (Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val))
-    (HashMap c arr, IndexToInsert psl' ix') ->
-      HashMap (c + 1) (Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val))
-    (hm, IndexToSwap oldVal psl' ix') ->
-      capacity hm  & \(Ur cap, HashMap ct arr) ->
-        tryInsertAtIndex
-          (HashMap ct (Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)))
-          ((ix' + 1) `mod` cap)
-          (incRobinValPSL oldVal)
+    (HashMap ct cap arr, IndexToUpdate _ psl' ix') ->
+      Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
+        & HashMap ct cap
+    (HashMap ct cap arr, IndexToInsert psl' ix') ->
+      Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
+        & HashMap (ct + 1) cap
+    (HashMap ct cap arr, IndexToSwap oldVal psl' ix') ->
+      Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
+        & HashMap ct cap
+        & \hm -> tryInsertAtIndex hm ((ix' + 1) `mod` cap) (incRobinValPSL oldVal)
 
 -- | Shift all cells with PSLs > 0 in a continuous segment
 -- following the deleted cell, backwards by one and decrement
@@ -511,28 +512,26 @@ shiftSegmentBackward dec s arr ix = Array.unsafeRead arr ix & \case
 -- | Makes sure that the map is not exceeding its utilization threshold
 -- (constMaxUtilization), resizes (constGrowthFactor) if necessary.
 growMapIfNecessary :: Keyed k => HashMap k v %1-> HashMap k v
-growMapIfNecessary hm =
-  capacity hm & \(Ur cap, hm') ->
-   size hm' & \(Ur sz, hm'') ->
-    let load = fromIntegral sz / fromIntegral cap
-    in if load Prelude.< constMaxLoadFactor
-       then hm''
-       else
-         let newCap = max 1 (cap * constGrowthFactor)
-         in  resize newCap hm''
+growMapIfNecessary (HashMap sz cap arr) =
+  let load = fromIntegral sz / fromIntegral cap
+  in if load Prelude.< constMaxLoadFactor
+     then HashMap sz cap arr
+     else
+       let newCap = max 1 (cap * constGrowthFactor)
+       in  resize newCap (HashMap sz cap arr)
 
 -- | Resizes the HashMap to given capacity.
 --
 -- Invariant: Given capacity should be greater than the size, this is not
 -- checked.
 resize :: Keyed k => Int -> HashMap k v %1-> HashMap k v
-resize targetSize (HashMap _ arr) =
+resize targetSize (HashMap _ _ arr) =
   Array.allocBeside targetSize Nothing arr & \(newArr, oldArr) ->
     Array.toList oldArr & \(Ur elems) ->
       let xs =
             elems
               NonLinear.& NonLinear.catMaybes
               NonLinear.& Prelude.map (\(RobinVal _ k v) -> (k, v))
-       in  insertAll xs (HashMap 0 newArr)
+       in  insertAll xs (HashMap 0 targetSize newArr)
 -- TODO: 'insertAll' keeps checking capacity on each insert. We should
 -- replace it with a faster unsafe variant.
