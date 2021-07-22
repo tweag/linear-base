@@ -157,7 +157,7 @@ fromList xs scope =
 alterF :: (Keyed k, Control.Functor f) => (Maybe v -> f (Ur (Maybe v))) -> k -> HashMap k v %1-> f (HashMap k v)
 alterF f key hm =
   idealIndexForKey key hm & \(Ur idx, hm') ->
-    case probeFrom key 0 idx hm' of
+    probeFrom key 0 idx hm' `chainU` \case
       -- The key does not exist, and there is an empty cell to insert.
       (# HashMap count cap arr, IndexToInsert psl ix #) ->
         f Nothing Control.<&> \case
@@ -394,7 +394,7 @@ capacity (HashMap ct cap arr) = (Ur cap, HashMap ct cap arr)
 lookup :: Keyed k => k -> HashMap k v %1-> (Ur (Maybe v), HashMap k v)
 lookup k hm =
   idealIndexForKey k hm & \(Ur idx, hm') ->
-    case probeFrom k 0 idx hm' of
+    probeFrom k 0 idx hm' `chainU` \case
       (# h, IndexToUpdate v _ _ #) ->
         (Ur (Just v), h)
       (# h, IndexToInsert _ _ #) ->
@@ -463,7 +463,7 @@ idealIndexForKey k (HashMap sz cap arr) =
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom :: Keyed k =>
   k -> PSL -> Int -> HashMap k v %1-> (# HashMap k v, ProbeResult k v #)
-probeFrom k p ix (HashMap ct cap arr) = case Array.unsafeRead arr ix of
+probeFrom k p ix (HashMap ct cap arr) = Array.unsafeRead arr ix `chainU'` \case
   (Ur Nothing, arr') ->
     (# HashMap ct cap arr', IndexToInsert p ix #)
   (Ur (Just robinVal'@(RobinVal psl k' v')), arr') ->
@@ -480,7 +480,7 @@ probeFrom k p ix (HashMap ct cap arr) = case Array.unsafeRead arr ix of
 tryInsertAtIndex :: Keyed k =>
   HashMap k v %1-> Int -> RobinVal k v -> HashMap k v
 tryInsertAtIndex hmap ix (RobinVal psl key val) =
-  case probeFrom key psl ix hmap of
+  probeFrom key psl ix hmap `chainU` \case
     (# HashMap ct cap arr, IndexToUpdate _ psl' ix' #) ->
       Array.unsafeWrite arr ix' (Just $ RobinVal psl' key val)
         & HashMap ct cap
@@ -537,3 +537,16 @@ resize targetSize (HashMap _ _ arr) =
        in  insertAll xs (HashMap 0 targetSize newArr)
 -- TODO: 'insertAll' keeps checking capacity on each insert. We should
 -- replace it with a faster unsafe variant.
+
+-- TODO: Remove the below workarounds once we are on GHC 9.2.
+--
+-- We have to use these functions below because:
+--
+-- * GHC <9.2 does not allow linear `case` statements.
+-- * LambdaCase workaround does not work, because (&) does not work with
+--   unlifted types.
+chainU :: (# a, b #) %1-> ((# a, b #) %1 -> c) %1-> c
+chainU x f = f x
+
+chainU' :: a %1-> (a %1 -> (# b, c #)) %1-> (# b, c #)
+chainU' x f = f x
