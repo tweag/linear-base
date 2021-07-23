@@ -53,8 +53,8 @@ data BenchInput where
 
 instance NFData BenchInput
 
-hmbench :: BenchInput -> Benchmark
-hmbench inp = bgroup "Comparing Linear Hashmaps"
+hmbench :: Benchmark
+hmbench = bgroup "hashmaps"
   [ bgroup "linear-base:Data.HashMap.Mutable.Linear" $
       linear_hashmap inp
   , bgroup "unordered-containers:Data.HashMap.Strict" $
