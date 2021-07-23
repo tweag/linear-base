@@ -9,7 +9,7 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
-module Data.Mutable.HashMap (hmbench, getHMInput) where
+module Data.Mutable.HashMap (hmbench) where
 
 import Gauge
 import qualified System.Random as Random
@@ -21,13 +21,11 @@ import qualified Data.Unrestricted.Linear as Linear
 import Data.List (foldl')
 import qualified Prelude.Linear as Linear
 import Control.Monad.ST (runST, ST)
-import Control.Exception (evaluate)
 
 import qualified Data.HashMap.Mutable.Linear as LMap
 import qualified Data.HashMap.Strict as Map
 import qualified Data.HashTable.ST.Basic as BasicST
 import qualified Data.HashTable.ST.Cuckoo as CuckooST
-
 
 -- # Exported benchmarks
 -------------------------------------------------------------------------------
@@ -50,6 +48,9 @@ data BenchInput where
     , shuffle2 :: ![Key]
     , shuffle3 :: ![Key]
     } -> BenchInput
+  deriving Generic
+
+instance NFData BenchInput
 
 hmbench :: BenchInput -> Benchmark
 hmbench inp = bgroup "Comparing Linear Hashmaps"
@@ -62,6 +63,15 @@ hmbench inp = bgroup "Comparing Linear Hashmaps"
   , bgroup "hashtables:Data.HashTable.ST.Cuckoo" $
       st_cuckoo inp
   ]
+ where
+  !inp = force . flip Random.evalRand (Random.mkStdGen 4541645642) $ do
+    let keys = map Key $ enumFromTo 1 num_keys
+    shuff1 <- Random.shuffleM keys
+    shuff2 <- Random.shuffleM shuff1
+    shuff3 <- Random.shuffleM shuff2
+    vals <- Random.getRandomRs (0, num_keys)
+    let kv_pairs = zip keys vals
+    return $ BenchInput kv_pairs shuff1 shuff2 shuff3
 
 descriptions :: [String]
 descriptions =
@@ -79,20 +89,6 @@ descriptions =
 
 num_keys :: Int
 num_keys = 100_000
-
-getHMInput :: IO BenchInput
-getHMInput = do
-  let keys = map Key $ enumFromTo 1 num_keys
-  g0 <- Random.getStdGen
-  let (gx,gc) = Random.split g0
-  let (ga,gb) = Random.split gx
-  shuff1 <- evaluate $ force $ Random.shuffle' keys num_keys ga
-  shuff2 <- evaluate $ force $ Random.shuffle' shuff1 num_keys gb
-  shuff3 <- evaluate $ force $ Random.shuffle' shuff2 num_keys gc
-  g1 <- Random.getStdGen
-  let (vals :: [Int]) = Random.randomRs (0,num_keys) g1
-  kv_pairs <- evaluate $ force (zip keys vals)
-  return $ BenchInput kv_pairs shuff1 shuff2 shuff3
 
 modVal :: Maybe Int -> Maybe Int
 modVal Nothing = Nothing
