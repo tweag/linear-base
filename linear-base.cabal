@@ -175,7 +175,8 @@ benchmark mutable-data
     linear-base,
     random,
     random-shuffle,
-    unordered-containers
+    unordered-containers,
+    MonadRandom
   ghc-options: -O
   default-language: Haskell2010
 
