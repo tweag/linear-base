@@ -12,7 +12,8 @@
 module Data.Mutable.HashMap (hmbench) where
 
 import Gauge
-import qualified System.Random as Random
+import Data.Coerce (coerce)
+import qualified Control.Monad.Random as Random
 import qualified System.Random.Shuffle as Random
 import Control.DeepSeq (deepseq, force, NFData(..))
 import Data.Hashable (Hashable(..), hashWithSalt)
@@ -62,6 +63,7 @@ hmbench inp = bgroup "Comparing Linear Hashmaps"
       st_basic inp
   , bgroup "hashtables:Data.HashTable.ST.Cuckoo" $
       st_cuckoo inp
+  , microbenchmarks
   ]
  where
   !inp = force . flip Random.evalRand (Random.mkStdGen 4541645642) $ do
@@ -323,3 +325,50 @@ st_cuckoo inp@(BenchInput {pairs=kvs}) =
       mapM_ (\k -> CuckooST.mutate hm k ((,()) . modVal)) (shuffle2 inp)
       mapM_ (look hm) (shuffle3 inp)
 
+-- Microbenchmarks
+
+microbenchmarks :: Benchmark
+microbenchmarks =
+  bgroup "microbenchmarks"
+    [ runImpls  "insertHeavy" insertHeavy input
+    ]
+ where
+  !input =
+    coerce . force . flip Random.evalRand (Random.mkStdGen 4541645642)
+     $ Random.shuffleM [1..num_keys]
+
+data Impls =
+  Impls
+    ([Key] -> LMap.HashMap Key () %1-> ())
+    ([Key] -> Map.HashMap Key () -> ())
+
+runImpls :: String -> Impls -> [Key] -> Benchmark
+runImpls name impls input =
+  let Impls linear dataHashMap = impls
+  in bgroup name
+       [ bench "Data.HashMap.Mutable.Linear" $ whnf (runLinear linear) input
+       , bench "Data.HashMap.Strict" $ whnf (runDataHashMap dataHashMap) input
+       ]
+ where
+  runLinear :: ([Key] -> LMap.HashMap Key () %1-> ()) -> [Key] -> ()
+  runLinear cb inp = LMap.empty (num_keys * 2) (\hm -> Linear.move (cb inp hm)) Linear.& Linear.unur
+
+  runDataHashMap :: ([Key] -> Map.HashMap Key () -> ()) -> [Key] -> ()
+  runDataHashMap cb inp = cb inp Map.empty
+
+insertHeavy :: Impls
+insertHeavy = Impls linear dataHashMap
+  where
+   linear :: [Key] -> LMap.HashMap Key () %1-> ()
+   linear inp hm = go inp hm `Linear.lseq` ()
+    where
+     go :: [Key] -> LMap.HashMap Key () %1-> LMap.HashMap Key ()
+     go [] h = h
+     go (x:xs) h = go xs Linear.$! LMap.insert x () h
+
+   dataHashMap :: [Key] -> Map.HashMap Key () -> ()
+   dataHashMap inp hm = go inp hm `seq` ()
+    where
+     go :: [Key] -> Map.HashMap Key () -> Map.HashMap Key ()
+     go [] h = h
+     go (x:xs) h = go xs $! Map.insert x () h
