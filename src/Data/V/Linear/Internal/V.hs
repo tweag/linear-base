@@ -23,6 +23,11 @@ module Data.V.Linear.Internal.V
   , iterate
   -- * Type-level utilities
   , caseNat
+  , predNat
+  , expandFunN
+  , contractFunN
+  , continue
+  , Dict (..)
   ) where
 
 import Data.Kind (Type)
