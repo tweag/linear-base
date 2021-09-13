@@ -22,6 +22,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Control.Monad.IO.Class.Linear
+    Control.Category.Linear
     Control.Functor.Linear
     Control.Functor.Linear.Internal.Class
     Control.Functor.Linear.Internal.Instances
