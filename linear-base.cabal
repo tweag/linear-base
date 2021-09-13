@@ -1,5 +1,5 @@
 name: linear-base
-version: 0.1.1
+version: 0.1.2
 cabal-version: >=1.10
 homepage: https://github.com/tweag/linear-base#README
 license: MIT
@@ -22,6 +22,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Control.Monad.IO.Class.Linear
+    Control.Arrow.Linear
     Control.Category.Linear
     Control.Functor.Linear
     Control.Functor.Linear.Internal.Class
