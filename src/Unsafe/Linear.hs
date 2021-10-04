@@ -1,10 +1,11 @@
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeInType #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- | Unsafe coercions for linearly typed code.
 --
@@ -28,14 +29,15 @@ module Unsafe.Linear
   )
   where
 
-import qualified Unsafe.Coerce as NonLinear
+import Unsafe.Coerce (UnsafeEquality (..), unsafeEqualityProof)
 import GHC.Exts (TYPE, RuntimeRep)
+import GHC.Types (Multiplicity (..))
 
 -- | Linearly typed @unsafeCoerce@
 coerce :: forall a b. a %1-> b
 coerce a =
-  case NonLinear.unsafeEqualityProof @a @b of
-    NonLinear.UnsafeRefl -> a
+  case unsafeEqualityProof @a @b of
+    UnsafeRefl -> a
 {-# INLINE coerce #-}
 
 -- | Converts an unrestricted function into a linear function
@@ -43,14 +45,16 @@ toLinear
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) p.
      (a %p-> b) %1-> (a %1-> b)
-toLinear = coerce
+toLinear f = case unsafeEqualityProof @p @'One of
+  UnsafeRefl -> f
 
 -- | Like 'toLinear' but for two-argument functions
 toLinear2
   :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep) (r3 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3) p q.
      (a %p-> b %q-> c) %1-> (a %1-> b %1-> c)
-toLinear2 = coerce
+toLinear2 f = case unsafeEqualityProof @'(p,q) @'( 'One, 'One) of
+  UnsafeRefl -> f
 
 -- | Like 'toLinear' but for three-argument functions
 toLinear3
@@ -58,4 +62,5 @@ toLinear3
      (r3 :: RuntimeRep) (r4 :: RuntimeRep)
      (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3) (d :: TYPE r4) p q r.
      (a %p-> b %q-> c %r-> d) %1-> (a %1-> b %1-> c %1-> d)
-toLinear3 = coerce
+toLinear3 f = case unsafeEqualityProof @'(p,q,r) @'( 'One, 'One, 'One) of
+  UnsafeRefl -> f
