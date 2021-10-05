@@ -1,5 +1,5 @@
 name: Continuous integration
-on: [push]
+on: [push, pull_request]
 env:
   # Bump this number to invalidate the Github-actions cache
   cache-invalidation-key: 0
