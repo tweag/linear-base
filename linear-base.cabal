@@ -25,6 +25,7 @@ library
     Control.Functor.Linear
     Control.Functor.Linear.Internal.Class
     Control.Functor.Linear.Internal.Instances
+    Control.Functor.Linear.Internal.Kan
     Control.Functor.Linear.Internal.MonadTrans
     Control.Functor.Linear.Internal.Reader
     Control.Functor.Linear.Internal.State
@@ -52,6 +53,7 @@ library
     Data.Functor.Linear.Internal.Functor
     Data.Functor.Linear.Internal.Applicative
     Data.Functor.Linear.Internal.Traversable
+    Data.Functor.Linear.Internal.Traversable.Generic
     Data.HashMap.Mutable.Linear
     Data.HashMap.Mutable.Linear.Internal
     Data.List.Linear
@@ -102,6 +104,7 @@ library
     containers,
     ghc-prim,
     hashable,
+    linear-generics,
     storable-tuple,
     text,
     transformers,

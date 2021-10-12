@@ -1,3 +1,4 @@
 resolver: nightly-2021-06-21
 packages:
 - '.'
+- linear-generics-0.1.0.1@sha256:42e24ff2fff59f235511c183b11a5e3175ae8642d11a06bb3ece5e68de6135c4,5823
