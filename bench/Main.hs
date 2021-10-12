@@ -1,14 +1,13 @@
 module Main where
 
 import Gauge
-import Data.Mutable.HashMap (hmbench, getHMInput)
+import Data.Mutable.HashMap (hmbench)
 import qualified Data.Mutable.Array as Array
 
 main :: IO ()
 main = do
-  hmInput <- getHMInput
   defaultMain
-    [ hmbench hmInput
+    [ hmbench
     , Array.benchmarks
     ]
 

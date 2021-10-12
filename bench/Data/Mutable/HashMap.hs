@@ -9,10 +9,11 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
-module Data.Mutable.HashMap (hmbench, getHMInput) where
+module Data.Mutable.HashMap (hmbench) where
 
 import Gauge
-import qualified System.Random as Random
+import Data.Coerce (coerce)
+import qualified Control.Monad.Random as Random
 import qualified System.Random.Shuffle as Random
 import Control.DeepSeq (deepseq, force, NFData(..))
 import Data.Hashable (Hashable(..), hashWithSalt)
@@ -21,13 +22,11 @@ import qualified Data.Unrestricted.Linear as Linear
 import Data.List (foldl')
 import qualified Prelude.Linear as Linear
 import Control.Monad.ST (runST, ST)
-import Control.Exception (evaluate)
 
 import qualified Data.HashMap.Mutable.Linear as LMap
 import qualified Data.HashMap.Strict as Map
 import qualified Data.HashTable.ST.Basic as BasicST
 import qualified Data.HashTable.ST.Cuckoo as CuckooST
-
 
 -- # Exported benchmarks
 -------------------------------------------------------------------------------
@@ -50,9 +49,12 @@ data BenchInput where
     , shuffle2 :: ![Key]
     , shuffle3 :: ![Key]
     } -> BenchInput
+  deriving Generic
 
-hmbench :: BenchInput -> Benchmark
-hmbench inp = bgroup "Comparing Linear Hashmaps"
+instance NFData BenchInput
+
+hmbench :: Benchmark
+hmbench = bgroup "hashmaps"
   [ bgroup "linear-base:Data.HashMap.Mutable.Linear" $
       linear_hashmap inp
   , bgroup "unordered-containers:Data.HashMap.Strict" $
@@ -61,7 +63,17 @@ hmbench inp = bgroup "Comparing Linear Hashmaps"
       st_basic inp
   , bgroup "hashtables:Data.HashTable.ST.Cuckoo" $
       st_cuckoo inp
+  , microbenchmarks
   ]
+ where
+  !inp = force . flip Random.evalRand (Random.mkStdGen 4541645642) $ do
+    let keys = map Key $ enumFromTo 1 num_keys
+    shuff1 <- Random.shuffleM keys
+    shuff2 <- Random.shuffleM shuff1
+    shuff3 <- Random.shuffleM shuff2
+    vals <- Random.getRandomRs (0, num_keys)
+    let kv_pairs = zip keys vals
+    return $ BenchInput kv_pairs shuff1 shuff2 shuff3
 
 descriptions :: [String]
 descriptions =
@@ -79,20 +91,6 @@ descriptions =
 
 num_keys :: Int
 num_keys = 100_000
-
-getHMInput :: IO BenchInput
-getHMInput = do
-  let keys = map Key $ enumFromTo 1 num_keys
-  g0 <- Random.getStdGen
-  let (gx,gc) = Random.split g0
-  let (ga,gb) = Random.split gx
-  shuff1 <- evaluate $ force $ Random.shuffle' keys num_keys ga
-  shuff2 <- evaluate $ force $ Random.shuffle' shuff1 num_keys gb
-  shuff3 <- evaluate $ force $ Random.shuffle' shuff2 num_keys gc
-  g1 <- Random.getStdGen
-  let (vals :: [Int]) = Random.randomRs (0,num_keys) g1
-  kv_pairs <- evaluate $ force (zip keys vals)
-  return $ BenchInput kv_pairs shuff1 shuff2 shuff3
 
 modVal :: Maybe Int -> Maybe Int
 modVal Nothing = Nothing
@@ -327,3 +325,50 @@ st_cuckoo inp@(BenchInput {pairs=kvs}) =
       mapM_ (\k -> CuckooST.mutate hm k ((,()) . modVal)) (shuffle2 inp)
       mapM_ (look hm) (shuffle3 inp)
 
+-- Microbenchmarks
+
+microbenchmarks :: Benchmark
+microbenchmarks =
+  bgroup "microbenchmarks"
+    [ runImpls  "insertHeavy" insertHeavy input
+    ]
+ where
+  !input =
+    coerce . force . flip Random.evalRand (Random.mkStdGen 4541645642)
+     $ Random.shuffleM [1..num_keys]
+
+data Impls =
+  Impls
+    ([Key] -> LMap.HashMap Key () %1-> ())
+    ([Key] -> Map.HashMap Key () -> ())
+
+runImpls :: String -> Impls -> [Key] -> Benchmark
+runImpls name impls input =
+  let Impls linear dataHashMap = impls
+  in bgroup name
+       [ bench "Data.HashMap.Mutable.Linear" $ whnf (runLinear linear) input
+       , bench "Data.HashMap.Strict" $ whnf (runDataHashMap dataHashMap) input
+       ]
+ where
+  runLinear :: ([Key] -> LMap.HashMap Key () %1-> ()) -> [Key] -> ()
+  runLinear cb inp = LMap.empty (num_keys * 2) (\hm -> Linear.move (cb inp hm)) Linear.& Linear.unur
+
+  runDataHashMap :: ([Key] -> Map.HashMap Key () -> ()) -> [Key] -> ()
+  runDataHashMap cb inp = cb inp Map.empty
+
+insertHeavy :: Impls
+insertHeavy = Impls linear dataHashMap
+  where
+   linear :: [Key] -> LMap.HashMap Key () %1-> ()
+   linear inp hm = go inp hm `Linear.lseq` ()
+    where
+     go :: [Key] -> LMap.HashMap Key () %1-> LMap.HashMap Key ()
+     go [] h = h
+     go (x:xs) h = go xs Linear.$! LMap.insert x () h
+
+   dataHashMap :: [Key] -> Map.HashMap Key () -> ()
+   dataHashMap inp hm = go inp hm `seq` ()
+    where
+     go :: [Key] -> Map.HashMap Key () -> Map.HashMap Key ()
+     go [] h = h
+     go (x:xs) h = go xs $! Map.insert x () h
