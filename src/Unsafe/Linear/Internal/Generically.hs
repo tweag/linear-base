@@ -73,11 +73,13 @@ from1 = Unsafe.toLinear G.from1
 instance (Generic1 f, Data.Functor (Rep1 f)) => Data.Functor (Generically1 f) where
   fmap f = Generically1 . to1 . Data.fmap f . from1 . unGenerically1
 
-instance (Generic1 f, Data.Traversable (Rep1 f)) => Data.Traversable (Generically1 f) where
-  traverse f = Control.fmap (Generically1 . to1) . Data.traverse f . from1 . unGenerically1
-
 instance (Generic1 f, Control.Functor (Rep1 f)) => Control.Functor (Generically1 f) where
   fmap f = Generically1 . to1 . Control.fmap f . from1 . unGenerically1
+
+genericTraverse
+  :: (Generic1 t, Data.Traversable (Rep1 t), Control.Applicative f)
+  => (a %1-> f b) -> t a %1-> f (t b)
+genericTraverse f = Control.fmap to1 . Data.traverse f . from1
 
 
 class GConsumable f where
