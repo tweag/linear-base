@@ -1,4 +1,5 @@
 {-# OPTIONS_HADDOCK hide #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -7,6 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -36,15 +38,17 @@ module Control.Functor.Linear.Internal.Class
   , foldM
   ) where
 
-import Prelude (String, Bool(..), error)
+import Prelude (String, Bool(..))
 import Prelude.Linear.Internal
 import qualified Control.Monad as NonLinear ()
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
+import Data.Type.Bool
 import Data.Unrestricted.Internal.Consumable
-import GHC.Generics
+import Generics.Linear
 import GHC.Types (Type)
 import GHC.TypeLits
+import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
 
 -- # Control Functors
 -------------------------------------------------------------------------------
@@ -161,19 +165,14 @@ foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 -- Generics instances --
 ------------------------
 
-type family (&&) (a :: Bool) (b :: Bool) :: Bool where
-  'True && 'True = 'True
-  a && b = 'False
-
 -- True if the generic type does not contain 'Par1', i.e. it does not use its parameter.
 type family NoPar1 (f :: Type -> Type) :: Bool where
   NoPar1 U1 = 'True
   NoPar1 (K1 i v) = 'True
   NoPar1 (l :*: r) = NoPar1 l && NoPar1 r
   NoPar1 (l :+: r) = NoPar1 l && NoPar1 r
-  NoPar1 (l :.: r) = NoPar1 l
+  NoPar1 (l :.: r) = NoPar1 l || NoPar1 r
   NoPar1 (M1 i c f) = NoPar1 f
-  NoPar1 (Rec1 f) = NoPar1 f
   NoPar1 Par1 = 'False
 
 -- If the generic type does not use its parameter, we can linearly coerce the parameter to any other type.
@@ -188,27 +187,36 @@ instance (Unused l, Unused r) => Unused (l :*: r) where
 instance (Unused l, Unused r) => Unused (l :+: r) where
   unused (L1 l) = L1 (unused l)
   unused (R1 r) = R1 (unused r)
-instance Unused l => Unused (l :.: r) where
-  unused (Comp1 a) = Comp1 (unused a)
 instance Unused f => Unused (M1 i c f) where
   unused (M1 a) = M1 (unused a)
-instance Unused f => Unused (Rec1 f) where
-  unused (Rec1 a) = Rec1 (unused a)
+instance (Unused' (NoPar1 l) l r, (NoPar1 l || NoPar1 r) ~ 'True) => Unused (l :.: r) where
+  unused (Comp1 a) = Comp1 (unused' @(NoPar1 l) a)
+class Unused' (left_unused :: Bool) l r where
+  unused' :: l (r a) %1-> l (r b)
+instance Unused l => Unused' 'True l r where
+  unused' = unused
+instance (Functor l, Unused r) => Unused' 'False l r where
+  unused' = fmap unused
 
 -- A linear map on a pair is only possible if only one side uses its parameter.
 -- To get the right type, the other side can then be coerced (instead of mapped) using `unused`.
-class (noPar1l ~ NoPar1 l, noPar1r ~ NoPar1 r) => EitherNoPar1 noPar1l noPar1r l r where
+class (noPar1l ~ NoPar1 l, noPar1r ~ NoPar1 r) => EitherNoPar1 (noPar1l :: Bool) (noPar1r :: Bool) l r where
   eitherNoPar1Map :: (a %1-> b) %1-> (l :*: r) a %1-> (l :*: r) b
 instance (Unused l, Functor r, NoPar1 r ~ 'False) => EitherNoPar1 'True 'False l r where
   eitherNoPar1Map f (l :*: r) = unused l :*: fmap f r
 instance (Unused r, Functor l, NoPar1 l ~ 'False) => EitherNoPar1 'False 'True l r where
   eitherNoPar1Map f (l :*: r) = fmap f l :*: unused r
-type MessageMany = 'Text "Can't derive an instance of Functor. One of the constructors of your datatype uses the type parameter more than once."
-instance ('False ~ NoPar1 l, 'False ~ NoPar1 r, TypeError MessageMany) => EitherNoPar1 'False 'False l r where
-  eitherNoPar1Map = error "This method is never called because it causes a type error"
-type MessageZero = 'Text "Can't derive an instance of Functor. One of the constructors of your datatype does not use the type parameter."
-instance ('True ~ NoPar1 l, 'True ~ NoPar1 r, TypeError MessageZero) => EitherNoPar1 'True 'True l r where
-  eitherNoPar1Map = error "This method is never called because it causes a type error"
+
+type MessageMany = 'Text "Can't derive an instance of Functor. One of the constructors" ':$$:
+                   'Text "of your datatype uses the type parameter more than once."
+
+instance ('False ~ NoPar1 l, 'False ~ NoPar1 r, Unsatisfiable MessageMany) => EitherNoPar1 'False 'False l r where
+  eitherNoPar1Map = unsatisfiable
+
+type MessageZero = 'Text "Can't derive an instance of Functor. One of the constructors" ':$$:
+                   'Text "of your datatype does not use the type parameter."
+instance ('True ~ NoPar1 l, 'True ~ NoPar1 r, Unsatisfiable MessageZero) => EitherNoPar1 'True 'True l r where
+  eitherNoPar1Map = unsatisfiable
 
 instance (Functor l, Functor r) => Functor (l :+: r) where
   fmap f (L1 a) = L1 (fmap f a)
@@ -217,8 +225,6 @@ instance Functor f => Functor (M1 j c f) where
   fmap f (M1 a) = M1 (fmap f a)
 instance Functor Par1 where
   fmap f (Par1 a) = Par1 (f a)
-instance Functor f => Functor (Rec1 f) where
-  fmap f (Rec1 a) = Rec1 (fmap f a)
 instance (Functor f, Functor g) => Functor (f :.: g) where
   fmap f (Comp1 fga) = Comp1 (fmap (fmap f) fga)
 instance (Data.Functor l, Data.Functor r, EitherNoPar1 b1 b2 l r) => Functor (l :*: r) where

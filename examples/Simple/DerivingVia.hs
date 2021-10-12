@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingVia        #-}
 module Simple.DerivingVia where
 
-import GHC.Generics (Generic, Generic1)
+import Generics.Linear (Generic, Generic1)
 import Unsafe.Linear (Generically(..), Generically1(..), genericTraverse)
 
 import qualified Data.Functor.Linear as Data

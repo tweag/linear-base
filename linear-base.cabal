@@ -84,7 +84,9 @@ library
     Foreign.Marshal.Pure
     Foreign.Marshal.Pure.Internal
     Prelude.Linear
+    Prelude.Linear.GenericUtil
     Prelude.Linear.Internal
+    Prelude.Linear.Unsatisfiable
     Streaming.Linear
     Streaming.Prelude.Linear
     Streaming.Internal.Consume
@@ -104,6 +106,7 @@ library
     containers,
     ghc-prim,
     hashable,
+    linear-generics >=0.1.0.1 && <0.2,
     storable-tuple,
     text,
     transformers,
@@ -151,6 +154,7 @@ test-suite examples
   build-depends:
     base,
     linear-base,
+    linear-generics,
     tasty,
     tasty-hedgehog,
     hedgehog,
@@ -172,9 +176,11 @@ benchmark mutable-data
     vector,
     deepseq,
     gauge,
+    ghc-prim,
     hashtables,
     hashable,
     linear-base,
+    linear-generics,
     random,
     random-shuffle,
     unordered-containers,

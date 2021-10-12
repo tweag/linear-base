@@ -21,11 +21,10 @@ import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Instances ()
-import GHC.Generics hiding (to, from, to1, from1)
-import qualified GHC.Generics as G
-import qualified Unsafe.Linear.Internal as Unsafe
+import Generics.Linear
 import Prelude.Linear.Internal
 import Data.V.Linear ()
+import GHC.Types (Multiplicity (..))
 
 -- | A datatype whose instances are defined generically, using the
 -- 'Generic' representation. 'Generically1' is a higher-kinded version
@@ -37,12 +36,6 @@ newtype Generically a = Generically a
 
 unGenerically :: Generically a %1-> a
 unGenerically (Generically a) = a
-
-to :: Generic a => Rep a p %1-> a
-to = Unsafe.toLinear G.to
-
-from :: Generic a => a %1-> Rep a p
-from = Unsafe.toLinear G.from
 
 instance (Generic a, GConsumable (Rep a)) => Consumable (Generically a) where
   consume = gconsume . from . unGenerically
@@ -63,12 +56,6 @@ newtype Generically1 f a = Generically1 (f a)
 
 unGenerically1 :: Generically1 f a %1-> f a
 unGenerically1 (Generically1 fa) = fa
-
-to1 :: Generic1 f => Rep1 f p %1-> f p
-to1 = Unsafe.toLinear G.to1
-
-from1 :: Generic1 f => f p %1-> Rep1 f p
-from1 = Unsafe.toLinear G.from1
 
 instance (Generic1 f, Data.Functor (Rep1 f)) => Data.Functor (Generically1 f) where
   fmap f = Generically1 . to1 . Data.fmap f . from1 . unGenerically1
@@ -98,6 +85,14 @@ instance Consumable c => GConsumable (K1 i c) where
 instance GConsumable f => GConsumable (M1 i t f) where
   gconsume (M1 a) = gconsume a
 
+-- This split is a bit awkward. We'd like to be able to *default*
+-- the multiplicity to `Many` when it's polymorphic, but to the best
+-- of my knowledge GHC doesn't offer any way to do that.
+instance GConsumable (MP1 'Many f) where
+  gconsume (MP1 _) = ()
+instance GConsumable f => GConsumable (MP1 'One f) where
+  gconsume (MP1 x) = gconsume x
+
 class GConsumable f => GDupable f where
   gdup2 :: f p %1-> (f p, f p)
 instance GDupable V1 where
@@ -116,6 +111,11 @@ instance Dupable c => GDupable (K1 i c) where
 instance GDupable f => GDupable (M1 i t f) where
   gdup2 (M1 a) = gdup2 a & \case (x, y) -> (M1 x, M1 y)
 
+instance GDupable (MP1 'Many f) where
+  gdup2 (MP1 x) = (MP1 x, MP1 x)
+instance GDupable f => GDupable (MP1 'One f) where
+  gdup2 (MP1 a) = gdup2 a & \case (x, y) -> (MP1 x, MP1 y)
+
 class GDupable f => GMovable f where
   gmove :: f p %1-> Ur (f p)
 instance GMovable V1 where
@@ -133,3 +133,8 @@ instance Movable c => GMovable (K1 i c) where
   gmove (K1 c) = move c & \case (Ur x) -> Ur (K1 x)
 instance GMovable f => GMovable (M1 i t f) where
   gmove (M1 a) = gmove a & \case (Ur x) -> Ur (M1 x)
+
+instance GMovable (MP1 'Many f) where
+  gmove (MP1 x) = Ur (MP1 x)
+instance GMovable f => GMovable (MP1 'One f) where
+  gmove (MP1 a) = gmove a & \case Ur x -> Ur (MP1 x)

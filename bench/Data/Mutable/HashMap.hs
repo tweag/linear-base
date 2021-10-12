@@ -1,7 +1,9 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE LambdaCase #-}
@@ -9,6 +11,10 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.Mutable.HashMap (hmbench) where
 
 import Gauge
@@ -17,7 +23,8 @@ import qualified Control.Monad.Random as Random
 import qualified System.Random.Shuffle as Random
 import Control.DeepSeq (deepseq, force, NFData(..))
 import Data.Hashable (Hashable(..), hashWithSalt)
-import GHC.Generics (Generic)
+import qualified GHC.Generics
+import Generics.Linear.TH
 import qualified Data.Unrestricted.Linear as Linear
 import Data.List (foldl')
 import qualified Prelude.Linear as Linear
@@ -35,8 +42,10 @@ newtype Key = Key Int
 
 deriving instance Eq Key
 deriving instance Ord Key
-deriving instance Generic Key
+deriving instance GHC.Generics.Generic Key
 deriving instance NFData Key
+$(deriveGeneric ''Key)
+
 instance Hashable Key where
     hash (Key x) =
       x  `hashWithSalt` (154669 :: Int)
@@ -48,10 +57,11 @@ data BenchInput where
     , shuffle1 :: ![Key]
     , shuffle2 :: ![Key]
     , shuffle3 :: ![Key]
-    } -> BenchInput
-  deriving Generic
+    } %1-> BenchInput
+  deriving GHC.Generics.Generic
 
 instance NFData BenchInput
+$(deriveGeneric ''BenchInput)
 
 hmbench :: Benchmark
 hmbench = bgroup "hashmaps"

@@ -25,7 +25,7 @@ import qualified Control.Monad.Trans.Maybe as NonLinear
 import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Unrestricted.Internal.Consumable
-import GHC.Generics
+import Generics.Linear
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -127,7 +127,5 @@ instance Functor f => Functor (M1 i c f) where
   fmap f (M1 a) = M1 (fmap f a)
 instance Functor Par1 where
   fmap f (Par1 a) = Par1 (f a)
-instance Functor f => Functor (Rec1 f) where
-  fmap f (Rec1 a) = Rec1 (fmap f a)
 instance (Functor f, Functor g) => Functor (f :.: g) where
   fmap f (Comp1 a) = Comp1 (fmap (fmap f) a)

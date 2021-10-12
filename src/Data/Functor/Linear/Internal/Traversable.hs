@@ -27,7 +27,7 @@ import qualified Data.Functor.Linear.Internal.Applicative as Data
 import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
-import GHC.Generics
+import Generics.Linear
 
 -- $traversable
 
@@ -147,8 +147,6 @@ instance Traversable f => Traversable (M1 i c f) where
   traverse f (M1 a) = M1 Data.<$> traverse f a
 instance Traversable Par1 where
   traverse f (Par1 a) = Par1 Data.<$> f a
-instance Traversable f => Traversable (Rec1 f) where
-  traverse f (Rec1 a) = Rec1 Data.<$> traverse f a
 instance (Traversable f, Traversable g) => Traversable (f :.: g) where
   traverse f (Comp1 a) = Comp1 Data.<$> traverse (traverse f) a
 -- This is the only instance where we need @Control.Applicative@.

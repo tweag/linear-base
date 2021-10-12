@@ -19,18 +19,7 @@ module Unsafe.Linear
     toLinear3,
     toLinearN,
     ToLinearN (..),
-    -- * Generics
-    Generically(..),
-    unGenerically,
-    to,
-    from,
-    Generically1(..),
-    unGenerically1,
-    to1,
-    from1,
-    genericTraverse
   )
   where
 
 import Unsafe.Linear.Internal
-import Unsafe.Linear.Internal.Generically
