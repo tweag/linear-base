@@ -68,6 +68,13 @@ instance Prelude.Foldable Ur where
 instance Prelude.Traversable Ur where
   sequenceA (Ur x) = Prelude.fmap Ur x
 
+instance Prelude.Applicative Ur where
+  pure = Ur
+  Ur f <*> Ur x = Ur (f x)
+
+instance Prelude.Monad Ur where
+  Ur a >>= f = f a
+
 -- -------------------
 -- Generic and Generic1 instances
 

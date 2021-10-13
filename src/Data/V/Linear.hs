@@ -41,24 +41,14 @@ module Data.V.Linear
   , iterate
   -- * Type-level utilities
   , caseNat
-  , module Data.V.Linear.Internal.Instances
   ) where
 
 import Data.V.Linear.Internal.V
-import Data.V.Linear.Internal.Instances ()
 
 {- Developers Note
 
-To avoid a common circular dependence, we moved the data type to
-Data.V.Internal.Linear.V and moved the instances here. The common import issue
-is as follows. Dupable depends on @V@ yet the instances of @V@ depend on
-a variety of things (data functors, control functors, traversable) which
-often end up depending on dupable. By moving the instances here, we
-can make sure that Data.Unrestricted.Internal.Dupable only depends on the data
-type definition in Data.V.Linear.V and does not require any of the dependencies
-of the instances.
+@V@ is used /all over the place/, so it can be a bit tricky to
+avoid module import cycles. Generally speaking:
 
-Remark: ideally the instances below would be in an internal `Instances`
-module. But we haven't got around to it yet.
+Avoid importing much into the implementation of @V@.
 -}
-

@@ -1,9 +1,12 @@
 {-# OPTIONS_HADDOCK hide #-}
-{-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Data.Functor.Linear.Internal.Functor
@@ -19,7 +22,6 @@ import Prelude (Maybe(..), Either(..))
 import Data.Functor.Const
 import Data.Functor.Sum
 import Data.Functor.Compose
-import Data.Functor.Identity
 import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.Cont as NonLinear
 import qualified Control.Monad.Trans.Maybe as NonLinear
@@ -32,6 +34,7 @@ import Data.Unrestricted.Internal.Ur (Ur (..))
 import qualified Unsafe.Linear as Unsafe
 import Data.V.Linear.Internal.V (V (..))
 import qualified Data.Vector as Vector
+import Data.Functor.Identity (Identity (..))
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -73,11 +76,20 @@ instance Functor (Either e) where
   fmap _ (Left x) = Left x
   fmap f (Right x) = Right (f x)
 
-instance Functor ((,) a) where
-  fmap f (x,y) = (x, f y)
+deriving via Generically1 ((,) a)
+  instance Functor ((,) a)
 
-instance Functor Identity where
-  fmap f (Identity x) = Identity (f x)
+deriving via Generically1 ((,,) a b)
+  instance Functor ((,,) a b)
+
+deriving via Generically1 ((,,,) a b c)
+  instance Functor ((,,,) a b c)
+
+deriving via Generically1 ((,,,,) a b c d)
+  instance Functor ((,,,,) a b c d)
+
+deriving via Generically1 Identity
+  instance Functor Identity
 
 instance (Functor f, Functor g) => Functor (Sum f g) where
   fmap f (InL fa) = InL (fmap f fa)
@@ -143,3 +155,5 @@ instance Functor Par1 where
   fmap f (Par1 a) = Par1 (f a)
 instance (Functor f, Functor g) => Functor (f :.: g) where
   fmap f (Comp1 a) = Comp1 (fmap (fmap f) a)
+instance Functor f => Functor (MP1 m f) where
+  fmap f (MP1 x) = MP1 (fmap f x)

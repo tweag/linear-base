@@ -4,6 +4,7 @@
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -35,8 +36,8 @@ import qualified Prelude as Prelude
 import Data.List.NonEmpty (NonEmpty)
 import Data.Unrestricted.Internal.Ur
 import qualified Data.Semigroup as Semigroup
+import qualified Data.Monoid as Monoid
 import GHC.Tuple (Solo)
-import GHC.TypeNats (KnownNat)
 import Data.V.Linear.Internal.V (V (..))
 import qualified Data.Vector as Vector
 
@@ -61,10 +62,11 @@ lseq a b = seqUnit (consume a) b
 -- fact direct, we may consider adding a deriving-via combinator) when we have a
 -- traversable-by-a-data-applicative class see #190.
 
-instance (KnownNat n, Consumable a) => Consumable (V n a) where
-  consume (V xs) = consume (Unsafe.toLinear Vector.toList xs)
+deriving newtype instance Consumable a => Consumable (V n a)
+instance Consumable a => Consumable (Vector.Vector a) where
+  consume xs = consume (Unsafe.toLinear Vector.toList xs)
 
--- Generic-derived instances
+-- Prelude and primitive instances
 
 deriving via Generically Prelude.Char
   instance Consumable Prelude.Char
@@ -104,31 +106,31 @@ deriving via Generically [a]
   instance _ => Consumable [a]
 deriving via Generically (NonEmpty a)
   instance _ => Consumable (NonEmpty a)
-deriving via Generically (Semigroup.Min a)
-  instance _ => Consumable (Semigroup.Min a)
-deriving via Generically (Semigroup.Max a)
-  instance _ => Consumable (Semigroup.Max a)
-deriving via Generically (Semigroup.First a)
-  instance _ => Consumable (Semigroup.First a)
-deriving via Generically (Semigroup.Last a)
-  instance _ => Consumable (Semigroup.Last a)
-deriving via Generically (Semigroup.WrappedMonoid a)
-  instance _ => Consumable (Semigroup.WrappedMonoid a)
-deriving via Generically (Semigroup.Dual a)
-  instance _ => Consumable (Semigroup.Dual a)
-deriving via Generically Semigroup.All
-  instance Consumable Semigroup.All
-deriving via Generically Semigroup.Any
-  instance Consumable Semigroup.Any
-deriving via Generically (Semigroup.Sum a)
-  instance _ => Consumable (Semigroup.Sum a)
-deriving via Generically (Semigroup.Product a)
-  instance _ => Consumable (Semigroup.Product a)
-deriving via Generically (Semigroup.Arg a b)
-  instance _ => Consumable (Semigroup.Arg a b)
 
 deriving via Generically (Ur a)
   instance Consumable (Ur a)
+
+-- Data.Semigroup instances
+
+deriving via Generically (Semigroup.Arg a b)
+  instance _ => Consumable (Semigroup.Arg a b)
+deriving newtype instance _ => Consumable (Semigroup.Min a)
+deriving newtype instance _ => Consumable (Semigroup.Max a)
+deriving newtype instance _ => Consumable (Semigroup.First a)
+deriving newtype instance _ => Consumable (Semigroup.Last a)
+deriving newtype instance _ => Consumable (Semigroup.WrappedMonoid a)
+deriving newtype instance _ => Consumable (Semigroup.Dual a)
+deriving newtype instance Consumable Semigroup.All
+deriving newtype instance Consumable Semigroup.Any
+deriving newtype instance _ => Consumable (Semigroup.Sum a)
+deriving newtype instance _ => Consumable (Semigroup.Product a)
+
+-- Data.Monoid instances
+
+deriving newtype instance _ => Consumable (Monoid.First a)
+deriving newtype instance _ => Consumable (Monoid.Last a)
+deriving newtype instance _ => Consumable (Monoid.Alt f a)
+deriving newtype instance _ => Consumable (Monoid.Ap f a)
 
 -- ----------------
 -- Generic deriving

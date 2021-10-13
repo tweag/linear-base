@@ -1,15 +1,17 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Data.Functor.Linear.Internal.Traversable
   ( -- * Linear traversable hierarchy
@@ -29,6 +31,11 @@ import Data.Functor.Const
 import Prelude.Linear.Internal
 import Prelude (Maybe(..), Either(..))
 import Generics.Linear
+import Data.V.Linear.Internal.V (V (..))
+import qualified Data.V.Linear.Internal.V as V
+import qualified Data.Vector as Vector
+import GHC.TypeNats (KnownNat)
+import qualified Unsafe.Linear as Unsafe
 
 -- $traversable
 
@@ -130,6 +137,11 @@ instance Traversable (Const a) where
 instance Traversable (Either a) where
   sequence (Left x) = Control.pure (Left x)
   sequence (Right x) = Right Control.<$> x
+
+instance KnownNat n => Traversable (V n) where
+  traverse f (V xs) =
+    (V . Unsafe.toLinear (Vector.fromListN (V.theLength @n))) Data.<$>
+    traverse f (Unsafe.toLinear Vector.toList xs)
 
 ------------------------
 -- Generics instances --

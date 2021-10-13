@@ -6,6 +6,7 @@
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeApplications #-}
@@ -50,6 +51,10 @@ import GHC.Types (Type)
 import GHC.TypeLits
 import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
 import Prelude.Linear.Generically
+import Data.Monoid.Linear
+import Data.Functor.Identity (Identity (..))
+import qualified Data.Functor.Sum as Sum
+import Data.Functor.Compose (Compose (..))
 
 -- # Control Functors
 -------------------------------------------------------------------------------
@@ -121,6 +126,28 @@ class (Data.Applicative f, Functor f) => Applicative f where
 dataPureDefault :: Applicative f => a -> f a
 dataPureDefault x = pure x
 
+instance Monoid a => Applicative ((,) a) where
+  pure x = (mempty, x)
+  (a, f) <*> (b, x) = (a <> b, f x)
+
+instance (Monoid a, Monoid b) => Applicative ((,,) a b) where
+  pure x = (mempty, mempty, x)
+  (a1, a2, f) <*> (b1, b2, x) = (a1 <> b1, a2 <> b2, f x)
+
+instance (Monoid a, Monoid b, Monoid c) => Applicative ((,,,) a b c) where
+  pure x = (mempty, mempty, mempty, x)
+  (a1, a2, a3, f) <*> (b1, b2, b3, x) = (a1 <> b1, a2 <> b2, a3 <> b3, f x)
+
+instance Functor Identity where
+  fmap f (Identity x) = Identity (f x)
+
+instance Applicative Identity where
+  pure = Identity
+  Identity f <*> Identity x = Identity (f x)
+
+instance Monad Identity where
+  Identity x >>= f = f x
+
 
 -- # Control Monads
 -------------------------------------------------------------------------------
@@ -161,6 +188,27 @@ foldM :: forall m a b. Monad m => (b %1-> a %1-> m b) -> b %1-> [a] %1-> m b
 foldM _ i [] = return i
 foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 
+---------------
+-- Instances --
+---------------
+
+deriving via Generically1 ((,) a)
+  instance Functor ((,) a)
+deriving via Generically1 ((,,) a b)
+  instance Functor ((,,) a b)
+deriving via Generically1 ((,,,) a b c)
+  instance Functor ((,,,) a b c)
+deriving via Generically1 ((,,,,) a b c d)
+  instance Functor ((,,,,) a b c d)
+instance Monoid a => Monad ((,) a) where
+  (a, x) >>= f = go a (f x)
+    where go :: a %1-> (a,b) %1-> (a,b)
+          go b1 (b2, y) = (b1 <> b2, y)
+
+deriving via Generically1 (Sum.Sum f g)
+  instance (Functor f, Functor g) => Functor (Sum.Sum f g)
+deriving via Generically1 (Compose f g)
+  instance (Functor f, Functor g) => Functor (Compose f g)
 
 ------------------------
 -- Generics instances --

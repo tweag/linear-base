@@ -73,7 +73,6 @@ module Data.Unrestricted.Linear
   , lseq
   , dup
   , dup3
-  , module Data.Unrestricted.Internal.Instances
   ) where
 
 import Data.Unrestricted.Internal.Consumable
@@ -81,5 +80,4 @@ import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
 import Data.Unrestricted.Internal.UrT
-import Data.Unrestricted.Internal.Instances
 
