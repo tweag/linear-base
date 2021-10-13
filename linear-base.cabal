@@ -99,7 +99,7 @@ library
     System.IO.Resource
     System.IO.Resource.Internal
     Unsafe.Linear
-    Unsafe.Linear.Internal.Generically
+    Prelude.Linear.Generically
   build-depends:
     base >= 4.15 && < 5,
     containers,
@@ -150,6 +150,7 @@ test-suite examples
     Simple.Pure
     Simple.Quicksort
     Simple.TopSort
+    Simple.DerivingVia
   build-depends:
     base,
     linear-base,
