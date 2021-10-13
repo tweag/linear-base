@@ -99,7 +99,6 @@ library
     System.IO.Resource
     System.IO.Resource.Internal
     Unsafe.Linear
-    Unsafe.Linear.Internal
     Unsafe.Linear.Internal.Generically
   build-depends:
     base >= 4.15 && < 5,

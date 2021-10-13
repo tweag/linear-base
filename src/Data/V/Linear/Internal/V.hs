@@ -44,7 +44,7 @@ import Prelude
   , (-))
 import qualified Prelude as Prelude
 import Prelude.Linear.Internal
-import qualified Unsafe.Linear.Internal as Unsafe
+import qualified Unsafe.Linear as Unsafe
 
 {- Developers Note
 
