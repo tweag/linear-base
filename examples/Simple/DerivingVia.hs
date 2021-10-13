@@ -10,7 +10,8 @@
 module Simple.DerivingVia where
 
 import Generics.Linear.TH (deriveGenericAnd1)
-import Prelude.Linear.Generically (Generically(..), Generically1(..), genericTraverse)
+import Prelude.Linear.Generically (Generically(..), Generically1(..))
+import Data.Functor.Linear (genericTraverse)
 
 import qualified Data.Functor.Linear as Data
 import Data.Unrestricted.Linear

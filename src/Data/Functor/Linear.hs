@@ -28,6 +28,8 @@ module Data.Functor.Linear
   , Traversable(..)
   , mapM, sequenceA, for, forM
   , mapAccumL, mapAccumR
+  -- * Generic
+  , genericTraverse
   )
   where
 

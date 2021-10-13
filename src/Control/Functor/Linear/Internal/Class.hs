@@ -49,6 +49,7 @@ import Generics.Linear
 import GHC.Types (Type)
 import GHC.TypeLits
 import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
+import Prelude.Linear.Generically
 
 -- # Control Functors
 -------------------------------------------------------------------------------
@@ -164,6 +165,9 @@ foldM f i (x:xs) = f i x >>= \i' -> foldM f i' xs
 ------------------------
 -- Generics instances --
 ------------------------
+
+instance (Generic1 f, Functor (Rep1 f)) => Functor (Generically1 f) where
+  fmap f = Generically1 . to1 . fmap f . from1 . unGenerically1
 
 -- True if the generic type does not contain 'Par1', i.e. it does not use its parameter.
 type family NoPar1 (f :: Type -> Type) :: Bool where

@@ -17,6 +17,7 @@ module Data.Functor.Linear.Internal.Traversable
     Traversable(..)
   , mapM, sequenceA, for, forM
   , mapAccumL, mapAccumR
+  , genericTraverse
   ) where
 
 import qualified Control.Functor.Linear.Internal.Class as Control
@@ -133,6 +134,11 @@ instance Traversable (Either a) where
 ------------------------
 -- Generics instances --
 ------------------------
+
+genericTraverse
+  :: (Generic1 t, Traversable (Rep1 t), Control.Applicative f)
+  => (a %1-> f b) -> t a %1-> f (t b)
+genericTraverse f = Control.fmap to1 . traverse f . from1
 
 instance Traversable U1 where
   traverse _ U1 = Data.pure U1

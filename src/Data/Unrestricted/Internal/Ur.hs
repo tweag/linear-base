@@ -23,6 +23,7 @@ import qualified GHC.Generics as GHCGen
 import Prelude.Linear.GenericUtil
 import GHC.Types (Multiplicity (..))
 import GHC.Exts (Any)
+import qualified Prelude
 
 -- | @Ur a@ represents unrestricted values of type @a@ in a linear
 -- context. The key idea is that because the contructor holds @a@ with a
@@ -92,3 +93,5 @@ lift f (Ur a) = Ur (f a)
 lift2 :: (a -> b -> c) -> Ur a %1-> Ur b %1-> Ur c
 lift2 f (Ur a) (Ur b) = Ur (f a b)
 
+instance Prelude.Functor Ur where
+  fmap f (Ur a) = Ur (f a)

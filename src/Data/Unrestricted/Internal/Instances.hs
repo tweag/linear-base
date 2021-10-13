@@ -213,15 +213,9 @@ instance Dupable (Ur a) where
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
 
-instance Prelude.Functor Ur where
-  fmap f (Ur a) = Ur (f a)
-
 instance Prelude.Applicative Ur where
   pure = Ur
   Ur f <*> Ur x = Ur (f x)
-
-instance Data.Functor Ur where
-  fmap f (Ur a) = Ur (f a)
 
 instance Data.Applicative Ur where
   pure = Ur

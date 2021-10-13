@@ -5,6 +5,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.Functor.Linear.Internal.Functor
   (
     Functor(..)
@@ -26,6 +27,8 @@ import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Unrestricted.Internal.Consumable
 import Generics.Linear
+import Prelude.Linear.Generically
+import Data.Unrestricted.Internal.Ur (Ur (..))
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -80,6 +83,9 @@ instance (Functor f, Functor g) => Functor (Sum f g) where
 instance (Functor f, Functor g) => Functor (Compose f g) where
   fmap f (Compose x) = Compose (fmap (fmap f) x)
 
+instance Functor Ur where
+  fmap f (Ur a) = Ur (f a)
+
 ---------------------------------
 -- Monad transformer instances --
 ---------------------------------
@@ -111,6 +117,8 @@ instance Functor m => Functor (Strict.StateT s m) where
 ------------------------
 -- Generics instances --
 ------------------------
+instance (Generic1 f, Functor (Rep1 f)) => Functor (Generically1 f) where
+  fmap f = Generically1 . to1 . fmap f . from1 . unGenerically1
 
 instance Functor U1 where
   fmap _ U1 = U1
