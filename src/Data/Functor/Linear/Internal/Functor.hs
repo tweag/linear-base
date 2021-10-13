@@ -29,6 +29,9 @@ import Data.Unrestricted.Internal.Consumable
 import Generics.Linear
 import Prelude.Linear.Generically
 import Data.Unrestricted.Internal.Ur (Ur (..))
+import qualified Unsafe.Linear as Unsafe
+import Data.V.Linear.Internal.V (V (..))
+import qualified Data.Vector as Vector
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -85,6 +88,9 @@ instance (Functor f, Functor g) => Functor (Compose f g) where
 
 instance Functor Ur where
   fmap f (Ur a) = Ur (f a)
+
+instance Functor (V n) where
+  fmap f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
 
 ---------------------------------
 -- Monad transformer instances --

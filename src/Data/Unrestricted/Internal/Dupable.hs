@@ -10,6 +10,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 module Data.Unrestricted.Internal.Dupable
   (
   -- * Dupable
@@ -27,10 +28,16 @@ import GHC.TypeLits
 import Data.Type.Equality
 import Data.V.Linear.Internal.V (V)
 import qualified Data.V.Linear.Internal.V as V
+import Data.V.Linear.Internal.V (V (..))
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
+import qualified Unsafe.Linear as Unsafe
 import GHC.Types (Multiplicity (..))
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Prelude as Prelude
+import qualified Data.Vector as Vector
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
 --
@@ -58,6 +65,21 @@ dup3 x = V.elim (dupV @_ @3 x) (,,)
 
 dup :: Dupable a => a %1-> (a, a)
 dup = dup2
+
+-- ---------------------
+-- Instances
+
+-- XXX: The Consumable and Dupable instances for V will be easier to define (in
+-- fact direct, we may consider adding a deriving-via combinator) when we have a
+-- traversable-by-a-data-applicative class see #190.
+instance (KnownNat n, Dupable a) => Dupable (V n a) where
+  dupV (V xs) =
+    V . Unsafe.toLinear (Vector.fromListN (V.theLength @n)) Data.<$>
+    dupV (Unsafe.toLinear Vector.toList xs)
+
+instance Dupable a => Dupable [a] where
+  dupV [] = Data.pure []
+  dupV (a:l) = (:) Data.<$> dupV a Data.<*> dupV l
 
 -- ---------------------
 -- Generic deriving

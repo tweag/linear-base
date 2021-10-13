@@ -38,6 +38,39 @@ data Ur a where
 deriving instance GHCGen.Generic (Ur a)
 deriving instance GHCGen.Generic1 Ur
 
+-- | Get an @a@ out of an @Ur a@. If you call this function on a
+-- linearly bound @Ur a@, then the @a@ you get out has to be used
+-- linearly, for example:
+--
+-- > restricted :: Ur a %1-> b
+-- > restricted x = f (unur x)
+-- >   where
+-- >     -- f __must__ be linear
+-- >     f :: a %1-> b
+-- >     f x = ...
+unur :: Ur a %1-> a
+unur (Ur a) = a
+
+-- | Lifts a function on a linear @Ur a@.
+lift :: (a -> b) -> Ur a %1-> Ur b
+lift f (Ur a) = Ur (f a)
+
+-- | Lifts a function to work on two linear @Ur a@.
+lift2 :: (a -> b -> c) -> Ur a %1-> Ur b %1-> Ur c
+lift2 f (Ur a) (Ur b) = Ur (f a b)
+
+instance Prelude.Functor Ur where
+  fmap f (Ur a) = Ur (f a)
+
+instance Prelude.Foldable Ur where
+  foldMap f (Ur x) = f x
+
+instance Prelude.Traversable Ur where
+  sequenceA (Ur x) = Prelude.fmap Ur x
+
+-- -------------------
+-- Generic and Generic1 instances
+
 instance Generic (Ur a) where
   type Rep (Ur a) = FixupMetaData (Ur a)
          (D1 Any
@@ -70,28 +103,3 @@ instance Generic1 Ur where
     where
       from1' :: Ur a %1-> Rep1 Ur a
       from1' (Ur a) = M1 (M1 (M1 (MP1 (Par1 a))))
-
-
--- | Get an @a@ out of an @Ur a@. If you call this function on a
--- linearly bound @Ur a@, then the @a@ you get out has to be used
--- linearly, for example:
---
--- > restricted :: Ur a %1-> b
--- > restricted x = f (unur x)
--- >   where
--- >     -- f __must__ be linear
--- >     f :: a %1-> b
--- >     f x = ...
-unur :: Ur a %1-> a
-unur (Ur a) = a
-
--- | Lifts a function on a linear @Ur a@.
-lift :: (a -> b) -> Ur a %1-> Ur b
-lift f (Ur a) = Ur (f a)
-
--- | Lifts a function to work on two linear @Ur a@.
-lift2 :: (a -> b -> c) -> Ur a %1-> Ur b %1-> Ur c
-lift2 f (Ur a) (Ur b) = Ur (f a b)
-
-instance Prelude.Functor Ur where
-  fmap f (Ur a) = Ur (f a)

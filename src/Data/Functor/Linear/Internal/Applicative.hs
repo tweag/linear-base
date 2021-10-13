@@ -1,6 +1,9 @@
 {-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Data.Functor.Linear.Internal.Applicative
   (
@@ -14,6 +17,11 @@ import Data.Monoid.Linear hiding (Sum)
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
+import Data.V.Linear.Internal.V (V (..))
+import qualified Data.V.Linear.Internal.V as V
+import qualified Data.Vector as Vector
+import GHC.TypeNats (KnownNat)
+import qualified Unsafe.Linear as Unsafe
 
 -- # Applicative definition
 -------------------------------------------------------------------------------
@@ -55,6 +63,11 @@ class Functor f => Applicative f where
 
 -- # Instances
 -------------------------------------------------------------------------------
+
+instance KnownNat n => Applicative (V n) where
+  pure a = V $ Vector.replicate (V.theLength @n) a
+  (V fs) <*> (V xs) = V $
+    Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
 
 instance Monoid x => Applicative (Const x) where
   pure _ = Const mempty
