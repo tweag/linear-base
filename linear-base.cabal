@@ -28,6 +28,9 @@ library
     Control.Functor.Linear.Internal.MonadTrans
     Control.Functor.Linear.Internal.Reader
     Control.Functor.Linear.Internal.State
+    Control.Functor.Linear.Yoneda
+    Control.Functor.Linear.Coyoneda
+    Control.Functor.Linear.Curried
     Control.Optics.Linear
     Control.Optics.Linear.Internal
     Control.Optics.Linear.Iso
@@ -49,6 +52,8 @@ library
     Data.Bool.Linear
     Data.Either.Linear
     Data.Functor.Linear
+    Data.Functor.Linear.Yoneda
+    Data.Functor.Linear.Coyoneda
     Data.Functor.Linear.Internal.Functor
     Data.Functor.Linear.Internal.Applicative
     Data.Functor.Linear.Internal.Traversable

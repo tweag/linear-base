@@ -2,6 +2,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -157,3 +158,15 @@ instance (Functor f, Functor g) => Functor (f :.: g) where
   fmap f (Comp1 a) = Comp1 (fmap (fmap f) a)
 instance Functor f => Functor (MP1 m f) where
   fmap f (MP1 x) = MP1 (fmap f x)
+instance Functor UAddr where
+  fmap _ (UAddr c) = UAddr c
+instance Functor UChar where
+  fmap _ (UChar c) = UChar c
+instance Functor UDouble where
+  fmap _ (UDouble c) = UDouble c
+instance Functor UFloat where
+  fmap _ (UFloat c) = UFloat c
+instance Functor UInt where
+  fmap _ (UInt c) = UInt c
+instance Functor UWord where
+  fmap _ (UWord c) = UWord c
