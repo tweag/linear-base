@@ -165,6 +165,12 @@ instance (GApplicative s f, GApplicative s g) => GApplicative s (f :*: g) where
   gliftA2 f (a1 :*: a2) (b1 :*: b2) = gliftA2 @s f a1 b1 :*: gliftA2 @s f a2 b2
   {-# INLINE gpure #-}
   {-# INLINE gliftA2 #-}
+instance Unsatisfiable
+  ('Text "Cannot derive a data Applicative instance for" ':$$: s
+   ':$$: 'Text "because sum types do not admit a uniform Applicative definition.")
+     => GApplicative s (x :+: y) where
+  gpure = unsatisfiable
+  gliftA2 = unsatisfiable
 instance GApplicative s f => GApplicative s (MP1 m f) where
   gpure a = MP1 (gpure @s a)
   gliftA2 f (MP1 a) (MP1 b) = MP1 (gliftA2 @s f a b)
@@ -175,3 +181,10 @@ instance Monoid c => GApplicative s (K1 i c) where
   gliftA2 _ (K1 x) (K1 y) = K1 (x <> y)
   {-# INLINE gpure #-}
   {-# INLINE gliftA2 #-}
+instance Unsatisfiable
+  ('Text "Cannot derive a data Applicative instance for" ':$$: s
+   ':$$: 'Text "because it contains one or more primitive unboxed fields."
+   ':$$: 'Text "Such unboxed types lack canonical monoid operations.")
+     => GApplicative s (URec a) where
+  gpure = unsatisfiable
+  gliftA2 = unsatisfiable

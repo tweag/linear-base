@@ -188,6 +188,13 @@ instance Traversable UWord where
 -- Generic deriving --
 ----------------------
 
+-- | Generically derive a suitable definition of 'traverse'.
+--
+-- === Caution
+--
+-- GHC's optimizer often fails to inline away the generic representations of
+-- traversals for sum types. To the best of my knowledge, no one has found a
+-- good workaround for this problem.
 genericTraverse
   :: (Generic1 t, GTraversable (Rep1 t), Control.Applicative f)
   => (a %1-> f b) -> t a %1-> f (t b)
@@ -199,8 +206,6 @@ class GTraversable t where
 instance GTraversable U1 where
   gtraverse _ U1 = Data.pure U1
   {-# INLINE gtraverse #-}
-instance GTraversable V1 where
-  gtraverse _ = \case
 instance (GTraversable f, GTraversable g) => GTraversable (f :*: g) where
   gtraverse f (l :*: r) = Data.liftA2 (:*:) (gtraverse f l) (gtraverse f r)
   {-# INLINE gtraverse #-}
@@ -222,6 +227,10 @@ instance (GTraversable f, Traversable g) => GTraversable (f :.: g) where
   gtraverse f (Comp1 a) = Comp1 Data.<$> gtraverse (traverse f) a
   {-# INLINE gtraverse #-}
 -- These are the only instances where we need @Control.Applicative@.
+instance GTraversable V1 where
+  -- This somewhat lazy instance is typical for the Traversable instances
+  -- in base, for better or for worse.
+  gtraverse _ x = Control.pure ((\case) x)
 instance GTraversable (K1 i v) where
   gtraverse _ (K1 c) = Control.pure (K1 c)
   {-# INLINE gtraverse #-}
@@ -243,7 +252,6 @@ instance GTraversable UInt where
 instance GTraversable UWord where
   gtraverse _ (UWord x) = Control.pure (UWord x)
   {-# INLINE gtraverse #-}
-
 
 -- CY f is a slight simplification, by Sjoerd Visscher, of the
 -- Curried (Yoneda f) (Yoneda f) type used to implement
