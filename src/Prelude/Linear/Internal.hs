@@ -6,23 +6,23 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Prelude.Linear.Internal where
 
 import Data.Functor.Identity
+import GHC.Exts (TYPE)
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
 -- simply reimplemented here. For harder function, we reuse the Prelude
 -- definition and make an unsafe cast.
 
--- XXX: Add runtime-representation polymorphism such that
--- `($)`+`-XImpredicativeType` (starting with 9.2) has the complete behaviour of
--- GHC's native `($)` rule.
-($) :: (a %p-> b) %q-> a %p-> b
+($) :: forall {rep} a (b :: TYPE rep) p q. (a %p-> b) %q-> a %p-> b
 ($) f x = f x
 infixr 0 $
 
-(&) :: a %p-> (a %p-> b) %q-> b
+(&) :: forall {rep} a (b :: TYPE rep) p q. a %p-> (a %p-> b) %q-> b
 x & f = f x
 infixl 1 &
 
@@ -41,7 +41,7 @@ asTypeOf = const
 seq :: a -> b %q-> b
 seq !_ y = y
 
-($!) :: (a %p-> b) %q-> a %p-> b
+($!) :: forall {rep} a (b :: TYPE rep) p q. (a %p-> b) %q-> a %p-> b
 ($!) f !a = f a
 
 curry :: ((a, b) %p-> c) %q-> a %p-> b %p-> c
@@ -52,12 +52,12 @@ uncurry f (x,y) = f x y
 
 -- | Beware: @(.)@ is not compatible with the standard one because it is
 -- higher-order and we don't have sufficient multiplicity polymorphism yet.
-(.) :: (b %1-> c) %q-> (a %1-> b) %m-> a %n-> c
+(.) :: forall {rep} b (c :: TYPE rep) a q m n. (b %1-> c) %q-> (a %1-> b) %m-> a %n-> c
 f . g = \x -> f (g x)
 
 -- | Convenience operator when a higher-order function expects a non-linear
 -- arrow but we have a linear arrow.
-forget :: (a %1-> b) %1-> a -> b
+forget :: forall {rep} a (b :: TYPE rep). (a %1-> b) %1-> a -> b
 forget f a = f a
 
 -- XXX: Temporary, until newtype record projections are linear.
