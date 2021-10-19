@@ -29,6 +29,8 @@ import Data.Unrestricted.Internal.Ur
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import GHC.Types hiding (Any)
+import GHC.Word
+import GHC.Int
 import Data.Monoid.Linear
 import Data.List.NonEmpty
 import qualified Prelude
@@ -81,6 +83,90 @@ instance Movable Int where
   -- copying an 'Int#' and using it several times. /!\
   move (I# i) = Unsafe.toLinear (\j -> Ur (I# j)) i
 
+instance Consumable Int8 where
+  -- /!\ 'Int8#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int8#' and using it several times. /!\
+  consume (I8# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Int8 where
+  -- /!\ 'Int8#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int8#' and using it several times. /!\
+  dupV (I8# i) = Unsafe.toLinear (\j -> Data.pure (I8# j)) i
+
+instance Movable Int8 where
+  -- /!\ 'Int8#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int8#' and using it several times. /!\
+  move (I8# i) = Unsafe.toLinear (\j -> Ur (I8# j)) i
+
+instance Consumable Int16 where
+  -- /!\ 'Int16#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int16#' and using it several times. /!\
+  consume (I16# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Int16 where
+  -- /!\ 'Int16#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int16#' and using it several times. /!\
+  dupV (I16# i) = Unsafe.toLinear (\j -> Data.pure (I16# j)) i
+
+instance Movable Int16 where
+  -- /!\ 'Int16#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int16#' and using it several times. /!\
+  move (I16# i) = Unsafe.toLinear (\j -> Ur (I16# j)) i
+
+instance Consumable Int32 where
+  -- /!\ 'Int32#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int32#' and using it several times. /!\
+  consume (I32# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Int32 where
+  -- /!\ 'Int32#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int32#' and using it several times. /!\
+  dupV (I32# i) = Unsafe.toLinear (\j -> Data.pure (I32# j)) i
+
+instance Movable Int32 where
+  -- /!\ 'Int32#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int32#' and using it several times. /!\
+  move (I32# i) = Unsafe.toLinear (\j -> Ur (I32# j)) i
+
+instance Consumable Int64 where
+  -- /!\ 'Int64#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int64#' and using it several times. /!\
+  consume (I64# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Int64 where
+  -- /!\ 'Int64#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int64#' and using it several times. /!\
+  dupV (I64# i) = Unsafe.toLinear (\j -> Data.pure (I64# j)) i
+
+instance Movable Int64 where
+  -- /!\ 'Int64#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Int64#' and using it several times. /!\
+  move (I64# i) = Unsafe.toLinear (\j -> Ur (I64# j)) i
+
 instance Consumable Double where
   -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
   -- linear values hidden in a closure anywhere. Therefore it is safe to call
@@ -101,6 +187,111 @@ instance Movable Double where
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Double#' and using it several times. /!\
   move (D# i) = Unsafe.toLinear (\j -> Ur (D# j)) i
+
+instance Consumable Word where
+  -- /!\ 'Word#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word#' and using it several times. /!\
+  consume (W# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Word where
+  -- /!\ 'Word#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word#' and using it several times. /!\
+  dupV (W# i) = Unsafe.toLinear (\j -> Data.pure (W# j)) i
+
+instance Movable Word where
+  -- /!\ 'Word#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word#' and using it several times. /!\
+  move (W# i) = Unsafe.toLinear (\j -> Ur (W# j)) i
+
+instance Consumable Word8 where
+  -- /!\ 'Word8#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word8#' and using it several times. /!\
+  consume (W8# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Word8 where
+  -- /!\ 'Word8#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word8#' and using it several times. /!\
+  dupV (W8# i) = Unsafe.toLinear (\j -> Data.pure (W8# j)) i
+
+instance Movable Word8 where
+  -- /!\ 'Word8#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word8#' and using it several times. /!\
+  move (W8# i) = Unsafe.toLinear (\j -> Ur (W8# j)) i
+
+instance Consumable Word16 where
+  -- /!\ 'Word16#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word16#' and using it several times. /!\
+  consume (W16# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Word16 where
+  -- /!\ 'Word16#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word16#' and using it several times. /!\
+  dupV (W16# i) = Unsafe.toLinear (\j -> Data.pure (W16# j)) i
+
+instance Movable Word16 where
+  -- /!\ 'Word16#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word16#' and using it several times. /!\
+  move (W16# i) = Unsafe.toLinear (\j -> Ur (W16# j)) i
+
+instance Consumable Word32 where
+  -- /!\ 'Word32#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word32#' and using it several times. /!\
+  consume (W32# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Word32 where
+  -- /!\ 'Word32#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word32#' and using it several times. /!\
+  dupV (W32# i) = Unsafe.toLinear (\j -> Data.pure (W32# j)) i
+
+instance Movable Word32 where
+  -- /!\ 'Word32#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word32#' and using it several times. /!\
+  move (W32# i) = Unsafe.toLinear (\j -> Ur (W32# j)) i
+
+instance Consumable Word64 where
+  -- /!\ 'Word64#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word64#' and using it several times. /!\
+  consume (W64# i) = Unsafe.toLinear (\_ -> ()) i
+
+instance Dupable Word64 where
+  -- /!\ 'Word64#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word64#' and using it several times. /!\
+  dupV (W64# i) = Unsafe.toLinear (\j -> Data.pure (W64# j)) i
+
+instance Movable Word64 where
+  -- /!\ 'Word64#' is an unboxed unlifted data-types, therefore it cannot have any
+  -- linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between
+  -- copying an 'Word64#' and using it several times. /!\
+  move (W64# i) = Unsafe.toLinear (\j -> Ur (W64# j)) i
 
 instance Consumable Char where
   consume (C# c) = Unsafe.toLinear (\_ -> ()) c
