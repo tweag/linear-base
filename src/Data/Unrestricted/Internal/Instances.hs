@@ -404,6 +404,8 @@ instance Dupable (Ur a) where
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
 
+deriving instance Prelude.Show a => Prelude.Show (Ur a)
+
 instance Prelude.Functor Ur where
   fmap f (Ur a) = Ur (f a)
 
