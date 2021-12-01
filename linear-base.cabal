@@ -39,6 +39,8 @@ library
     Data.Array.Mutable.Linear
     Data.Array.Mutable.Linear.Internal
     Data.Array.Mutable.Unlifted.Linear
+    Data.LArray.Mutable.Unlifted.Linear
+    Data.LArray.Mutable.Unlifted.Linear.Internal
     Data.Array.Polarized
     Data.Array.Polarized.Pull
     Data.Array.Polarized.Pull.Internal
@@ -78,6 +80,9 @@ library
     Data.V.Linear
     Data.V.Linear.Internal.V
     Data.V.Linear.Internal.Instances
+    Data.VM.Linear
+    Data.VM.Linear.Internal.VM
+    Data.VM.Linear.Internal.Instances
     Data.Vector.Mutable.Linear
     Data.Vector.Mutable.Linear.Internal
     Debug.Trace.Linear
