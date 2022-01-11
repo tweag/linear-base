@@ -119,8 +119,8 @@ class Applicative m => Monad m where
   -- | @x >>= g@ applies a /linear/ function @g@ linearly (i.e., using it
   -- exactly once) on the value of type @a@ inside the value of type @m a@
   (>>=) :: m a %1-> (a %1-> m b) %1-> m b
-  (>>) :: m () %1-> m a %1-> m a
-  m >> k = m >>= (\() -> k)
+  (>>) :: (Consumable a) => m a %1-> m b %1-> m b
+  m >> k = m >>= ((\() -> k) . consume)
 
 -- | This class handles pattern-matching failure in do-notation.
 -- See "Control.Monad.Fail" for details.
