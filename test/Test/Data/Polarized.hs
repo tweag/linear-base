@@ -1,16 +1,17 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+
 module Test.Data.Polarized (polarizedArrayTests) where
 
-import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import qualified Data.Array.Polarized as Polar
+import qualified Data.Array.Polarized.Pull as Pull
+import qualified Data.Array.Polarized.Push as Push
+import qualified Data.Vector as Vector
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import qualified Data.Array.Polarized.Pull as Pull
-import qualified Data.Array.Polarized.Push as Push
-import qualified Data.Array.Polarized as Polar
-import qualified Data.Vector as Vector
 import Prelude.Linear
+import Test.Tasty
+import Test.Tasty.Hedgehog (testProperty)
 import qualified Prelude
 
 {- TODO:
@@ -20,22 +21,23 @@ import qualified Prelude
 
 -}
 
-
 -- # Tests and Utlities
 -------------------------------------------------------------------------------
 
 polarizedArrayTests :: TestTree
-polarizedArrayTests = testGroup "Polarized arrays"
-  [ testProperty "Push.alloc . transfer . Pull.fromVector = id" polarRoundTrip
-  , testProperty "Push.append ~ Vec.append" pushAppend
-  , testProperty "Push.make ~ Vec.replicate" pushMake
-  , testProperty "Pull.append ~ Vec.append" pullAppend
-  , testProperty "Pull.asList . Pull.fromVector ~ id" pullAsList
-  , testProperty "Pull.singleton x = [x]" pullSingleton
-  , testProperty "Pull.splitAt ~ splitAt" pullSplitAt
-  , testProperty "Pull.make ~ Vec.replicate" pullMake
-  , testProperty "Pull.zip ~ zip" pullZip
-  ]
+polarizedArrayTests =
+  testGroup
+    "Polarized arrays"
+    [ testProperty "Push.alloc . transfer . Pull.fromVector = id" polarRoundTrip,
+      testProperty "Push.append ~ Vec.append" pushAppend,
+      testProperty "Push.make ~ Vec.replicate" pushMake,
+      testProperty "Pull.append ~ Vec.append" pullAppend,
+      testProperty "Pull.asList . Pull.fromVector ~ id" pullAsList,
+      testProperty "Pull.singleton x = [x]" pullSingleton,
+      testProperty "Pull.splitAt ~ splitAt" pullSplitAt,
+      testProperty "Pull.make ~ Vec.replicate" pullMake,
+      testProperty "Pull.zip ~ zip" pullZip
+    ]
 
 list :: Gen [Int]
 list = Gen.list (Range.linear 0 1000) randInt
@@ -45,7 +47,6 @@ randInt = Gen.int (Range.linear (-500) 500)
 
 randNonnegInt :: Gen Int
 randNonnegInt = Gen.int (Range.linear 0 500)
-
 
 -- # Properties
 -------------------------------------------------------------------------------
@@ -96,7 +97,7 @@ pullSplitAt = property Prelude.$ do
   xs <- forAll list
   n <- forAll randNonnegInt
   let v = Vector.fromList xs
-  let (l,r) = Pull.split n (Pull.fromVector v)
+  let (l, r) = Pull.split n (Pull.fromVector v)
   (Pull.asList l, Pull.asList r) === splitAt n xs
 
 pullMake :: Property
@@ -109,8 +110,7 @@ pullZip :: Property
 pullZip = property Prelude.$ do
   let genPairs = (,) Prelude.<$> randInt Prelude.<*> randInt
   as <- forAll (Gen.list (Range.linear 0 1000) genPairs)
-  let (xs,ys) = unzip as
+  let (xs, ys) = unzip as
   let xs' = Pull.fromVector (Vector.fromList xs)
   let ys' = Pull.fromVector (Vector.fromList ys)
   zip xs ys === Pull.asList (Pull.zip xs' ys')
-

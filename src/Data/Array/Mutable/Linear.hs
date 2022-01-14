@@ -27,15 +27,18 @@
 module Data.Array.Mutable.Linear
   ( -- * Mutable Linear Arrays
     Array,
+
     -- * Performing Computations with Arrays
     alloc,
     allocBeside,
     fromList,
+
     -- * Modifications
     set,
     unsafeSet,
     resize,
     map,
+
     -- * Accessors
     get,
     unsafeGet,
@@ -43,13 +46,14 @@ module Data.Array.Mutable.Linear
     slice,
     toList,
     freeze,
+
     -- * Mutable-style interface
     read,
     unsafeRead,
     write,
-    unsafeWrite
+    unsafeWrite,
   )
 where
 
 import Data.Array.Mutable.Linear.Internal
-import Prelude hiding (read, map)
+import Prelude hiding (map, read)

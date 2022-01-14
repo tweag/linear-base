@@ -9,9 +9,11 @@ module Data.HashMap.Mutable.Linear
   ( -- * A mutable hashmap
     HashMap,
     Keyed,
+
     -- * Constructors
     empty,
     fromList,
+
     -- * Modifiers
     insert,
     insertAll,
@@ -23,16 +25,18 @@ module Data.HashMap.Mutable.Linear
     shrinkToFit,
     alter,
     alterF,
+
     -- * Accessors
     size,
     capacity,
     lookup,
     member,
     toList,
+
     -- * Combining maps
     union,
     unionWith,
-    intersectionWith
+    intersectionWith,
   )
 where
 

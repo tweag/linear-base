@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# OPTIONS_HADDOCK hide #-}
 -- XXX: deactivate orphan instance warning as we're defining a few Storable
 -- instances here. It's not worth fixing as I [aspiwack] intend to change the
 -- interface for something more appropriate, which won't require these Storable
@@ -12,10 +10,12 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Foreign.Marshal.Pure.Internal where
 
@@ -28,10 +28,10 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude (($), return, (<*>), Eq(..), (<$>), (=<<))
-import Prelude.Linear hiding (($), Eq(..))
+import Prelude.Linear hiding (Eq (..), ($))
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
+import Prelude (Eq (..), return, ($), (<$>), (<*>), (=<<))
 
 -- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
@@ -47,34 +47,41 @@ data Dict :: Constraint -> Type where
 -- base types.
 class KnownRepresentable a where
   storable :: Dict (Storable a)
-
   default storable :: Storable a => Dict (Storable a)
   storable = Dict
-  -- This ought to be read a `newtype` around `Storable`. This type is abstract,
-  -- because using Storable this way is highly unsafe: Storable uses IO so we
-  -- will call unsafePerformIO, and Storable doesn't guarantee linearity. But
-  -- Storable comes with a lot of machinery, in particular for
-  -- architecture-independent alignment. So we can depend on it.
-  --
-  -- So, we restrict ourselves to known instances that we trust. For base types
-  -- there is no reason to expect problems. Tuples are a bit more subtle in that
-  -- they use non-linear operations. But the way they are used should be ok. At
-  -- any rate: in case a bug is found, the tuple instances are a good place to
-  -- look.
+
+-- This ought to be read a `newtype` around `Storable`. This type is abstract,
+-- because using Storable this way is highly unsafe: Storable uses IO so we
+-- will call unsafePerformIO, and Storable doesn't guarantee linearity. But
+-- Storable comes with a lot of machinery, in particular for
+-- architecture-independent alignment. So we can depend on it.
+--
+-- So, we restrict ourselves to known instances that we trust. For base types
+-- there is no reason to expect problems. Tuples are a bit more subtle in that
+-- they use non-linear operations. But the way they are used should be ok. At
+-- any rate: in case a bug is found, the tuple instances are a good place to
+-- look.
 
 instance KnownRepresentable Word -- TODO: more word types
+
 instance KnownRepresentable Int
+
 instance KnownRepresentable (Ptr a)
+
 instance KnownRepresentable ()
+
 instance
-  (KnownRepresentable a, KnownRepresentable b)
-  => KnownRepresentable (a, b) where
+  (KnownRepresentable a, KnownRepresentable b) =>
+  KnownRepresentable (a, b)
+  where
   storable =
     case (storable @a, storable @b) of
       (Dict, Dict) -> Dict
+
 instance
-  (KnownRepresentable a, KnownRepresentable b, KnownRepresentable c)
-  => KnownRepresentable (a, b, c) where
+  (KnownRepresentable a, KnownRepresentable b, KnownRepresentable c) =>
+  KnownRepresentable (a, b, c)
+  where
   storable =
     case (storable @a, storable @b, storable @c) of
       (Dict, Dict, Dict) -> Dict
@@ -101,17 +108,17 @@ instance Storable a => Storable (Maybe a) where
   sizeOf x = sizeOf (stripMaybe x) + 1
   alignment x = alignment (stripMaybe x)
   peek ptr = do
-      filled <- peekByteOff ptr $ sizeOf $ stripMaybe $ stripPtr ptr
-      case filled == (1 :: Word8) of
-        True -> do
-          x <- peek (stripMaybePtr ptr)
-          return (Just x)
-        False ->
-          return Nothing
+    filled <- peekByteOff ptr $ sizeOf $ stripMaybe $ stripPtr ptr
+    case filled == (1 :: Word8) of
+      True -> do
+        x <- peek (stripMaybePtr ptr)
+        return (Just x)
+      False ->
+        return Nothing
   poke ptr Nothing = pokeByteOff ptr (sizeOf $ stripMaybe $ stripPtr ptr) (0 :: Word8)
   poke ptr (Just a) = do
-      poke (stripMaybePtr ptr) a
-      pokeByteOff ptr (sizeOf a) (1 :: Word8)
+    poke (stripMaybePtr ptr) a
+    pokeByteOff ptr (sizeOf a) (1 :: Word8)
 
 stripMaybe :: Maybe a -> a
 stripMaybe _ = error "stripMaybe"
@@ -133,13 +140,13 @@ instance KnownRepresentable a => KnownRepresentable (Maybe a) where
 class (KnownRepresentable (AsKnown a)) => Representable a where
   type AsKnown a :: Type
 
-  toKnown :: a %1-> AsKnown a
-  ofKnown :: AsKnown a %1-> a
+  toKnown :: a %1 -> AsKnown a
+  ofKnown :: AsKnown a %1 -> a
 
-  default toKnown
-    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => a %1-> AsKnown a
-  default ofKnown
-    :: (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a %1-> a
+  default toKnown ::
+    (MkRepresentable a b, AsKnown a ~ AsKnown b) => a %1 -> AsKnown a
+  default ofKnown ::
+    (MkRepresentable a b, AsKnown a ~ AsKnown b) => AsKnown a %1 -> a
 
   toKnown a = toKnown (toRepr a)
   ofKnown b = ofRepr (ofKnown b)
@@ -151,28 +158,34 @@ instance Representable Word where
   type AsKnown Word = Word
   toKnown = id
   ofKnown = id
+
 instance Representable Int where
   type AsKnown Int = Int
   toKnown = id
   ofKnown = id
+
 instance Representable (Ptr a) where
   type AsKnown (Ptr a) = Ptr a
   toKnown = id
   ofKnown = id
+
 instance Representable () where
   type AsKnown () = ()
   toKnown = id
   ofKnown = id
+
 instance
-  (Representable a, Representable b)
-  => Representable (a, b) where
+  (Representable a, Representable b) =>
+  Representable (a, b)
+  where
   type AsKnown (a, b) = (AsKnown a, AsKnown b)
   toKnown (a, b) = (toKnown a, toKnown b)
   ofKnown (x, y) = (ofKnown x, ofKnown y)
 
 instance
-  (Representable a, Representable b, Representable c)
-  => Representable (a, b, c) where
+  (Representable a, Representable b, Representable c) =>
+  Representable (a, b, c)
+  where
   type AsKnown (a, b, c) = (AsKnown a, AsKnown b, AsKnown c)
   toKnown (a, b, c) = (toKnown a, toKnown b, toKnown c)
   ofKnown (x, y, z) = (ofKnown x, ofKnown y, ofKnown z)
@@ -180,9 +193,9 @@ instance
 instance Representable a => Representable (Maybe a) where
   type AsKnown (Maybe a) = Maybe (AsKnown a)
   toKnown (Just x) = Just (toKnown x)
-  toKnown Nothing  = Nothing
+  toKnown Nothing = Nothing
   ofKnown (Just x) = Just (ofKnown x)
-  ofKnown Nothing  = Nothing
+  ofKnown Nothing = Nothing
 
 -- | This is an easier way to create an instance of 'Representable'. It is a bit
 -- abusive to use a type class for this (after all, it almost never makes sense
@@ -202,9 +215,8 @@ instance Representable a => Representable (Maybe a) where
 -- * 'ofRepr' may be partial, but must be total on the image of 'toRepr'
 -- * @ofRepr . toRepr = id@
 class Representable b => MkRepresentable a b | a -> b where
-  toRepr :: a %1-> b
-  ofRepr :: b %1-> a
-
+  toRepr :: a %1 -> b
+  ofRepr :: b %1 -> a
 
 -- TODO: Briefly explain the Dupable-reader style of API, below, and fix
 -- details.
@@ -215,15 +227,16 @@ class Representable b => MkRepresentable a b | a -> b where
 -- impossible to add new data to the pool.
 data Pool where
   Pool :: DLL (Ptr ()) -> Pool
-  -- /!\ Black magic: the pointers in the pool are only used to deallocate
-  -- dangling pointers. Therefore their 'sizeOf' does not matter. It is simpler
-  -- to cast all the pointers to some canonical type (here `Ptr ()`) so that we
-  -- don't have to deal with heterogeneous types. /!\
+
+-- /!\ Black magic: the pointers in the pool are only used to deallocate
+-- dangling pointers. Therefore their 'sizeOf' does not matter. It is simpler
+-- to cast all the pointers to some canonical type (here `Ptr ()`) so that we
+-- don't have to deal with heterogeneous types. /!\
 
 -- Implementing a doubly-linked list with `Ptr`
 
-data DLL a = DLL { prev :: Ptr (DLL a), elt :: Ptr a, next :: Ptr (DLL a) }
-  deriving Eq
+data DLL a = DLL {prev :: Ptr (DLL a), elt :: Ptr a, next :: Ptr (DLL a)}
+  deriving (Eq)
 
 -- XXX: probably replaceable by storable-generic
 instance Storable (DLL a) where
@@ -262,24 +275,26 @@ delete link = do
 freeAll :: DLL (Ptr ()) -> DLL (Ptr ()) -> IO ()
 freeAll start end = do
   nextLink <- peek (next start)
-  if nextLink == end then do
-    free (next start)
-    free (prev end)
-  else do
-    delete nextLink
-    free (prev nextLink)
-    free (elt nextLink)
-    free (next nextLink)
-    freeAll start end
+  if nextLink == end
+    then do
+      free (next start)
+      free (prev end)
+    else do
+      delete nextLink
+      free (prev nextLink)
+      free (elt nextLink)
+      free (next nextLink)
+      freeAll start end
 
 -- TODO: document individual functions
 
 -- | Given a linear computation that manages memory, run that computation.
-withPool :: (Pool %1-> Ur b) %1-> Ur b
+withPool :: (Pool %1 -> Ur b) %1 -> Ur b
 withPool scope = Unsafe.toLinear performScope scope
-    -- XXX: do ^ without `toLinear` by using linear IO
   where
-    performScope :: (Pool %1-> Ur b) -> Ur b
+    -- XXX: do ^ without `toLinear` by using linear IO
+
+    performScope :: (Pool %1 -> Ur b) -> Ur b
     performScope scope' = unsafeDupablePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc
@@ -287,8 +302,9 @@ withPool scope = Unsafe.toLinear performScope scope
       start <- DLL nullPtr nullPtr <$> new end -- always at the start of the list
       poke backPtr start
       -- Run the computation
-      evaluate (scope' (Pool start)) `finally`
-      -- Clean up remaining variables.
+      evaluate (scope' (Pool start))
+        `finally`
+        -- Clean up remaining variables.
         (freeAll start end)
 
 instance Consumable Pool where
@@ -314,7 +330,8 @@ instance Storable (Box a) where
   poke ptr (Box pool ptr') =
     poke (castPtr ptr :: Ptr (Ptr (DLL (Ptr ())), Ptr a)) (pool, ptr')
 
-instance KnownRepresentable (Box a) where
+instance KnownRepresentable (Box a)
+
 instance Representable (Box a) where
   type AsKnown (Box a) = Box a
   ofKnown = id
@@ -326,13 +343,14 @@ instance Representable (Box a) where
 -- Movable. In order to be useful, need some kind of borrowing on the values, I
 -- guess. 'Box' can be realloced, but not RC pointers.
 
-reprPoke :: forall a. Representable a => Ptr a -> a %1-> IO ()
-reprPoke ptr a | Dict <- storable @(AsKnown a) =
-  Unsafe.toLinear (poke (castPtr ptr :: Ptr (AsKnown a))) (toKnown a)
+reprPoke :: forall a. Representable a => Ptr a -> a %1 -> IO ()
+reprPoke ptr a
+  | Dict <- storable @(AsKnown a) =
+      Unsafe.toLinear (poke (castPtr ptr :: Ptr (AsKnown a))) (toKnown a)
 
-reprNew :: forall a. Representable a => a %1-> IO (Ptr a)
+reprNew :: forall a. Representable a => a %1 -> IO (Ptr a)
 reprNew a =
-    Unsafe.toLinear mkPtr a
+  Unsafe.toLinear mkPtr a
   where
     -- XXX: should be improved by using linear IO
     mkPtr :: a -> IO (Ptr a)
@@ -348,10 +366,11 @@ reprNew a =
 -- passing-style API (but there is still some design to be done there). This
 -- alloc primitive would then be derived (but most of the time we would rather
 -- write bespoke constructors).
+
 -- | Store a value @a@ on the system heap that is not managed by the GC.
-alloc :: forall a. Representable a => a %1-> Pool %1-> Box a
+alloc :: forall a. Representable a => a %1 -> Pool %1 -> Box a
 alloc a (Pool pool) =
-    Unsafe.toLinear mkPtr a
+  Unsafe.toLinear mkPtr a
   where
     -- XXX: should be improved by using linear IO
     mkPtr :: a -> Box a
@@ -368,10 +387,11 @@ reprPeek ptr | Dict <- storable @(AsKnown a) = do
   return (ofKnown knownRepr)
 
 -- | Retrieve the value stored on system heap memory.
-deconstruct :: Representable a => Box a %1-> a
-deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $ mask_ $ do
-  res <- reprPeek ptr
-  delete =<< peek poolPtr
-  free ptr
-  free poolPtr
-  return res
+deconstruct :: Representable a => Box a %1 -> a
+deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $
+  mask_ $ do
+    res <- reprPeek ptr
+    delete =<< peek poolPtr
+    free ptr
+    free poolPtr
+    return res

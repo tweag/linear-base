@@ -8,43 +8,67 @@
 --
 -- This distinction and the use-cases of each group of functors is explained in
 -- [this blog post](https://tweag.io/posts/2020-01-16-data-vs-control.html).
---
 module Control.Functor.Linear
   ( -- * Control functor hierarchy
-    Functor(..)
-  , (<$>)
-  , (<&>)
-  , (<$)
-  , dataFmapDefault
-  , Applicative(..)
-  , dataPureDefault
-  , Monad(..)
-  , return
-  , join
-  , ap
-  , foldM
-  , MonadFail(..)
-  , Data(..)
-  -- * Monad transformers
-  -- ** ReaderT monad transformer
-  -- $readerT
-  , Reader, reader, runReader, mapReader, withReader
-  , ReaderT(..), runReaderT, mapReaderT, withReaderT
-  , ask, local, asks
-  -- ** StateT monad
-  -- $stateT
-  , State, state, runState, execState, mapState, withState
-  , StateT(..), runStateT, execStateT, mapStateT, withStateT
-  , get, put, modify, gets
-  , MonadTrans(..)
-  , module Control.Functor.Linear.Internal.Instances
-  ) where
+    Functor (..),
+    (<$>),
+    (<&>),
+    (<$),
+    dataFmapDefault,
+    Applicative (..),
+    dataPureDefault,
+    Monad (..),
+    return,
+    join,
+    ap,
+    foldM,
+    MonadFail (..),
+    Data (..),
+
+    -- * Monad transformers
+
+    -- ** ReaderT monad transformer
+    -- $readerT
+    Reader,
+    reader,
+    runReader,
+    mapReader,
+    withReader,
+    ReaderT (..),
+    runReaderT,
+    mapReaderT,
+    withReaderT,
+    ask,
+    local,
+    asks,
+
+    -- ** StateT monad
+    -- $stateT
+    State,
+    state,
+    runState,
+    execState,
+    mapState,
+    withState,
+    StateT (..),
+    runStateT,
+    execStateT,
+    mapStateT,
+    withStateT,
+    get,
+    put,
+    modify,
+    gets,
+    MonadTrans (..),
+    module Control.Functor.Linear.Internal.Instances,
+  )
+where
 
 import Control.Functor.Linear.Internal.Class
+import Control.Functor.Linear.Internal.Instances
+import Control.Functor.Linear.Internal.MonadTrans
 import Control.Functor.Linear.Internal.Reader
 import Control.Functor.Linear.Internal.State
-import Control.Functor.Linear.Internal.MonadTrans
-import Control.Functor.Linear.Internal.Instances
 
 -- $readerT
 -- See [here](https://mmhaskell.com/monads/reader-writer) to learn about
@@ -70,4 +94,3 @@ import Control.Functor.Linear.Internal.Instances
 -- [here](https://hackage.haskell.org/package/mtl-2.2.2/docs/Control-Monad-State-Lazy.html).
 -- To learn the basics of the state monad, see
 -- [here](https://mmhaskell.com/monads/state).
-

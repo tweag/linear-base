@@ -37,19 +37,24 @@
 --     fromClosure (CLeft x f) = Left (f x)
 --     fromClosure (CRight x f) = Right (f x)
 -- @
---
 module Control.Optics.Linear.Iso
   ( -- * Types
-    Iso, Iso'
+    Iso,
+    Iso',
+
     -- * Composing optics
-  , (.>)
+    (.>),
+
     -- * Common optics
-  , swap, assoc
+    swap,
+    assoc,
+
     -- * Using optics
-  , withIso
+    withIso,
+
     -- * Constructing optics
-  , iso
+    iso,
   )
-  where
+where
 
 import Control.Optics.Linear.Internal

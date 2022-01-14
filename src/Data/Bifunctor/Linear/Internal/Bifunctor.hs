@@ -1,14 +1,14 @@
-{-# OPTIONS_HADDOCK hide #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Data.Bifunctor.Linear.Internal.Bifunctor
-  ( Bifunctor(..)
-  ) where
+  ( Bifunctor (..),
+  )
+where
 
 import Prelude.Linear
-
 
 -- | The Bifunctor class
 --
@@ -26,28 +26,26 @@ import Prelude.Linear
 -- * If all are supplied, then
 -- @'bimap' f g = 'first' f '.' 'second' g
 class Bifunctor p where
-  {-# MINIMAL bimap | (first , second) #-}
-  bimap :: (a %1-> b) -> (c %1-> d) -> a `p` c %1-> b `p` d
+  {-# MINIMAL bimap | (first, second) #-}
+  bimap :: (a %1 -> b) -> (c %1 -> d) -> a `p` c %1 -> b `p` d
   bimap f g x = first f (second g x)
   {-# INLINE bimap #-}
 
-  first :: (a %1-> b) -> a `p` c %1-> b `p` c
+  first :: (a %1 -> b) -> a `p` c %1 -> b `p` c
   first f = bimap f id
   {-# INLINE first #-}
 
-  second :: (b %1-> c) -> a `p` b %1-> a `p` c
+  second :: (b %1 -> c) -> a `p` b %1 -> a `p` c
   second = bimap id
   {-# INLINE second #-}
-
 
 -- # Instances
 -------------------------------------------------------------------------------
 
 instance Bifunctor (,) where
-  bimap f g (x,y) = (f x, g y)
-  first f (x,y) = (f x, y)
-  second g (x,y) = (x, g y)
+  bimap f g (x, y) = (f x, g y)
+  first f (x, y) = (f x, y)
+  second g (x, y) = (x, g y)
 
 instance Bifunctor Either where
   bimap f g = either (Left . f) (Right . g)
-

@@ -3,8 +3,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module provides (linear) Kleisli and CoKleisli arrows
 --
@@ -31,19 +31,18 @@
 -- A CoKleisli arrow is just one that represents a computation from
 -- a @m a@ to an @a@ via a linear arrow. (It's a Co-something because it
 -- reverses the order of the function arrows in the something.)
---
 module Data.Profunctor.Kleisli.Linear
-  ( Kleisli(..)
-  , CoKleisli(..)
+  ( Kleisli (..),
+    CoKleisli (..),
   )
-  where
+where
 
-import Data.Profunctor.Linear
-import Data.Void
-import Prelude.Linear (Either(..), either)
-import Prelude.Linear.Internal
 import qualified Control.Functor.Linear as Control
 import qualified Data.Functor.Linear as Data
+import Data.Profunctor.Linear
+import Data.Void
+import Prelude.Linear (Either (..), either)
+import Prelude.Linear.Internal
 
 -- Ideally, there would only be one Kleisli arrow, parametrised by
 -- a multiplicity parameter:
@@ -55,21 +54,21 @@ import qualified Data.Functor.Linear as Data
 -- | Linear Kleisli arrows for the monad `m`. These arrows are still useful
 -- in the case where `m` is not a monad however, and some profunctorial
 -- properties still hold in this weaker setting.
-newtype Kleisli m a b = Kleisli { runKleisli :: a %1-> m b }
+newtype Kleisli m a b = Kleisli {runKleisli :: a %1 -> m b}
 
 instance Data.Functor f => Profunctor (Kleisli f) where
   dimap f g (Kleisli h) = Kleisli (Data.fmap g . h . f)
 
 instance Control.Functor f => Strong (,) () (Kleisli f) where
-  first  (Kleisli f) = Kleisli (\(a,b) -> (,b) Control.<$> f a)
-  second (Kleisli g) = Kleisli (\(a,b) -> (a,) Control.<$> g b)
+  first (Kleisli f) = Kleisli (\(a, b) -> (,b) Control.<$> f a)
+  second (Kleisli g) = Kleisli (\(a, b) -> (a,) Control.<$> g b)
 
 instance Control.Applicative f => Strong Either Void (Kleisli f) where
-  first  (Kleisli f) = Kleisli (either (Data.fmap Left . f) (Control.pure . Right))
+  first (Kleisli f) = Kleisli (either (Data.fmap Left . f) (Control.pure . Right))
   second (Kleisli g) = Kleisli (either (Control.pure . Left) (Data.fmap Right . g))
 
 instance Data.Applicative f => Monoidal (,) () (Kleisli f) where
-  Kleisli f *** Kleisli g = Kleisli $ \(x,y) -> (,) Data.<$> f x Data.<*> g y
+  Kleisli f *** Kleisli g = Kleisli $ \(x, y) -> (,) Data.<$> f x Data.<*> g y
   unit = Kleisli $ \() -> Data.pure ()
 
 instance Data.Functor f => Monoidal Either Void (Kleisli f) where
@@ -86,7 +85,7 @@ instance Control.Applicative f => Wandering (Kleisli f) where
 -- profunctorial properties still hold in this weaker setting.
 -- However stronger requirements on `f` are needed for profunctorial
 -- strength, so we have fewer instances.
-newtype CoKleisli w a b = CoKleisli { runCoKleisli :: w a %1-> b }
+newtype CoKleisli w a b = CoKleisli {runCoKleisli :: w a %1 -> b}
 
 instance Data.Functor f => Profunctor (CoKleisli f) where
   dimap f g (CoKleisli h) = CoKleisli (g . h . Data.fmap f)

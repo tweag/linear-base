@@ -53,7 +53,7 @@ jobs:
     - name: Build Nix dependencies
       run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
     - name: check formatting
-      run: nix-shell --pure --run 'stack build ormolu && { stack exec ormolu -- -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs") || true; }'
+      run: nix-shell --pure --run 'stack build ormolu && stack exec ormolu -- -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs")'
 
   stack-build:
     name: stack build

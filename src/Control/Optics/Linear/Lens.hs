@@ -1,6 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE FlexibleContexts #-}
+
 -- | This module provides linear lenses.
 --
 -- A @Lens s t a b@ is equivalent to a @(s %1-> (a,b %1-> t)@.  It is a way to
@@ -38,20 +39,30 @@
 -- locZipL :: Lens' Location Int
 -- locZipL = lens (\(Location i s) -> (i, \i' -> Location i' s))
 -- @
---
 module Control.Optics.Linear.Lens
   ( -- * Types
-    Lens, Lens'
+    Lens,
+    Lens',
+
     -- * Composing lens
-  , (.>)
+    (.>),
+
     -- * Common optics
-  , _1, _2
+    _1,
+    _2,
+
     -- * Using optics
-  , get, set, gets, setSwap
-  , over, overU
-  , reifyLens, withLens
+    get,
+    set,
+    gets,
+    setSwap,
+    over,
+    overU,
+    reifyLens,
+    withLens,
+
     -- * Constructing optics
-  , lens
+    lens,
   )
 where
 

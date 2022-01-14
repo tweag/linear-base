@@ -55,31 +55,31 @@
 -- >     fromMove (Ur 0) = True
 -- >     fromMove (Ur 1) = True
 -- >     fromMove (Ur x) = False
---
 module Data.Unrestricted.Linear
   ( -- * Unrestricted
-    Ur(..)
-  , unur
-  , lift
-  , lift2
-  , UrT(..)
-  , runUrT
-  , liftUrT
-  , evalUrT
+    Ur (..),
+    unur,
+    lift,
+    lift2,
+    UrT (..),
+    runUrT,
+    liftUrT,
+    evalUrT,
+
     -- * Performing non-linear actions on linearly bound values
-  , Consumable(..)
-  , Dupable(..)
-  , Movable(..)
-  , lseq
-  , dup
-  , dup3
-  , module Data.Unrestricted.Internal.Instances
-  ) where
+    Consumable (..),
+    Dupable (..),
+    Movable (..),
+    lseq,
+    dup,
+    dup3,
+    module Data.Unrestricted.Internal.Instances,
+  )
+where
 
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
+import Data.Unrestricted.Internal.Instances
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
 import Data.Unrestricted.Internal.UrT
-import Data.Unrestricted.Internal.Instances
-

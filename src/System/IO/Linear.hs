@@ -2,11 +2,11 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module redefines 'IO' with linear types.
 --
@@ -33,37 +33,39 @@
 -- upstreamed in "System.IO".  When multiplicity-polymorphism is implemented,
 -- this module will supercede IO by providing a seamless replacement for
 -- "System.IO" that won't break non-linear code.
-
 module System.IO.Linear
-  ( IO(..)
-  -- * Interfacing with "System.IO"
-  , fromSystemIO
-  , fromSystemIOU
-  , withLinearIO
-  -- * Using Mutable References
-  -- $ioref
-  , newIORef
-  , readIORef
-  , writeIORef
-  -- * Catching and Throwing Exceptions
-  -- $exceptions
-  , throwIO
-  , catch
-  , mask_
-  ) where
+  ( IO (..),
 
-import Data.IORef (IORef)
-import qualified Data.IORef as System
+    -- * Interfacing with "System.IO"
+    fromSystemIO,
+    fromSystemIOU,
+    withLinearIO,
+
+    -- * Using Mutable References
+    -- $ioref
+    newIORef,
+    readIORef,
+    writeIORef,
+
+    -- * Catching and Throwing Exceptions
+    -- $exceptions
+    throwIO,
+    catch,
+    mask_,
+  )
+where
+
 import Control.Exception (Exception)
-import qualified Control.Exception as System (throwIO, catch, mask_)
+import qualified Control.Exception as System (catch, mask_, throwIO)
 import qualified Control.Functor.Linear as Control
 import qualified Data.Functor.Linear as Data
-import GHC.Exts (State#, RealWorld)
+import Data.IORef (IORef)
+import qualified Data.IORef as System
+import GHC.Exts (RealWorld, State#)
 import Prelude.Linear hiding (IO)
+import qualified System.IO as System
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
-import qualified System.IO as System
-
 
 -- | This is the linear IO monad.
 -- It is a newtype around a function that transitions from one
@@ -77,18 +79,19 @@ import qualified System.IO as System
 -- linear arrow enforcing the implicit invariant that IO actions linearly
 -- thread the state of the real world. Hence, we can safely release the
 -- constructor to this newtype.
-newtype IO a = IO (State# RealWorld %1-> (# State# RealWorld, a #))
+newtype IO a = IO (State# RealWorld %1 -> (# State# RealWorld, a #))
   deriving (Data.Functor, Data.Applicative) via (Control.Data IO)
+
 type role IO representational
 
 -- Defined separately because projections from newtypes are considered like
 -- general projections of data types, which take an unrestricted argument.
-unIO :: IO a %1-> State# RealWorld %1-> (# State# RealWorld, a #)
+unIO :: IO a %1 -> State# RealWorld %1 -> (# State# RealWorld, a #)
 unIO (IO action) = action
 
 -- | Coerces a standard IO action into a linear IO action.
 -- Note that the value @a@ must be used linearly in the linear IO monad.
-fromSystemIO :: System.IO a %1-> IO a
+fromSystemIO :: System.IO a %1 -> IO a
 -- The implementation relies on the fact that the monad abstraction for IO
 -- actually enforces linear use of the @RealWorld@ token.
 --
@@ -107,7 +110,7 @@ fromSystemIOU action =
   fromSystemIO (Ur Prelude.<$> action)
 
 -- | Convert a linear IO action to a "System.IO" action.
-toSystemIO :: IO a %1-> System.IO a
+toSystemIO :: IO a %1 -> System.IO a
 toSystemIO = Unsafe.coerce -- basically just subtyping
 
 -- | Use at the top of @main@ function in your program to switch to the
@@ -123,35 +126,35 @@ withLinearIO action = (\x -> unur x) Prelude.<$> (toSystemIO action)
 -- * Monadic interface
 
 instance Control.Functor IO where
-  fmap :: forall a b. (a %1-> b) %1-> IO a %1-> IO b
+  fmap :: forall a b. (a %1 -> b) %1 -> IO a %1 -> IO b
   fmap f x = IO $ \s ->
-      cont (unIO x s) f
+    cont (unIO x s) f
     where
       -- XXX: long line
-      cont :: (# State# RealWorld, a #) %1-> (a %1-> b) %1-> (# State# RealWorld, b #)
+      cont :: (# State# RealWorld, a #) %1 -> (a %1 -> b) %1 -> (# State# RealWorld, b #)
       cont (# s', a #) f' = (# s', f' a #)
 
 instance Control.Applicative IO where
-  pure :: forall a. a %1-> IO a
+  pure :: forall a. a %1 -> IO a
   pure a = IO $ \s -> (# s, a #)
 
-  (<*>) :: forall a b. IO (a %1-> b) %1-> IO a %1-> IO b
+  (<*>) :: forall a b. IO (a %1 -> b) %1 -> IO a %1 -> IO b
   (<*>) = Control.ap
 
 instance Control.Monad IO where
-  (>>=) :: forall a b. IO a %1-> (a %1-> IO b) %1-> IO b
+  (>>=) :: forall a b. IO a %1 -> (a %1 -> IO b) %1 -> IO b
   x >>= f = IO $ \s ->
-      cont (unIO x s) f
+    cont (unIO x s) f
     where
       -- XXX: long line
-      cont :: (# State# RealWorld, a #) %1-> (a %1-> IO b) %1-> (# State# RealWorld, b #)
+      cont :: (# State# RealWorld, a #) %1 -> (a %1 -> IO b) %1 -> (# State# RealWorld, b #)
       cont (# s', a #) f' = unIO (f' a) s'
 
-  (>>) :: forall b. IO () %1-> IO b %1-> IO b
+  (>>) :: forall b. IO () %1 -> IO b %1 -> IO b
   x >> y = IO $ \s ->
-      cont (unIO x s) y
+    cont (unIO x s) y
     where
-      cont :: (# State# RealWorld, () #) %1-> IO b %1-> (# State# RealWorld, b #)
+      cont :: (# State# RealWorld, () #) %1 -> IO b %1 -> (# State# RealWorld, b #)
       cont (# s', () #) y' = unIO y' s'
 
 -- $ioref
@@ -181,9 +184,11 @@ writeIORef r a = fromSystemIO $ System.writeIORef r a
 throwIO :: Exception e => e -> IO a
 throwIO e = fromSystemIO $ System.throwIO e
 
-catch
-  :: Exception e
-  => IO (Ur a) -> (e -> IO (Ur a)) -> IO (Ur a)
+catch ::
+  Exception e =>
+  IO (Ur a) ->
+  (e -> IO (Ur a)) ->
+  IO (Ur a)
 catch body handler =
   fromSystemIO $ System.catch (toSystemIO body) (\e -> toSystemIO (handler e))
 

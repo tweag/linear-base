@@ -130,18 +130,17 @@
 --    includes the standard one
 --  * The instance marked by (4) implies that the linear iso definition
 --    includes the standard one
---
 module Control.Optics.Linear
-  ( Optic_(..)
-  , Optic
-  , module Control.Optics.Linear.Iso
-  , module Control.Optics.Linear.Lens
-  , module Control.Optics.Linear.Prism
-  , module Control.Optics.Linear.Traversal
+  ( Optic_ (..),
+    Optic,
+    module Control.Optics.Linear.Iso,
+    module Control.Optics.Linear.Lens,
+    module Control.Optics.Linear.Prism,
+    module Control.Optics.Linear.Traversal,
   )
 where
 
-import Control.Optics.Linear.Internal (Optic_(..), Optic)
+import Control.Optics.Linear.Internal (Optic, Optic_ (..))
 import Control.Optics.Linear.Iso
 import Control.Optics.Linear.Lens
 import Control.Optics.Linear.Prism

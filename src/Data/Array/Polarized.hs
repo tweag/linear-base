@@ -1,6 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module documents polarized arrays and top-level conversions
 --
@@ -81,7 +81,7 @@
 -- since the @b@ is completely abstract due to the rank2 type
 -- (read about -XRankNTypes for more) this computation must fill the array
 -- by wrapping writes of values of type @a@ with the given linear conversion
--- function of type @a %1-> b@. This prevents the computation from being 
+-- function of type @a %1-> b@. This prevents the computation from being
 -- evaluated until we are sure we want to allocate.
 --
 -- == Background for the interested
@@ -92,19 +92,18 @@
 -- * http://www.cse.chalmers.se/~josefs/talks/LinArrays.pdf
 -- * http://jyp.github.io/posts/controlled-fusion.html
 -- * https://www.sciencedirect.com/science/article/pii/030439759090147A
---
 module Data.Array.Polarized
-  ( transfer
-  , walk
+  ( transfer,
+    walk,
   )
-  where
+where
 
-import qualified Data.Array.Polarized.Pull.Internal as Pull
 import qualified Data.Array.Polarized.Pull as Pull
+import qualified Data.Array.Polarized.Pull.Internal as Pull
 import qualified Data.Array.Polarized.Push as Push
 import qualified Data.Foldable as NonLinear
-import Prelude.Linear
 import Data.Vector (Vector)
+import Prelude.Linear
 
 -- DEVELOPER NOTE:
 --
@@ -128,11 +127,11 @@ import Data.Vector (Vector)
 
 -- | Convert a pull array into a push array.
 -- NOTE: this does NOT require allocation and can be in-lined.
-transfer :: Pull.Array a %1-> Push.Array a
+transfer :: Pull.Array a %1 -> Push.Array a
 transfer (Pull.Array f n) =
-  Push.Array (\k -> NonLinear.foldMap' (\x -> k (f x)) [0..(n-1)])
+  Push.Array (\k -> NonLinear.foldMap' (\x -> k (f x)) [0 .. (n - 1)])
 
 -- | This is a shortcut convenience function
 -- for @transfer . Pull.fromVector@.
-walk :: Vector a %1-> Push.Array a
+walk :: Vector a %1 -> Push.Array a
 walk = transfer . Pull.fromVector

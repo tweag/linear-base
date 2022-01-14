@@ -28,10 +28,12 @@
 module Data.Vector.Mutable.Linear
   ( -- * A mutable vector
     Vector,
+
     -- * Run a computation with a vector
     empty,
     constant,
     fromList,
+
     -- * Mutators
     set,
     unsafeSet,
@@ -43,6 +45,7 @@ module Data.Vector.Mutable.Linear
     mapMaybe,
     slice,
     shrinkToFit,
+
     -- * Accessors
     get,
     unsafeGet,
@@ -50,11 +53,12 @@ module Data.Vector.Mutable.Linear
     capacity,
     toList,
     freeze,
+
     -- * Mutable-style interface
     read,
     unsafeRead,
     write,
-    unsafeWrite
+    unsafeWrite,
   )
 where
 

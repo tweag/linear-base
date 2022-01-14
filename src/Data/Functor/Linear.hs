@@ -15,23 +15,27 @@
 -- that can be zipped.
 -- * Linear data traversible functors should be thought of as
 -- containers which store a finite number of values.
---
 module Data.Functor.Linear
   ( -- * Data Functor Hierarchy
-    Functor(..)
-  , (<$>)
-  , (<$)
-  , void
-  , Applicative(..)
-  , Const(..)
-  -- * Linear traversable hierarchy
-  , Traversable(..)
-  , mapM, sequenceA, for, forM
-  , mapAccumL, mapAccumR
-  )
-  where
+    Functor (..),
+    (<$>),
+    (<$),
+    void,
+    Applicative (..),
+    Const (..),
 
-import Data.Functor.Linear.Internal.Functor
-import Data.Functor.Linear.Internal.Applicative
-import Data.Functor.Linear.Internal.Traversable
+    -- * Linear traversable hierarchy
+    Traversable (..),
+    mapM,
+    sequenceA,
+    for,
+    forM,
+    mapAccumL,
+    mapAccumR,
+  )
+where
+
 import Data.Functor.Const
+import Data.Functor.Linear.Internal.Applicative
+import Data.Functor.Linear.Internal.Functor
+import Data.Functor.Linear.Internal.Traversable

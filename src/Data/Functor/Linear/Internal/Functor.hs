@@ -1,26 +1,27 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-module Data.Functor.Linear.Internal.Functor
-  (
-    Functor(..)
-  , (<$>)
-  , (<$)
-  , void
-  ) where
+{-# OPTIONS_HADDOCK hide #-}
 
-import Prelude.Linear.Internal
-import Prelude (Maybe(..), Either(..))
-import Data.Functor.Const
-import Data.Functor.Sum
-import Data.Functor.Compose
-import Data.Functor.Identity
-import qualified Control.Monad.Trans.Reader as NonLinear
+module Data.Functor.Linear.Internal.Functor
+  ( Functor (..),
+    (<$>),
+    (<$),
+    void,
+  )
+where
+
 import qualified Control.Monad.Trans.Cont as NonLinear
-import qualified Control.Monad.Trans.Maybe as NonLinear
 import qualified Control.Monad.Trans.Except as NonLinear
+import qualified Control.Monad.Trans.Maybe as NonLinear
+import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
+import Data.Functor.Compose
+import Data.Functor.Const
+import Data.Functor.Identity
+import Data.Functor.Sum
 import Data.Unrestricted.Internal.Consumable
+import Prelude.Linear.Internal
+import Prelude (Either (..), Maybe (..))
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -30,18 +31,18 @@ import Data.Unrestricted.Internal.Consumable
 -- b@ __on each__ value of type @a@ in the functor and consume a given functor
 -- of type @f a@.
 class Functor f where
-  fmap :: (a %1-> b) -> f a %1-> f b
+  fmap :: (a %1 -> b) -> f a %1 -> f b
 
-(<$>) :: Functor f => (a %1-> b) -> f a %1-> f b
+(<$>) :: Functor f => (a %1 -> b) -> f a %1 -> f b
 (<$>) = fmap
 
 -- | Replace all occurances of @b@ with the given @a@
 -- and consume the functor @f b@.
-(<$) :: (Functor f, Consumable b) => a -> f b %1-> f a
+(<$) :: (Functor f, Consumable b) => a -> f b %1 -> f a
 a <$ fb = fmap (`lseq` a) fb
 
 -- | Discard a consumable value stored in a data functor.
-void :: (Functor f, Consumable a) => f a %1-> f ()
+void :: (Functor f, Consumable a) => f a %1 -> f ()
 void = fmap consume
 
 -- # Instances
@@ -49,7 +50,7 @@ void = fmap consume
 
 instance Functor [] where
   fmap _f [] = []
-  fmap f (a:as) = f a : fmap f as
+  fmap f (a : as) = f a : fmap f as
 
 instance Functor (Const x) where
   fmap _ (Const x) = Const x
@@ -63,7 +64,7 @@ instance Functor (Either e) where
   fmap f (Right x) = Right (f x)
 
 instance Functor ((,) a) where
-  fmap f (x,y) = (x, f y)
+  fmap f (x, y) = (x, f y)
 
 instance Functor Identity where
   fmap f (Identity x) = Identity (f x)
@@ -102,4 +103,3 @@ instance Functor (NonLinear.ContT r m) where
 
 instance Functor m => Functor (Strict.StateT s m) where
   fmap f (Strict.StateT x) = Strict.StateT (\s -> fmap (\(a, s') -> (f a, s')) (x s))
-

@@ -24,7 +24,6 @@
 -- * Do not use this unless you have to. Specifically, if you can write a
 -- linear function @f :: A %1-> B@, do not write a non-linear version and coerce
 -- it.
-
 module Unsafe.Linear
   ( -- * Unsafe Coercions
     coerce,
@@ -34,44 +33,73 @@ module Unsafe.Linear
     toLinearN,
     ToLinearN (..),
   )
-  where
+where
 
-import Data.Type.Equality (type (~~))
 import Data.Kind (Constraint)
-import Unsafe.Coerce (UnsafeEquality (..), unsafeEqualityProof)
-import GHC.Exts (TYPE, RuntimeRep (..))
+import Data.Type.Equality (type (~~))
+import GHC.Exts (RuntimeRep (..), TYPE)
 import GHC.TypeNats
+import Unsafe.Coerce (UnsafeEquality (..), unsafeEqualityProof)
 
 -- | Linearly typed @unsafeCoerce@
-coerce :: forall a b. a %1-> b
+coerce :: forall a b. a %1 -> b
 coerce a =
   case unsafeEqualityProof @a @b of
     UnsafeRefl -> a
 {-# INLINE coerce #-}
 
 -- | Converts an unrestricted function into a linear function
-toLinear
-  :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
-     (a :: TYPE r1) (b :: TYPE r2) p x.
-     (a %p-> b) %1-> (a %x-> b)
+toLinear ::
+  forall
+    (r1 :: RuntimeRep)
+    (r2 :: RuntimeRep)
+    (a :: TYPE r1)
+    (b :: TYPE r2)
+    p
+    x.
+  (a %p -> b) %1 ->
+  (a %x -> b)
 toLinear f = case unsafeEqualityProof @p @x of
   UnsafeRefl -> f
 
 -- | Like 'toLinear' but for two-argument functions
-toLinear2
-  :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep) (r3 :: RuntimeRep)
-     (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3) p q x y.
-     (a %p-> b %q-> c) %1-> (a %x-> b %y-> c)
-toLinear2 f = case unsafeEqualityProof @'(p,q) @'(x, y) of
+toLinear2 ::
+  forall
+    (r1 :: RuntimeRep)
+    (r2 :: RuntimeRep)
+    (r3 :: RuntimeRep)
+    (a :: TYPE r1)
+    (b :: TYPE r2)
+    (c :: TYPE r3)
+    p
+    q
+    x
+    y.
+  (a %p -> b %q -> c) %1 ->
+  (a %x -> b %y -> c)
+toLinear2 f = case unsafeEqualityProof @'(p, q) @'(x, y) of
   UnsafeRefl -> f
 
 -- | Like 'toLinear' but for three-argument functions
-toLinear3
-  :: forall (r1 :: RuntimeRep) (r2 :: RuntimeRep)
-     (r3 :: RuntimeRep) (r4 :: RuntimeRep)
-     (a :: TYPE r1) (b :: TYPE r2) (c :: TYPE r3) (d :: TYPE r4) p q r x y z.
-     (a %p-> b %q-> c %r-> d) %1-> (a %x-> b %y-> c %z-> d)
-toLinear3 f = case unsafeEqualityProof @'(p,q,r) @'(x,y,z) of
+toLinear3 ::
+  forall
+    (r1 :: RuntimeRep)
+    (r2 :: RuntimeRep)
+    (r3 :: RuntimeRep)
+    (r4 :: RuntimeRep)
+    (a :: TYPE r1)
+    (b :: TYPE r2)
+    (c :: TYPE r3)
+    (d :: TYPE r4)
+    p
+    q
+    r
+    x
+    y
+    z.
+  (a %p -> b %q -> c %r -> d) %1 ->
+  (a %x -> b %y -> c %z -> d)
+toLinear3 f = case unsafeEqualityProof @'(p, q, r) @'(x, y, z) of
   UnsafeRefl -> f
 
 -- | @toLinearN@ subsumes the functionality of 'toLinear1', 'toLinear2', and
@@ -88,7 +116,7 @@ toLinear3 f = case unsafeEqualityProof @'(p,q,r) @'(x,y,z) of
 --   :: (a %m-> b -> c %1-> d) %1-> (a %1-> b %1-> c %x-> d)
 -- 'toLinear3' = toLinearN \@3
 -- @
-toLinearN :: forall n f g. ToLinearN n f g => f %1-> g
+toLinearN :: forall n f g. ToLinearN n f g => f %1 -> g
 -- See Note: Core size
 toLinearN f = case unsafeLinearityProofN @n @f @g of
   UnsafeRefl -> f
@@ -148,10 +176,12 @@ instance a ~ b => ToLinearN' 'Z (a :: TYPE rep) (b :: TYPE rep) where
 -- @y@ are lifted types, rather than needing that information to come from
 -- elsewhere.
 instance
-  ( ToLinearN' k fb gb
-  , x ~~ ((a :: TYPE repa) %p-> (fb :: TYPE repb))
-  , y ~~ (a %q-> (gb :: TYPE repb))
-  ) => ToLinearN' ('S k) (x :: TYPE rep) (y :: TYPE rep) where
+  ( ToLinearN' k fb gb,
+    x ~~ ((a :: TYPE repa) %p -> (fb :: TYPE repb)),
+    y ~~ (a %q -> (gb :: TYPE repb))
+  ) =>
+  ToLinearN' ('S k) (x :: TYPE rep) (y :: TYPE rep)
+  where
   prf = case prf @k @fb @gb of
     UnsafeRefl -> case unsafeEqualityProof @p @q of
       UnsafeRefl -> UnsafeRefl
