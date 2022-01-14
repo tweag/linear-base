@@ -41,7 +41,7 @@
 --
 -- @
 -- jacobi1d :: Int -> Vector Double -> Vector Double
--- jacobi1d n oldA = case stepArr n oldA of 
+-- jacobi1d n oldA = case stepArr n oldA of
 --   newB -> stepArr n newB
 --
 -- -- @jacobi1d N A[N] B[N] = (new_A[N], new_B[N])@.
@@ -107,22 +107,22 @@
 --
 -- and the only way to really consume a @DArray@ is via our API
 -- which requires you to completely fill the array.
---
 module Data.Array.Destination
-  (
-  -- * The Data Type
-    DArray
-  -- * Create and use a @DArray@
-  , alloc
-  , size
-  -- * Ways to write to a @DArray@
-  , replicate
-  , split
-  , mirror
-  , fromFunction
-  , fill
-  , dropEmpty
+  ( -- * The Data Type
+    DArray,
+
+    -- * Create and use a @DArray@
+    alloc,
+    size,
+
+    -- * Ways to write to a @DArray@
+    replicate,
+    split,
+    mirror,
+    fromFunction,
+    fill,
+    dropEmpty,
   )
-  where
+where
 
 import Data.Array.Destination.Internal

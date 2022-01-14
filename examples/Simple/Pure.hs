@@ -1,21 +1,18 @@
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE GADTs       #-}
 
-{-|
-Module      : Pure
-Description : Pure functions showing the basics of linear haskell.
-
-We have simple linear functions and simple linear data structures that
-illustrate the basic concepts of how the type checker of GHC with linear
-types behaves. The goal of this is to be a ridiculously simple tutorial
-on the basics of linear types.
--}
-
-
+-- |
+-- Module      : Pure
+-- Description : Pure functions showing the basics of linear haskell.
+--
+-- We have simple linear functions and simple linear data structures that
+-- illustrate the basic concepts of how the type checker of GHC with linear
+-- types behaves. The goal of this is to be a ridiculously simple tutorial
+-- on the basics of linear types.
 module Simple.Pure where
 
-
 -- * Simple linear functions
+
 ------------------------------------------------------------
 
 {-
@@ -29,7 +26,7 @@ module Simple.Pure where
    times the argument of f is used in the body.
 -}
 
-linearIdentity :: a %1-> a
+linearIdentity :: a %1 -> a
 linearIdentity x = x
 
 {-
@@ -42,9 +39,8 @@ linearIdentity x = x
    consumed exactly once.
 -}
 
-
-linearSwap :: (a,a) %1-> (a,a)
-linearSwap (x,y) = (y,x)
+linearSwap :: (a, a) %1 -> (a, a)
+linearSwap (x, y) = (y, x)
 
 {-
    Here, the argument is decomposed by the tuple data constructor into two
@@ -73,8 +69,8 @@ linearSwap (x,y) = (y,x)
    Consider the next function as an example.
 -}
 
-nonLinearSubsume :: (a,a) -> (a,a)
-nonLinearSubsume (x,_) = (x,x)
+nonLinearSubsume :: (a, a) -> (a, a)
+nonLinearSubsume (x, _) = (x, x)
 
 {-
    This function is not linear on its argument and in fact could not have a
@@ -91,8 +87,8 @@ nonLinearSubsume (x,_) = (x,x)
    zero times.
 -}
 
-linearPairIdentity :: (a,a) %1-> (a,a)
-linearPairIdentity (x,y) = (x,y)
+linearPairIdentity :: (a, a) %1 -> (a, a)
+linearPairIdentity (x, y) = (x, y)
 
 {-
    Here, notice that `(a,a)` is linear, and since `(,)` is linear
@@ -106,8 +102,7 @@ linearPairIdentity (x,y) = (x,y)
    constructor that is linear on the appropreate arguments.
 -}
 
-
-linearIdentity2 :: a %1-> a
+linearIdentity2 :: a %1 -> a
 linearIdentity2 x = linearIdentity x
 
 {-
@@ -127,18 +122,17 @@ linearIdentity2 x = linearIdentity x
    use their input exactly twice.
 -}
 
-nonLinearPair :: a -> (a,a)
+nonLinearPair :: a -> (a, a)
 nonLinearPair x = (linearIdentity x, linearIdentity x)
 
-nonLinearPair2 :: a -> (a,a)
+nonLinearPair2 :: a -> (a, a)
 nonLinearPair2 x = (x, linearIdentity x)
-
 
 {-
    The function below uses its input exactly thrice.
 -}
 
-nonLinearTriple :: a -> (a,(a,a))
+nonLinearTriple :: a -> (a, (a, a))
 nonLinearTriple x = (linearIdentity x, linearIdentity (nonLinearPair2 x))
 
 {-
@@ -183,7 +177,6 @@ nonLinearTriple x = (linearIdentity x, linearIdentity (nonLinearPair2 x))
 
 -}
 
-
 regularIdentity :: a -> a
 regularIdentity x = linearIdentity x
 
@@ -196,11 +189,10 @@ regularIdentity x = linearIdentity x
    functions are linear functions.
 -}
 
-
-(#.) :: (b %1-> c) -> (a %1-> b) -> (a %1-> c)
+(#.) :: (b %1 -> c) -> (a %1 -> b) -> (a %1 -> c)
 g #. f = \a -> g (f a)
 
-linearCompose :: (a,a) %1-> (a,a)
+linearCompose :: (a, a) %1 -> (a, a)
 linearCompose = linearIdentity #. linearSwap
 
 {-
@@ -212,9 +204,8 @@ linearCompose = linearIdentity #. linearSwap
    (##.) :: (b -> c) -> (a %1-> b) -> (a %1-> c)
 -}
 
-
-
 -- * Linear functions with user data types
+
 ------------------------------------------------------------
 
 {-
@@ -223,9 +214,9 @@ linearCompose = linearIdentity #. linearSwap
 -}
 
 data LinearHolder a where
-  LinearHolder :: a %1-> LinearHolder a
+  LinearHolder :: a %1 -> LinearHolder a
 
-linearHold :: a %1-> LinearHolder a
+linearHold :: a %1 -> LinearHolder a
 linearHold x = LinearHolder x
 
 {-
@@ -234,11 +225,10 @@ linearHold x = LinearHolder x
    non-linearly.
 -}
 
-
-linearHoldExtract :: LinearHolder a %1-> a
+linearHoldExtract :: LinearHolder a %1 -> a
 linearHoldExtract (LinearHolder x) = x
 
-linearIdentity3 :: a %1-> a
+linearIdentity3 :: a %1 -> a
 linearIdentity3 = linearHoldExtract #. linearHold
 
 {-
@@ -254,13 +244,13 @@ linearIdentity3 = linearHoldExtract #. linearHold
    (LinearHolder a  %1-> b) ≅ (a %1-> b)
 -}
 
-
 data LinearHolder2 where
-  LinearHolder2 :: a %1-> b -> LinearHolder2
+  LinearHolder2 :: a %1 -> b -> LinearHolder2
 
-linearHold' :: a %1-> LinearHolder2
+linearHold' :: a %1 -> LinearHolder2
 linearHold' x = LinearHolder2 x "hello"
---linearHold' x = LinearHolder2 "hi" x -- fails to type check
+
+-- linearHold' x = LinearHolder2 "hi" x -- fails to type check
 
 {-
    We can have constructors with mixed arrows, of course.  Here, this
@@ -268,12 +258,11 @@ linearHold' x = LinearHolder2 x "hello"
    commented out line would fail to type check
 -}
 
-
 data ForcedUnlinear a where
   ForcedUnlinear :: a -> ForcedUnlinear a
 
-forcedLinearPair :: ForcedUnlinear a %1-> (a,a)
-forcedLinearPair (ForcedUnlinear x) = (x,x)
+forcedLinearPair :: ForcedUnlinear a %1 -> (a, a)
+forcedLinearPair (ForcedUnlinear x) = (x, x)
 
 {-
    Above we define a data type ForcedUnlinear which does not use the
@@ -285,13 +274,11 @@ forcedLinearPair (ForcedUnlinear x) = (x,x)
    linearPair :: a %1-> (a,a)
 -}
 
-
-demote :: (ForcedUnlinear a %1-> b) -> (a -> b)
+demote :: (ForcedUnlinear a %1 -> b) -> (a -> b)
 demote f x = f (ForcedUnlinear x)
 
-promote :: (a -> b) -> (ForcedUnlinear a %1-> b)
+promote :: (a -> b) -> (ForcedUnlinear a %1 -> b)
 promote f (ForcedUnlinear x) = f x
-
 
 {-
    Another way of saying this is the following equivalence proven by the

@@ -1,14 +1,14 @@
-{-# OPTIONS_HADDOCK hide #-}
-{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE LinearTypes #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Data.Unrestricted.Internal.Ur
-  (
-    Ur(..)
-  , unur
-  , lift
-  , lift2
-  ) where
+  ( Ur (..),
+    unur,
+    lift,
+    lift2,
+  )
+where
 
 -- | @Ur a@ represents unrestricted values of type @a@ in a linear
 -- context. The key idea is that because the contructor holds @a@ with a
@@ -30,14 +30,13 @@ data Ur a where
 -- >     -- f __must__ be linear
 -- >     f :: a %1-> b
 -- >     f x = ...
-unur :: Ur a %1-> a
+unur :: Ur a %1 -> a
 unur (Ur a) = a
 
 -- | Lifts a function on a linear @Ur a@.
-lift :: (a -> b) -> Ur a %1-> Ur b
+lift :: (a -> b) -> Ur a %1 -> Ur b
 lift f (Ur a) = Ur (f a)
 
 -- | Lifts a function to work on two linear @Ur a@.
-lift2 :: (a -> b -> c) -> Ur a %1-> Ur b %1-> Ur c
+lift2 :: (a -> b -> c) -> Ur a %1 -> Ur b %1 -> Ur c
 lift2 f (Ur a) (Ur b) = Ur (f a b)
-

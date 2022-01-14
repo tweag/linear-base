@@ -1,18 +1,18 @@
-{-# OPTIONS_HADDOCK hide #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 -- | This module exports instances of Consumable, Dupable and Movable
 --
@@ -23,38 +23,41 @@
 -- other classes (for cleanness) in this module to avoid this dependence.
 module Data.Unrestricted.Internal.Instances where
 
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import Data.List.NonEmpty
+import Data.Monoid.Linear
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
-import qualified Data.Functor.Linear.Internal.Functor as Data
-import qualified Data.Functor.Linear.Internal.Applicative as Data
+import Data.V.Linear ()
+import Data.V.Linear.Internal.V (V (..), theLength)
+import qualified Data.Vector as Vector
+import GHC.Int
+import GHC.TypeLits
 import GHC.Types hiding (Any)
 import GHC.Word
-import GHC.Int
-import Data.Monoid.Linear
-import Data.List.NonEmpty
-import qualified Prelude
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
-import Data.V.Linear ()
-import Data.V.Linear.Internal.V (V(..), theLength)
-import qualified Data.Vector as Vector
-import GHC.TypeLits
+import qualified Prelude
 
 newtype AsMovable a = AsMovable a
 
 instance Movable a => Movable (AsMovable a) where
-  move (AsMovable x) = move x & \case
-    Ur x' -> Ur (AsMovable x')
+  move (AsMovable x) =
+    move x & \case
+      Ur x' -> Ur (AsMovable x')
 
 instance Movable a => Consumable (AsMovable a) where
-  consume x = move x & \case
-    Ur _ -> ()
+  consume x =
+    move x & \case
+      Ur _ -> ()
 
 instance Movable a => Dupable (AsMovable a) where
-  dupV x = move x & \case
-    Ur x' -> Data.pure x'
+  dupV x =
+    move x & \case
+      Ur x' -> Data.pure x'
 
 deriving via (AsMovable ()) instance Consumable ()
 
@@ -238,8 +241,8 @@ instance (KnownNat n, Consumable a) => Consumable (V n a) where
 
 instance (KnownNat n, Dupable a) => Dupable (V n a) where
   dupV (V xs) =
-    V . Unsafe.toLinear (Vector.fromListN (theLength @n)) Data.<$>
-    dupV (Unsafe.toLinear Vector.toList xs)
+    V . Unsafe.toLinear (Vector.fromListN (theLength @n))
+      Data.<$> dupV (Unsafe.toLinear Vector.toList xs)
 
 instance Consumable a => Consumable (Prelude.Maybe a) where
   consume Prelude.Nothing = ()
@@ -267,15 +270,15 @@ instance (Movable a, Movable b) => Movable (Prelude.Either a b) where
 
 instance Consumable a => Consumable [a] where
   consume [] = ()
-  consume (a:l) = consume a `lseq` consume l
+  consume (a : l) = consume a `lseq` consume l
 
 instance Dupable a => Dupable [a] where
   dupV [] = Data.pure []
-  dupV (a:l) = (:) Data.<$> dupV a Data.<*> dupV l
+  dupV (a : l) = (:) Data.<$> dupV a Data.<*> dupV l
 
 instance Movable a => Movable [a] where
   move [] = Ur []
-  move (a:l) = (:) Data.<$> move a Data.<*> move l
+  move (a : l) = (:) Data.<$> move a Data.<*> move l
 
 instance Consumable a => Consumable (NonEmpty a) where
   consume (x :| xs) = consume x `lseq` consume xs
@@ -315,16 +318,27 @@ instance Prelude.Traversable Ur where
 
 -- Some stock instances
 deriving instance Consumable a => Consumable (Sum a)
+
 deriving instance Dupable a => Dupable (Sum a)
+
 deriving instance Movable a => Movable (Sum a)
+
 deriving instance Consumable a => Consumable (Product a)
+
 deriving instance Dupable a => Dupable (Product a)
+
 deriving instance Movable a => Movable (Product a)
+
 deriving instance Consumable All
+
 deriving instance Dupable All
+
 deriving instance Movable All
+
 deriving instance Consumable Any
+
 deriving instance Dupable Any
+
 deriving instance Movable Any
 
 newtype MovableMonoid a = MovableMonoid a
@@ -332,6 +346,8 @@ newtype MovableMonoid a = MovableMonoid a
 
 instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
   MovableMonoid a <> MovableMonoid b = MovableMonoid (combine (move a) (move b))
-    where combine :: Prelude.Semigroup a => Ur a %1-> Ur a %1-> a
-          combine (Ur x) (Ur y) = x Prelude.<> y
+    where
+      combine :: Prelude.Semigroup a => Ur a %1 -> Ur a %1 -> a
+      combine (Ur x) (Ur y) = x Prelude.<> y
+
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)

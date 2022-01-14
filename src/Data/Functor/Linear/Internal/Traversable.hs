@@ -1,32 +1,37 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Data.Functor.Linear.Internal.Traversable
   ( -- * Linear traversable hierarchy
-    -- $ traversable
-    Traversable(..)
-  , mapM, sequenceA, for, forM
-  , mapAccumL, mapAccumR
-  ) where
+    -- $
+    Traversable (..),
+    mapM,
+    sequenceA,
+    for,
+    forM,
+    mapAccumL,
+    mapAccumR,
+  )
+where
 
 import qualified Control.Functor.Linear.Internal.Class as Control
-import qualified Control.Functor.Linear.Internal.State as Control
 import qualified Control.Functor.Linear.Internal.Instances as Control
-import qualified Data.Functor.Linear.Internal.Functor as Data
-import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Control.Functor.Linear.Internal.State as Control
 import Data.Functor.Const
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
 import Prelude.Linear.Internal
-import Prelude (Maybe(..), Either(..))
+import Prelude (Either (..), Maybe (..))
 
--- $traversable
+-- traversable
 
 -- TODO: write the laws
 -- TODO: maybe add a Foldable class between Functor and Traversable as well
@@ -52,58 +57,58 @@ import Prelude (Maybe(..), Either(..))
 --    by Mauro Jaskelioff and Ondrej Rypacek,
 --    in /Mathematically-Structured Functional Programming/, 2012, online at
 --    <http://arxiv.org/pdf/1202.2919>.
---
 class Data.Functor t => Traversable t where
   {-# MINIMAL traverse | sequence #-}
 
-  traverse :: Control.Applicative f => (a %1-> f b) -> t a %1-> f (t b)
+  traverse :: Control.Applicative f => (a %1 -> f b) -> t a %1 -> f (t b)
   {-# INLINE traverse #-}
   traverse f x = sequence (Data.fmap f x)
 
-  sequence :: Control.Applicative f => t (f a) %1-> f (t a)
+  sequence :: Control.Applicative f => t (f a) %1 -> f (t a)
   {-# INLINE sequence #-}
   sequence = traverse id
 
-mapM :: (Traversable t, Control.Monad m) => (a %1-> m b) -> t a %1-> m (t b)
+mapM :: (Traversable t, Control.Monad m) => (a %1 -> m b) -> t a %1 -> m (t b)
 mapM = traverse
 {-# INLINE mapM #-}
 
-sequenceA :: (Traversable t, Control.Applicative f) => t (f a) %1-> f (t a)
+sequenceA :: (Traversable t, Control.Applicative f) => t (f a) %1 -> f (t a)
 sequenceA = sequence
 {-# INLINE sequenceA #-}
 
-for :: (Traversable t, Control.Applicative f) => t a %1-> (a %1-> f b) -> f (t b)
+for :: (Traversable t, Control.Applicative f) => t a %1 -> (a %1 -> f b) -> f (t b)
 for t f = traverse f t
 {-# INLINE for #-}
 
-forM :: (Traversable t, Control.Monad m) => t a %1-> (a %1-> m b) -> m (t b)
+forM :: (Traversable t, Control.Monad m) => t a %1 -> (a %1 -> m b) -> m (t b)
 forM = for
 {-# INLINE forM #-}
 
-mapAccumL :: Traversable t => (a %1-> b %1-> (a,c)) -> a %1-> t b %1-> (a, t c)
+mapAccumL :: Traversable t => (a %1 -> b %1 -> (a, c)) -> a %1 -> t b %1 -> (a, t c)
 mapAccumL f s t = swap $ Control.runState (traverse (\b -> Control.state $ \i -> swap $ f i b) t) s
 
-mapAccumR :: Traversable t => (a %1-> b %1-> (a,c)) -> a %1-> t b %1-> (a, t c)
+mapAccumR :: Traversable t => (a %1 -> b %1 -> (a, c)) -> a %1 -> t b %1 -> (a, t c)
 mapAccumR f s t = swap $ runStateR (traverse (\b -> StateR $ \i -> swap $ f i b) t) s
 
-swap :: (a,b) %1-> (b,a)
-swap (x,y) = (y,x)
+swap :: (a, b) %1 -> (b, a)
+swap (x, y) = (y, x)
 
 -- | A right-to-left state transformer
-newtype StateR s a = StateR (s %1-> (a, s))
+newtype StateR s a = StateR (s %1 -> (a, s))
   deriving (Data.Functor, Data.Applicative) via Control.Data (StateR s)
 
-runStateR :: StateR s a %1-> s %1-> (a, s)
+runStateR :: StateR s a %1 -> s %1 -> (a, s)
 runStateR (StateR f) = f
 
 instance Control.Functor (StateR s) where
   fmap f (StateR x) = StateR $ (\(a, s') -> (f a, s')) . x
 
 instance Control.Applicative (StateR s) where
-  pure x = StateR $ \s -> (x,s)
+  pure x = StateR $ \s -> (x, s)
   StateR f <*> StateR x = StateR (go . Control.fmap f . x)
-    where go :: (a, (a %1-> b, s)) %1-> (b, s)
-          go (a, (h, s'')) = (h a, s'')
+    where
+      go :: (a, (a %1 -> b, s)) %1 -> (b, s)
+      go (a, (h, s'')) = (h a, s'')
 
 ------------------------
 -- Standard instances --

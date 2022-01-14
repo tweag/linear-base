@@ -1,40 +1,45 @@
-{-# OPTIONS_GHC -Wno-name-shadowing #-}
-{-# OPTIONS_HADDOCK hide #-}
-{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 -- | This module contains functions for interoperating with other
 -- streaming libraries.
 module Streaming.Internal.Interop
   ( -- * Interoperating with other streaming libraries
-    reread
-  ) where
+    reread,
+  )
+where
 
-import Streaming.Internal.Type
-import Streaming.Internal.Produce
+import qualified Control.Functor.Linear as Control
 import Data.Unrestricted.Linear
 import Prelude.Linear (($))
-import Prelude (Maybe(..))
-import qualified Control.Functor.Linear as Control
+import Streaming.Internal.Produce
+import Streaming.Internal.Type
+import Prelude (Maybe (..))
 
-{-| Read an @IORef (Maybe a)@ or a similar device until it reads @Nothing@.
-    @reread@ provides convenient exit from the @io-streams@ library
-
-> reread readIORef    :: IORef (Maybe a) -> Stream (Of a) IO ()
-> reread Streams.read :: System.IO.Streams.InputStream a -> Stream (Of a) IO ()
--}
-reread :: Control.Monad m =>
-  (s -> m (Ur (Maybe a))) -> s -> Stream (Of a) m ()
+-- | Read an @IORef (Maybe a)@ or a similar device until it reads @Nothing@.
+--    @reread@ provides convenient exit from the @io-streams@ library
+--
+-- > reread readIORef    :: IORef (Maybe a) -> Stream (Of a) IO ()
+-- > reread Streams.read :: System.IO.Streams.InputStream a -> Stream (Of a) IO ()
+reread ::
+  Control.Monad m =>
+  (s -> m (Ur (Maybe a))) ->
+  s ->
+  Stream (Of a) m ()
 reread f s = reread' f s
   where
-    reread' :: Control.Monad m =>
-      (s -> m (Ur (Maybe a))) -> s -> Stream (Of a) m ()
+    reread' ::
+      Control.Monad m =>
+      (s -> m (Ur (Maybe a))) ->
+      s ->
+      Stream (Of a) m ()
     reread' f s = Effect $ Control.do
       Ur maybeA <- f s
       case maybeA of
         Nothing -> Control.return $ Return ()
         Just a -> Control.return $ (yield a Control.>> reread f s)
-{-# INLINABLE reread #-}
-
+{-# INLINEABLE reread #-}

@@ -29,31 +29,36 @@
 -- only modifies the desugaring of binds, we still need to qualify `Control.return`.
 module System.IO.Resource
   ( -- * The Resource I/O Monad
-    RIO
-  , run
+    RIO,
+    run,
+
     -- * Using Resource Handles
     -- $monad
     -- $files
-  , Handle
+    Handle,
+
     -- ** File I/O
-  , openFile
-  , System.IOMode (..)
+    openFile,
+    System.IOMode (..),
+
     -- ** Working with Handles
-  , hClose
-  , hIsEOF
-  , hGetChar
-  , hPutChar
-  , hGetLine
-  , hPutStr
-  , hPutStrLn
+    hClose,
+    hIsEOF,
+    hGetChar,
+    hPutChar,
+    hGetLine,
+    hPutStr,
+    hPutStrLn,
+
     -- * Creating new types of resources
     -- $new-resources
-  , UnsafeResource
-  , unsafeRelease
-  , unsafeAcquire
-  , unsafeFromSystemIOResource
-  , unsafeFromSystemIOResource_
-  ) where
+    UnsafeResource,
+    unsafeRelease,
+    unsafeAcquire,
+    unsafeFromSystemIOResource,
+    unsafeFromSystemIOResource_,
+  )
+where
 
-import System.IO.Resource.Internal
 import qualified System.IO as System
+import System.IO.Resource.Internal

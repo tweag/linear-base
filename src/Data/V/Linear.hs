@@ -1,5 +1,6 @@
-{-# OPTIONS_GHC -Wno-dodgy-exports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-dodgy-exports #-}
+
 -- | This module defines vectors of known length which can hold linear values.
 --
 -- Having a known length matters with linear types, because many common vector
@@ -34,18 +35,20 @@
 -- sense of [linear algebra](https://en.wikipedia.org/wiki/Linear_algebra),
 -- rather than linear types).
 module Data.V.Linear
-  ( V
-  , FunN
-  , elim
-  , make
-  , iterate
-  -- * Type-level utilities
-  , caseNat
-  , module Data.V.Linear.Internal.Instances
-  ) where
+  ( V,
+    FunN,
+    elim,
+    make,
+    iterate,
 
-import Data.V.Linear.Internal.V
+    -- * Type-level utilities
+    caseNat,
+    module Data.V.Linear.Internal.Instances,
+  )
+where
+
 import Data.V.Linear.Internal.Instances ()
+import Data.V.Linear.Internal.V
 
 {- Developers Note
 
@@ -61,4 +64,3 @@ of the instances.
 Remark: ideally the instances below would be in an internal `Instances`
 module. But we haven't got around to it yet.
 -}
-

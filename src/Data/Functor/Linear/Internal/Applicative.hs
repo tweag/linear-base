@@ -1,19 +1,19 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Data.Functor.Linear.Internal.Applicative
-  (
-    Applicative(..)
-  ) where
+  ( Applicative (..),
+  )
+where
 
-import Data.Functor.Linear.Internal.Functor
-import Prelude.Linear.Internal
 import qualified Control.Monad.Trans.Reader as NonLinear
-import Data.Monoid.Linear hiding (Sum)
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
+import Data.Functor.Linear.Internal.Functor
+import Data.Monoid.Linear hiding (Sum)
+import Prelude.Linear.Internal
 
 -- # Applicative definition
 -------------------------------------------------------------------------------
@@ -48,9 +48,9 @@ import Data.Functor.Identity
 class Functor f => Applicative f where
   {-# MINIMAL pure, (liftA2 | (<*>)) #-}
   pure :: a -> f a
-  (<*>) :: f (a %1-> b) %1-> f a %1-> f b
+  (<*>) :: f (a %1 -> b) %1 -> f a %1 -> f b
   f <*> x = liftA2 ($) f x
-  liftA2 :: (a %1-> b %1-> c) -> f a %1-> f b %1-> f c
+  liftA2 :: (a %1 -> b %1 -> c) -> f a %1 -> f b %1 -> f c
   liftA2 f x y = f <$> x <*> y
 
 -- # Instances
@@ -62,18 +62,17 @@ instance Monoid x => Applicative (Const x) where
 
 instance Monoid a => Applicative ((,) a) where
   pure x = (mempty, x)
-  (u,f) <*> (v,x) = (u <> v, f x)
+  (u, f) <*> (v, x) = (u <> v, f x)
 
 instance Applicative Identity where
   pure = Identity
   Identity f <*> Identity x = Identity (f x)
 
 instance (Applicative f, Applicative g) => Applicative (Compose f g) where
-   pure x = Compose (pure (pure x))
-   (Compose f) <*> (Compose x) = Compose (liftA2 (<*>) f x)
-   liftA2 f (Compose x) (Compose y) = Compose (liftA2 (liftA2 f) x y)
+  pure x = Compose (pure (pure x))
+  (Compose f) <*> (Compose x) = Compose (liftA2 (<*>) f x)
+  liftA2 f (Compose x) (Compose y) = Compose (liftA2 (liftA2 f) x y)
 
 instance Applicative m => Applicative (NonLinear.ReaderT r m) where
   pure x = NonLinear.ReaderT (\_ -> pure x)
   NonLinear.ReaderT f <*> NonLinear.ReaderT x = NonLinear.ReaderT (\r -> f r <*> x r)
-

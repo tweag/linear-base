@@ -1,7 +1,7 @@
-{-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -27,9 +27,9 @@
 -- runtime.
 module Simple.FileIO where
 
-import Control.Monad ()
 -- Linear Base Imports
 import qualified Control.Functor.Linear as Control
+import Control.Monad ()
 import Data.Text
 import Data.Unrestricted.Linear
 import qualified System.IO as System
@@ -37,6 +37,7 @@ import qualified System.IO.Resource as Linear
 import Prelude
 
 -- *  Non-linear first line printing
+
 --------------------------------------------
 
 -- openFile :: FilePath -> IOMode -> IO Handle
@@ -71,6 +72,7 @@ printFirstLineAfterClose fpath = do
   System.putStrLn firstLine
 
 -- * Linear first line printing
+
 --------------------------------------------
 
 linearGetFirstLine :: FilePath -> RIO (Ur Text)
@@ -102,6 +104,7 @@ linearPrintFirstLine fp = do
 -}
 
 -- * Linear and non-linear combinators
+
 -------------------------------------------------
 
 -- Some type synonyms
@@ -112,7 +115,7 @@ type LinHandle = Linear.Handle
 -- | Linear bind
 -- Notice the continuation has a linear arrow,
 -- i.e., (a %1-> RIO b)
-(>>#=) :: RIO a %1-> (a %1-> RIO b) %1-> RIO b
+(>>#=) :: RIO a %1 -> (a %1 -> RIO b) %1 -> RIO b
 (>>#=) = (Control.>>=)
 
 -- | Non-linear bind
@@ -120,15 +123,16 @@ type LinHandle = Linear.Handle
 -- i.e., (() -> RIO b). For simplicity, we don't use
 -- a more general type, like the following:
 -- (>>==) :: RIO (Ur a) %1-> (a -> RIO b) %1-> RIO b
-(>>==) :: RIO () %1-> (() -> RIO b) %1-> RIO b
+(>>==) :: RIO () %1 -> (() -> RIO b) %1 -> RIO b
 (>>==) ma f = ma Control.>>= (\() -> f ())
 
 -- | Inject
 -- provided just to make the type explicit
-inject :: a %1-> RIO a
+inject :: a %1 -> RIO a
 inject = Control.return
 
 -- * The explicit example
+
 -------------------------------------------------
 
 getFirstLineExplicit :: FilePath -> RIO (Ur Text)
@@ -139,10 +143,10 @@ getFirstLineExplicit path =
   where
     openFileForReading :: FilePath -> RIO LinHandle
     openFileForReading fp = Linear.openFile fp System.ReadMode
-    readOneLine :: LinHandle %1-> RIO (Ur Text, LinHandle)
+    readOneLine :: LinHandle %1 -> RIO (Ur Text, LinHandle)
     readOneLine = Linear.hGetLine
     closeAndReturnLine ::
-      (Ur Text, LinHandle) %1-> RIO (Ur Text)
+      (Ur Text, LinHandle) %1 -> RIO (Ur Text)
     closeAndReturnLine (unrText, handle) =
       Linear.hClose handle >>#= (\() -> inject unrText)
 

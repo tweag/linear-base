@@ -20,15 +20,15 @@ module Test.Data.Mutable.Array
 where
 
 import qualified Data.Array.Mutable.Linear as Array
-import Data.Unrestricted.Linear
 import qualified Data.Functor.Linear as Data
-import qualified Data.Ord.Linear as Linear
-import Hedgehog
 import qualified Data.List as List
+import qualified Data.Ord.Linear as Linear
+import Data.Unrestricted.Linear
+import qualified Data.Vector as Vector
+import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
-import qualified Data.Vector as Vector
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
@@ -41,36 +41,36 @@ mutArrTests = testGroup "Mutable array tests" group
 group :: [TestTree]
 group =
   -- All tests for exprs of the form (read (const ...) i)
-  [ testProperty "∀ s,i,x. read (alloc s x) i = x" readAlloc
-  , testProperty "∀ a,s,x,i. read (snd (allocBeside s x a)) i = x" allocBeside
-  , testProperty "∀ s,a,i. i < length a, read (resize s 42 a) i = read a i" readResize
-  , testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1
-  , testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2
-  -- All tests for exprs of the form (length (const ...))
-  , testProperty "∀ s,x. len (alloc s x) = s" lenAlloc
-  , testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite
-  , testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed
-  -- Tests against a reference implementation
-  , testProperty
+  [ testProperty "∀ s,i,x. read (alloc s x) i = x" readAlloc,
+    testProperty "∀ a,s,x,i. read (snd (allocBeside s x a)) i = x" allocBeside,
+    testProperty "∀ s,a,i. i < length a, read (resize s 42 a) i = read a i" readResize,
+    testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1,
+    testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2,
+    -- All tests for exprs of the form (length (const ...))
+    testProperty "∀ s,x. len (alloc s x) = s" lenAlloc,
+    testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite,
+    testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed,
+    -- Tests against a reference implementation
+    testProperty
       "∀ a,ix. toList . write a ix = (\\l -> take ix l ++ [a] ++ drop (ix+1) l) . toList"
-      writeRef
-  , testProperty "∀ ix. read ix a = (toList a) !! i" readRef
-  , testProperty "size = length . toList" sizeRef
-  , testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef
-  , testProperty "∀ s,n. slice s n = take s . drop n" sliceRef
-  , testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap
-  , testProperty "toList . fromList = id" refToListFromList
-  , testProperty "toList . freeze . fromList = id" refFreeze
-  , testProperty "dup2 produces identical arrays" refDupable
-  -- Regression tests
-  , testProperty "do not reorder reads and writes" readAndWriteTest
-  , testProperty "do not evaluate values unnecesesarily" strictnessTest
+      writeRef,
+    testProperty "∀ ix. read ix a = (toList a) !! i" readRef,
+    testProperty "size = length . toList" sizeRef,
+    testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef,
+    testProperty "∀ s,n. slice s n = take s . drop n" sliceRef,
+    testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap,
+    testProperty "toList . fromList = id" refToListFromList,
+    testProperty "toList . freeze . fromList = id" refFreeze,
+    testProperty "dup2 produces identical arrays" refDupable,
+    -- Regression tests
+    testProperty "do not reorder reads and writes" readAndWriteTest,
+    testProperty "do not evaluate values unnecesesarily" strictnessTest
   ]
 
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type ArrayTester = Array.Array Int %1-> Ur (TestT IO ())
+type ArrayTester = Array.Array Int %1 -> Ur (TestT IO ())
 
 nonEmptyList :: Gen [Int]
 nonEmptyList = Gen.list (Range.linear 1 1000) value
@@ -83,15 +83,14 @@ value :: Gen Int
 value = Gen.int (Range.linear (-1000) 1000)
 
 compInts ::
-  Ur Int %1->
-  Ur Int %1->
+  Ur Int %1 ->
+  Ur Int %1 ->
   Ur (TestT IO ())
 compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getFst :: Consumable b => (a, b) %1-> a
+getFst :: Consumable b => (a, b) %1 -> a
 getFst (a, b) = lseq b a
-
 
 -- # Tests
 --------------------------------------------------------------------------------
@@ -100,7 +99,7 @@ readAlloc :: Property
 readAlloc = property $ do
   size <- forAll $ Gen.int $ Range.linear 1 1000
   val <- forAll value
-  ix <- forAll $ Gen.element [0..size-1]
+  ix <- forAll $ Gen.element [0 .. size - 1]
   test $ unur Linear.$ Array.alloc size val (readAllocTest ix val)
 
 readAllocTest :: Int -> Int -> ArrayTester
@@ -110,24 +109,26 @@ readResize :: Property
 readResize = property $ do
   l <- forAll nonEmptyList
   let size = length l
-  newSize <- forAll $ Gen.element [1..(size*4)]
-  ix <- forAll $ Gen.element [0..(min size newSize)-1]
+  newSize <- forAll $ Gen.element [1 .. (size * 4)]
+  ix <- forAll $ Gen.element [0 .. (min size newSize) - 1]
   let tester = readResizeTest newSize ix
   test $ unur Linear.$ Array.fromList l tester
 
 readResizeTest :: Int -> Int -> ArrayTester
 readResizeTest size ix arr =
   Array.read arr ix
-    Linear.& \(Ur old, arr) -> Array.resize size 42 arr
-    Linear.& \arr -> Array.read arr ix
-    Linear.& getFst
-    Linear.& \(Ur new) -> Ur (old === new)
+    Linear.& \(Ur old, arr) ->
+      Array.resize size 42 arr
+        Linear.& \arr ->
+          Array.read arr ix
+            Linear.& getFst
+            Linear.& \(Ur new) -> Ur (old === new)
 
 readWrite1 :: Property
 readWrite1 = property $ do
   l <- forAll nonEmptyList
   let size = length l
-  ix <- forAll $ Gen.element [0..size-1]
+  ix <- forAll $ Gen.element [0 .. size - 1]
   val <- forAll value
   let tester = readWrite1Test ix val
   test $ unur Linear.$ Array.fromList l tester
@@ -141,8 +142,8 @@ readWrite2 = property $ do
   let list = Gen.list (Range.linearFrom 2 2 1000) value
   l <- forAll list
   let size = length l
-  ix <- forAll $ Gen.element [0..size-1]
-  jx <- forAll $ Gen.element [ z | z <- [0..size-1], z /= ix ]
+  ix <- forAll $ Gen.element [0 .. size - 1]
+  jx <- forAll $ Gen.element [z | z <- [0 .. size - 1], z /= ix]
   val <- forAll value
   let tester = readWrite2Test ix jx val
   test $ unur Linear.$ Array.fromList l tester
@@ -151,7 +152,7 @@ readWrite2Test :: Int -> Int -> Int -> ArrayTester
 readWrite2Test ix jx val arr = fromRead (Array.read arr ix)
   where
     fromRead ::
-      (Ur Int, Array.Array Int) %1-> Ur (TestT IO ())
+      (Ur Int, Array.Array Int) %1 -> Ur (TestT IO ())
     fromRead (val1, arr) =
       compInts
         val1
@@ -161,9 +162,9 @@ allocBeside :: Property
 allocBeside = property $ do
   l <- forAll nonEmptyList
   let size = length l
-  newSize <- forAll $ Gen.element [size..(size*4)]
+  newSize <- forAll $ Gen.element [size .. (size * 4)]
   val <- forAll value
-  ix <- forAll $ Gen.element [0..newSize-1]
+  ix <- forAll $ Gen.element [0 .. newSize - 1]
   let tester = allocBesideTest newSize val ix
   test $ unur Linear.$ Array.fromList l tester
 
@@ -171,9 +172,10 @@ allocBesideTest :: Int -> Int -> Int -> ArrayTester
 allocBesideTest newSize val ix arr =
   Array.allocBeside newSize val arr
     Linear.& getFst
-    Linear.& \arr -> Array.read arr ix
-    Linear.& getFst
-    Linear.& compInts (move val)
+    Linear.& \arr ->
+      Array.read arr ix
+        Linear.& getFst
+        Linear.& compInts (move val)
 
 lenAlloc :: Property
 lenAlloc = property $ do
@@ -190,13 +192,14 @@ lenWrite = property $ do
   l <- forAll nonEmptyList
   let size = length l
   val <- forAll value
-  ix <- forAll $ Gen.element [0..size-1]
+  ix <- forAll $ Gen.element [0 .. size - 1]
   let tester = lenWriteTest size val ix
   test $ unur Linear.$ Array.fromList l tester
 
 lenWriteTest :: Int -> Int -> Int -> ArrayTester
 lenWriteTest size val ix arr =
-  compInts (move size)
+  compInts
+    (move size)
     (getFst Linear.$ Array.size (Array.write arr ix val))
 
 lenResizeSeed :: Property
@@ -204,7 +207,7 @@ lenResizeSeed = property $ do
   l <- forAll list
   let size = length l
   val <- forAll value
-  newSize <- forAll $ Gen.element [size..(size*4)]
+  newSize <- forAll $ Gen.element [size .. (size * 4)]
   let tester = lenResizeSeedTest newSize val
   test $ unur Linear.$ Array.fromList l tester
 
@@ -219,7 +222,7 @@ writeRef = property $ do
   l <- forAll nonEmptyList
   v <- forAll value
   ix <- forAll $ Gen.int $ Range.linear 0 (List.length l - 1)
-  let l' = List.take ix l ++ [v] ++ List.drop (ix+1) l
+  let l' = List.take ix l ++ [v] ++ List.drop (ix + 1) l
   l' === unur (Array.fromList l (Array.toList Linear.. Array.set ix v))
 
 readRef :: Property
@@ -261,14 +264,14 @@ sliceRef = property $ do
         Array.fromList xs Linear.$ \arr ->
           Array.slice s n arr
             Linear.& \(old, new) ->
-                       old `lseq` Array.toList new
+              old `lseq` Array.toList new
   expected === actual
 
 refFmap :: Property
 refFmap = property $ do
   xs <- forAll list
   let -- An arbitrary function
-      f :: Int %1-> Bool
+      f :: Int %1 -> Bool
       f = (Linear.> 0)
       expected = map (Linear.forget f) xs
       Ur actual =
@@ -296,10 +299,11 @@ refDupable = property $ do
 
 -- https://github.com/tweag/linear-base/pull/135
 readAndWriteTest :: Property
-readAndWriteTest = withTests 1 . property $
-  unur (Array.fromList "a" test) === 'a'
+readAndWriteTest =
+  withTests 1 . property $
+    unur (Array.fromList "a" test) === 'a'
   where
-    test :: Array.Array Char %1-> Ur Char
+    test :: Array.Array Char %1 -> Ur Char
     test arr =
       Array.read arr 0 Linear.& \(before, arr') ->
         Array.write arr' 0 'b' Linear.& \arr'' ->
@@ -307,11 +311,12 @@ readAndWriteTest = withTests 1 . property $
 
 -- https://github.com/tweag/linear-base/issues/142
 strictnessTest :: Property
-strictnessTest = withTests 1 . property $
-  unur (Array.fromList [()] test) === ()
+strictnessTest =
+  withTests 1 . property $
+    unur (Array.fromList [()] test) === ()
   where
-    test :: Array.Array () %1-> Ur ()
+    test :: Array.Array () %1 -> Ur ()
     test arr =
       Array.write arr 0 (error "this should not be evaluated") Linear.& \arr ->
-      Array.read arr 0 Linear.& \(Ur _, arr) ->
-        arr `Linear.lseq` Ur ()
+        Array.read arr 0 Linear.& \(Ur _, arr) ->
+          arr `Linear.lseq` Ur ()

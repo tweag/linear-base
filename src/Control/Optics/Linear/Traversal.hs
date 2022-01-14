@@ -50,20 +50,26 @@
 --     traverse' (\(Student s i) -> Student <$> onName s <*> pure i) students <*>
 --     pure texts
 -- @
---
 module Control.Optics.Linear.Traversal
   ( -- * Types
-    Traversal, Traversal'
+    Traversal,
+    Traversal',
+
     -- * Composing optics
-  , (.>)
+    (.>),
+
     -- * Common optics
-  , traversed
+    traversed,
+
     -- * Using optics
-  , over, overU
-  , traverseOf, traverseOfU
+    over,
+    overU,
+    traverseOf,
+    traverseOfU,
+
     -- * Constructing optics
-  , traversal
+    traversal,
   )
-  where
+where
 
 import Control.Optics.Linear.Internal

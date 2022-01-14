@@ -2,6 +2,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
+
 -- |
 -- Tests for mutable sets.
 --
@@ -58,13 +59,13 @@ module Test.Data.Mutable.Set
   )
 where
 
-import qualified Data.Set.Mutable.Linear as Set
+import Data.Containers.ListUtils (nubOrd)
+import qualified Data.Functor.Linear as Data
+import qualified Data.List as List
 import Data.Set.Mutable.Linear (Set)
+import qualified Data.Set.Mutable.Linear as Set
 import Data.Unrestricted.Linear
 import Hedgehog
-import Data.Containers.ListUtils (nubOrd)
-import qualified Data.List as List
-import qualified Data.Functor.Linear as Data
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear
@@ -80,22 +81,22 @@ mutSetTests = testGroup "Mutable set tests" group
 group :: [TestTree]
 group =
   -- Tests of the form [accessor (mutator)]
-  [ testProperty "∀ x. member (insert s x) x = True" memberInsert1
-  , testProperty "∀ x,y/=x. member (insert s x) y = member s y" memberInsert2
-  , testProperty "∀ x. member (delete s x) x = False" memberDelete1
-  , testProperty "∀ x,y/=x. member (delete s x) y = member s y" memberDelete2
-  , testProperty "∀ s, x \\in s. size (insert s x) = size s" sizeInsert1
-  , testProperty "∀ s, x \\notin s. size (insert s x) = size s + 1" sizeInsert2
-  , testProperty "∀ s, x \\in s. size (delete s x) = size s - 1" sizeDelete1
-  , testProperty "∀ s, x \\notin s. size (delete s x) = size s" sizeDelete2
-  -- Homomorphism tests
-  , testProperty "sort . nub = sort . toList" toListFromList
-  , testProperty "member x s = elem x (toList s)" memberHomomorphism
-  , testProperty "size = length . toList" sizeHomomorphism
-  , testProperty
+  [ testProperty "∀ x. member (insert s x) x = True" memberInsert1,
+    testProperty "∀ x,y/=x. member (insert s x) y = member s y" memberInsert2,
+    testProperty "∀ x. member (delete s x) x = False" memberDelete1,
+    testProperty "∀ x,y/=x. member (delete s x) y = member s y" memberDelete2,
+    testProperty "∀ s, x \\in s. size (insert s x) = size s" sizeInsert1,
+    testProperty "∀ s, x \\notin s. size (insert s x) = size s + 1" sizeInsert2,
+    testProperty "∀ s, x \\in s. size (delete s x) = size s - 1" sizeDelete1,
+    testProperty "∀ s, x \\notin s. size (delete s x) = size s" sizeDelete2,
+    -- Homomorphism tests
+    testProperty "sort . nub = sort . toList" toListFromList,
+    testProperty "member x s = elem x (toList s)" memberHomomorphism,
+    testProperty "size = length . toList" sizeHomomorphism,
+    testProperty
       "sort . nub ((toList s) ∪ (toList s')) = sort . toList (s ∪ s')"
-      unionHomomorphism
-  , testProperty
+      unionHomomorphism,
+    testProperty
       "sort . nub ((toList s) ∩ (toList s')) = sort . toList (s ∩ s')"
       intersectHomomorphism
   ]
@@ -103,7 +104,7 @@ group =
 -- # Internal Library
 --------------------------------------------------------------------------------
 
-type SetTester = Set.Set Int %1-> Ur (TestT IO ())
+type SetTester = Set.Set Int %1 -> Ur (TestT IO ())
 
 -- | A random list
 list :: Gen [Int]
@@ -116,14 +117,15 @@ list = do
 value :: Gen Int
 value = Gen.int (Range.linear (-100) 100)
 
-testEqual :: (Show a, Eq a) =>
-  Ur a %1->
-  Ur a %1->
+testEqual ::
+  (Show a, Eq a) =>
+  Ur a %1 ->
+  Ur a %1 ->
   Ur (TestT IO ())
 testEqual (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getFst :: Consumable b => (a, b) %1-> a
+getFst :: Consumable b => (a, b) %1 -> a
 getFst (a, b) = lseq b a
 
 -- # Tests
@@ -153,7 +155,7 @@ memberInsert2 = property $ do
 memberInsert2Test :: Int -> Int -> SetTester
 memberInsert2Test val1 val2 set = fromRead (Set.member val2 set)
   where
-    fromRead :: (Ur Bool, Set.Set Int) %1-> Ur (TestT IO ())
+    fromRead :: (Ur Bool, Set.Set Int) %1 -> Ur (TestT IO ())
     fromRead (memberVal2, set) =
       testEqual
         memberVal2
@@ -183,7 +185,7 @@ memberDelete2 = property $ do
 memberDelete2Test :: Int -> Int -> SetTester
 memberDelete2Test val1 val2 set = fromRead (Set.member val2 set)
   where
-    fromRead :: (Ur Bool, Set.Set Int) %1-> Ur (TestT IO ())
+    fromRead :: (Ur Bool, Set.Set Int) %1 -> Ur (TestT IO ())
     fromRead (memberVal2, set) =
       testEqual
         memberVal2
@@ -199,7 +201,7 @@ sizeInsert1 = property $ do
 sizeInsert1Test :: Int -> SetTester
 sizeInsert1Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1 -> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         sizeOriginal
@@ -215,7 +217,7 @@ sizeInsert2 = property $ do
 sizeInsert2Test :: Int -> SetTester
 sizeInsert2Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1 -> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         ((Linear.+ 1) Data.<$> sizeOriginal)
@@ -231,7 +233,7 @@ sizeDelete1 = property $ do
 sizeDelete1Test :: Int -> SetTester
 sizeDelete1Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1 -> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         ((Linear.- 1) Data.<$> sizeOriginal)
@@ -247,7 +249,7 @@ sizeDelete2 = property $ do
 sizeDelete2Test :: Int -> SetTester
 sizeDelete2Test val set = fromRead (Set.size set)
   where
-    fromRead :: (Ur Int, Set.Set Int) %1-> Ur (TestT IO ())
+    fromRead :: (Ur Int, Set.Set Int) %1 -> Ur (TestT IO ())
     fromRead (sizeOriginal, set) =
       testEqual
         sizeOriginal
@@ -267,10 +269,10 @@ unionHomomorphism = property $ do
   let setUnion = List.sort $ unur (fromLists l l' doUnion)
   setUnion === listUnion
   where
-    fromLists :: [Int] -> [Int] -> (Set Int %1-> Set Int %1-> Ur b) %1-> Ur b
+    fromLists :: [Int] -> [Int] -> (Set Int %1 -> Set Int %1 -> Ur b) %1 -> Ur b
     fromLists l l' f = Set.fromList l (\s -> Set.fromList l' (\s' -> f s s'))
 
-    doUnion :: Set Int %1-> Set Int %1-> Ur [Int]
+    doUnion :: Set Int %1 -> Set Int %1 -> Ur [Int]
     doUnion s s' = Set.toList (Set.union s s')
 
 intersectHomomorphism :: Property
@@ -281,10 +283,10 @@ intersectHomomorphism = property $ do
   let setIntersect = List.sort $ unur (fromLists l l' doIntersect)
   setIntersect === listIntersect
   where
-    fromLists :: [Int] -> [Int] -> (Set Int %1-> Set Int %1-> Ur b) %1-> Ur b
+    fromLists :: [Int] -> [Int] -> (Set Int %1 -> Set Int %1 -> Ur b) %1 -> Ur b
     fromLists l l' f = Set.fromList l (\s -> Set.fromList l' (\s' -> f s s'))
 
-    doIntersect :: Set Int %1-> Set Int %1-> Ur [Int]
+    doIntersect :: Set Int %1 -> Set Int %1 -> Ur [Int]
     doIntersect s s' = Set.toList (Set.intersection s s')
 
 memberHomomorphism :: Property
@@ -297,4 +299,3 @@ sizeHomomorphism :: Property
 sizeHomomorphism = property $ do
   l <- forAll list
   length (nubOrd l) === (unur (Set.fromList l (getFst Linear.. Set.size)))
-

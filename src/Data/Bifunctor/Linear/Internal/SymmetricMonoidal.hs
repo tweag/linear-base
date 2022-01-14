@@ -1,19 +1,19 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Data.Bifunctor.Linear.Internal.SymmetricMonoidal
-  ( SymmetricMonoidal(..)
-  ) where
+  ( SymmetricMonoidal (..),
+  )
+where
 
 import Data.Bifunctor.Linear.Internal.Bifunctor
-import Prelude.Linear
 import Data.Kind (Type)
 import Data.Void
-
+import Prelude.Linear
 
 -- | A SymmetricMonoidal class
 --
@@ -30,30 +30,34 @@ import Data.Void
 --  * @rassoc . lassoc = id@
 --  * @lassoc . rassoc = id@
 --  * @second swap . rassoc . first swap = rassoc . swap . rassoc@
-class Bifunctor m => SymmetricMonoidal (m :: Type -> Type -> Type) (u :: Type)
-    | m -> u, u -> m where
+class
+  Bifunctor m =>
+  SymmetricMonoidal (m :: Type -> Type -> Type) (u :: Type)
+    | m -> u,
+      u -> m
+  where
   {-# MINIMAL swap, (rassoc | lassoc) #-}
-  rassoc :: (a `m` b) `m` c %1-> a `m` (b `m` c)
+  rassoc :: (a `m` b) `m` c %1 -> a `m` (b `m` c)
   rassoc = swap . lassoc . swap . lassoc . swap
-  lassoc :: a `m` (b `m` c) %1-> (a `m` b) `m` c
+  lassoc :: a `m` (b `m` c) %1 -> (a `m` b) `m` c
   lassoc = swap . rassoc . swap . rassoc . swap
-  swap :: a `m` b %1-> b `m` a
+  swap :: a `m` b %1 -> b `m` a
+
 -- XXX: should unitors be added?
 -- XXX: Laws don't seem minimial
-
 
 -- # Instances
 -------------------------------------------------------------------------------
 
 instance SymmetricMonoidal (,) () where
   swap (x, y) = (y, x)
-  rassoc ((x,y),z) = (x,(y,z))
+  rassoc ((x, y), z) = (x, (y, z))
 
 instance SymmetricMonoidal Either Void where
   swap = either Right Left
   rassoc (Left (Left x)) = Left x
-  rassoc (Left (Right x)) = (Right :: a %1-> Either b a) (Left x)
-  rassoc (Right x) = (Right :: a %1-> Either b a) (Right x)
+  rassoc (Left (Right x)) = (Right :: a %1 -> Either b a) (Left x)
+  rassoc (Right x) = (Right :: a %1 -> Either b a) (Right x)
+
 -- XXX: the above type signatures are necessary for certain older versions of
 -- the compiler, and as such are temporary
-

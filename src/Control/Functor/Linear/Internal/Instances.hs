@@ -1,26 +1,26 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS -Wno-orphans #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Control.Functor.Linear.Internal.Instances
-  ( Data(..)
-  ) where
+  ( Data (..),
+  )
+where
 
-import Prelude.Linear.Internal
 import Control.Functor.Linear.Internal.Class
-import qualified Data.Functor.Linear.Internal.Functor as Data
-import qualified Data.Functor.Linear.Internal.Applicative as Data
-import Data.Monoid.Linear hiding (Sum)
-import Data.Functor.Sum
 import Data.Functor.Compose
 import Data.Functor.Identity
-
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import Data.Functor.Sum
+import Data.Monoid.Linear hiding (Sum)
+import Prelude.Linear.Internal
 
 -- # Deriving Data.XXX in terms of Control.XXX
 -------------------------------------------------------------------------------
@@ -28,7 +28,6 @@ import Data.Functor.Identity
 -- | This is a newtype for deriving Data.XXX classes from
 -- Control.XXX classes.
 newtype Data f a = Data (f a)
-
 
 -- # Basic instances
 -------------------------------------------------------------------------------
@@ -49,8 +48,9 @@ instance Monoid a => Applicative ((,) a) where
 
 instance Monoid a => Monad ((,) a) where
   (a, x) >>= f = go a (f x)
-    where go :: a %1-> (a,b) %1-> (a,b)
-          go b1 (b2, y) = (b1 <> b2, y)
+    where
+      go :: a %1 -> (a, b) %1 -> (a, b)
+      go b1 (b2, y) = (b1 <> b2, y)
 
 instance Functor Identity where
   fmap f (Identity x) = Identity (f x)
@@ -68,4 +68,3 @@ instance (Functor f, Functor g) => Functor (Sum f g) where
 
 instance (Functor f, Functor g) => Functor (Compose f g) where
   fmap f (Compose fga) = Compose $ fmap (fmap f) fga
-

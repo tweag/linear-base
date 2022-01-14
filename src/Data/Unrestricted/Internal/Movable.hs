@@ -1,13 +1,14 @@
-{-# OPTIONS_HADDOCK hide #-}
 {-# LANGUAGE LinearTypes #-}
-module Data.Unrestricted.Internal.Movable
-  (
-  -- * Movable
-    Movable(..)
-  ) where
+{-# OPTIONS_HADDOCK hide #-}
 
-import Data.Unrestricted.Internal.Ur
+module Data.Unrestricted.Internal.Movable
+  ( -- * Movable
+    Movable (..),
+  )
+where
+
 import Data.Unrestricted.Internal.Dupable
+import Data.Unrestricted.Internal.Ur
 
 -- | Use @'Movable' a@ to represent a type which can be used many times even
 -- when given linearly. Simple data types such as 'Bool' or @[]@ are 'Movable'.
@@ -25,5 +26,4 @@ import Data.Unrestricted.Internal.Dupable
 -- * @case move x of {Ur _ -> ()} = consume x@
 -- * @case move x of {Ur x -> (x, x)} = dup2 x@
 class Dupable a => Movable a where
-  move :: a %1-> Ur a
-
+  move :: a %1 -> Ur a

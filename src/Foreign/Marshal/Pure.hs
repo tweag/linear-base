@@ -49,19 +49,19 @@
 --
 -- You can find example data structure implementations in @Foreign.List@ and
 -- @Foreign.Heap@ [here](https://github.com/tweag/linear-base/tree/master/examples/Foreign).
-
 module Foreign.Marshal.Pure
-  (
-  -- * Allocating and using values on the heap
-    Pool
-  , withPool
-  , Box
-  , alloc
-  , deconstruct
-  -- * Typeclasses for values that can be allocated
-  , KnownRepresentable
-  , Representable(..)
-  , MkRepresentable(..)
-  ) where
+  ( -- * Allocating and using values on the heap
+    Pool,
+    withPool,
+    Box,
+    alloc,
+    deconstruct,
+
+    -- * Typeclasses for values that can be allocated
+    KnownRepresentable,
+    Representable (..),
+    MkRepresentable (..),
+  )
+where
 
 import Foreign.Marshal.Pure.Internal

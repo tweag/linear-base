@@ -45,21 +45,28 @@
 --   decompose (IdLicence l) = Right l
 --   decompose x = Left x
 -- @
---
 module Control.Optics.Linear.Prism
   ( -- * Types
-    Prism, Prism'
+    Prism,
+    Prism',
+
     -- * Composing optics
-  , (.>)
+    (.>),
+
     -- * Common optics
-  , _Left, _Right
-  , _Just, _Nothing
+    _Left,
+    _Right,
+    _Just,
+    _Nothing,
+
     -- * Using optics
-  , match, build
-  , withPrism
+    match,
+    build,
+    withPrism,
+
     -- * Constructing optics
-  , prism
+    prism,
   )
-  where
+where
 
 import Control.Optics.Linear.Internal

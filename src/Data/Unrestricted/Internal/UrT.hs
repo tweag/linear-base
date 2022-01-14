@@ -1,4 +1,5 @@
 {-# LANGUAGE LinearTypes #-}
+
 -- | `UrT` creates non-linear monads from linear monads.
 -- The effect of @UrT m@ is the same as the effect of @m@ with the same linearity.
 -- It's just that the @a@ in @m a@ must be used linearly, but the @a@ in @UrT m a@ can be used unrestricted.
@@ -7,16 +8,16 @@
 -- A good use case is when you have a linear resource, then you can use @UrT (`Linear.State` s) a@
 -- to manipulate the resource linearly with regular do-notation.
 module Data.Unrestricted.Internal.UrT
-  (
-    UrT(..)
-  , runUrT
-  , liftUrT
-  , evalUrT
-  ) where
+  ( UrT (..),
+    runUrT,
+    liftUrT,
+    evalUrT,
+  )
+where
 
 import qualified Control.Functor.Linear as Linear
-import Data.Unrestricted.Internal.Ur
 import Data.Unrestricted.Internal.Movable
+import Data.Unrestricted.Internal.Ur
 
 -- | @UrT@ transforms linear control monads to non-linear monads.
 --

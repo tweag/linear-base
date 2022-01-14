@@ -1,8 +1,8 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module provides Bifunctor and related classes.
 --
@@ -21,11 +21,10 @@
 -- > negateRight :: (Int, Bool) %1-> (Int, Bool)
 -- > negateRight x = second not x
 module Data.Bifunctor.Linear
-  ( Bifunctor(..),
-    SymmetricMonoidal(..),
+  ( Bifunctor (..),
+    SymmetricMonoidal (..),
   )
-  where
+where
 
 import Data.Bifunctor.Linear.Internal.Bifunctor
 import Data.Bifunctor.Linear.Internal.SymmetricMonoidal
-

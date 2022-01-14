@@ -1,20 +1,20 @@
-{-# OPTIONS_HADDOCK hide #-}
-{-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 -- | This module provides a linear 'Eq' class for testing equality between
 -- values, along with standard instances.
 module Data.Ord.Linear.Internal.Eq
-  ( Eq(..)
+  ( Eq (..),
   )
-  where
+where
 
 import Data.Bool.Linear
-import qualified Prelude
-import Prelude.Linear.Internal
 import Data.Unrestricted.Linear
+import Prelude.Linear.Internal
+import qualified Prelude
 
 -- | Testing equality on values.
 --
@@ -25,12 +25,11 @@ import Data.Unrestricted.Linear
 -- * @x == y@ implies @y == x@
 -- * @x == y@ and @y == z@ implies @x == z@
 -- * @(x == y)@ ≌ @not (x /= y)@
---
 class Eq a where
   {-# MINIMAL (==) | (/=) #-}
-  (==) :: a %1-> a %1-> Bool
+  (==) :: a %1 -> a %1 -> Bool
   x == y = not (x /= y)
-  (/=) :: a %1-> a %1-> Bool
+  (/=) :: a %1 -> a %1 -> Bool
   x /= y = not (x == y)
   infix 4 ==, /=
 
@@ -42,7 +41,7 @@ instance Prelude.Eq a => Eq (Ur a) where
 
 instance (Consumable a, Eq a) => Eq [a] where
   [] == [] = True
-  (x:xs) == (y:ys) = x == y && xs == ys
+  (x : xs) == (y : ys) = x == y && xs == ys
   xs == ys = (xs, ys) `lseq` False
 
 instance (Consumable a, Eq a) => Eq (Prelude.Maybe a) where
@@ -50,8 +49,10 @@ instance (Consumable a, Eq a) => Eq (Prelude.Maybe a) where
   Prelude.Just x == Prelude.Just y = x == y
   x == y = (x, y) `lseq` False
 
-instance (Consumable a, Consumable b, Eq a, Eq b)
-  => Eq (Prelude.Either a b) where
+instance
+  (Consumable a, Consumable b, Eq a, Eq b) =>
+  Eq (Prelude.Either a b)
+  where
   Prelude.Left x == Prelude.Left y = x == y
   Prelude.Right x == Prelude.Right y = x == y
   x == y = (x, y) `lseq` False
@@ -69,20 +70,24 @@ instance (Eq a, Eq b, Eq c, Eq d) => Eq (a, b, c, d) where
     a == a' && b == b' && c == c' && d == d'
 
 deriving via MovableEq () instance Eq ()
+
 deriving via MovableEq Prelude.Int instance Eq Prelude.Int
+
 deriving via MovableEq Prelude.Double instance Eq Prelude.Double
+
 deriving via MovableEq Prelude.Bool instance Eq Prelude.Bool
+
 deriving via MovableEq Prelude.Char instance Eq Prelude.Char
+
 deriving via MovableEq Prelude.Ordering instance Eq Prelude.Ordering
 
 newtype MovableEq a = MovableEq a
 
 instance (Prelude.Eq a, Movable a) => Eq (MovableEq a) where
-  MovableEq ar == MovableEq br
-    = move (ar, br) & \(Ur (a, b)) ->
-        a Prelude.== b
+  MovableEq ar == MovableEq br =
+    move (ar, br) & \(Ur (a, b)) ->
+      a Prelude.== b
 
-  MovableEq ar /= MovableEq br
-    = move (ar, br) & \(Ur (a, b)) ->
-        a Prelude./= b
-
+  MovableEq ar /= MovableEq br =
+    move (ar, br) & \(Ur (a, b)) ->
+      a Prelude./= b

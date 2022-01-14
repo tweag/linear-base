@@ -2,27 +2,28 @@
 
 module Test.Data.Destination (destArrayTests) where
 
-import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
 import qualified Data.Array.Destination as DArray
+import qualified Data.Vector as Vector
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import qualified Data.Vector as Vector
 import Prelude.Linear
+import Test.Tasty
+import Test.Tasty.Hedgehog (testProperty)
 import qualified Prelude
-
 
 -- # Tests and Utlities
 -------------------------------------------------------------------------------
 
 destArrayTests :: TestTree
-destArrayTests = testGroup "Destination array tests"
-  [ testProperty "alloc . mirror = id" roundTrip
-  , testProperty "alloc . replicate = V.replicate" replicateTest
-  , testProperty "alloc . fill = V.singleton" fillTest
-  , testProperty "alloc n . fromFunction (+s) = V.fromEnum n s" fromFuncEnum
-  ]
+destArrayTests =
+  testGroup
+    "Destination array tests"
+    [ testProperty "alloc . mirror = id" roundTrip,
+      testProperty "alloc . replicate = V.replicate" replicateTest,
+      testProperty "alloc . fill = V.singleton" fillTest,
+      testProperty "alloc n . fromFunction (+s) = V.fromEnum n s" fromFuncEnum
+    ]
 
 list :: Gen [Int]
 list = Gen.list (Range.linear 0 1000) (Gen.int (Range.linear 0 100))
@@ -32,7 +33,6 @@ randInt = Gen.int (Range.linear (-500) 500)
 
 randNonnegInt :: Gen Int
 randNonnegInt = Gen.int (Range.linear 0 500)
-
 
 -- # Properties
 -------------------------------------------------------------------------------
@@ -51,7 +51,6 @@ replicateTest = property Prelude.$ do
   let v = Vector.replicate n x
   v === DArray.alloc n (DArray.replicate x)
 
-
 fillTest :: Property
 fillTest = property Prelude.$ do
   x <- forAll randInt
@@ -64,4 +63,3 @@ fromFuncEnum = property Prelude.$ do
   start <- forAll randInt
   let v = Vector.enumFromN start n
   v === DArray.alloc n (DArray.fromFunction (Prelude.+ start))
-
