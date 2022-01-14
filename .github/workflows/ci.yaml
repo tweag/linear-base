@@ -48,8 +48,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.stack
-        key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
-        restore-keys: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-
+        key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-${{ github.sha }}
+        restore-keys: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-
     - name: Build Nix dependencies
       run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
     - name: check formatting
