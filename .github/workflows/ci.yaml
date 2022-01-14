@@ -3,19 +3,17 @@ on: [push, pull_request]
 env:
   # Bump this number to invalidate the Github-actions cache
   cache-invalidation-key: 0
+  nixpkgs-url: https://github.com/NixOS/nixpkgs/archive/b2737d4980a17cc2b7d600d7d0b32fd7333aca88.tar.gz
+
 jobs:
   cabal-test:
     name: cabal test
-    env:
-      NIXSHELL: nix-shell --pure
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.3.4
-    - uses: cachix/install-nix-action@v12
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v15
       with:
-        nix_path: nixpkgs=channel:nixos-unstable
-    - name: Build Nix dependencies
-      run: $NIXSHELL --run "echo '=== Installed ==='"
+        nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Cabal dependencies
       uses: actions/cache@v2
       with:
@@ -23,29 +21,55 @@ jobs:
           ~/.cabal/packages
           ~/.cabal/store
           dist-newstyle
-        key: cache-${{ runner.os }}-${{ hashFiles('nixpkgs.nix') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
-        restore-keys: cache-${{ runner.os }}-${{ hashFiles('nixpkgs.nix') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
+        key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
+    - name: Build Nix dependencies
+      run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Update Cabal's database
-      run: $NIXSHELL --run "cabal update"
+      run: nix-shell --pure --run "cabal update"
     - name: Build Cabal's dependencies
-      run:  $NIXSHELL --run "cabal build --enable-tests --enable-benchmarks --dependencies-only"
+      run: nix-shell --pure --run "cabal build --enable-tests --enable-benchmarks --dependencies-only"
     - name: Build
-      run: $NIXSHELL --run "cabal build"
+      run: nix-shell --pure --run "cabal build"
     - name: Test
-      run: $NIXSHELL --run "cabal test"
+      run: nix-shell --pure --run "cabal test"
     - name: Haddock
-      run: $NIXSHELL --run "cabal haddock"
+      run: nix-shell --pure --run "cabal haddock"
+
+  ormolu:
+    name: check formatting with ormolu
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v15
+      with:
+        nix_path: "${{ env.nixpkgs-url }}"
+    - name: Cache Stack dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.stack
+        key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-
+    - name: Build Nix dependencies
+      run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
+    - name: check formatting
+      run: nix-shell --pure --run 'stack build ormolu && { stack exec ormolu -- -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs") || true; }'
+
   stack-build:
     name: stack build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.3.4
-    - name: Cache dependencies
-      uses: actions/cache@v2.1.6
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v15
+      with:
+        nix_path: "${{ env.nixpkgs-url }}"
+    - name: Cache Stack dependencies
+      uses: actions/cache@v2
       with:
         path: ~/.stack
-        key: stack-${{ runner.os }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}
-    - name: Upgrade stack
-      run: stack upgrade
+        key: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-
+    - name: Build Nix dependencies
+      run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Build
-      run: stack build --pedantic --test --bench --no-run-tests --no-run-benchmarks
+      run: nix-shell --pure --run "stack build --pedantic --test --bench --no-run-tests --no-run-benchmarks"
