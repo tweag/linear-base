@@ -70,6 +70,8 @@ module Data.Unrestricted.Linear
     Consumable (..),
     Dupable (..),
     Movable (..),
+    RepStream (..),
+    Replicator (..),
     lseq,
     dup,
     dup3,
@@ -83,3 +85,4 @@ import Data.Unrestricted.Internal.Instances
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
 import Data.Unrestricted.Internal.UrT
+import Data.Unrestricted.Internal.Replicator

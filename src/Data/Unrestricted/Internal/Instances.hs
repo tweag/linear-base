@@ -1,17 +1,23 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | This module exports instances of Consumable, Dupable and Movable
@@ -32,7 +38,7 @@ import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
 import Data.V.Linear ()
-import Data.V.Linear.Internal.V (V (..), theLength)
+import Data.V.Linear.Internal.V (V (..), theLength, FunN, caseNat, expandFunN, Dict (Dict), predNat)
 import qualified Data.Vector as Vector
 import GHC.Int
 import GHC.TypeLits
@@ -41,6 +47,9 @@ import GHC.Word
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
+import Data.Unrestricted.Internal.Replicator
+import Prelude (error, Either (..))
+import Data.Type.Equality
 
 newtype AsMovable a = AsMovable a
 
@@ -55,9 +64,9 @@ instance Movable a => Consumable (AsMovable a) where
       Ur _ -> ()
 
 instance Movable a => Dupable (AsMovable a) where
-  dupV x =
+  dupR x =
     move x & \case
-      Ur x' -> Data.pure x'
+      Ur x' -> Moved x'
 
 deriving via (AsMovable ()) instance Consumable ()
 
@@ -218,7 +227,7 @@ instance (Consumable a, Consumable b) => Consumable (a, b) where
   consume (a, b) = consume a `lseq` consume b
 
 instance (Dupable a, Dupable b) => Dupable (a, b) where
-  dupV (a, b) = (,) Data.<$> dupV a Data.<*> dupV b
+  dupR (a, b) = (,) Data.<$> dupR a Data.<*> dupR b
 
 instance (Movable a, Movable b) => Movable (a, b) where
   move (a, b) = (,) Data.<$> move a Data.<*> move b
@@ -227,7 +236,7 @@ instance (Consumable a, Consumable b, Consumable c) => Consumable (a, b, c) wher
   consume (a, b, c) = consume a `lseq` consume b `lseq` consume c
 
 instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
-  dupV (a, b, c) = (,,) Data.<$> dupV a Data.<*> dupV b Data.<*> dupV c
+  dupR (a, b, c) = (,,) Data.<$> dupR a Data.<*> dupR b Data.<*> dupR c
 
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
@@ -239,18 +248,19 @@ instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
 instance (KnownNat n, Consumable a) => Consumable (V n a) where
   consume (V xs) = consume (Unsafe.toLinear Vector.toList xs)
 
+-- TODO: check?
 instance (KnownNat n, Dupable a) => Dupable (V n a) where
-  dupV (V xs) =
+  dupR (V xs) =
     V . Unsafe.toLinear (Vector.fromListN (theLength @n))
-      Data.<$> dupV (Unsafe.toLinear Vector.toList xs)
+      Data.<$> dupR (Unsafe.toLinear Vector.toList xs)
 
 instance Consumable a => Consumable (Prelude.Maybe a) where
   consume Prelude.Nothing = ()
   consume (Prelude.Just x) = consume x
 
 instance Dupable a => Dupable (Prelude.Maybe a) where
-  dupV Prelude.Nothing = Data.pure Prelude.Nothing
-  dupV (Prelude.Just x) = Data.fmap Prelude.Just (dupV x)
+  dupR Prelude.Nothing = Data.pure Prelude.Nothing
+  dupR (Prelude.Just x) = Data.fmap Prelude.Just (dupR x)
 
 instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
@@ -261,8 +271,8 @@ instance (Consumable a, Consumable b) => Consumable (Prelude.Either a b) where
   consume (Prelude.Right b) = consume b
 
 instance (Dupable a, Dupable b) => Dupable (Prelude.Either a b) where
-  dupV (Prelude.Left a) = Data.fmap Prelude.Left (dupV a)
-  dupV (Prelude.Right b) = Data.fmap Prelude.Right (dupV b)
+  dupR (Prelude.Left a) = Data.fmap Prelude.Left (dupR a)
+  dupR (Prelude.Right b) = Data.fmap Prelude.Right (dupR b)
 
 instance (Movable a, Movable b) => Movable (Prelude.Either a b) where
   move (Prelude.Left a) = Data.fmap Prelude.Left (move a)
@@ -273,8 +283,8 @@ instance Consumable a => Consumable [a] where
   consume (a : l) = consume a `lseq` consume l
 
 instance Dupable a => Dupable [a] where
-  dupV [] = Data.pure []
-  dupV (a : l) = (:) Data.<$> dupV a Data.<*> dupV l
+  dupR [] = Data.pure []
+  dupR (a : l) = (:) Data.<$> dupR a Data.<*> dupR l
 
 instance Movable a => Movable [a] where
   move [] = Ur []
@@ -284,7 +294,7 @@ instance Consumable a => Consumable (NonEmpty a) where
   consume (x :| xs) = consume x `lseq` consume xs
 
 instance Dupable a => Dupable (NonEmpty a) where
-  dupV (x :| xs) = (:|) Data.<$> dupV x Data.<*> dupV xs
+  dupR (x :| xs) = (:|) Data.<$> dupR x Data.<*> dupR xs
 
 instance Movable a => Movable (NonEmpty a) where
   move (x :| xs) = (:|) Data.<$> move x Data.<*> move xs
@@ -351,3 +361,74 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
       combine (Ur x) (Ur y) = x Prelude.<> y
 
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)
+
+instance Consumable (RepStream a) where
+  consume (RepStream givex dupsx consumesx sx) = consumesx sx
+instance Dupable (RepStream a) where
+  dupR (RepStream givex dupsx consumesx sx) = CollectFrom $ RepStream
+    (\sx' -> RepStream givex dupsx consumesx sx')
+    dupsx
+    consumesx
+    sx
+
+instance Consumable (Replicator a) where
+  consume = \case
+    Moved _ -> ()
+    CollectFrom stream -> consume stream
+
+instance Dupable (Replicator a) where
+  dupR = \case
+    Moved x -> Moved (Moved x)
+    CollectFrom stream -> CollectFrom Data.<$> dupR stream
+
+instance Data.Functor RepStream where
+  fmap f (RepStream givef dupsf consumesf sf) =
+    RepStream (f . givef) dupsf consumesf sf
+instance Data.Applicative RepStream where
+  pure x = RepStream
+    unur
+    (\case
+      Ur x -> (Ur x, Ur x))
+    (\case
+      Ur _ -> ())
+    (Ur x)
+  (RepStream givef dupsf consumesf sf) <*> (RepStream givex dupsx consumesx sx) =
+    RepStream
+      (\(sf', sx') -> givef sf' (givex sx'))
+      (\(sf', sx') ->
+        (dupsf sf', dupsx sx') & \case
+          ((sf1, sf2), (sx1, sx2)) -> ((sf1, sx1), (sf2, sx2))
+      )
+      (\(sf', sx') -> consumesf sf' & \case
+        () -> consumesx sx')
+      (sf, sx)
+
+instance Data.Functor Replicator where
+  fmap f = \case
+    Moved x -> Moved (f x)
+    CollectFrom stream -> CollectFrom $ Data.fmap f stream
+instance Data.Applicative Replicator where
+  pure = Moved
+  (Moved f) <*> (Moved x) = Moved (f x)
+  sf <*> sx = CollectFrom (toRepStream sf Data.<*> toRepStream sx)
+
+toRepStream :: Replicator a %1 -> RepStream a
+toRepStream = \case
+  Moved x -> Data.pure x
+  CollectFrom stream -> stream
+
+nextR :: Replicator a %1 -> (# a, Replicator a #)
+nextR (Moved x) = (# x, Moved x #)
+nextR (CollectFrom (RepStream givex dupsx consumesx sx)) =
+  dupsx sx & \case
+    (sx1, sx2) -> (# givex sx1, CollectFrom (RepStream givex dupsx consumesx sx2) #)
+
+elim' :: forall n a b. KnownNat n => Replicator a %1 -> FunN n a b %1 -> b
+elim' rep f =
+  case caseNat @n of
+    Left Refl -> rep `lseq` f
+    Right Refl -> elimS' (nextR rep) f
+  where
+    elimS' :: 1 <= n => (# a, Replicator a #) %1 -> FunN n a b %1 -> b
+    elimS' (# x, rep' #) f = case predNat @n of
+      Dict -> elim' @(n - 1) rep' (expandFunN @n @a @b f x)

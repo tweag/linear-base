@@ -3,7 +3,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -25,6 +24,9 @@ module Data.V.Linear.Internal.V
 
     -- * Type-level utilities
     caseNat,
+    expandFunN,
+    Dict (..),
+    predNat,
   )
 where
 
