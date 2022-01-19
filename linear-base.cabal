@@ -77,6 +77,7 @@ library
         Data.Unrestricted.Internal.Ur
         Data.Unrestricted.Internal.UrT
         Data.Unrestricted.Internal.Replicator
+        Data.Unrestricted.Internal.ReplicationStream
         Data.Unrestricted.Linear
         Data.V.Linear
         Data.V.Linear.Internal.V

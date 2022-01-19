@@ -94,7 +94,7 @@ import Data.Functor.Sum
 import qualified Data.IntSet as IntSet
 import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
-import Data.Unrestricted.Linear
+import Data.Unrestricted.Linear (Consumable, Ur (..), lseq)
 import GHC.Stack
 import Prelude.Linear (($), (&), (.))
 import Streaming.Internal.Type

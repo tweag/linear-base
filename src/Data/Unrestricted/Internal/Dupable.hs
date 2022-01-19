@@ -1,10 +1,9 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
@@ -13,19 +12,18 @@ module Data.Unrestricted.Internal.Dupable
     Dupable (..),
     dup,
     dup3,
+    dup4,
+    dup5,
+    dup6,
+    dup7,
   )
 where
 
-import Data.Type.Equality
 import Data.Unrestricted.Internal.Consumable
-import Data.V.Linear.Internal.V (V)
-import qualified Data.V.Linear.Internal.V as V
-import GHC.TypeLits
-import Data.Unrestricted.Internal.Ur
-import GHC.Types (TYPE)
-import Data.Unrestricted.Internal.Replicator
-import Prelude.Linear.Internal ((&), id, ($))
-import qualified Prelude
+import Data.Unrestricted.Internal.ReplicationStream (ReplicationStream (..))
+import Data.Unrestricted.Internal.Replicator (Replicator (..))
+import qualified Data.Unrestricted.Internal.Replicator as Replicator
+import Prelude.Linear.Internal
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':
 --
@@ -40,22 +38,25 @@ class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
   dupR :: a %1 -> Replicator a
-  dupR a = FromStream $ RepStream id dup2 consume a
-
-  dupV :: forall n. KnownNat n => a %1 -> V n a
-  dupV a =
-    case V.caseNat @n of
-      Prelude.Left Refl -> a `lseq` V.make @0 @a
-      Prelude.Right Refl -> V.iterate dup2 a
+  dupR x = Streamed $ ReplicationStream id dup2 consume x
 
   dup2 :: a %1 -> (a, a)
-  dup2 a = dupR a & \case
-    FromMoved a -> (a, a)
-    FromStream (RepStream givea dupsa _ sa) -> dupsa sa & \case
-      (sa1, sa2) -> (givea sa1, givea sa2)
+  dup2 x = Replicator.elim @2 (,) (dupR x)
 
 dup3 :: Dupable a => a %1 -> (a, a, a)
-dup3 x = V.elim (dupV @_ @3 x) (,,)
+dup3 x = Replicator.elim @3 (,,) (dupR x)
+
+dup4 :: Dupable a => a %1 -> (a, a, a, a)
+dup4 x = Replicator.elim @4 (,,,) (dupR x)
+
+dup5 :: Dupable a => a %1 -> (a, a, a, a, a)
+dup5 x = Replicator.elim @5 (,,,,) (dupR x)
+
+dup6 :: Dupable a => a %1 -> (a, a, a, a, a, a)
+dup6 x = Replicator.elim @6 (,,,,,) (dupR x)
+
+dup7 :: Dupable a => a %1 -> (a, a, a, a, a, a, a)
+dup7 x = Replicator.elim @7 (,,,,,,) (dupR x)
 
 dup :: Dupable a => a %1 -> (a, a)
 dup = dup2

@@ -1,23 +1,13 @@
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UnboxedTuples #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | This module exports instances of Consumable, Dupable and Movable
@@ -36,9 +26,13 @@ import Data.Monoid.Linear
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
+import Data.Unrestricted.Internal.ReplicationStream (ReplicationStream (..))
+import qualified Data.Unrestricted.Internal.ReplicationStream as ReplicationStream
+import Data.Unrestricted.Internal.Replicator (Replicator (..))
+import qualified Data.Unrestricted.Internal.Replicator as Replicator
 import Data.Unrestricted.Internal.Ur
-import Data.V.Linear ()
-import Data.V.Linear.Internal.V (V (..), theLength, FunN, caseNat, expandFunN, Dict (Dict), predNat)
+import Data.V.Linear.Internal.V (V (..))
+import qualified Data.V.Linear.Internal.V as V
 import qualified Data.Vector as Vector
 import GHC.Int
 import GHC.TypeLits
@@ -47,9 +41,6 @@ import GHC.Word
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
-import Data.Unrestricted.Internal.Replicator
-import Prelude (error, Either (..))
-import Data.Type.Equality
 
 newtype AsMovable a = AsMovable a
 
@@ -66,7 +57,7 @@ instance Movable a => Consumable (AsMovable a) where
 instance Movable a => Dupable (AsMovable a) where
   dupR x =
     move x & \case
-      Ur x' -> FromMoved x'
+      Ur x' -> Moved x'
 
 deriving via (AsMovable ()) instance Consumable ()
 
@@ -241,17 +232,12 @@ instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
 
--- XXX: The Consumable and Dupable instances for V will be easier to define (in
--- fact direct, we may consider adding a deriving-via combinator) when we have a
--- traversable-by-a-data-applicative class see #190.
-
 instance (KnownNat n, Consumable a) => Consumable (V n a) where
   consume (V xs) = consume (Unsafe.toLinear Vector.toList xs)
 
--- TODO: check?
 instance (KnownNat n, Dupable a) => Dupable (V n a) where
   dupR (V xs) =
-    V . Unsafe.toLinear (Vector.fromListN (theLength @n))
+    V . Unsafe.toLinear (Vector.fromListN (V.theLength @n))
       Data.<$> dupR (Unsafe.toLinear Vector.toList xs)
 
 instance Consumable a => Consumable (Prelude.Maybe a) where
@@ -362,73 +348,36 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
 
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)
 
-instance Consumable (RepStream a) where
-  consume (RepStream givex dupsx consumesx sx) = consumesx sx
-instance Dupable (RepStream a) where
-  dupR (RepStream givex dupsx consumesx sx) = FromStream $ RepStream
-    (\sx' -> RepStream givex dupsx consumesx sx')
-    dupsx
-    consumesx
-    sx
+instance Consumable (ReplicationStream a) where
+  consume = ReplicationStream.consume
+
+instance Dupable (ReplicationStream a) where
+  dupR (ReplicationStream give dups consumes s) =
+    Streamed $
+      ReplicationStream
+        (ReplicationStream give dups consumes)
+        dups
+        consumes
+        s
+
+instance Data.Functor ReplicationStream where
+  fmap = ReplicationStream.fmap
+
+instance Data.Applicative ReplicationStream where
+  pure = ReplicationStream.pure
+  f <*> x = f ReplicationStream.<*> x
 
 instance Consumable (Replicator a) where
-  consume = \case
-    FromMoved _ -> ()
-    FromStream stream -> consume stream
+  consume = Replicator.consume
 
 instance Dupable (Replicator a) where
   dupR = \case
-    FromMoved x -> FromMoved (FromMoved x)
-    FromStream stream -> FromStream Data.<$> dupR stream
-
-instance Data.Functor RepStream where
-  fmap f (RepStream givef dupsf consumesf sf) =
-    RepStream (f . givef) dupsf consumesf sf
-instance Data.Applicative RepStream where
-  pure x = RepStream
-    unur
-    (\case
-      Ur x -> (Ur x, Ur x))
-    (\case
-      Ur _ -> ())
-    (Ur x)
-  (RepStream givef dupsf consumesf sf) <*> (RepStream givex dupsx consumesx sx) =
-    RepStream
-      (\(sf', sx') -> givef sf' (givex sx'))
-      (\(sf', sx') ->
-        (dupsf sf', dupsx sx') & \case
-          ((sf1, sf2), (sx1, sx2)) -> ((sf1, sx1), (sf2, sx2))
-      )
-      (\(sf', sx') -> consumesf sf' & \case
-        () -> consumesx sx')
-      (sf, sx)
+    Moved x -> Moved (Moved x)
+    Streamed stream -> Replicator.fmap Streamed $ dupR stream
 
 instance Data.Functor Replicator where
-  fmap f = \case
-    FromMoved x -> FromMoved (f x)
-    FromStream stream -> FromStream $ Data.fmap f stream
+  fmap = Replicator.fmap
+
 instance Data.Applicative Replicator where
-  pure = FromMoved
-  (FromMoved f) <*> (FromMoved x) = FromMoved (f x)
-  sf <*> sx = FromStream (toRepStream sf Data.<*> toRepStream sx)
-
-toRepStream :: Replicator a %1 -> RepStream a
-toRepStream = \case
-  FromMoved x -> Data.pure x
-  FromStream stream -> stream
-
-nextR :: Replicator a %1 -> (# a, Replicator a #)
-nextR (FromMoved x) = (# x, FromMoved x #)
-nextR (FromStream (RepStream givex dupsx consumesx sx)) =
-  dupsx sx & \case
-    (sx1, sx2) -> (# givex sx1, FromStream (RepStream givex dupsx consumesx sx2) #)
-
-elim' :: forall n a b. KnownNat n => Replicator a %1 -> FunN n a b %1 -> b
-elim' rep f =
-  case caseNat @n of
-    Left Refl -> rep `lseq` f
-    Right Refl -> elimS' (nextR rep) f
-  where
-    elimS' :: 1 <= n => (# a, Replicator a #) %1 -> FunN n a b %1 -> b
-    elimS' (# x, rep' #) f = case predNat @n of
-      Dict -> elim' @(n - 1) rep' (expandFunN @n @a @b f x)
+  pure = Replicator.pure
+  f <*> x = f Replicator.<*> x
