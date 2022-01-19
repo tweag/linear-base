@@ -67,7 +67,7 @@ extract (Moved x) = x
 extract (Streamed (ReplicationStream give _ _ s)) = give s
 
 type Elim :: Nat -> Type -> Type -> Type -> Constraint
-class Elim n a b f | n a b -> f where
+class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   elim :: f %1 -> Replicator a %1 -> b
 
 instance Elim 0 a b b where
@@ -76,12 +76,17 @@ instance Elim 0 a b b where
       () -> b
   {-# INLINE elim #-}
 
-instance Elim 1 a b (a %1 -> b) where
+instance (Arity b (a %1 -> b) ~ 1) => Elim 1 a b (a %1 -> b) where
   elim f r = f (extract r)
   {-# INLINE elim #-}
 
-instance {-# OVERLAPPABLE #-} (Elim (n - 1) a b f) => Elim n a b (a %1 -> f) where
+instance {-# OVERLAPPABLE #-} (n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => Elim n a b (a %1 -> f) where
   elim g r =
     next r & \case
-      (a, r') -> elim @(n - 1) (g a) r'
+      (a, r') -> elim (g a) r'
   {-# INLINE elim #-}
+
+type family Arity b f where
+  Arity b b = 0
+  Arity b (a %1 -> f) = Arity b f + 1
+  Arity _ _ = 0

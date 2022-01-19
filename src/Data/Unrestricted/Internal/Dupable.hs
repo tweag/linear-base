@@ -41,22 +41,22 @@ class Consumable a => Dupable a where
   dupR x = Streamed $ ReplicationStream id dup2 consume x
 
   dup2 :: a %1 -> (a, a)
-  dup2 x = Replicator.elim @2 (,) (dupR x)
+  dup2 x = Replicator.elim (,) (dupR x)
 
 dup3 :: Dupable a => a %1 -> (a, a, a)
-dup3 x = Replicator.elim @3 (,,) (dupR x)
+dup3 x = Replicator.elim (,,) (dupR x)
 
 dup4 :: Dupable a => a %1 -> (a, a, a, a)
-dup4 x = Replicator.elim @4 (,,,) (dupR x)
+dup4 x = Replicator.elim (,,,) (dupR x)
 
 dup5 :: Dupable a => a %1 -> (a, a, a, a, a)
-dup5 x = Replicator.elim @5 (,,,,) (dupR x)
+dup5 x = Replicator.elim (,,,,) (dupR x)
 
 dup6 :: Dupable a => a %1 -> (a, a, a, a, a, a)
-dup6 x = Replicator.elim @6 (,,,,,) (dupR x)
+dup6 x = Replicator.elim (,,,,,) (dupR x)
 
 dup7 :: Dupable a => a %1 -> (a, a, a, a, a, a, a)
-dup7 x = Replicator.elim @7 (,,,,,,) (dupR x)
+dup7 x = Replicator.elim (,,,,,,) (dupR x)
 
 dup :: Dupable a => a %1 -> (a, a)
 dup = dup2
