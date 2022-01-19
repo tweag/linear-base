@@ -21,6 +21,7 @@
 -- A toy example:
 --
 -- >>> :set -XLinearTypes
+-- >>> import Prelude
 -- >>> import Data.Unrestricted.Linear
 -- >>> import qualified Foreign.Marshal.Pure as Manual
 -- >>> :{

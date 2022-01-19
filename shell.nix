@@ -5,6 +5,7 @@ let
     haskell-language-server = super.haskell-language-server.override { supportedGhcVersions = [ "${ghcVersion}" ]; };
   };
   pkgs = import sources.nixpkgs { inherit system; overlays = [ selectHls ]; };
+  cabal-docspec = import ./nix/cabal-docspec.nix { inherit pkgs; };
   stack-wrapped = pkgs.symlinkJoin {
     name = "stack";
     paths = [ pkgs.stack ];
@@ -31,5 +32,6 @@ mkShell {
     cabal-install
     stack-wrapped
     nix
+    cabal-docspec
   ];
 }

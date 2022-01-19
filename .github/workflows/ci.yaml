@@ -35,6 +35,8 @@ jobs:
       run: nix-shell --pure --run "cabal test"
     - name: Haddock
       run: nix-shell --pure --run "cabal haddock"
+    - name: cabal-docspec
+      run: nix-shell --pure --run cabal-docspec
 
   ormolu:
     name: check formatting with ormolu
