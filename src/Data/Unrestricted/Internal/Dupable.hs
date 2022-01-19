@@ -40,7 +40,7 @@ class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
   dupR :: a %1 -> Replicator a
-  dupR a = CollectFrom $ RepStream id dup2 consume a
+  dupR a = FromStream $ RepStream id dup2 consume a
 
   dupV :: forall n. KnownNat n => a %1 -> V n a
   dupV a =
@@ -50,8 +50,8 @@ class Consumable a => Dupable a where
 
   dup2 :: a %1 -> (a, a)
   dup2 a = dupR a & \case
-    Moved a -> (a, a)
-    CollectFrom (RepStream givea dupsa _ sa) -> dupsa sa & \case
+    FromMoved a -> (a, a)
+    FromStream (RepStream givea dupsa _ sa) -> dupsa sa & \case
       (sa1, sa2) -> (givea sa1, givea sa2)
 
 dup3 :: Dupable a => a %1 -> (a, a, a)

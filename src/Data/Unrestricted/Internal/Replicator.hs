@@ -15,5 +15,5 @@ data RepStream a where
   RepStream :: (s %1 -> a) -> (s %1 -> (s, s)) -> (s %1 -> ()) -> s %1 -> RepStream a
 
 data Replicator a where
-  Moved :: a -> Replicator a
-  CollectFrom :: RepStream a %1 -> Replicator a
+  FromMoved :: a -> Replicator a
+  FromStream :: RepStream a %1 -> Replicator a

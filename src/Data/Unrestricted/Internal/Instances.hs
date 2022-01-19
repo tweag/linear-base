@@ -66,7 +66,7 @@ instance Movable a => Consumable (AsMovable a) where
 instance Movable a => Dupable (AsMovable a) where
   dupR x =
     move x & \case
-      Ur x' -> Moved x'
+      Ur x' -> FromMoved x'
 
 deriving via (AsMovable ()) instance Consumable ()
 
@@ -365,7 +365,7 @@ instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)
 instance Consumable (RepStream a) where
   consume (RepStream givex dupsx consumesx sx) = consumesx sx
 instance Dupable (RepStream a) where
-  dupR (RepStream givex dupsx consumesx sx) = CollectFrom $ RepStream
+  dupR (RepStream givex dupsx consumesx sx) = FromStream $ RepStream
     (\sx' -> RepStream givex dupsx consumesx sx')
     dupsx
     consumesx
@@ -373,13 +373,13 @@ instance Dupable (RepStream a) where
 
 instance Consumable (Replicator a) where
   consume = \case
-    Moved _ -> ()
-    CollectFrom stream -> consume stream
+    FromMoved _ -> ()
+    FromStream stream -> consume stream
 
 instance Dupable (Replicator a) where
   dupR = \case
-    Moved x -> Moved (Moved x)
-    CollectFrom stream -> CollectFrom Data.<$> dupR stream
+    FromMoved x -> FromMoved (FromMoved x)
+    FromStream stream -> FromStream Data.<$> dupR stream
 
 instance Data.Functor RepStream where
   fmap f (RepStream givef dupsf consumesf sf) =
@@ -405,23 +405,23 @@ instance Data.Applicative RepStream where
 
 instance Data.Functor Replicator where
   fmap f = \case
-    Moved x -> Moved (f x)
-    CollectFrom stream -> CollectFrom $ Data.fmap f stream
+    FromMoved x -> FromMoved (f x)
+    FromStream stream -> FromStream $ Data.fmap f stream
 instance Data.Applicative Replicator where
-  pure = Moved
-  (Moved f) <*> (Moved x) = Moved (f x)
-  sf <*> sx = CollectFrom (toRepStream sf Data.<*> toRepStream sx)
+  pure = FromMoved
+  (FromMoved f) <*> (FromMoved x) = FromMoved (f x)
+  sf <*> sx = FromStream (toRepStream sf Data.<*> toRepStream sx)
 
 toRepStream :: Replicator a %1 -> RepStream a
 toRepStream = \case
-  Moved x -> Data.pure x
-  CollectFrom stream -> stream
+  FromMoved x -> Data.pure x
+  FromStream stream -> stream
 
 nextR :: Replicator a %1 -> (# a, Replicator a #)
-nextR (Moved x) = (# x, Moved x #)
-nextR (CollectFrom (RepStream givex dupsx consumesx sx)) =
+nextR (FromMoved x) = (# x, FromMoved x #)
+nextR (FromStream (RepStream givex dupsx consumesx sx)) =
   dupsx sx & \case
-    (sx1, sx2) -> (# givex sx1, CollectFrom (RepStream givex dupsx consumesx sx2) #)
+    (sx1, sx2) -> (# givex sx1, FromStream (RepStream givex dupsx consumesx sx2) #)
 
 elim' :: forall n a b. KnownNat n => Replicator a %1 -> FunN n a b %1 -> b
 elim' rep f =
