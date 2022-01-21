@@ -1,5 +1,3 @@
-{-# LANGUAGE MagicHash #-}
-
 -- | This module provides essential tools for doing non-linear things
 -- in linear code.
 --
@@ -72,7 +70,6 @@ module Data.Unrestricted.Linear
     Consumable (..),
     Dupable (..),
     Movable (..),
-    Replicator,
     lseq,
     dup,
     dup3,
@@ -80,10 +77,6 @@ module Data.Unrestricted.Linear
     dup5,
     dup6,
     dup7,
-    next,
-    next#,
-    extract,
-    Elim (..),
     module Data.Unrestricted.Internal.Instances,
   )
 where
@@ -92,6 +85,5 @@ import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Instances
 import Data.Unrestricted.Internal.Movable
-import Data.Unrestricted.Internal.Replicator
 import Data.Unrestricted.Internal.Ur
 import Data.Unrestricted.Internal.UrT

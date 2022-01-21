@@ -3,7 +3,6 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
@@ -19,10 +18,10 @@ module Data.Unrestricted.Internal.Dupable
   )
 where
 
+import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
+import Data.Replicator.Linear.Internal.Replicator (Replicator (..))
+import qualified Data.Replicator.Linear.Internal.Replicator as Replicator
 import Data.Unrestricted.Internal.Consumable
-import Data.Unrestricted.Internal.ReplicationStream (ReplicationStream (..))
-import Data.Unrestricted.Internal.Replicator (Replicator (..))
-import qualified Data.Unrestricted.Internal.Replicator as Replicator
 import Prelude.Linear.Internal
 
 -- | The laws of @Dupable@ are dual to those of 'Monoid':

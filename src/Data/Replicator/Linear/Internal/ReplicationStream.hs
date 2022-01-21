@@ -4,7 +4,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Unrestricted.Internal.ReplicationStream (ReplicationStream (..), consume, fmap, pure, (<*>)) where
+module Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..), consume, fmap, pure, (<*>)) where
 
 import Data.Unrestricted.Internal.Ur
 import Prelude.Linear.Internal

@@ -1,3 +1,4 @@
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-dodgy-exports #-}
 
@@ -36,17 +37,20 @@
 -- rather than linear types).
 module Data.V.Linear
   ( V,
+    next#,
+    next,
+    -- split,
+    Elim (..),
+    cons,
+    -- fromReplicator,
+    -- dupV,
     FunN,
-    elim,
     make,
-    iterate,
-
-    -- * Type-level utilities
-    caseNat,
     module Data.V.Linear.Internal.Instances,
   )
 where
 
+import Data.V.Linear.Internal.Ambiguous
 import Data.V.Linear.Internal.Instances ()
 import Data.V.Linear.Internal.V
 

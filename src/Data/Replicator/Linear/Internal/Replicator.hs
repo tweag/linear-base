@@ -1,4 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -9,7 +8,6 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -17,11 +15,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Unrestricted.Internal.Replicator (Replicator (..), consume, fmap, pure, (<*>), next, next#, extract, Elim (..)) where
+module Data.Replicator.Linear.Internal.Replicator (Replicator (..), consume, fmap, pure, (<*>), next, next#, extract, Elim (..)) where
 
+import Data.Arity.Linear.Internal.Arity
 import Data.Kind (Constraint, Type)
-import Data.Unrestricted.Internal.ReplicationStream (ReplicationStream (..))
-import qualified Data.Unrestricted.Internal.ReplicationStream as ReplicationStream
+import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
+import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
 import GHC.TypeLits
 import Prelude.Linear.Internal
 
@@ -85,8 +84,3 @@ instance {-# OVERLAPPABLE #-} (n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => E
     next r & \case
       (a, r') -> elim (g a) r'
   {-# INLINE elim #-}
-
-type family Arity b f where
-  Arity b b = 0
-  Arity b (a %1 -> f) = Arity b f + 1
-  Arity _ _ = 0

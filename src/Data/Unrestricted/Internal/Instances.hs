@@ -1,4 +1,6 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
@@ -23,14 +25,16 @@ import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.List.NonEmpty
 import Data.Monoid.Linear
+import Data.Replicator.Linear.Internal.Instances ()
+import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
+import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
+import Data.Replicator.Linear.Internal.Replicator (Replicator (..))
+import qualified Data.Replicator.Linear.Internal.Replicator as Replicator
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
-import Data.Unrestricted.Internal.ReplicationStream (ReplicationStream (..))
-import qualified Data.Unrestricted.Internal.ReplicationStream as ReplicationStream
-import Data.Unrestricted.Internal.Replicator (Replicator (..))
-import qualified Data.Unrestricted.Internal.Replicator as Replicator
 import Data.Unrestricted.Internal.Ur
+import qualified Data.V.Linear.Internal.Ambiguous as V
 import Data.V.Linear.Internal.V (V (..))
 import qualified Data.V.Linear.Internal.V as V
 import qualified Data.Vector as Vector
@@ -232,6 +236,9 @@ instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
 
+instance Consumable (V 0 a) where
+  consume = V.consume
+
 instance (KnownNat n, Consumable a) => Consumable (V n a) where
   consume (V xs) = consume (Unsafe.toLinear Vector.toList xs)
 
@@ -360,13 +367,6 @@ instance Dupable (ReplicationStream a) where
         consumes
         s
 
-instance Data.Functor ReplicationStream where
-  fmap = ReplicationStream.fmap
-
-instance Data.Applicative ReplicationStream where
-  pure = ReplicationStream.pure
-  f <*> x = f ReplicationStream.<*> x
-
 instance Consumable (Replicator a) where
   consume = Replicator.consume
 
@@ -374,10 +374,3 @@ instance Dupable (Replicator a) where
   dupR = \case
     Moved x -> Moved (Moved x)
     Streamed stream -> Replicator.fmap Streamed $ dupR stream
-
-instance Data.Functor Replicator where
-  fmap = Replicator.fmap
-
-instance Data.Applicative Replicator where
-  pure = Replicator.pure
-  f <*> x = f Replicator.<*> x

@@ -12,7 +12,9 @@ module Data.V.Linear.Internal.Instances where
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Traversable as Data
-import Data.V.Linear.Internal.V
+import Data.V.Linear.Internal.Ambiguous (theLength)
+import Data.V.Linear.Internal.V (V (..))
+import qualified Data.V.Linear.Internal.V as V
 import qualified Data.Vector as Vector
 import GHC.TypeLits
 import Prelude.Linear.Internal
@@ -22,13 +24,11 @@ import qualified Unsafe.Linear as Unsafe
 -------------------------------------------------------------------------------
 
 instance Data.Functor (V n) where
-  fmap f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
+  fmap = V.fmap
 
 instance KnownNat n => Data.Applicative (V n) where
-  pure a = V $ Vector.replicate (theLength @n) a
-  (V fs) <*> (V xs) =
-    V $
-      Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
+  pure = V.pure
+  a <*> b = a V.<*> b
 
 instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
