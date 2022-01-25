@@ -61,7 +61,7 @@ instance Movable a => Consumable (AsMovable a) where
 instance Movable a => Dupable (AsMovable a) where
   dupR x =
     move x & \case
-      Ur x' -> Moved x'
+      Ur x' -> Data.pure x'
 
 deriving via (AsMovable ()) instance Consumable ()
 
