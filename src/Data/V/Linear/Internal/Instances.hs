@@ -12,9 +12,8 @@ module Data.V.Linear.Internal.Instances where
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import qualified Data.Functor.Linear.Internal.Traversable as Data
-import Data.V.Linear.Internal.Ambiguous (theLength)
-import Data.V.Linear.Internal.V (V (..))
-import qualified Data.V.Linear.Internal.V as V
+import Data.V.Linear.Internal (V (..))
+import qualified Data.V.Linear.Internal as V
 import qualified Data.Vector as Vector
 import GHC.TypeLits
 import Prelude.Linear.Internal
@@ -32,5 +31,5 @@ instance KnownNat n => Data.Applicative (V n) where
 
 instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
-    (V . Unsafe.toLinear (Vector.fromListN (theLength @n)))
+    (V . Unsafe.toLinear (Vector.fromListN (V.theLength @n)))
       Data.<$> Data.traverse f (Unsafe.toLinear Vector.toList xs)

@@ -18,9 +18,9 @@ module Data.Unrestricted.Internal.Dupable
   )
 where
 
+import Data.Replicator.Linear.Internal (Replicator (..))
+import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
-import Data.Replicator.Linear.Internal.Replicator (Replicator (..))
-import qualified Data.Replicator.Linear.Internal.Replicator as Replicator
 import Data.Unrestricted.Internal.Consumable
 import Prelude.Linear.Internal
 
@@ -37,7 +37,7 @@ class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
   dupR :: a %1 -> Replicator a
-  dupR x = Streamed $ ReplicationStream id dup2 consume x
+  dupR x = Streamed $ ReplicationStream x id dup2 consume
 
   dup2 :: a %1 -> (a, a)
   dup2 x = Replicator.elim (,) (dupR x)

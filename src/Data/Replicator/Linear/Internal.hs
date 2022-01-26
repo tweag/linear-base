@@ -15,7 +15,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Replicator.Linear.Internal.Replicator (Replicator (..), consume, fmap, pure, (<*>), next, next#, extract, Elim (..)) where
+module Data.Replicator.Linear.Internal (Replicator (..), consume, map, pure, (<*>), next, next#, extract, Elim (..)) where
 
 import Data.Arity.Linear.Internal.Arity
 import Data.Kind (Constraint, Type)
@@ -32,10 +32,10 @@ consume :: Replicator a %1 -> ()
 consume (Moved _) = ()
 consume (Streamed stream) = ReplicationStream.consume stream
 
-fmap :: (a %1 -> b) -> Replicator a %1 -> Replicator b
-fmap f = \case
+map :: (a %1 -> b) -> Replicator a %1 -> Replicator b
+map f = \case
   Moved x -> Moved (f x)
-  Streamed stream -> Streamed $ ReplicationStream.fmap f stream
+  Streamed stream -> Streamed $ ReplicationStream.map f stream
 
 pure :: a -> Replicator a
 pure = Moved
@@ -51,20 +51,22 @@ sf <*> sx = Streamed (toStream sf ReplicationStream.<*> toStream sx)
 
 next :: Replicator a %1 -> (a, Replicator a)
 next (Moved x) = (x, Moved x)
-next (Streamed (ReplicationStream give dups consumes s)) =
+next (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
-    (s1, s2) -> (give s1, Streamed (ReplicationStream give dups consumes s2))
+    (s1, s2) -> (give s1, Streamed (ReplicationStream s2 give dups consumes))
 
 next# :: Replicator a %1 -> (# a, Replicator a #)
 next# (Moved x) = (# x, Moved x #)
-next# (Streamed (ReplicationStream give dups consumes s)) =
+next# (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
-    (s1, s2) -> (# give s1, Streamed (ReplicationStream give dups consumes s2) #)
+    (s1, s2) -> (# give s1, Streamed (ReplicationStream s2 give dups consumes) #)
 
 extract :: Replicator a %1 -> a
 extract (Moved x) = x
-extract (Streamed (ReplicationStream give _ _ s)) = give s
+extract (Streamed (ReplicationStream s give _ _)) = give s
 
+-- | @Elim n a b f@ asserts that @f@ is a function taking @n@ linear arguments of
+-- type @a@ and then returning a value of type @b@.
 type Elim :: Nat -> Type -> Type -> Type -> Constraint
 class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   elim :: f %1 -> Replicator a %1 -> b

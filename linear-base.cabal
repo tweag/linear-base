@@ -78,14 +78,13 @@ library
         Data.Unrestricted.Internal.Ur
         Data.Unrestricted.Internal.UrT
         Data.Replicator.Linear
-        Data.Replicator.Linear.Internal.Replicator
+        Data.Replicator.Linear.Internal
         Data.Replicator.Linear.Internal.ReplicationStream
         Data.Replicator.Linear.Internal.Instances
         Data.Arity.Linear.Internal.Arity
         Data.V.Linear
-        Data.V.Linear.Internal.V
+        Data.V.Linear.Internal
         Data.V.Linear.Internal.Instances
-        Data.V.Linear.Internal.Ambiguous
         Data.Vector.Mutable.Linear
         Data.Vector.Mutable.Linear.Internal
         Debug.Trace.Linear

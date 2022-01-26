@@ -4,24 +4,25 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..), consume, fmap, pure, (<*>)) where
+module Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..), consume, map, pure, (<*>)) where
 
 import Data.Unrestricted.Internal.Ur
 import Prelude.Linear.Internal
 
 data ReplicationStream a where
-  ReplicationStream :: (s %1 -> a) -> (s %1 -> (s, s)) -> (s %1 -> ()) -> s %1 -> ReplicationStream a
+  ReplicationStream :: s %1 -> (s %1 -> a) -> (s %1 -> (s, s)) -> (s %1 -> ()) -> ReplicationStream a
 
 consume :: ReplicationStream a %1 -> ()
-consume (ReplicationStream _ _ consumes s) = consumes s
+consume (ReplicationStream s _ _ consumes) = consumes s
 
-fmap :: (a %1 -> b) -> ReplicationStream a %1 -> ReplicationStream b
-fmap f (ReplicationStream give dups consumes s) =
-  ReplicationStream (f . give) dups consumes s
+map :: (a %1 -> b) -> ReplicationStream a %1 -> ReplicationStream b
+map f (ReplicationStream s give dups consumes) =
+  ReplicationStream s (f . give) dups consumes
 
 pure :: a -> ReplicationStream a
 pure x =
   ReplicationStream
+    (Ur x)
     unur
     ( \case
         Ur x' -> (Ur x', Ur x')
@@ -29,11 +30,11 @@ pure x =
     ( \case
         Ur _ -> ()
     )
-    (Ur x)
 
 (<*>) :: ReplicationStream (a %1 -> b) %1 -> ReplicationStream a %1 -> ReplicationStream b
-(ReplicationStream givef dupsf consumesf sf) <*> (ReplicationStream givex dupsx consumesx sx) =
+(ReplicationStream sf givef dupsf consumesf) <*> (ReplicationStream sx givex dupsx consumesx) =
   ReplicationStream
+    (sf, sx)
     (\(sf', sx') -> givef sf' (givex sx'))
     ( \(sf', sx') ->
         (dupsf sf', dupsx sx') & \case
@@ -43,4 +44,3 @@ pure x =
         consumesf sf' & \case
           () -> consumesx sx'
     )
-    (sf, sx)

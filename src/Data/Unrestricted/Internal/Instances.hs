@@ -25,18 +25,17 @@ import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.List.NonEmpty
 import Data.Monoid.Linear
+import Data.Replicator.Linear.Internal (Replicator (..))
+import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.Instances ()
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
 import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
-import Data.Replicator.Linear.Internal.Replicator (Replicator (..))
-import qualified Data.Replicator.Linear.Internal.Replicator as Replicator
 import Data.Unrestricted.Internal.Consumable
 import Data.Unrestricted.Internal.Dupable
 import Data.Unrestricted.Internal.Movable
 import Data.Unrestricted.Internal.Ur
-import qualified Data.V.Linear.Internal.Ambiguous as V
-import Data.V.Linear.Internal.V (V (..))
-import qualified Data.V.Linear.Internal.V as V
+import Data.V.Linear.Internal (V (..))
+import qualified Data.V.Linear.Internal as V
 import qualified Data.Vector as Vector
 import GHC.Int
 import GHC.TypeLits
@@ -359,13 +358,13 @@ instance Consumable (ReplicationStream a) where
   consume = ReplicationStream.consume
 
 instance Dupable (ReplicationStream a) where
-  dupR (ReplicationStream give dups consumes s) =
+  dupR (ReplicationStream s give dups consumes) =
     Streamed $
       ReplicationStream
-        (ReplicationStream give dups consumes)
+        s
+        (\s' -> ReplicationStream s' give dups consumes)
         dups
         consumes
-        s
 
 instance Consumable (Replicator a) where
   consume = Replicator.consume
@@ -373,4 +372,4 @@ instance Consumable (Replicator a) where
 instance Dupable (Replicator a) where
   dupR = \case
     Moved x -> Moved (Moved x)
-    Streamed stream -> Replicator.fmap Streamed $ dupR stream
+    Streamed stream -> Replicator.map Streamed $ dupR stream

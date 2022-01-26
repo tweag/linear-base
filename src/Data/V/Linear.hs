@@ -37,22 +37,21 @@
 -- rather than linear types).
 module Data.V.Linear
   ( V,
-    next#,
-    next,
-    -- split,
-    Elim (..),
+    uncons,
+    uncons#,
+    elim,
     cons,
-    -- fromReplicator,
-    -- dupV,
+    fromReplicator,
+    dupV,
     FunN,
     make,
+    theLength,
     module Data.V.Linear.Internal.Instances,
   )
 where
 
-import Data.V.Linear.Internal.Ambiguous
+import Data.V.Linear.Internal
 import Data.V.Linear.Internal.Instances ()
-import Data.V.Linear.Internal.V
 
 {- Developers Note
 
