@@ -23,7 +23,7 @@
 --
 -- >>> :{
 --  isTrue :: Bool
---  isTrue = V.elim (build 4 9) doSomething
+--  isTrue = V.elim doSomething (build 4 9)
 --    where
 --      -- GHC can't figure out this type equality, so this is needed.
 --      build :: Int %1-> Int %1-> V.V 2 Int
