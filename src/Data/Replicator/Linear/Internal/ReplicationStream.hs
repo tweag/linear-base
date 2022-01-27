@@ -9,6 +9,9 @@ module Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..)
 import Data.Unrestricted.Internal.Ur
 import Prelude.Linear.Internal
 
+-- | @ReplicatorStream s g dup2 c@ is the infinite stream @repeat (g s)@ where
+-- @dup2@ is used to make as many copies of @s@ as necessary, and @c@ is used
+-- to consume @s@ when consuming the stream.
 data ReplicationStream a where
   ReplicationStream :: s %1 -> (s %1 -> a) -> (s %1 -> (s, s)) -> (s %1 -> ()) -> ReplicationStream a
 

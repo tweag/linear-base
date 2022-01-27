@@ -24,6 +24,11 @@ import qualified Data.Replicator.Linear.Internal.ReplicationStream as Replicatio
 import GHC.TypeLits
 import Prelude.Linear.Internal
 
+-- | @Replicator@ is used to linearly duplicate values in an efficient fashion.
+-- @Movable@ types are deep-copied only once (no matter how many copies are
+-- required), whereas non-@Movable@ values are duplicated using the internal
+-- construct @ReplicationStream@. @Replicator@ also have a linear
+-- @Data.Applicative@ instance.
 data Replicator a where
   Moved :: a -> Replicator a
   Streamed :: ReplicationStream a %1 -> Replicator a
@@ -49,26 +54,34 @@ sf <*> sx = Streamed (toStream sf ReplicationStream.<*> toStream sx)
       Moved x -> ReplicationStream.pure x
       Streamed stream -> stream
 
+-- | Extract one more copy of @a@ from the infinite "stream" @Replicator a@.
 next :: Replicator a %1 -> (a, Replicator a)
 next (Moved x) = (x, Moved x)
 next (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
     (s1, s2) -> (give s1, Streamed (ReplicationStream s2 give dups consumes))
 
+-- | Extract one more copy of @a@ from the infinite "stream" @Replicator a@.
+-- Same function as @next@, but returning an unboxed tuple.
 next# :: Replicator a %1 -> (# a, Replicator a #)
 next# (Moved x) = (# x, Moved x #)
 next# (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
     (s1, s2) -> (# give s1, Streamed (ReplicationStream s2 give dups consumes) #)
 
+-- | Returns one more copy of @a@ while efficiently consuming the replicator
+-- at the same time.
 extract :: Replicator a %1 -> a
 extract (Moved x) = x
 extract (Streamed (ReplicationStream s give _ _)) = give s
 
--- | @Elim n a b f@ asserts that @f@ is a function taking @n@ linear arguments of
--- type @a@ and then returning a value of type @b@.
+-- | @Elim n a b f@ asserts that @f@ is a function taking @n@ linear arguments
+-- of type @a@ and then returning a value of type @b@.
 type Elim :: Nat -> Type -> Type -> Type -> Constraint
 class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
+  -- | Takes a function of type @a %1 -> a %1 -> ... %1 -> a %1 -> b@, and
+  -- returns a @b@ . The replicator is used to supply all the copies of @a@
+  -- required by the function.
   elim :: f %1 -> Replicator a %1 -> b
 
 instance Elim 0 a b b where

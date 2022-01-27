@@ -45,6 +45,8 @@ import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
 
+-- | Newtype that must be used with @DerivingVia@ to get efficient @Dupable@
+-- and @Consumable@ implementation for @Movable@ types.
 newtype AsMovable a = AsMovable a
 
 instance Movable a => Movable (AsMovable a) where

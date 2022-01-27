@@ -31,31 +31,42 @@ import Prelude.Linear.Internal
 --
 -- Where the @(≃)@ sign represents equality up to type isomorphism.
 --
--- When implementing 'Dupable' instances for composite types, using 'dupR'
--- should be more convenient since 'Replicator' has an 'Applicative' instance.
+-- Implementation of @Dupable@ for @Movable@ types should be done with
+-- @AsMovable@ and @DerivingVia@, whereas implementation for non-@Movable@
+-- types should be done using either @dupR@ (for data types composed of
+-- @Dupable@ members) or @dup2@.
 class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
+  -- | Creates a @Replicator@ for the given @a@. This @Replicator@ type has
+  -- a @Data.Applicative@ instance, which allows for an easy composition.
   dupR :: a %1 -> Replicator a
   dupR x = Streamed $ ReplicationStream x id dup2 consume
 
+  -- | Creates two copies of @a@ from a @Dupable a@, in a linear fashion.
   dup2 :: a %1 -> (a, a)
   dup2 x = Replicator.elim (,) (dupR x)
 
+-- | Creates 3 copies of @a@ from a @Dupable a@, in a linear fashion.
 dup3 :: Dupable a => a %1 -> (a, a, a)
 dup3 x = Replicator.elim (,,) (dupR x)
 
+-- | Creates 4 copies of @a@ from a @Dupable a@, in a linear fashion.
 dup4 :: Dupable a => a %1 -> (a, a, a, a)
 dup4 x = Replicator.elim (,,,) (dupR x)
 
+-- | Creates 5 copies of @a@ from a @Dupable a@, in a linear fashion.
 dup5 :: Dupable a => a %1 -> (a, a, a, a, a)
 dup5 x = Replicator.elim (,,,,) (dupR x)
 
+-- | Creates 6 copies of @a@ from a @Dupable a@, in a linear fashion.
 dup6 :: Dupable a => a %1 -> (a, a, a, a, a, a)
 dup6 x = Replicator.elim (,,,,,) (dupR x)
 
+-- | Creates 7 copies of @a@ from a @Dupable a@, in a linear fashion.
 dup7 :: Dupable a => a %1 -> (a, a, a, a, a, a, a)
 dup7 x = Replicator.elim (,,,,,,) (dupR x)
 
+-- | Creates two copies of @a@ from a @Dupable a@. Same function as @dup2@.
 dup :: Dupable a => a %1 -> (a, a)
 dup = dup2
