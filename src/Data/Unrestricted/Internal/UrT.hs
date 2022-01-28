@@ -1,4 +1,5 @@
 {-# LANGUAGE LinearTypes #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 -- | `UrT` creates non-linear monads from linear monads.
 -- The effect of @UrT m@ is the same as the effect of @m@ with the same linearity.
