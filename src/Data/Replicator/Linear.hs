@@ -20,7 +20,7 @@
 --
 -- Strictly speaking, the implementation of '(<*>)' plays a role in all this as
 -- well:
--- For two 'pure' 'Replicators' @fs@ and @as@, @fs <*> as@  is a pure
+-- For two 'pure' 'Replicators' @fs@ and @as@, @fs \<*\> as@  is a pure
 -- 'Replicator'. Together, 'pure' and '(<*>)' form the
 -- 'Data.Functor.Linear.Applicative' instance of 'Replicator'.
 module Data.Replicator.Linear

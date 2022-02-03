@@ -29,13 +29,14 @@ import Prelude.Linear.Internal
 -- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
 --
 -- We should also have:
+--
 -- * @dup2 = Replicator.elim (,) . dupR@ (coherence between 'dup2' and 'dupR')
 -- * @consume = Replicator.elim () . dupR@ (coherence between 'consume' and 'dupR')
 --
 -- Where the @(≃)@ sign represents equality up to type isomorphism.
 --
 -- Implementation of 'Dupable' for 'Data.Unrestricted.Movable' types should
--- be done with @deriving via 'Data.Unrestricted.AsMovable' ...@'.
+-- be done with @deriving via 'Data.Unrestricted.AsMovable' ...@.
 class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
@@ -43,7 +44,7 @@ class Consumable a => Dupable a where
   --
   -- You usually want to define this method using 'Replicator'\'s
   -- 'Data.Functor.Linear.Applicative' instance. For instance, here is an
-  -- implementation of `Dupable [a]`:
+  -- implementation of @'Dupable' [a]@:
   --
   -- > instance Dupable a => Dupable [a] where
   -- >   dupR [] = pure []

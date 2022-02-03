@@ -120,6 +120,7 @@ class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   --
   -- It is not always necessary to give the arity argument. It can be
   -- inferred from the function argument.
+  --
   -- > elim (,) :: Replicator a %1 -> (a, a)
   -- > elim (,,) :: Replicator a %1 -> (a, a, a)
   elim :: f %1 -> Replicator a %1 -> b

@@ -137,7 +137,7 @@ dupV = fromReplicator . dupR
 -- Functions below use AllowAmbiguousTypes
 -------------------------------------------------------------------------------
 
--- | Returns the type-level Nat of the context as a term-level integer.
+-- | Returns the type-level 'Nat' of the context as a term-level integer.
 theLength :: forall n. KnownNat n => Prelude.Int
 theLength = Prelude.fromIntegral (natVal' @n (proxy# @_))
 
