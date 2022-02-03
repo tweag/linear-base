@@ -34,6 +34,7 @@ module Data.Replicator.Linear
     next#,
     take,
     extract,
+    extend,
     Elim,
     elim,
   )

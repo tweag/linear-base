@@ -26,6 +26,7 @@ module Data.Replicator.Linear.Internal
     next#,
     take,
     extract,
+    extend,
     Elim (..),
   )
 where
@@ -101,6 +102,11 @@ take n r =
 extract :: Replicator a %1 -> a
 extract (Moved x) = x
 extract (Streamed (ReplicationStream s give _ _)) = give s
+
+-- | 'extend' function to comply with the linear Comonad interface
+-- of 'Replicator'.
+extend :: ((Replicator a) %1 -> b) -> Replicator a %1 -> Replicator b
+extend f = map f . duplicate
 
 -- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
 -- of type @a@ and then returning a value of type @b@.

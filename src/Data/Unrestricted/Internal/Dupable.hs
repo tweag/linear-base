@@ -25,18 +25,21 @@ import Prelude.Linear.Internal
 
 -- | The laws of 'Dupable' are dual to those of 'Monoid':
 --
--- * @first consume (dup2 a) ≃ a ≃ second consume (dup2 a)@ (neutrality)
--- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
+-- * 1. @first consume (dup2 a) ≃ a ≃ second consume (dup2 a)@ ('dup2' neutrality)
+-- * 2. @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ ('dup2' associativity)
 --
--- We should also have:
+-- where the @(≃)@ sign represents equality up to type isomorphism.
 --
--- * @dup2 = Replicator.elim (,) . dupR@ (coherence between 'dup2' and 'dupR')
--- * @consume = Replicator.elim () . dupR@ (coherence between 'consume' and 'dupR')
+-- * 3. @dup2 = Replicator.elim (,) . dupR@ (coherence between 'dup2' and 'dupR')
+-- * 4. @consume = Replicator.elim () . dupR@ (coherence between 'consume' and 'dupR')
 --
--- Where the @(≃)@ sign represents equality up to type isomorphism.
+-- * 5. @Replicator.extract . dupR = id@ ('dupR' identity)
+-- * 6. @dupR . dupR = (Replicator.map dupR) . dupR@ ('dupR' interchange)
+--
+-- (Laws 1-2 and 5-6 are equivalent)
 --
 -- Implementation of 'Dupable' for 'Data.Unrestricted.Movable' types should
--- be done with @deriving via 'Data.Unrestricted.AsMovable' ...@.
+-- be done with @deriving via 'Data.Unrestricted.AsMovable'@.
 class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
