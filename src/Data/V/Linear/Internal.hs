@@ -23,11 +23,12 @@
 module Data.V.Linear.Internal
   ( V (..),
     consume,
-    fmap,
+    map,
     pure,
     (<*>),
     uncons#,
     uncons,
+    Elim,
     elim,
     cons,
     fromReplicator,
@@ -54,8 +55,8 @@ import qualified Unsafe.Linear as Unsafe
 import Prelude (Bool (..), Either (..), Maybe (..), error, (-))
 import qualified Prelude
 
--- | @V n a@ represents an immutable sequence of @n@ elements of type @a@
--- (like a n-tuple), with a linear @Data.Applicative@ instance.
+-- | @'V' n a@ represents an immutable sequence of @n@ elements of type @a@
+-- (like a n-tuple), with a linear 'Data.Functor.Linear.Applicative' instance.
 newtype V (n :: Nat) (a :: Type) = V (Vector a)
   deriving (Prelude.Eq, Prelude.Ord, Prelude.Functor)
 
@@ -68,8 +69,8 @@ newtype V (n :: Nat) (a :: Type) = V (Vector a)
 consume :: V 0 a %1 -> ()
 consume = Unsafe.toLinear (\_ -> ())
 
-fmap :: (a %1 -> b) -> V n a %1 -> V n b
-fmap f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
+map :: (a %1 -> b) -> V n a %1 -> V n b
+map f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
 
 pure :: forall n a. KnownNat n => a -> V n a
 pure a = V $ Vector.replicate (theLength @n) a
@@ -79,28 +80,33 @@ pure a = V $ Vector.replicate (theLength @n) a
   V $
     Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
 
--- | Splits the head and tail of the @V@, returning an unboxed tuple.
+-- | Splits the head and tail of the 'V', returning an unboxed tuple.
 uncons# :: 1 <= n => V n a %1 -> (# a, V (n - 1) a #)
 uncons# = Unsafe.toLinear uncons'#
   where
     uncons'# :: 1 <= n => V n a -> (# a, V (n - 1) a #)
     uncons'# (V xs) = (# Vector.head xs, V (Vector.tail xs) #)
 
--- | Splits the head and tail of the @V@, returning a boxed tuple.
+-- | Splits the head and tail of the 'V', returning a boxed tuple.
 uncons :: 1 <= n => V n a %1 -> (a, V (n - 1) a)
 uncons = Unsafe.toLinear uncons'
   where
     uncons' :: 1 <= n => V n a -> (a, V (n - 1) a)
     uncons' (V xs) = (Vector.head xs, V (Vector.tail xs))
 
--- | @Elim n a b f@ asserts that @f@ is a function taking @n@ linear arguments
+-- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
 -- of type @a@ and then returning a value of type @b@.
 type Elim :: Nat -> Type -> Type -> Type -> Constraint
 class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   -- | Takes a function of type @a %1 -> a %1 -> ... %1 -> a %1 -> b@, and
-  -- returns a @b@ . The @V@ is used to supply all the copies of @a@
-  -- required by the function (the arity of the specified function must
-  -- match the @V@ size).
+  -- returns a @b@ . The 'V' is used to supply all the items of type @a@
+  -- required by the function.
+  --
+  -- For instance:
+  --
+  -- > elim @1 :: (a %1 -> b) %1 -> V 1 a %1 -> b
+  -- > elim @2 :: (a %1 -> a %1 -> b) %1 -> V 2 a %1 -> b
+  -- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> V 3 a %1 -> b
   elim :: f %1 -> V n a %1 -> b
 
 instance Elim 0 a b b where
@@ -115,15 +121,15 @@ instance (1 <= n, n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => Elim n a b (a 
       (a, v') -> elim (g a) v'
   {-# INLINE elim #-}
 
--- | Prepends the given element to the @V@.
+-- | Prepends the given element to the 'V'.
 cons :: forall n a. a %1 -> V (n - 1) a %1 -> V n a
 cons = Unsafe.toLinear2 $ \x (V v) -> V (Vector.cons x v)
 
--- | Creates a @V@ of the specified size by consuming a @Replicator@.
+-- | Creates a 'V' of the specified size by consuming a 'Replicator'.
 fromReplicator :: forall n a. (KnownNat n, Replicator.Elim n a (V n a) (FunN n a (V n a))) => Replicator a %1 -> V n a
 fromReplicator = Replicator.elim @n @a @(V n a) @(FunN n a (V n a)) (make @n @a)
 
--- | Produces a @V n a@ for a @Dupable@ type @a@.
+-- | Produces a @'V' n a@ from a 'Dupable' value @a@.
 dupV :: forall n a. (KnownNat n, Dupable a, Replicator.Elim n a (V n a) (FunN n a (V n a))) => a %1 -> V n a
 dupV = fromReplicator . dupR
 
@@ -137,8 +143,8 @@ theLength = Prelude.fromIntegral (natVal' @n (proxy# @_))
 
 -- Make implementation, which needs to be improved
 
--- | Builds a n-ary constructor for @V n a@ (i.e. a function taking @n@
--- elements of type @a@ and returning a @V n a@).
+-- | Builds a n-ary constructor for @'V' n a@ (i.e. a function taking @n@
+-- elements of type @a@ and returning a @'V' n a@).
 make :: forall n a. KnownNat n => FunN n a (V n a)
 make = case caseNat @n of
   Left Refl -> V Vector.empty

@@ -28,18 +28,26 @@ import Prelude.Linear.Internal
 -- * @first consume (dup2 a) ≃ a ≃ second consume (dup2 a)@ (neutrality)
 -- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
 --
+-- We should also have:
+-- * @dup2 = Replicator.elim (,) . dupR@ (coherence between 'dup2' and 'dupR')
+-- * @consume = Replicator.elim () . dupR@ (coherence between 'consume' and 'dupR')
+--
 -- Where the @(≃)@ sign represents equality up to type isomorphism.
 --
 -- Implementation of 'Dupable' for 'Data.Unrestricted.Movable' types should
--- be done with @deriving via 'Data.Unrestricted.AsMovable' ...@, whereas
--- implementation for non-'Data.Unrestricted.Movable' types should be done
--- using either 'dupR' (for data types composed of 'Dupable' members) or 'dup2'.
+-- be done with @deriving via 'Data.Unrestricted.AsMovable' ...@'.
 class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
-  -- | Creates a 'Replicator' for the given @a@. This 'Replicator' type has
-  -- a 'Data.Functor.Linear.Applicative' instance, which allows for an easy
-  -- composition.
+  -- | Creates a 'Replicator' for the given @a@.
+  --
+  -- You usually want to define this method using 'Replicator'\'s
+  -- 'Data.Functor.Linear.Applicative' instance. For instance, here is an
+  -- implementation of `Dupable [a]`:
+  --
+  -- > instance Dupable a => Dupable [a] where
+  -- >   dupR [] = pure []
+  -- >   dupR (a : as) = (:) <$> dupR a <*> dupR as
   dupR :: a %1 -> Replicator a
   dupR x = Streamed $ ReplicationStream x id dup2 consume
 

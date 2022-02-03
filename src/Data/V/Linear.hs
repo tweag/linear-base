@@ -1,6 +1,5 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# OPTIONS_GHC -Wno-dodgy-exports #-}
 
 -- | This module defines vectors of known length which can hold linear values.
 --
@@ -37,16 +36,20 @@
 -- rather than linear types).
 module Data.V.Linear
   ( V,
-    uncons,
+    consume,
+    map,
+    pure,
+    (<*>),
     uncons#,
+    uncons,
+    Elim,
     elim,
     cons,
     fromReplicator,
     dupV,
-    FunN,
-    make,
     theLength,
-    module Data.V.Linear.Internal.Instances,
+    make,
+    FunN,
   )
 where
 

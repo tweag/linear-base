@@ -7,6 +7,7 @@
 module Data.Replicator.Linear.Internal.ReplicationStream
   ( ReplicationStream (..),
     consume,
+    duplicate,
     map,
     pure,
     (<*>),
@@ -19,13 +20,13 @@ import Prelude.Linear.Internal
 -- | @'ReplicatorStream' s g dup2 c@ is the infinite linear stream
 -- @repeat (g s)@ where @dup2@ is used to make as many copies of @s@ as
 -- necessary, and @c@ is used to consume @s@ when consuming the stream.
--- 'ReplicatorStream' is used to implement 'Replicator', for the
--- non-'Data.Unrestricted.Movable' types, and is not exposed to the end user.
 --
 -- Although it isn't enforced at type level, @dup2@ should abide by the same
 -- laws as 'Data.Unrestricted.Dupable.dup2':
 -- * @first c (dup2 a) ≃ a ≃ second c (dup2 a)@ (neutrality)
 -- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
+--
+-- This type is solely used to implement 'Data.Replicator.Linear'
 data ReplicationStream a where
   ReplicationStream ::
     s %1 ->
@@ -36,6 +37,14 @@ data ReplicationStream a where
 
 consume :: ReplicationStream a %1 -> ()
 consume (ReplicationStream s _ _ consumes) = consumes s
+
+duplicate :: ReplicationStream a %1 -> ReplicationStream (ReplicationStream a)
+duplicate (ReplicationStream s give dups consumes) =
+  ReplicationStream
+    s
+    (\s' -> ReplicationStream s' give dups consumes)
+    dups
+    consumes
 
 map :: (a %1 -> b) -> ReplicationStream a %1 -> ReplicationStream b
 map f (ReplicationStream s give dups consumes) =

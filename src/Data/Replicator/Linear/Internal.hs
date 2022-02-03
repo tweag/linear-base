@@ -18,6 +18,7 @@
 module Data.Replicator.Linear.Internal
   ( Replicator (..),
     consume,
+    duplicate,
     map,
     pure,
     (<*>),
@@ -39,7 +40,7 @@ import Prelude ((-))
 import qualified Prelude
 
 -- | 'Replicator' is a stream-like data structure used to linearly duplicate
--- values in an efficient fashion.
+-- values.
 data Replicator a where
   Moved :: a -> Replicator a
   Streamed :: ReplicationStream a %1 -> Replicator a
@@ -47,6 +48,11 @@ data Replicator a where
 consume :: Replicator a %1 -> ()
 consume (Moved _) = ()
 consume (Streamed stream) = ReplicationStream.consume stream
+
+duplicate :: Replicator a %1 -> Replicator (Replicator a)
+duplicate = \case
+  Moved x -> Moved (Moved x)
+  Streamed stream -> Streamed $ ReplicationStream.map Streamed (ReplicationStream.duplicate stream)
 
 map :: (a %1 -> b) -> Replicator a %1 -> Replicator b
 map f = \case
@@ -80,8 +86,7 @@ next# (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
     (s1, s2) -> (# give s1, Streamed (ReplicationStream s2 give dups consumes) #)
 
--- | Consumes the @'Replicator' a@ to give a list of @a@s of the specified
--- length.
+-- | @'take' n as@ is a list of size @n@, containing @n@ replicas from @as@.
 take :: Prelude.Int -> Replicator a %1 -> [a]
 take 0 r =
   consume r & \case
@@ -114,7 +119,7 @@ class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   -- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> Replicator a %1 -> b
   --
   -- It is not always necessary to give the arity argument. It can be
-  -- inferred from the argument.
+  -- inferred from the function argument.
   -- > elim (,) :: Replicator a %1 -> (a, a)
   -- > elim (,,) :: Replicator a %1 -> (a, a, a)
   elim :: f %1 -> Replicator a %1 -> b

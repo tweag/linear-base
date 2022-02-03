@@ -23,7 +23,7 @@ import qualified Unsafe.Linear as Unsafe
 -------------------------------------------------------------------------------
 
 instance Data.Functor (V n) where
-  fmap = V.fmap
+  fmap = V.map
 
 instance KnownNat n => Data.Applicative (V n) where
   pure = V.pure

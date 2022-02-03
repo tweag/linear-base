@@ -45,8 +45,8 @@ import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
 
--- | Newtype that must be used with @DerivingVia@ to get efficient @Dupable@
--- and @Consumable@ implementation for @Movable@ types.
+-- | Newtype that must be used with @DerivingVia@ to get efficient 'Dupable'
+-- and 'Consumable' implementation for 'Movable' types.
 newtype AsMovable a = AsMovable a
 
 instance Movable a => Movable (AsMovable a) where
@@ -360,18 +360,10 @@ instance Consumable (ReplicationStream a) where
   consume = ReplicationStream.consume
 
 instance Dupable (ReplicationStream a) where
-  dupR (ReplicationStream s give dups consumes) =
-    Streamed $
-      ReplicationStream
-        s
-        (\s' -> ReplicationStream s' give dups consumes)
-        dups
-        consumes
+  dupR = Streamed . ReplicationStream.duplicate
 
 instance Consumable (Replicator a) where
   consume = Replicator.consume
 
 instance Dupable (Replicator a) where
-  dupR = \case
-    Moved x -> Moved (Moved x)
-    Streamed stream -> Replicator.map Streamed $ dupR stream
+  dupR = Replicator.duplicate
