@@ -17,7 +17,7 @@ where
 import Data.Unrestricted.Internal.Ur
 import Prelude.Linear.Internal
 
--- | @'ReplicatorStream' s g dup2 c@ is the infinite linear stream
+-- | @ReplicationStream s g dup2 c@ is the infinite linear stream
 -- @repeat (g s)@ where @dup2@ is used to make as many copies of @s@ as
 -- necessary, and @c@ is used to consume @s@ when consuming the stream.
 --
