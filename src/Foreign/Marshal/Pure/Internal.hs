@@ -311,7 +311,7 @@ instance Consumable Pool where
   consume (Pool _) = ()
 
 instance Dupable Pool where
-  dupV (Pool l) = Data.pure (Pool l)
+  dupR (Pool l) = Data.pure (Pool l)
 
 -- | 'Box a' is the abstract type of manually managed data. It can be used as
 -- part of data type definitions in order to store linked data structure off

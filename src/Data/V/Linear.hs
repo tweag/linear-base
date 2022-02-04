@@ -1,5 +1,5 @@
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# OPTIONS_GHC -Wno-dodgy-exports #-}
 
 -- | This module defines vectors of known length which can hold linear values.
 --
@@ -22,7 +22,7 @@
 --
 -- >>> :{
 --  isTrue :: Bool
---  isTrue = V.elim (build 4 9) doSomething
+--  isTrue = V.elim doSomething (build 4 9)
 --    where
 --      -- GHC can't figure out this type equality, so this is needed.
 --      build :: Int %1-> Int %1-> V.V 2 Int
@@ -36,19 +36,25 @@
 -- rather than linear types).
 module Data.V.Linear
   ( V,
-    FunN,
+    consume,
+    map,
+    pure,
+    (<*>),
+    uncons#,
+    uncons,
+    Elim,
     elim,
+    cons,
+    fromReplicator,
+    dupV,
+    theLength,
     make,
-    iterate,
-
-    -- * Type-level utilities
-    caseNat,
-    module Data.V.Linear.Internal.Instances,
+    FunN,
   )
 where
 
+import Data.V.Linear.Internal
 import Data.V.Linear.Internal.Instances ()
-import Data.V.Linear.Internal.V
 
 {- Developers Note
 

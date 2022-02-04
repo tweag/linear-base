@@ -73,6 +73,10 @@ module Data.Unrestricted.Linear
     lseq,
     dup,
     dup3,
+    dup4,
+    dup5,
+    dup6,
+    dup7,
     module Data.Unrestricted.Internal.Instances,
   )
 where
