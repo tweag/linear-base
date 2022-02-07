@@ -24,9 +24,8 @@
 --  isTrue :: Bool
 --  isTrue = V.elim doSomething (build 4 9)
 --    where
---      -- GHC can't figure out this type equality, so this is needed.
 --      build :: Int %1-> Int %1-> V.V 2 Int
---      build = V.make @2 @Int
+--      build = V.make
 -- :}
 --
 -- A much more expensive library of vectors of known size (including matrices
@@ -48,8 +47,8 @@ module Data.V.Linear
     fromReplicator,
     dupV,
     theLength,
+    Make,
     make,
-    FunN,
   )
 where
 
