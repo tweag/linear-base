@@ -9,6 +9,8 @@ import Test.Data.Mutable.HashMap (mutHMTests)
 import Test.Data.Mutable.Set (mutSetTests)
 import Test.Data.Mutable.Vector (mutVecTests)
 import Test.Data.Polarized (polarizedArrayTests)
+import Test.Data.Replicator (replicatorInspectionTests)
+import Test.Data.V (vInspectionTests)
 import Test.Tasty
 
 main :: IO ()
@@ -18,10 +20,18 @@ allTests :: TestTree
 allTests =
   testGroup
     "All tests"
-    [ mutArrTests,
-      mutVecTests,
-      mutHMTests,
-      mutSetTests,
-      destArrayTests,
-      polarizedArrayTests
+    [ testGroup
+        "Functional tests"
+        [ mutArrTests,
+          mutVecTests,
+          mutHMTests,
+          mutSetTests,
+          destArrayTests,
+          polarizedArrayTests
+        ],
+      testGroup
+        "Inspection tests"
+        [ vInspectionTests,
+          replicatorInspectionTests
+        ]
     ]

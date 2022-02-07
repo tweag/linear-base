@@ -22,6 +22,7 @@
 
 module Data.V.Linear.Internal
   ( V (..),
+    empty,
     consume,
     map,
     pure,
@@ -62,6 +63,10 @@ newtype V (n :: Nat) (a :: Type) = V (Vector a)
 -- kill the fusion rules, it may be worth it going lower level since I
 -- probably have to write my own fusion anyway. Therefore, starting from
 -- Vectors at the moment.
+
+-- | Returns an empty 'V'.
+empty :: forall a. V 0 a
+empty = V Vector.empty
 
 consume :: V 0 a %1 -> ()
 consume = Unsafe.toLinear (\_ -> ())
@@ -156,7 +161,7 @@ class (m ~ Arity (V n a) f) => Make m n a f | f -> m n a where
   make' :: (V m a %1 -> V n a) %1 -> f
 
 instance Make 0 n a (V n a) where
-  make' produceFrom = produceFrom (V Vector.empty)
+  make' produceFrom = produceFrom empty
   {-# INLINE make' #-}
 
 instance (m ~ Arity (V n a) (a %1 -> f), Make (m - 1) n a f) => Make m n a (a %1 -> f) where
