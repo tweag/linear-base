@@ -1,21 +1,24 @@
-{-# language GADTs #-}
-{-# language LinearTypes #-}
-{-# language RankNTypes #-}
-{-# language NoImplicitPrelude #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | A few things lifted from kan-extensions and lens for generic deriving of
--- Traversable instances.
+-- 'Data.Functor.Linear.Traversable' instances (see
+-- 'Data.Functor.Linear.Internal.Generic').
 module Control.Functor.Linear.Internal.Kan where
+
 import Control.Functor.Linear
-import qualified Data.Functor.Linear as Data
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
 import Prelude.Linear.Internal
 
 newtype Curried g h a = Curried
-  { runCurried :: forall r. g (a %1-> r) %1-> h r }
+  {runCurried :: forall r. g (a %1 -> r) %1 -> h r}
 
 instance Data.Functor g => Data.Functor (Curried g h) where
-  fmap f (Curried g) = Curried (g . Data.fmap (.f))
+  fmap f (Curried g) = Curried (g . Data.fmap (. f))
   {-# INLINE fmap #-}
 
 instance Functor g => Functor (Curried g h) where
@@ -34,11 +37,11 @@ instance (Functor g, g ~ h) => Applicative (Curried g h) where
   Curried mf <*> Curried ma = Curried (ma . mf . fmap (.))
   {-# INLINE (<*>) #-}
 
-lowerCurriedC :: Applicative f => Curried f g a %1-> g a
+lowerCurriedC :: Applicative f => Curried f g a %1 -> g a
 lowerCurriedC (Curried f) = f (pure id)
 {-# INLINE lowerCurriedC #-}
 
-newtype Yoneda f a = Yoneda { runYoneda :: forall b. (a %1-> b) %1-> f b }
+newtype Yoneda f a = Yoneda {runYoneda :: forall b. (a %1 -> b) %1 -> f b}
 
 instance Data.Functor (Yoneda f) where
   fmap f (Yoneda m) = Yoneda (\k -> m (k . f))
@@ -60,15 +63,15 @@ instance Applicative f => Applicative (Yoneda f) where
   Yoneda m <*> Yoneda n = Yoneda (\f -> m (f .) <*> n id)
   {-# INLINE (<*>) #-}
 
-lowerYoneda :: Yoneda f a %1-> f a
+lowerYoneda :: Yoneda f a %1 -> f a
 lowerYoneda (Yoneda m) = m id
 {-# INLINE lowerYoneda #-}
 
 -- This bit comes from lens.
-liftCurriedYonedaC :: Applicative f => f a %1-> Curried (Yoneda f) (Yoneda f) a
+liftCurriedYonedaC :: Applicative f => f a %1 -> Curried (Yoneda f) (Yoneda f) a
 liftCurriedYonedaC fa = Curried (`yap` fa)
 {-# INLINE liftCurriedYonedaC #-}
 
-yap :: Applicative f => Yoneda f (a %1-> b) %1-> f a %1-> Yoneda f b
+yap :: Applicative f => Yoneda f (a %1 -> b) %1 -> f a %1 -> Yoneda f b
 yap (Yoneda k) fa = Yoneda (\ab_r -> k (ab_r .) <*> fa)
 {-# INLINE yap #-}

@@ -13,8 +13,11 @@
 -- * Linear data functors should be thought of as containers of data.
 -- * Linear data applicative functors should be thought of as containers
 -- that can be zipped.
--- * Linear data traversible functors should be thought of as
+-- * Linear data traversable functors should be thought of as
 -- containers which store a finite number of values.
+--
+-- This module also defines 'genericTraverse' for types implementing
+-- 'Generics.Linear.Generic1'.
 module Data.Functor.Linear
   ( -- * Data Functor Hierarchy
     Functor (..),
@@ -26,6 +29,8 @@ module Data.Functor.Linear
 
     -- * Linear traversable hierarchy
     Traversable (..),
+    genericTraverse,
+    GTraversable,
     mapM,
     sequenceA,
     for,
@@ -39,3 +44,4 @@ import Data.Functor.Const
 import Data.Functor.Linear.Internal.Applicative
 import Data.Functor.Linear.Internal.Functor
 import Data.Functor.Linear.Internal.Traversable
+import Data.Functor.Linear.Internal.Traversable.Generic

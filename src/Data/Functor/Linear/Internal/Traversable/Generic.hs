@@ -1,24 +1,25 @@
-{-# language EmptyCase #-}
-{-# language LambdaCase #-}
-{-# language FlexibleContexts #-}
-{-# language FlexibleInstances #-}
-{-# language GADTs #-}
-{-# language LinearTypes #-}
-{-# language NoImplicitPrelude #-}
-{-# language TypeOperators #-}
+{-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 module Data.Functor.Linear.Internal.Traversable.Generic where
 
-import Generics.Linear
 import Control.Functor.Linear
-import Data.Functor.Linear.Internal.Traversable
 import Control.Functor.Linear.Internal.Kan
+import Data.Functor.Linear.Internal.Traversable
 import GHC.Types (Multiplicity (..))
+import Generics.Linear
 import Prelude.Linear.Internal
 
+-- | Linear counterpart of [@GTraversable@](https://hackage.haskell.org/package/traverse-with-class-1.0.1.1/docs/Data-Generics-Traversable.html#t:GTraversable).
 class GTraversable t where
-  gtraverse :: Applicative f => (a %1-> f b) -> t a %1-> Curried (Yoneda f) (Yoneda f) (t b)
+  gtraverse :: Applicative f => (a %1 -> f b) -> t a %1 -> Curried (Yoneda f) (Yoneda f) (t b)
 
 instance GTraversable t => GTraversable (M1 i c t) where
   gtraverse f (M1 x) = M1 <$> gtraverse f x
@@ -55,7 +56,7 @@ instance GTraversable U1 where
   {-# INLINE gtraverse #-}
 
 instance GTraversable V1 where
-  gtraverse _ v = pure ((\case) v)
+  gtraverse _ v = pure ((\case {}) v)
 
 instance GTraversable UAddr where
   gtraverse _ (UAddr x) = pure (UAddr x)
@@ -81,8 +82,12 @@ instance GTraversable UWord where
   gtraverse _ (UWord x) = pure (UWord x)
   {-# INLINE gtraverse #-}
 
-genericTraverse
-  :: (Generic1 t, GTraversable (Rep1 t), Applicative f)
-  => (a %1-> f b) -> t a %1-> f (t b)
+-- | Implementation of 'Data.Functor.Linear.traverse' for types which derive
+-- (linear) 'Generics.Linear.Generic1'.
+genericTraverse ::
+  (Generic1 t, GTraversable (Rep1 t), Applicative f) =>
+  (a %1 -> f b) ->
+  t a %1 ->
+  f (t b)
 genericTraverse f = lowerYoneda . lowerCurriedC . fmap to1 . gtraverse f . from1
 {-# INLINE genericTraverse #-}
