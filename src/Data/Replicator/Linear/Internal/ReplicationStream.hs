@@ -17,12 +17,12 @@ where
 import Data.Unrestricted.Internal.Ur
 import Prelude.Linear.Internal
 
--- | @'ReplicatorStream' s g dup2 c@ is the infinite linear stream
+-- | @ReplicationStream s g dup2 c@ is the infinite linear stream
 -- @repeat (g s)@ where @dup2@ is used to make as many copies of @s@ as
 -- necessary, and @c@ is used to consume @s@ when consuming the stream.
 --
 -- Although it isn't enforced at type level, @dup2@ should abide by the same
--- laws as 'Data.Unrestricted.Dupable.dup2':
+-- laws as 'Data.Unrestricted.Linear.dup2':
 -- * @first c (dup2 a) ≃ a ≃ second c (dup2 a)@ (neutrality)
 -- * @first dup2 (dup2 a) ≃ (second dup2 (dup2 a))@ (associativity)
 --
