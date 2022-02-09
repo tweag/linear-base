@@ -1,8 +1,6 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -O -dno-suppress-type-signatures -fplugin=Test.Tasty.Inspection.Plugin #-}
 
@@ -21,7 +19,7 @@ replicatorInspectionTests =
     [$(inspectTest $ 'elim3 === 'manualElim3)]
 
 elim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> Replicator a %1 -> [a]
-elim3 = Replicator.elim
+elim3 f r = Replicator.elim f r
 
 manualElim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> Replicator a %1 -> [a]
 manualElim3 f r =

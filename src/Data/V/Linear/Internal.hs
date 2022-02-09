@@ -70,6 +70,7 @@ empty = V Vector.empty
 
 consume :: V 0 a %1 -> ()
 consume = Unsafe.toLinear (\_ -> ())
+{-# INLINEABLE consume #-}
 
 map :: (a %1 -> b) -> V n a %1 -> V n b
 map f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
@@ -85,6 +86,7 @@ uncons# = Unsafe.toLinear uncons'#
   where
     uncons'# :: 1 <= n => V n a -> (# a, V (n - 1) a #)
     uncons'# (V xs) = (# Vector.head xs, V (Vector.tail xs) #)
+{-# INLINEABLE uncons# #-}
 
 -- | Splits the head and tail of the 'V', returning a boxed tuple.
 uncons :: 1 <= n => V n a %1 -> (a, V (n - 1) a)
@@ -92,6 +94,7 @@ uncons = Unsafe.toLinear uncons'
   where
     uncons' :: 1 <= n => V n a -> (a, V (n - 1) a)
     uncons' (V xs) = (Vector.head xs, V (Vector.tail xs))
+{-# INLINEABLE uncons #-}
 
 -- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
 -- of type @a@ and then returning a value of type @b@.
