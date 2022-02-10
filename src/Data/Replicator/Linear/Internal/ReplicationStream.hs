@@ -37,6 +37,7 @@ data ReplicationStream a where
 
 consume :: ReplicationStream a %1 -> ()
 consume (ReplicationStream s _ _ consumes) = consumes s
+{-# INLINEABLE consume #-}
 
 duplicate :: ReplicationStream a %1 -> ReplicationStream (ReplicationStream a)
 duplicate (ReplicationStream s give dups consumes) =

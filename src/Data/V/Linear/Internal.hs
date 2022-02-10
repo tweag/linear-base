@@ -22,6 +22,7 @@
 
 module Data.V.Linear.Internal
   ( V (..),
+    empty,
     consume,
     map,
     pure,
@@ -63,8 +64,13 @@ newtype V (n :: Nat) (a :: Type) = V (Vector a)
 -- probably have to write my own fusion anyway. Therefore, starting from
 -- Vectors at the moment.
 
+-- | Returns an empty 'V'.
+empty :: forall a. V 0 a
+empty = V Vector.empty
+
 consume :: V 0 a %1 -> ()
 consume = Unsafe.toLinear (\_ -> ())
+{-# INLINEABLE consume #-}
 
 map :: (a %1 -> b) -> V n a %1 -> V n b
 map f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
@@ -80,6 +86,7 @@ uncons# = Unsafe.toLinear uncons'#
   where
     uncons'# :: 1 <= n => V n a -> (# a, V (n - 1) a #)
     uncons'# (V xs) = (# Vector.head xs, V (Vector.tail xs) #)
+{-# INLINEABLE uncons# #-}
 
 -- | Splits the head and tail of the 'V', returning a boxed tuple.
 uncons :: 1 <= n => V n a %1 -> (a, V (n - 1) a)
@@ -87,6 +94,7 @@ uncons = Unsafe.toLinear uncons'
   where
     uncons' :: 1 <= n => V n a -> (a, V (n - 1) a)
     uncons' (V xs) = (Vector.head xs, V (Vector.tail xs))
+{-# INLINEABLE uncons #-}
 
 -- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
 -- of type @a@ and then returning a value of type @b@.
@@ -156,7 +164,7 @@ class (m ~ Arity (V n a) f) => Make m n a f | f -> m n a where
   make' :: (V m a %1 -> V n a) %1 -> f
 
 instance Make 0 n a (V n a) where
-  make' produceFrom = produceFrom (V Vector.empty)
+  make' produceFrom = produceFrom empty
   {-# INLINE make' #-}
 
 instance (m ~ Arity (V n a) (a %1 -> f), Make (m - 1) n a f) => Make m n a (a %1 -> f) where

@@ -35,6 +35,7 @@
 -- rather than linear types).
 module Data.V.Linear
   ( V,
+    empty,
     consume,
     map,
     pure,

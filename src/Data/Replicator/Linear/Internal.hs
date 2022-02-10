@@ -49,6 +49,7 @@ data Replicator a where
 consume :: Replicator a %1 -> ()
 consume (Moved _) = ()
 consume (Streamed stream) = ReplicationStream.consume stream
+{-# INLINEABLE consume #-}
 
 duplicate :: Replicator a %1 -> Replicator (Replicator a)
 duplicate = \case
@@ -78,6 +79,7 @@ next (Moved x) = (x, Moved x)
 next (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
     (s1, s2) -> (give s1, Streamed (ReplicationStream s2 give dups consumes))
+{-# INLINEABLE next #-}
 
 -- | Extracts the next item from the \"infinite stream\" @'Replicator' a@.
 -- Same function as 'next', but returning an unboxed tuple.
@@ -86,6 +88,7 @@ next# (Moved x) = (# x, Moved x #)
 next# (Streamed (ReplicationStream s give dups consumes)) =
   dups s & \case
     (s1, s2) -> (# give s1, Streamed (ReplicationStream s2 give dups consumes) #)
+{-# INLINEABLE next# #-}
 
 -- | @'take' n as@ is a list of size @n@, containing @n@ replicas from @as@.
 take :: Prelude.Int -> Replicator a %1 -> [a]
@@ -102,6 +105,7 @@ take n r =
 extract :: Replicator a %1 -> a
 extract (Moved x) = x
 extract (Streamed (ReplicationStream s give _ _)) = give s
+{-# INLINEABLE extract #-}
 
 -- | Comonadic 'extend' function.
 --
