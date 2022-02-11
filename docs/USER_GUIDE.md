@@ -15,14 +15,16 @@ if you are unfamiliar).
  * The [`Prelude.Linear`] module is a good place to start. It is a prelude for
  Haskell programs that use `-XLinearTypes` and is meant to replace the original
  prelude from `base`.
- * Mutable data with a pure API.
-   Consider looking at `Data.{Array, Hashmap, Vector, Set}.Mutable.Linear`.
+ * For mutable data with a pure API,
+   consider looking at `Data.{Array, Hashmap, Vector, Set}.Mutable.Linear`.
  * A linear `IO` monad is in `System.IO.Linear`.
    * A variant of linear `IO` which lets you enforce resource safety
      can be found in `System.IO.Resource.Linear`.
  * Streams in the style of the [`streaming`
    library](https://hackage.haskell.org/package/streaming) is in
    `Streaming.Linear` and `Streaming.Prelude.Linear`.
+ * How `Prelude.Linear` classes relate to their `base` (non-linear) counterpart is
+   described in the [class comparison table](./CLASS_TABLE.md).
 
 There are many other modules of course but a lot of the ones not already listed
 are still experimental, such as system-heap memory management in `Foreign.Marshall.Pure`.

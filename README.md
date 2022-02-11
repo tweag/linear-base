@@ -45,6 +45,9 @@ If you already know what `-XLinearTypes` does and what the linear
 arrow `a %1-> b` means, then read the [User Guide] and explore the
 [`examples/`](./examples) folder to know how to use `linear-base`.
 
+You can also find a table comparing `base` and `linear-base` typeclasses
+[here](./docs/CLASS_TABLE.md).
+
 ## Learning about `-XLinearTypes`
 
 If you're a Haskeller who hasn't written any Linear Haskell code, don't fear!
