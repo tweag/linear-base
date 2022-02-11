@@ -1,4 +1,4 @@
-cabal-version:      >=1.10
+cabal-version:      3.0
 name:               linear-base
 version:            0.1.1
 license:            MIT
@@ -21,7 +21,13 @@ source-repository head
     type:     git
     location: https://github.com/tweag/linear-base
 
+common warnings
+    ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wnoncanonical-monad-instances
+                 -- Additional warnings we may consider adding:
+                 -- * -Wredundant-constraints : would need deactivating in the modules which use Nat
+
 library
+    import: warnings
     exposed-modules:
         Control.Monad.IO.Class.Linear
         Control.Functor.Linear
@@ -109,6 +115,7 @@ library
     default-language: Haskell2010
     ghc-options:      -O
     build-depends:
+
         base >=4.15 && <5,
         containers,
         ghc-prim,
@@ -120,6 +127,7 @@ library
         primitive
 
 test-suite test
+    import: warnings
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   test
@@ -148,6 +156,7 @@ test-suite test
         vector
 
 test-suite examples
+    import: warnings
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   examples
@@ -174,6 +183,7 @@ test-suite examples
         text
 
 benchmark mutable-data
+    import: warnings
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   bench
