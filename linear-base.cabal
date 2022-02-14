@@ -27,6 +27,7 @@ library
         Control.Functor.Linear
         Control.Functor.Linear.Internal.Class
         Control.Functor.Linear.Internal.Instances
+        Control.Functor.Linear.Internal.Kan
         Control.Functor.Linear.Internal.MonadTrans
         Control.Functor.Linear.Internal.Reader
         Control.Functor.Linear.Internal.State
@@ -54,6 +55,7 @@ library
         Data.Functor.Linear.Internal.Functor
         Data.Functor.Linear.Internal.Applicative
         Data.Functor.Linear.Internal.Traversable
+        Data.Functor.Linear.Internal.Traversable.Generic
         Data.HashMap.Mutable.Linear
         Data.HashMap.Mutable.Linear.Internal
         Data.List.Linear
@@ -113,6 +115,7 @@ library
         containers,
         ghc-prim,
         hashable,
+        linear-generics,
         storable-tuple,
         text,
         transformers,
@@ -154,12 +157,14 @@ test-suite examples
     other-modules:
         Test.Foreign
         Test.Quicksort
+        Test.Generic
         Foreign.List
         Foreign.Heap
         Simple.FileIO
         Simple.Pure
         Simple.Quicksort
         Simple.TopSort
+        Generic.Traverse
 
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts -with-rtsopts=-N
@@ -171,7 +176,8 @@ test-suite examples
         hedgehog,
         storable-tuple,
         vector,
-        text
+        text,
+        linear-generics
 
 benchmark mutable-data
     type:             exitcode-stdio-1.0

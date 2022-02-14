@@ -25,6 +25,13 @@ packages:
       sha256: adcd797fed395273b05a0e7fdf254cba76c6a9ceab573d78211447c6430ebb2a
   original:
     hackage: ghc-lib-parser-9.2.1.20220109@sha256:5da80d84452a31b7d0dab46d849a9c3552897405048d466b766136d852d20cfe,12705
+- completed:
+    hackage: linear-generics-0.2@sha256:c1db1fcb96333be867978abfbed71e99dfbdcafa07d7d9642a89405e6bc971b1,5818
+    pantry-tree:
+      size: 2818
+      sha256: 62c6d4bb56b01f240bbc8cf276ddbe7f65ffa3f73cc430772a26d8769c08066b
+  original:
+    hackage: linear-generics-0.2@sha256:c1db1fcb96333be867978abfbed71e99dfbdcafa07d7d9642a89405e6bc971b1,5818
 snapshots:
 - completed:
     size: 621061

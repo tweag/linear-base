@@ -1,6 +1,7 @@
 module Main where
 
 import Test.Foreign (foreignGCTests)
+import Test.Generic (genericTests)
 import Test.Quicksort (quickSortTests)
 import Test.Tasty
 
@@ -12,5 +13,6 @@ allTests =
   testGroup
     "All tests"
     [ foreignGCTests,
-      quickSortTests
+      quickSortTests,
+      genericTests
     ]
