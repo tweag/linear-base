@@ -3,7 +3,6 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -156,6 +155,12 @@ instance Control.Monad IO where
     where
       cont :: (# State# RealWorld, () #) %1 -> IO b %1 -> (# State# RealWorld, b #)
       cont (# s', () #) y' = unIO y' s'
+
+instance Semigroup a => Semigroup (IO a) where
+  (<>) = Control.liftA2 (<>)
+
+instance Monoid a => Monoid (IO a) where
+  mempty = Control.pure mempty
 
 -- $ioref
 -- @IORef@s are mutable references to values, or pointers to values.

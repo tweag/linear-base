@@ -354,7 +354,8 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
       combine :: Prelude.Semigroup a => Ur a %1 -> Ur a %1 -> a
       combine (Ur x) (Ur y) = x Prelude.<> y
 
-instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a)
+instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a) where
+  mempty = MovableMonoid Prelude.mempty
 
 instance Consumable (ReplicationStream a) where
   consume = ReplicationStream.consume

@@ -1,5 +1,9 @@
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 module Data.Functor.Linear.Internal.Applicative
@@ -12,6 +16,7 @@ import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
 import Data.Functor.Linear.Internal.Functor
+import Data.Monoid (Ap (..))
 import Data.Monoid.Linear hiding (Sum)
 import Prelude.Linear.Internal
 
@@ -57,14 +62,6 @@ class Functor f => Applicative f where
 -- # Instances
 -------------------------------------------------------------------------------
 
-instance Monoid x => Applicative (Const x) where
-  pure _ = Const mempty
-  Const x <*> Const y = Const (x <> y)
-
-instance Monoid a => Applicative ((,) a) where
-  pure x = (mempty, x)
-  (u, f) <*> (v, x) = (u <> v, f x)
-
 instance Applicative Identity where
   pure = Identity
   Identity f <*> Identity x = Identity (f x)
@@ -77,3 +74,17 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
 instance Applicative m => Applicative (NonLinear.ReaderT r m) where
   pure x = NonLinear.ReaderT (\_ -> pure x)
   NonLinear.ReaderT f <*> NonLinear.ReaderT x = NonLinear.ReaderT (\r -> f r <*> x r)
+
+instance (Applicative f, Semigroup a) => Semigroup (Ap f a) where
+  (Ap x) <> (Ap y) = Ap $ liftA2 (<>) x y
+
+instance (Applicative f, Monoid a) => Monoid (Ap f a) where
+  mempty = Ap $ pure mempty
+
+instance Monoid x => Applicative (Const x) where
+  pure _ = Const mempty
+  Const x <*> Const y = Const (x <> y)
+
+instance Monoid a => Applicative ((,) a) where
+  pure x = (mempty, x)
+  (u, f) <*> (v, x) = (u <> v, f x)

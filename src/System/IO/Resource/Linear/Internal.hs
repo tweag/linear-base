@@ -3,11 +3,9 @@
 -- function. Which is a good argument for having support for F#-style builders.
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 
@@ -22,6 +20,7 @@ import Data.IORef (IORef)
 import qualified Data.IORef as System
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
+import Data.Monoid (Ap (..))
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
 import Prelude.Linear hiding (IO)
@@ -38,6 +37,7 @@ newtype ReleaseMap = ReleaseMap (IntMap (Linear.IO ()))
 -- are always released.
 newtype RIO a = RIO (IORef ReleaseMap -> Linear.IO a)
   deriving (Data.Functor, Data.Applicative) via (Control.Data RIO)
+  deriving (Semigroup, Monoid) via (Ap RIO a)
 
 unRIO :: RIO a %1 -> IORef ReleaseMap -> Linear.IO a
 unRIO (RIO action) = action
