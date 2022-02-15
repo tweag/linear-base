@@ -112,31 +112,29 @@ class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   -- > elim @2 :: (a %1 -> a %1 -> b) %1 -> V 2 a %1 -> b
   -- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> V 3 a %1 -> b
   elim :: f %1 -> V n a %1 -> b
+  elim f v = elim' f v
+  {-# INLINEABLE elim #-}
+
+  -- 'elim' is used to force eta-expansion of 'elim\''.
+  -- Otherwise, 'elim\'' might not get inlined
+  -- (see https://github.com/tweag/linear-base/issues/369).
+  elim' :: f %1 -> V n a %1 -> b
 
 instance Elim 0 a b b where
-  elim b v =
+  elim' b v =
     consume v & \case
       () -> b
-  {-# INLINE elim #-}
+  {-# INLINE elim' #-}
 
 instance (1 <= n, n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => Elim n a b (a %1 -> f) where
-  elim g v =
+  elim' g v =
     uncons v & \case
-      (a, v') -> elim (g a) v'
-  {-# INLINE elim #-}
+      (a, v') -> elim' (g a) v'
+  {-# INLINE elim' #-}
 
 -- | Prepends the given element to the 'V'.
 cons :: forall n a. a %1 -> V (n - 1) a %1 -> V n a
 cons = Unsafe.toLinear2 $ \x (V v) -> V (Vector.cons x v)
-
--- | Builds a n-ary constructor for @'V' n a@ (i.e. a function taking @n@ linear
--- arguments of type @a@ and returning a @'V' n a@).
---
--- > myV :: V 3 Int
--- > myV = make 1 2 3
-make :: forall n a f. Make n n a f => f
-make = make' @n @n id
-{-# INLINE make #-}
 
 -- | @'Make' m n a f@ asserts that @f@ is a function taking @m@ linear arguments
 -- of type @a@ and then returning a value of type @'V' n a@.
@@ -162,6 +160,15 @@ class (m ~ Arity (V n a) f) => Make m n a f | f -> m n a where
   -- > --> λx. λy. ... λz. make' @0 @n (V[x, y, ... z] <>)    -- make' @0 @n f = f V[]
   -- > --> λx. λy. ... λz. V[x, y, ... z]
   make' :: (V m a %1 -> V n a) %1 -> f
+
+  -- | Builds a n-ary constructor for @'V' n a@ (i.e. a function taking @n@ linear
+  -- arguments of type @a@ and returning a @'V' n a@).
+  --
+  -- > myV :: V 3 Int
+  -- > myV = make 1 2 3
+  make :: (n ~ m) => f
+  make = make' @n @n id
+  {-# INLINE make #-}
 
 instance Make 0 n a (V n a) where
   make' produceFrom = produceFrom empty
