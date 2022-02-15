@@ -28,7 +28,7 @@ manualMake3 :: a %1 -> a %1 -> a %1 -> V 3 a
 manualMake3 x y z = V.cons x . V.cons y . V.cons z $ V.empty
 
 elim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> V 3 a %1 -> [a]
-elim3 f v = V.elim f v
+elim3 = V.elim
 
 manualElim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> V 3 a %1 -> [a]
 manualElim3 f v =

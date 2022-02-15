@@ -19,7 +19,7 @@ replicatorInspectionTests =
     [$(inspectTest $ 'elim3 === 'manualElim3)]
 
 elim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> Replicator a %1 -> [a]
-elim3 f r = Replicator.elim f r
+elim3 = Replicator.elim
 
 manualElim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> Replicator a %1 -> [a]
 manualElim3 f r =

@@ -27,7 +27,8 @@ module Data.Replicator.Linear.Internal
     take,
     extract,
     extend,
-    Elim (..),
+    Elim,
+    elim,
   )
 where
 
@@ -135,19 +136,25 @@ class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
   -- > elim (,) :: Replicator a %1 -> (a, a)
   -- > elim (,,) :: Replicator a %1 -> (a, a, a)
   elim :: f %1 -> Replicator a %1 -> b
+  elim f r = elim' f r
+
+  -- 'elim' is used to force eta-expansion of 'elim\''.
+  -- Otherwise, 'elim\'' might not get inlined
+  -- (see https://github.com/tweag/linear-base/issues/369).
+  elim' :: f %1 -> Replicator a %1 -> b
 
 instance Elim 0 a b b where
-  elim b r =
+  elim' b r =
     consume r & \case
       () -> b
-  {-# INLINE elim #-}
+  {-# INLINE elim' #-}
 
 instance (Arity b (a %1 -> b) ~ 1) => Elim 1 a b (a %1 -> b) where
-  elim f r = f (extract r)
-  {-# INLINE elim #-}
+  elim' f r = f (extract r)
+  {-# INLINE elim' #-}
 
 instance {-# OVERLAPPABLE #-} (n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => Elim n a b (a %1 -> f) where
-  elim g r =
+  elim' g r =
     next r & \case
-      (a, r') -> elim (g a) r'
-  {-# INLINE elim #-}
+      (a, r') -> elim' (g a) r'
+  {-# INLINE elim' #-}
