@@ -10,7 +10,7 @@
 
 -- | This module provides all functions which produce a
 -- 'Stream (Of a) m r' from some given non-stream inputs.
-module Streaming.Internal.Produce
+module Streaming.Linear.Internal.Produce
   ( -- * Constructing Finite 'Stream's
     yield,
     each',
@@ -50,12 +50,12 @@ import qualified Data.Text as Text
 import Data.Unrestricted.Linear
 import GHC.Stack
 import Prelude.Linear (($), (&))
-import Streaming.Internal.Consume (effects)
-import Streaming.Internal.Process
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Consume (effects)
+import Streaming.Linear.Internal.Process
+import Streaming.Linear.Internal.Type
 import qualified System.IO as System
 import System.IO.Linear
-import System.IO.Resource
+import System.IO.Resource.Linear
 import Prelude
   ( Bool (..),
     Either (..),

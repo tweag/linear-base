@@ -9,7 +9,7 @@
 
 -- | This module provides all functions that take input streams
 -- but do not return output streams.
-module Streaming.Internal.Consume
+module Streaming.Linear.Internal.Consume
   ( -- * Consuming 'Stream's of elements
 
     -- ** IO Consumers
@@ -69,11 +69,11 @@ import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Data.Unrestricted.Linear
 import Prelude.Linear (($), (&), (.))
-import Streaming.Internal.Process
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Process
+import Streaming.Linear.Internal.Type
 import qualified System.IO as System
 import System.IO.Linear
-import System.IO.Resource
+import System.IO.Resource.Linear
 import Prelude
   ( Bool (..),
     Eq (..),

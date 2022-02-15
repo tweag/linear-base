@@ -34,7 +34,7 @@ where
 import qualified Control.Monad as NonLinear ()
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
-import Data.Unrestricted.Internal.Consumable
+import Data.Unrestricted.Linear.Internal.Consumable
 import Prelude.Linear.Internal
 import Prelude (String)
 

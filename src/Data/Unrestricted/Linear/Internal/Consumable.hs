@@ -1,7 +1,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Unrestricted.Internal.Consumable
+module Data.Unrestricted.Linear.Internal.Consumable
   ( -- * Consumable
     Consumable (..),
     lseq,

@@ -6,7 +6,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Unrestricted.Internal.Dupable
+module Data.Unrestricted.Linear.Internal.Dupable
   ( Dupable (..),
     dup,
     dup3,
@@ -20,7 +20,7 @@ where
 import Data.Replicator.Linear.Internal (Replicator (..))
 import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
-import Data.Unrestricted.Internal.Consumable
+import Data.Unrestricted.Linear.Internal.Consumable
 import Prelude.Linear.Internal
 
 -- | The laws of 'Dupable' are dual to those of 'Monoid':

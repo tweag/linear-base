@@ -1,14 +1,14 @@
 {-# LANGUAGE LinearTypes #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Unrestricted.Internal.Movable
+module Data.Unrestricted.Linear.Internal.Movable
   ( -- * Movable
     Movable (..),
   )
 where
 
-import Data.Unrestricted.Internal.Dupable
-import Data.Unrestricted.Internal.Ur
+import Data.Unrestricted.Linear.Internal.Dupable
+import Data.Unrestricted.Linear.Internal.Ur
 
 -- | Use @'Movable' a@ to represent a type which can be used many times even
 -- when given linearly. Simple data types such as 'Bool' or @[]@ are 'Movable'.

@@ -36,8 +36,8 @@ import qualified Control.Monad.Trans.State.Strict as NonLinear
 import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
-import Data.Unrestricted.Internal.Consumable
-import Data.Unrestricted.Internal.Dupable
+import Data.Unrestricted.Linear.Internal.Consumable
+import Data.Unrestricted.Linear.Internal.Dupable
 import Prelude.Linear.Internal
 
 -- # StateT

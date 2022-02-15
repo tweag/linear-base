@@ -47,18 +47,18 @@
 -- > --------------------------------------------------------------------------------------------------------------------
 -- >
 module Streaming.Prelude.Linear
-  ( module Streaming.Internal.Type,
-    module Streaming.Internal.Consume,
-    module Streaming.Internal.Interop,
-    module Streaming.Internal.Many,
-    module Streaming.Internal.Process,
-    module Streaming.Internal.Produce,
+  ( module Streaming.Linear.Internal.Type,
+    module Streaming.Linear.Internal.Consume,
+    module Streaming.Linear.Internal.Interop,
+    module Streaming.Linear.Internal.Many,
+    module Streaming.Linear.Internal.Process,
+    module Streaming.Linear.Internal.Produce,
   )
 where
 
-import Streaming.Internal.Consume
-import Streaming.Internal.Interop
-import Streaming.Internal.Many
-import Streaming.Internal.Process
-import Streaming.Internal.Produce
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Consume
+import Streaming.Linear.Internal.Interop
+import Streaming.Linear.Internal.Many
+import Streaming.Linear.Internal.Process
+import Streaming.Linear.Internal.Produce
+import Streaming.Linear.Internal.Type

@@ -63,7 +63,7 @@ Data.V.Internal.Linear.V and moved the instances here. The common import issue
 is as follows. Dupable depends on @V@ yet the instances of @V@ depend on
 a variety of things (data functors, control functors, traversable) which
 often end up depending on dupable. By moving the instances here, we
-can make sure that Data.Unrestricted.Internal.Dupable only depends on the data
+can make sure that Data.Unrestricted.Linear.Internal.Dupable only depends on the data
 type defintion in Data.V.Linear.V and does not require any of the dependencies
 of the instances.
 

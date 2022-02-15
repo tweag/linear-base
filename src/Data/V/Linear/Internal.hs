@@ -40,11 +40,11 @@ module Data.V.Linear.Internal
   )
 where
 
-import Data.Arity.Linear.Internal.Arity
+import Data.Arity.Linear.Internal
 import Data.Kind
 import Data.Replicator.Linear.Internal (Replicator)
 import qualified Data.Replicator.Linear.Internal as Replicator
-import Data.Unrestricted.Internal.Dupable (Dupable (dupR))
+import Data.Unrestricted.Linear.Internal.Dupable (Dupable (dupR))
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import GHC.Exts (proxy#)

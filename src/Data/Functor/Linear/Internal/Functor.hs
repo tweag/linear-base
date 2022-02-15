@@ -19,7 +19,7 @@ import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
 import Data.Functor.Sum
-import Data.Unrestricted.Internal.Consumable
+import Data.Unrestricted.Linear.Internal.Consumable
 import Prelude.Linear.Internal
 import Prelude (Either (..), Maybe (..))
 

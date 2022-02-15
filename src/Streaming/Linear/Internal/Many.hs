@@ -10,7 +10,7 @@
 -- | This module contains all functions that do something with
 -- multiple streams as input or output. This includes combining
 -- streams, splitting a stream, etc.
-module Streaming.Internal.Many
+module Streaming.Linear.Internal.Many
   ( -- * Operations that use or return multiple 'Stream's
 
     -- ** Zips and Unzip
@@ -37,8 +37,8 @@ where
 
 import qualified Control.Functor.Linear as Control
 import Prelude.Linear (($), (&))
-import Streaming.Internal.Consume
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Consume
+import Streaming.Linear.Internal.Type
 import Prelude (Either (..), Ord (..), Ordering (..))
 
 -- # Zips and Unzip

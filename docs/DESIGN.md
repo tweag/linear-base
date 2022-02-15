@@ -14,7 +14,7 @@ Linear base consists of the following:
 * tools ported from [`base`] and from other critical haskell
   libraries, like `lens`,
 * new APIs for using system resources, e.g., file I/O in
-  [`System.IO.Resource`],
+  [`System.IO.Resource.Linear`],
 * new abstractions made possible by linear types, like monad-free
   mutable arrays in ([`Data.Array.Mutable.Linear`]).
 
@@ -91,5 +91,5 @@ more details.
 [`Data.Array.Mutable.Linear`]: https://github.com/tweag/linear-base/blob/master/src/Data/Array/Mutable/Linear.hs
 [blog post]: https://www.tweag.io/posts/2020-01-16-data-vs-control.html
 [contributor's guide]: ../CONTRIBUTING.md
-[`System.IO.Resource`]: https://github.com/tweag/linear-base/blob/master/src/System/IO/Resource.hs
+[`System.IO.Resource.Linear`]: https://github.com/tweag/linear-base/blob/master/src/System/IO/Resource/Linear.hs
 [issue-147]: https://github.com/tweag/linear-base/issues/147

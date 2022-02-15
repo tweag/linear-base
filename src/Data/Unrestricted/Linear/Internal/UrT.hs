@@ -8,7 +8,7 @@
 --
 -- A good use case is when you have a linear resource, then you can use @UrT (`Linear.State` s) a@
 -- to manipulate the resource linearly with regular do-notation.
-module Data.Unrestricted.Internal.UrT
+module Data.Unrestricted.Linear.Internal.UrT
   ( UrT (..),
     runUrT,
     liftUrT,
@@ -17,8 +17,8 @@ module Data.Unrestricted.Internal.UrT
 where
 
 import qualified Control.Functor.Linear as Linear
-import Data.Unrestricted.Internal.Movable
-import Data.Unrestricted.Internal.Ur
+import Data.Unrestricted.Linear.Internal.Movable
+import Data.Unrestricted.Linear.Internal.Ur
 
 -- | @UrT@ transforms linear control monads to non-linear monads.
 --
