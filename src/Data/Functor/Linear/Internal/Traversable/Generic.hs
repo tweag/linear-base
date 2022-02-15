@@ -17,8 +17,14 @@ import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Internal
 
--- | Linear counterpart of [@GTraversable@](https://hackage.haskell.org/package/traverse-with-class-1.0.1.1/docs/Data-Generics-Traversable.html#t:GTraversable).
+-- | This type class derives the definition of 'genericTraverse' by induction on
+-- the generic representation of a type.
 class GTraversable t where
+  -- gtraverse :: Applicative f => (a %1 -> f b) -> t a %1 -> forall r. (forall k. ((a %1 -> r) %1 -> k) %1 -> f k) %1 -> forall k. (t b %1 -> k) %1 -> f k
+  --
+  -- TODO: developer documentation on why we use this type rather than the more
+  -- straightforward type of `traverse`. Used, for instance, in the
+  -- generic-deriving package.
   gtraverse :: Applicative f => (a %1 -> f b) -> t a %1 -> Curried (Yoneda f) (Yoneda f) (t b)
 
 instance GTraversable t => GTraversable (M1 i c t) where
@@ -84,6 +90,19 @@ instance GTraversable UWord where
 
 -- | Implementation of 'Data.Functor.Linear.traverse' for types which derive
 -- (linear) 'Generics.Linear.Generic1'.
+--
+-- ### Example
+--
+-- > data T
+-- > $(deriveGeneric1 ''T)
+-- >
+-- > instance Traversable T where
+-- >   traverse = genericTraverse
+--
+-- Note that, contrary to many other classes in linear-base, we can't define
+-- `Traversable T` using deriving via, because the
+-- [role](https://downloads.haskell.org/ghc/latest/docs/html/users_guide/exts/roles.html)
+-- of `t`, in the type of 'Data.Functor.Linear.traverse', is nominal.
 genericTraverse ::
   (Generic1 t, GTraversable (Rep1 t), Applicative f) =>
   (a %1 -> f b) ->

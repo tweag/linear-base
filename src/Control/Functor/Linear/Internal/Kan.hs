@@ -6,7 +6,7 @@
 
 -- | A few things lifted from kan-extensions and lens for generic deriving of
 -- 'Data.Functor.Linear.Traversable' instances (see
--- 'Data.Functor.Linear.Internal.Generic').
+-- "Data.Functor.Linear.Internal.Traversable.Generic").
 module Control.Functor.Linear.Internal.Kan where
 
 import Control.Functor.Linear
