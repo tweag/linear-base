@@ -14,7 +14,7 @@ module Data.Replicator.Linear.Internal.ReplicationStream
   )
 where
 
-import Data.Unrestricted.Internal.Ur
+import Data.Unrestricted.Linear.Internal.Ur
 import Prelude.Linear.Internal
 
 -- | @ReplicationStream s g dup2 c@ is the infinite linear stream

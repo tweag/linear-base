@@ -8,7 +8,7 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Streaming.Internal.Type
+module Streaming.Linear.Internal.Type
   ( -- * The 'Stream' and 'Of' types
     -- $stream
     Stream (..),

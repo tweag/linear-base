@@ -19,7 +19,7 @@ if you are unfamiliar).
    Consider looking at `Data.{Array, Hashmap, Vector, Set}.Mutable.Linear`.
  * A linear `IO` monad is in `System.IO.Linear`.
    * A variant of linear `IO` which lets you enforce resource safety
-     can be found in `System.IO.Resource`.
+     can be found in `System.IO.Resource.Linear`.
  * Streams in the style of the [`streaming`
    library](https://hackage.haskell.org/package/streaming) is in
    `Streaming.Linear` and `Streaming.Prelude.Linear`.

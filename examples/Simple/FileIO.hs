@@ -33,7 +33,7 @@ import Control.Monad ()
 import Data.Text
 import Data.Unrestricted.Linear
 import qualified System.IO as System
-import qualified System.IO.Resource as Linear
+import qualified System.IO.Resource.Linear as Linear
 import Prelude
 
 -- *  Non-linear first line printing

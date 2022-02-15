@@ -77,13 +77,13 @@ module Data.Unrestricted.Linear
     dup5,
     dup6,
     dup7,
-    module Data.Unrestricted.Internal.Instances,
+    module Data.Unrestricted.Linear.Internal.Instances,
   )
 where
 
-import Data.Unrestricted.Internal.Consumable
-import Data.Unrestricted.Internal.Dupable
-import Data.Unrestricted.Internal.Instances
-import Data.Unrestricted.Internal.Movable
-import Data.Unrestricted.Internal.Ur
-import Data.Unrestricted.Internal.UrT
+import Data.Unrestricted.Linear.Internal.Consumable
+import Data.Unrestricted.Linear.Internal.Dupable
+import Data.Unrestricted.Linear.Internal.Instances
+import Data.Unrestricted.Linear.Internal.Movable
+import Data.Unrestricted.Linear.Internal.Ur
+import Data.Unrestricted.Linear.Internal.UrT

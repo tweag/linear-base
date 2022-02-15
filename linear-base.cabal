@@ -79,17 +79,17 @@ library
         Data.Set.Mutable.Linear.Internal
         Data.Tuple.Linear
         Data.Unrestricted.Linear
-        Data.Unrestricted.Internal.Consumable
-        Data.Unrestricted.Internal.Dupable
-        Data.Unrestricted.Internal.Movable
-        Data.Unrestricted.Internal.Instances
-        Data.Unrestricted.Internal.Ur
-        Data.Unrestricted.Internal.UrT
+        Data.Unrestricted.Linear.Internal.Consumable
+        Data.Unrestricted.Linear.Internal.Dupable
+        Data.Unrestricted.Linear.Internal.Movable
+        Data.Unrestricted.Linear.Internal.Instances
+        Data.Unrestricted.Linear.Internal.Ur
+        Data.Unrestricted.Linear.Internal.UrT
         Data.Replicator.Linear
         Data.Replicator.Linear.Internal
         Data.Replicator.Linear.Internal.ReplicationStream
         Data.Replicator.Linear.Internal.Instances
-        Data.Arity.Linear.Internal.Arity
+        Data.Arity.Linear.Internal
         Data.V.Linear
         Data.V.Linear.Internal
         Data.V.Linear.Internal.Instances
@@ -101,16 +101,16 @@ library
         Prelude.Linear
         Prelude.Linear.Internal
         Streaming.Linear
+        Streaming.Linear.Internal.Consume
+        Streaming.Linear.Internal.Interop
+        Streaming.Linear.Internal.Many
+        Streaming.Linear.Internal.Process
+        Streaming.Linear.Internal.Produce
+        Streaming.Linear.Internal.Type
         Streaming.Prelude.Linear
-        Streaming.Internal.Consume
-        Streaming.Internal.Interop
-        Streaming.Internal.Many
-        Streaming.Internal.Process
-        Streaming.Internal.Produce
-        Streaming.Internal.Type
         System.IO.Linear
-        System.IO.Resource
-        System.IO.Resource.Internal
+        System.IO.Resource.Linear
+        System.IO.Resource.Linear.Internal
         Unsafe.Linear
 
     hs-source-dirs:   src

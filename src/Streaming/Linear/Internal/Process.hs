@@ -11,7 +11,7 @@
 -- | This module provides functions that take one input
 -- stream and produce one output stream. These are functions that
 -- process a single stream.
-module Streaming.Internal.Process
+module Streaming.Linear.Internal.Process
   ( -- * Stream processors
 
     -- ** Splitting and inspecting streams of elements
@@ -97,7 +97,7 @@ import qualified Data.Set as Set
 import Data.Unrestricted.Linear
 import GHC.Stack
 import Prelude.Linear (($), (&), (.))
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Type
 import System.IO.Linear
 import Text.Read (readMaybe)
 import Prelude

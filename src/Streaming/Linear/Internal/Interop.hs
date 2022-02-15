@@ -7,7 +7,7 @@
 
 -- | This module contains functions for interoperating with other
 -- streaming libraries.
-module Streaming.Internal.Interop
+module Streaming.Linear.Internal.Interop
   ( -- * Interoperating with other streaming libraries
     reread,
   )
@@ -16,8 +16,8 @@ where
 import qualified Control.Functor.Linear as Control
 import Data.Unrestricted.Linear
 import Prelude.Linear (($))
-import Streaming.Internal.Produce
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Produce
+import Streaming.Linear.Internal.Type
 import Prelude (Maybe (..))
 
 -- | Read an @IORef (Maybe a)@ or a similar device until it reads @Nothing@.

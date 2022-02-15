@@ -2,7 +2,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module Data.Unrestricted.Internal.Ur
+module Data.Unrestricted.Linear.Internal.Ur
   ( Ur (..),
     unur,
     lift,

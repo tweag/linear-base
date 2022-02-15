@@ -11,7 +11,7 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 
-module System.IO.Resource.Internal where
+module System.IO.Resource.Linear.Internal where
 
 import Control.Exception (finally, mask, onException)
 import qualified Control.Functor.Linear as Control

@@ -32,7 +32,7 @@ module Data.Replicator.Linear.Internal
   )
 where
 
-import Data.Arity.Linear.Internal.Arity
+import Data.Arity.Linear.Internal
 import Data.Kind (Constraint, Type)
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
 import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream

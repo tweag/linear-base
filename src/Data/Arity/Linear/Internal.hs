@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Data.Arity.Linear.Internal.Arity (Arity) where
+module Data.Arity.Linear.Internal (Arity) where
 
 import GHC.TypeLits
 

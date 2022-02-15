@@ -8,7 +8,7 @@
 
 module Streaming.Linear
   ( -- $stream
-    module Streaming.Internal.Type,
+    module Streaming.Linear.Internal.Type,
 
     -- * Constructing a 'Stream' on a given functor
     yields,
@@ -66,8 +66,8 @@ import Data.Functor.Sum
 import Data.Unrestricted.Linear
 import GHC.Stack
 import Prelude.Linear (($), (&), (.))
-import Streaming.Internal.Process (destroyExposed)
-import Streaming.Internal.Type
+import Streaming.Linear.Internal.Process (destroyExposed)
+import Streaming.Linear.Internal.Type
 import qualified Streaming.Prelude.Linear as Stream
 import System.IO.Linear
 import Prelude

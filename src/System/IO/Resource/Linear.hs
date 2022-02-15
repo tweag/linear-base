@@ -11,7 +11,7 @@
 -- >>> :set -XLinearTypes
 -- >>> :set -XQualifiedDo
 -- >>> :set -XNoImplicitPrelude
--- >>> import qualified System.IO.Resource as Linear
+-- >>> import qualified System.IO.Resource.Linear as Linear
 -- >>> import qualified Control.Functor.Linear as Control
 -- >>> import qualified Data.Text as Text
 -- >>> import Prelude.Linear
@@ -27,7 +27,7 @@
 --
 -- To enable do notation, `QualifiedDo` extension is used. But since QualifiedDo
 -- only modifies the desugaring of binds, we still need to qualify `Control.return`.
-module System.IO.Resource
+module System.IO.Resource.Linear
   ( -- * The Resource I/O Monad
     RIO,
     run,
@@ -61,4 +61,4 @@ module System.IO.Resource
 where
 
 import qualified System.IO as System
-import System.IO.Resource.Internal
+import System.IO.Resource.Linear.Internal

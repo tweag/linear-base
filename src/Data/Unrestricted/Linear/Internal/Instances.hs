@@ -19,7 +19,7 @@
 -- many instances of Movable which we might have put in the module with
 -- Movable depend on Ur. So, we just put the instances of Movable and the
 -- other classes (for cleanness) in this module to avoid this dependence.
-module Data.Unrestricted.Internal.Instances where
+module Data.Unrestricted.Linear.Internal.Instances where
 
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
@@ -30,10 +30,10 @@ import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.Instances ()
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
 import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
-import Data.Unrestricted.Internal.Consumable
-import Data.Unrestricted.Internal.Dupable
-import Data.Unrestricted.Internal.Movable
-import Data.Unrestricted.Internal.Ur
+import Data.Unrestricted.Linear.Internal.Consumable
+import Data.Unrestricted.Linear.Internal.Dupable
+import Data.Unrestricted.Linear.Internal.Movable
+import Data.Unrestricted.Linear.Internal.Ur
 import Data.V.Linear.Internal (V (..))
 import qualified Data.V.Linear.Internal as V
 import qualified Data.Vector as Vector
