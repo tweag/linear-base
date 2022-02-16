@@ -53,6 +53,7 @@ import qualified Prelude
 -- > a + b = b + c
 class Additive a where
   (+) :: a %1 -> a %1 -> a
+  infixl 6 + -- same fixity as base.+
 
 -- | An 'Additive' type with an identity on @(+)@.
 class Additive a => AddIdentity a where
@@ -65,13 +66,15 @@ class AddIdentity a => AdditiveGroup a where
   negate :: a %1 -> a
   negate x = zero - x
   (-) :: a %1 -> a %1 -> a
+  infixl 6 - -- same fixity as base.-
   x - y = x + negate y
 
 -- | A numeric type with an associative @(*)@ operation
 class Multiplicative a where
   (*) :: a %1 -> a %1 -> a
+  infixl 7 * -- same fixity as base.*
 
--- | A 'Multipcative' type with an identity for @(*)@
+-- | A 'Multiplicative' type with an identity for @(*)@
 class Multiplicative a => MultIdentity a where
   one :: a
 

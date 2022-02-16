@@ -71,6 +71,8 @@ dataFmapDefault f = fmap f
 (<$>) = fmap
 {-# INLINE (<$>) #-}
 
+infixl 4 <$> -- same fixity as base.<$>
+
 -- |  @
 --    ('<&>') = 'flip' 'fmap'
 --    @
@@ -78,9 +80,13 @@ dataFmapDefault f = fmap f
 (<&>) a f = f <$> a
 {-# INLINE (<&>) #-}
 
+infixl 1 <&> -- same fixity as base.<&>
+
 -- | Linearly typed replacement for the standard '(Prelude.<$)' function.
 (<$) :: (Functor f, Consumable b) => a %1 -> f b %1 -> f a
 a <$ fb = fmap (`lseq` a) fb
+
+infixl 4 <$ -- same fixity as base.<$
 
 -- | Discard a consumable value stored in a control functor.
 void :: (Functor f, Consumable a) => f a %1 -> f ()
@@ -106,6 +112,8 @@ class (Data.Applicative f, Functor f) => Applicative f where
   (<*>) :: f (a %1 -> b) %1 -> f a %1 -> f b
   (<*>) = liftA2 id
 
+  infixl 4 <*> -- same fixity as base.<*>
+
   -- | @liftA2 g@ consumes @g@ linearly as it lifts it
   -- over two functors: @liftA2 g :: f a %1-> f b %1-> f c@.
   liftA2 :: (a %1 -> b %1 -> c) %1 -> f a %1 -> f b %1 -> f c
@@ -128,8 +136,11 @@ class Applicative m => Monad m where
   -- exactly once) on the value of type @a@ inside the value of type @m a@
   (>>=) :: m a %1 -> (a %1 -> m b) %1 -> m b
 
+  infixl 1 >>= -- same fixity as base.>>=
+
   (>>) :: m () %1 -> m a %1 -> m a
   m >> k = m >>= (\() -> k)
+  infixl 1 >> -- same fixity as base.>>
 
 -- | This class handles pattern-matching failure in do-notation.
 -- See "Control.Monad.Fail" for details.

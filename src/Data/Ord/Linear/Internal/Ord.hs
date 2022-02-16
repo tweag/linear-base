@@ -47,19 +47,25 @@ class Eq a => Ord a where
   -- which should be understood as \"x is @(compare x y)@ y\".
   compare :: a %1 -> a %1 -> Ordering
 
+  -- /!\ `compare` doesn't have a specified fixity in base
+  -- but we chose infix 4 for consistency with `elem`, <, <=, ==, /= ...
+  infix 4 `compare`
+
   (<=) :: a %1 -> a %1 -> Bool
   x <= y = not (x > y)
+  infix 4 <= -- same fixity as base.<=
 
   (<) :: a %1 -> a %1 -> Bool
   x < y = compare x y == LT
+  infix 4 < -- same fixity as base.<
 
   (>) :: a %1 -> a %1 -> Bool
   x > y = compare x y == GT
+  infix 4 > -- same fixity as base.>
 
   (>=) :: a %1 -> a %1 -> Bool
   x >= y = not (x < y)
-
-  infix 4 <=, <, >, >=
+  infix 4 >= -- same fixity as base.>=
 
 -- | @max x y@ returns the larger input, or  'y'
 -- in case of a tie.

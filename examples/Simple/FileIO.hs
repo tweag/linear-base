@@ -118,6 +118,8 @@ type LinHandle = Linear.Handle
 (>>#=) :: RIO a %1 -> (a %1 -> RIO b) %1 -> RIO b
 (>>#=) = (Control.>>=)
 
+infixl 1 >>#= -- same fixity as base.>>=
+
 -- | Non-linear bind
 -- Notice the continuation has a non-linear arrow,
 -- i.e., (() -> RIO b). For simplicity, we don't use
@@ -125,6 +127,8 @@ type LinHandle = Linear.Handle
 -- (>>==) :: RIO (Ur a) %1-> (a -> RIO b) %1-> RIO b
 (>>==) :: RIO () %1 -> (() -> RIO b) %1 -> RIO b
 (>>==) ma f = ma Control.>>= (\() -> f ())
+
+infixl 1 >>== -- same fixity as base.>>=
 
 -- | Inject
 -- provided just to make the type explicit

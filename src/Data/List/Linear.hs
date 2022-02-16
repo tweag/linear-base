@@ -105,6 +105,8 @@ import qualified Prelude as Prelude
 (++) :: [a] %1 -> [a] %1 -> [a]
 (++) = Unsafe.toLinear2 (NonLinear.++)
 
+infixr 5 ++ -- same fixity as base.++
+
 map :: (a %1 -> b) -> [a] %1 -> [b]
 map = fmap
 

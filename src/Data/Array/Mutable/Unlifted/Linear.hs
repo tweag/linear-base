@@ -55,6 +55,8 @@ unArray# f = Unsafe.toLinear (\(Array# a) -> Ur (f a))
 lseq :: Array# a %1 -> b %1 -> b
 lseq = Unsafe.toLinear2 (\_ b -> b)
 
+infixr 0 `lseq` -- same fixity as base.seq
+
 -- | Allocate a mutable array of given size using a default value.
 --
 -- The size should be non-negative.
