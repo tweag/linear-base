@@ -16,6 +16,7 @@ module Control.Functor.Linear.Internal.Class
     (<$>),
     (<&>),
     (<$),
+    void,
 
     -- * Applicative Functors
     Applicative (..),
@@ -80,6 +81,10 @@ dataFmapDefault f = fmap f
 -- | Linearly typed replacement for the standard '(Prelude.<$)' function.
 (<$) :: (Functor f, Consumable b) => a %1 -> f b %1 -> f a
 a <$ fb = fmap (`lseq` a) fb
+
+-- | Discard a consumable value stored in a control functor.
+void :: (Functor f, Consumable a) => f a %1 -> f ()
+void = fmap consume
 
 -- # Control Applicatives
 -------------------------------------------------------------------------------

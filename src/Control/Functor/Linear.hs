@@ -14,6 +14,7 @@ module Control.Functor.Linear
     (<$>),
     (<&>),
     (<$),
+    void,
     dataFmapDefault,
     Applicative (..),
     dataPureDefault,
