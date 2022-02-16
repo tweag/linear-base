@@ -14,6 +14,50 @@ import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Prelude.Linear.Internal
 
+-- | A linear version of @Data.Functor.Day.Curried.Curried@ in the
+-- @kan-extensions@ package. We use this for generic traversals. How
+-- does it help? Consider a type like
+--
+-- @data Foo a = Foo a a a a@
+--
+-- The generic representation may look roughly like
+--
+-- @D1 _ (C1 _ ((S1 _ Rec1 :*: S1 _ Rec1) :*: (S1 _ Rec1 :*: S1 _ Rec1)))@
+--
+-- Traversing this naively requires a bunch of @fmap@ applications.
+-- Most of them could be removed using 'Yoneda', but one aspect
+-- can't be. Let's simplify down to the hard bit:
+--
+-- @m :*: (n :*: o)@
+--
+-- Traversing this looks like
+--
+-- @((:*:) <$> m) <*> ((:*:) <$> n <*> o)@
+--
+-- We want to reassociate the applications so the whole reconstruction
+-- of the generic representation happens in one place, allowing inlining
+-- to (hopefully) erase them altogether. It will end up looking roughly like
+--
+-- @(\x y z -> x :*: (y :*: z)) <$> m <*> n <*> o@
+--
+-- In our context, we always have the two functor
+-- arguments the same, so something like @Curried f f@.
+-- @Curried f f a@ is a lot like @f a@, as demonstrated directly by
+-- 'lowerCurriedC' and, in @kan-extensions@, @liftCurried@.
+-- It's a sort of "continuation passing style" version. If we have
+-- something like
+--
+-- @
+-- Con <$> m <*> n <*> o
+--
+-- -- parenthesized
+--
+-- ((Con <$> m) <*> n) <*> o
+-- @
+--
+-- we can look at what happens next to each field. So the next thing
+-- after performing @m@ is to map @Con@ over it. The next thing after
+-- performing @n@ is to apply @Con <$> m@ to it within the functor.
 newtype Curried g h a = Curried
   {runCurried :: forall r. g (a %1 -> r) %1 -> h r}
 
