@@ -36,10 +36,14 @@ class Functor f where
 (<$>) :: Functor f => (a %1 -> b) -> f a %1 -> f b
 (<$>) = fmap
 
+infixl 4 <$> -- same fixity as base.<$>
+
 -- | Replace all occurances of @b@ with the given @a@
 -- and consume the functor @f b@.
 (<$) :: (Functor f, Consumable b) => a -> f b %1 -> f a
 a <$ fb = fmap (`lseq` a) fb
+
+infixl 4 <$ -- same fixity as base.<$
 
 -- | Discard a consumable value stored in a data functor.
 void :: (Functor f, Consumable a) => f a %1 -> f ()

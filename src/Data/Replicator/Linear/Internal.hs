@@ -74,6 +74,8 @@ sf <*> sx = Streamed (toStream sf ReplicationStream.<*> toStream sx)
       Moved x -> ReplicationStream.pure x
       Streamed stream -> stream
 
+infixl 4 <*> -- same fixity as base.<*>
+
 -- | Extracts the next item from the \"infinite stream\" @'Replicator' a@.
 next :: Replicator a %1 -> (a, Replicator a)
 next (Moved x) = (x, Moved x)

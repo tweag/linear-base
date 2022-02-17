@@ -49,6 +49,7 @@ class Functor f => Applicative f where
   {-# MINIMAL pure, (liftA2 | (<*>)) #-}
   pure :: a -> f a
   (<*>) :: f (a %1 -> b) %1 -> f a %1 -> f b
+  infixl 4 <*> -- same fixity as base.<*>
   f <*> x = liftA2 ($) f x
   liftA2 :: (a %1 -> b %1 -> c) -> f a %1 -> f b %1 -> f c
   liftA2 f x y = f <$> x <*> y

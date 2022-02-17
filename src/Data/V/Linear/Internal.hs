@@ -80,6 +80,8 @@ map f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
   V $
     Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
 
+infixl 4 <*> -- same fixity as base.<*>
+
 -- | Splits the head and tail of the 'V', returning an unboxed tuple.
 uncons# :: 1 <= n => V n a %1 -> (# a, V (n - 1) a #)
 uncons# = Unsafe.toLinear uncons'#

@@ -55,7 +55,7 @@ data Stream f m r where
 data Of a b where
   (:>) :: !a -> b %1 -> Of a b
 
-infixr 5 :>
+infixr 5 :> -- same fixity as streaming.:>
 
 -- # Control.Monad instance for (Stream f m)
 -------------------------------------------------------------------------------

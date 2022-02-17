@@ -23,7 +23,7 @@ False && False = False
 False && True = False
 True && x = x
 
-infixr 3 &&
+infixr 3 && -- same as base.&&
 
 -- | @True@ iff either is @True@
 -- __NOTE:__ this is strict and not lazy!
@@ -32,7 +32,7 @@ True || False = True
 True || True = True
 False || x = x
 
-infixr 2 ||
+infixr 2 || -- same as base.||
 
 -- | @not b@ is @True@ iff b is @False@
 -- __NOTE:__ this is strict and not lazy!

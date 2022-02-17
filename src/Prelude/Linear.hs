@@ -168,3 +168,5 @@ flip f b a = f a b
 -- | Linearly typed replacement for the standard '(Prelude.<*)' function.
 (<*) :: (Data.Applicative f, Consumable b) => f a %1 -> f b %1 -> f a
 fa <* fb = Data.fmap (flip lseq) fa Data.<*> fb
+
+infixl 4 <* -- same fixity as base.<*

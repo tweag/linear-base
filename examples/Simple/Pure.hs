@@ -192,6 +192,8 @@ regularIdentity x = linearIdentity x
 (#.) :: (b %1 -> c) -> (a %1 -> b) -> (a %1 -> c)
 g #. f = \a -> g (f a)
 
+infixr 9 #. -- same fixity as base..
+
 linearCompose :: (a, a) %1 -> (a, a)
 linearCompose = linearIdentity #. linearSwap
 

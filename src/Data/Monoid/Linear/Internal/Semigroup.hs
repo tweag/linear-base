@@ -29,6 +29,7 @@ import Prelude.Linear.Internal
 -- that linearly consumes two @a@s.
 class Prelude.Semigroup a => Semigroup a where
   (<>) :: a %1 -> a %1 -> a
+  infixr 6 <> -- same fixity as base.<>
 
 ---------------
 -- Instances --

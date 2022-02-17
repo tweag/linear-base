@@ -20,12 +20,12 @@ import GHC.Exts (TYPE)
 ($) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
 ($) f x = f x
 
-infixr 0 $
+infixr 0 $ -- same fixity as base.$
 
 (&) :: forall {rep} a (b :: TYPE rep) p q. a %p -> (a %p -> b) %q -> b
 x & f = f x
 
-infixl 1 &
+infixl 1 & -- same fixity as base.&
 
 id :: a %q -> a
 id x = x
@@ -42,8 +42,12 @@ asTypeOf = const
 seq :: a -> b %q -> b
 seq !_ y = y
 
+infixr 0 `seq` -- same fixity as base.seq
+
 ($!) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
 ($!) f !a = f a
+
+infixr 0 $! -- same fixity as base.$!
 
 curry :: ((a, b) %p -> c) %q -> a %p -> b %p -> c
 curry f x y = f (x, y)
@@ -55,6 +59,8 @@ uncurry f (x, y) = f x y
 -- higher-order and we don't have sufficient multiplicity polymorphism yet.
 (.) :: forall {rep} b (c :: TYPE rep) a q m n. (b %1 -> c) %q -> (a %1 -> b) %m -> a %n -> c
 f . g = \x -> f (g x)
+
+infixr 9 . -- same fixity as base..
 
 -- | Convenience operator when a higher-order function expects a non-linear
 -- arrow but we have a linear arrow.

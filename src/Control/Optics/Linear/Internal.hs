@@ -104,6 +104,8 @@ assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 (.>) :: Optic_ arr s t a b -> Optic_ arr a b x y -> Optic_ arr s t x y
 Optical f .> Optical g = Optical (f Prelude.. g)
 
+infixr 9 .> -- same fixity as lens..>
+
 lens :: (s %1 -> (a, b %1 -> t)) -> Lens s t a b
 lens k = Optical $ \f -> dimap k (\(x, g) -> g $ x) (first f)
 

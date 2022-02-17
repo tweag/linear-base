@@ -80,6 +80,7 @@ class Profunctor (arr :: Type -> Type -> Type) where
 -- with the bifunctor @m@.
 class (SymmetricMonoidal m u, Profunctor arr) => Monoidal m u arr where
   (***) :: a `arr` b -> x `arr` y -> (a `m` x) `arr` (b `m` y)
+  infixr 3 *** -- same fixity as base.***
   unit :: u `arr` u
 
 -- | A @(Strong m u arr)@ instance means that the function-like thing

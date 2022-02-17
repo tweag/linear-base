@@ -76,3 +76,5 @@ pure x =
         consumesf sf' & \case
           () -> consumesx sx'
     )
+
+infixl 4 <*> -- same fixity as base.<*>

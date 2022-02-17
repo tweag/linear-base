@@ -530,6 +530,8 @@ elem a stream = loop stream
           False -> elem a stream'
 {-# INLINEABLE elem #-}
 
+infix 4 `elem` -- same fixity as base.elem
+
 elem_ ::
   forall a m r.
   (Consumable r, Control.Monad m, Eq a) =>

@@ -29,9 +29,10 @@ class Eq a where
   {-# MINIMAL (==) | (/=) #-}
   (==) :: a %1 -> a %1 -> Bool
   x == y = not (x /= y)
+  infix 4 == -- same fixity as base.==
   (/=) :: a %1 -> a %1 -> Bool
   x /= y = not (x == y)
-  infix 4 ==, /=
+  infix 4 /= -- same fixity as base./=
 
 -- * Instances
 
