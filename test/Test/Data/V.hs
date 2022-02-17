@@ -17,7 +17,7 @@ vInspectionTests :: TestTree
 vInspectionTests =
   testGroup
     "Inspection testing of elim and make for V"
-    [ $(inspectTest $ 'make3 === 'manualMake3),
+    [ $(inspectTest $ 'make3 ==- 'manualMake3),
       $(inspectTest $ 'elim3 ==- 'manualElim3)
     ]
 
