@@ -50,6 +50,9 @@ module Data.V.Linear
     theLength,
     Make,
     make,
+
+    -- * Type-level helpers for staging
+    ArityV,
   )
 where
 

@@ -3,12 +3,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
@@ -37,6 +36,7 @@ module Data.V.Linear.Internal
     theLength,
     Make,
     make,
+    ArityV,
   )
 where
 
@@ -98,58 +98,115 @@ uncons = Unsafe.toLinear uncons'
     uncons' (V xs) = (Vector.head xs, V (Vector.tail xs))
 {-# INLINEABLE uncons #-}
 
--- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
--- of type @a@ and then returning a value of type @b@.
+-- | Takes a function of type @a %1 -> a %1 -> ... %1 -> a %1 -> b@, and
+-- returns a @b@ . The @'V' n a@ is used to supply all the items of type @a@
+-- required by the function.
 --
--- It is solely used to define the type of the 'elim' function.
-type Elim :: Nat -> Type -> Type -> Type -> Constraint
-class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
-  -- | Takes a function of type @a %1 -> a %1 -> ... %1 -> a %1 -> b@, and
-  -- returns a @b@ . The 'V' is used to supply all the items of type @a@
-  -- required by the function.
-  --
-  -- For instance:
-  --
-  -- > elim @1 :: (a %1 -> b) %1 -> V 1 a %1 -> b
-  -- > elim @2 :: (a %1 -> a %1 -> b) %1 -> V 2 a %1 -> b
-  -- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> V 3 a %1 -> b
-  elim :: f %1 -> V n a %1 -> b
-  elim f v = elim' f v
-  {-# INLINEABLE elim #-}
+-- For instance:
+--
+-- > elim @1 :: (a %1 -> b) %1 -> V 1 a %1 -> b
+-- > elim @2 :: (a %1 -> a %1 -> b) %1 -> V 2 a %1 -> b
+-- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> V 3 a %1 -> b
+--
+-- It is not always necessary to give the arity argument. It can be
+-- inferred from the function argument.
+--
+-- About the constraints of this function (they won't get in your way):
+--
+-- * @n ~ 'PeanoToNat' ('NatToPeano' n)@ is just there to help GHC, and will always be proved
+-- * @'Elim' ('NatToPeano' n) a b@ provides the actual implementation of 'elim'; there is an instance of this class for any @(n, a, b)@
+-- * @'IsFunN' a b f, f ~ 'FunN' ('NatToPeano' n) a b, n ~ 'Arity' b f@ indicate the shape of @f@ to the typechecker (see documentation of 'IsFunN').
+elim ::
+  forall (n :: Nat) a b f.
+  ( -- GHC cannot prove it for any @n@, but can prove it at call site when
+    -- @n@ is known
+    n ~ PeanoToNat (NatToPeano n),
+    Elim (NatToPeano n) a b,
+    IsFunN a b f,
+    f ~ FunN (NatToPeano n) a b,
+    n ~ Arity b f
+  ) =>
+  f %1 ->
+  V n a %1 ->
+  b
+elim f v = elim' @(NatToPeano n) f v
 
-  -- 'elim' is used to force eta-expansion of 'elim\''.
-  -- Otherwise, 'elim\'' might not get inlined
-  -- (see https://github.com/tweag/linear-base/issues/369).
-  elim' :: f %1 -> V n a %1 -> b
+-- | @'Elim' n a b@ is used to implement 'elim' without recursion
+-- so that we can guarantee that 'elim' will be inlined and unrolled.
+--
+-- 'Elim' is solely used in the signature of 'elim'.
+type Elim :: Peano -> Type -> Type -> Constraint
+class Elim n a b where
+  -- Note that 'elim' is, in particular, used to force eta-expansion of
+  -- 'elim\''. Otherwise, 'elim\'' might not get inlined (see
+  -- https://github.com/tweag/linear-base/issues/369).
+  elim' :: FunN n a b %1 -> V (PeanoToNat n) a %1 -> b
 
-instance Elim 0 a b b where
+instance Elim 'Z a b where
   elim' b v =
     consume v & \case
       () -> b
   {-# INLINE elim' #-}
 
-instance (1 <= n, n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => Elim n a b (a %1 -> f) where
+instance (1 <= 1 + PeanoToNat n, (1 + PeanoToNat n) - 1 ~ PeanoToNat n, Elim n a b) => Elim ('S n) a b where
   elim' g v =
     uncons v & \case
-      (a, v') -> elim' (g a) v'
+      (a, v') -> elim' @n (g a) v'
   {-# INLINE elim' #-}
 
 -- | Prepends the given element to the 'V'.
 cons :: forall n a. a %1 -> V (n - 1) a %1 -> V n a
 cons = Unsafe.toLinear2 $ \x (V v) -> V (Vector.cons x v)
 
--- | @'Make' m n a f@ asserts that @f@ is a function taking @m@ linear arguments
--- of type @a@ and then returning a value of type @'V' n a@.
+-- | The 'ArityV' type family exists to help the type checker compute the arity
+-- @n ~ 'Arity' b f@ when @b ~ 'V' n a@.
+type family ArityV f where
+  ArityV (V _ _) = 0
+  ArityV (a %1 -> f) = 1 + ArityV f
+  ArityV f =
+    TypeError
+      ( 'Text "Arity: "
+          ':<>: 'ShowType f
+          ':<>: 'Text " isn't a linear function with head (V _ _)"
+      )
+
+-- | Builds a n-ary constructor for @'V' n a@ (i.e. a function taking @n@ linear
+-- arguments of type @a@ and returning a @'V' n a@).
 --
--- It is solely used to define the type of the 'make' function.
-type Make :: Nat -> Nat -> Type -> Type -> Constraint
-class (m ~ Arity (V n a) f) => Make m n a f | f -> m n a where
+-- > myV :: V 3 Int
+-- > myV = make 1 2 3
+--
+-- About the constraints of this function (they won't get in your way):
+--
+-- * @n ~ 'PeanoToNat' ('NatToPeano' n)@ is just there to help GHC, and will always be proved
+-- * @'Make' ('NatToPeano' n) ('NatToPeano' n) a@ provides the actual implementation of 'make'; there is an instance of this class for any @(n, a)@
+-- * @'IsFunN' a ('V' n a) f, f ~ 'FunN' ('NatToPeano' n) a ('V' n a), n ~ 'ArityV' f@ indicate the shape to the typechecker of @f@ (see documentation of 'IsFunN').
+make ::
+  forall (n :: Nat) a f.
+  ( -- GHC cannot prove it for any @n@, but can prove it at call site when
+    -- @n@ is known
+    n ~ PeanoToNat (NatToPeano n),
+    Make (NatToPeano n) (NatToPeano n) a,
+    IsFunN a (V n a) f,
+    f ~ FunN (NatToPeano n) a (V n a),
+    n ~ ArityV f
+  ) =>
+  f
+make = make' @(NatToPeano n) @(NatToPeano n) @a id
+{-# INLINE make #-}
+
+-- | @'Make' m n a@ is used to avoid recursion in the implementation of 'make'
+-- so that 'make' can be inlined.
+--
+-- 'Make' is solely used in the signature of that function.
+type Make :: Peano -> Peano -> Type -> Constraint
+class Make m n a where
   -- The idea behind Make / make' / make is the following:
   --
-  -- f takes m values of type a, but returns a 'V n a' (with n ≥ m),
+  -- The function created by make' takes m values of type a, but returns a 'V n a' (with n ≥ m),
   -- so the n - m missing values must be supplied via the accumulator.
   --
-  -- @make' is initially called with m = n via make, and as m decreases,
+  -- make' is initially called with m = n via make, and as m decreases,
   -- the number of lambda on the left increases and the captured values are put
   -- in the accumulator
   -- ('V[ ... ] <> ' represents the "extend" operation for 'V'):
@@ -161,23 +218,14 @@ class (m ~ Arity (V n a) f) => Make m n a f | f -> m n a where
   -- > --> ...
   -- > --> λx. λy. ... λz. make' @0 @n (V[x, y, ... z] <>)    -- make' @0 @n f = f V[]
   -- > --> λx. λy. ... λz. V[x, y, ... z]
-  make' :: (V m a %1 -> V n a) %1 -> f
+  make' :: (V (PeanoToNat m) a %1 -> V (PeanoToNat n) a) %1 -> FunN m a (V (PeanoToNat n) a)
 
-  -- | Builds a n-ary constructor for @'V' n a@ (i.e. a function taking @n@ linear
-  -- arguments of type @a@ and returning a @'V' n a@).
-  --
-  -- > myV :: V 3 Int
-  -- > myV = make 1 2 3
-  make :: (n ~ m) => f
-  make = make' @n @n id
-  {-# INLINE make #-}
-
-instance Make 0 n a (V n a) where
+instance Make 'Z n a where
   make' produceFrom = produceFrom empty
   {-# INLINE make' #-}
 
-instance (m ~ Arity (V n a) (a %1 -> f), Make (m - 1) n a f) => Make m n a (a %1 -> f) where
-  make' produceFrom = \x -> make' @(m - 1) @n @a (\s -> produceFrom $ cons x s)
+instance ((1 + PeanoToNat m) - 1 ~ PeanoToNat m, Make m n a) => Make ('S m) n a where
+  make' produceFrom = \x -> make' @m @n @a (\s -> produceFrom $ cons x s)
   {-# INLINE make' #-}
 
 -------------------------------------------------------------------------------
