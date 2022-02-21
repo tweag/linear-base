@@ -1,13 +1,15 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -116,47 +118,47 @@ extract (Streamed (ReplicationStream s give _ _)) = give s
 extend :: (Replicator a %1 -> b) -> Replicator a %1 -> Replicator b
 extend f = map f . duplicate
 
+-- | Takes a function of type @a %1 -> a %1 -> ... %1 -> a %1 -> b@, and
+-- returns a @b@ . The replicator is used to supply all the items of type @a@
+-- required by the function.
+--
+-- For instance:
+--
+-- > elim @1 :: (a %1 -> b) %1 -> Replicator a %1 -> b
+-- > elim @2 :: (a %1 -> a %1 -> b) %1 -> Replicator a %1 -> b
+-- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> Replicator a %1 -> b
+--
+-- It is not always necessary to give the arity argument. It can be
+-- inferred from the function argument.
+--
+-- > elim (,) :: Replicator a %1 -> (a, a)
+-- > elim (,,) :: Replicator a %1 -> (a, a, a)
+elim :: forall (n :: Nat) a b f. (Elim (NatToPeano n) a b, IsFunN a b f, f ~ FunN (NatToPeano n) a b, n ~ Arity b f) => f %1 -> Replicator a %1 -> b
+elim f r = elim' @(NatToPeano n) f r
+
 -- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
 -- of type @a@ and then returning a value of type @b@.
 --
 -- It is solely used to define the type of the 'elim' function.
-type Elim :: Nat -> Type -> Type -> Type -> Constraint
-class (n ~ Arity b f) => Elim n a b f | n a b -> f, f b -> n where
-  -- | Takes a function of type @a %1 -> a %1 -> ... %1 -> a %1 -> b@, and
-  -- returns a @b@ . The replicator is used to supply all the items of type @a@
-  -- required by the function.
-  --
-  -- For instance:
-  --
-  -- > elim @1 :: (a %1 -> b) %1 -> Replicator a %1 -> b
-  -- > elim @2 :: (a %1 -> a %1 -> b) %1 -> Replicator a %1 -> b
-  -- > elim @3 :: (a %1 -> a %1 -> a %1 -> b) %1 -> Replicator a %1 -> b
-  --
-  -- It is not always necessary to give the arity argument. It can be
-  -- inferred from the function argument.
-  --
-  -- > elim (,) :: Replicator a %1 -> (a, a)
-  -- > elim (,,) :: Replicator a %1 -> (a, a, a)
-  elim :: f %1 -> Replicator a %1 -> b
-  elim f r = elim' f r
+type Elim :: Peano -> Type -> Type -> Constraint
+class Elim n a b where
+  -- Note that 'elim' is, in particular, used to force eta-expansion of
+  -- 'elim\''.  Otherwise, 'elim\'' might not get inlined (see
+  -- https://github.com/tweag/linear-base/issues/369).
+  elim' :: FunN n a b %1 -> Replicator a %1 -> b
 
-  -- 'elim' is used to force eta-expansion of 'elim\''.
-  -- Otherwise, 'elim\'' might not get inlined
-  -- (see https://github.com/tweag/linear-base/issues/369).
-  elim' :: f %1 -> Replicator a %1 -> b
-
-instance Elim 0 a b b where
+instance Elim 'Z a b where
   elim' b r =
     consume r & \case
       () -> b
   {-# INLINE elim' #-}
 
-instance (Arity b (a %1 -> b) ~ 1) => Elim 1 a b (a %1 -> b) where
+instance Elim ('S 'Z) a b where
   elim' f r = f (extract r)
   {-# INLINE elim' #-}
 
-instance {-# OVERLAPPABLE #-} (n ~ Arity b (a %1 -> f), Elim (n - 1) a b f) => Elim n a b (a %1 -> f) where
+instance (Elim ('S n) a b) => Elim ('S ('S n)) a b where
   elim' g r =
     next r & \case
-      (a, r') -> elim' (g a) r'
+      (a, r') -> elim' @('S n) (g a) r'
   {-# INLINE elim' #-}

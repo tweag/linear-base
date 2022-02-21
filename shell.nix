@@ -19,6 +19,9 @@ let
         "
     '';
   };
+  brokenIn92 = if ghcVersion == "921" then [] else [
+    pkgs.haskell-language-server
+  ];
 in with pkgs;
 
 mkShell {
@@ -28,10 +31,9 @@ mkShell {
 
   buildInputs = [
     haskell.compiler."ghc${ghcVersion}"
-    haskell-language-server
     cabal-install
     stack-wrapped
     nix
     cabal-docspec
-  ];
+  ] ++ brokenIn92;
 }

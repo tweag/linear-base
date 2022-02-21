@@ -98,13 +98,13 @@ instance Functor (Yoneda f) where
 instance Applicative f => Data.Applicative (Yoneda f) where
   pure a = Yoneda (\f -> pure (f a))
   {-# INLINE pure #-}
-  Yoneda m <*> Yoneda n = Yoneda (\f -> m (f .) <*> n id)
+  Yoneda m <*> Yoneda n = Yoneda (\f -> m (\g -> f . g) <*> n id)
   {-# INLINE (<*>) #-}
 
 instance Applicative f => Applicative (Yoneda f) where
   pure a = Yoneda (\f -> pure (f a))
   {-# INLINE pure #-}
-  Yoneda m <*> Yoneda n = Yoneda (\f -> m (f .) <*> n id)
+  Yoneda m <*> Yoneda n = Yoneda (\f -> m (\g -> f . g) <*> n id)
   {-# INLINE (<*>) #-}
 
 lowerYoneda :: Yoneda f a %1 -> f a
@@ -117,5 +117,5 @@ liftCurriedYonedaC fa = Curried (`yap` fa)
 {-# INLINE liftCurriedYonedaC #-}
 
 yap :: Applicative f => Yoneda f (a %1 -> b) %1 -> f a %1 -> Yoneda f b
-yap (Yoneda k) fa = Yoneda (\ab_r -> k (ab_r .) <*> fa)
+yap (Yoneda k) fa = Yoneda (\ab_r -> k (\g -> ab_r . g) <*> fa)
 {-# INLINE yap #-}
