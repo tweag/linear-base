@@ -103,6 +103,7 @@ library
         Prelude.Linear.Generically
         Prelude.Linear.GenericUtil
         Prelude.Linear.Internal
+        Prelude.Linear.Unsatisfiable
         Streaming.Linear
         Streaming.Linear.Internal.Consume
         Streaming.Linear.Internal.Interop
