@@ -119,26 +119,58 @@ instance Control.Applicative (StateR s) where
       go (a, (h, s'')) = (h a, s'')
 
 ------------------------
--- Standard instances --
+-- Generic derived instances --
 ------------------------
 
 instance Traversable [] where
-  traverse _f [] = Control.pure []
-  traverse f (a : as) = (:) Control.<$> f a Control.<*> traverse f as
+  traverse = genericTraverse
 
 instance Traversable ((,) a) where
-  sequence (a, fb) = (a,) Control.<$> fb
+  traverse = genericTraverse
+instance Traversable ((,,) a b) where
+  traverse = genericTraverse
+instance Traversable ((,,,) a b c) where
+  traverse = genericTraverse
+instance Traversable ((,,,,) a b c d) where
+  traverse = genericTraverse
 
 instance Traversable Maybe where
-  sequence Nothing = Control.pure Nothing
-  sequence (Just x) = Control.fmap Just x
+  traverse = genericTraverse
 
 instance Traversable (Const a) where
-  sequence (Const x) = Control.pure (Const x)
+  traverse = genericTraverse
 
 instance Traversable (Either a) where
-  sequence (Left x) = Control.pure (Left x)
-  sequence (Right x) = Right Control.<$> x
+  traverse = genericTraverse
+
+instance Traversable U1 where
+  traverse = genericTraverse
+instance Traversable V1 where
+  traverse = genericTraverse
+instance (Traversable f, Traversable g) => Traversable (f :*: g) where
+  traverse = genericTraverse
+instance (Traversable f, Traversable g) => Traversable (f :+: g) where
+  traverse = genericTraverse
+instance Traversable f => Traversable (M1 i c f) where
+  traverse = genericTraverse
+instance Traversable Par1 where
+  traverse = genericTraverse
+instance (Traversable f, Traversable g) => Traversable (f :.: g) where
+  traverse = genericTraverse
+instance Traversable (K1 i v) where
+  traverse = genericTraverse
+instance Traversable UAddr where
+  traverse = genericTraverse
+instance Traversable UChar where
+  traverse = genericTraverse
+instance Traversable UDouble where
+  traverse = genericTraverse
+instance Traversable UFloat where
+  traverse = genericTraverse
+instance Traversable UInt where
+  traverse = genericTraverse
+instance Traversable UWord where
+  traverse = genericTraverse
 
 -- | This type class derives the definition of 'genericTraverse' by induction on
 -- the generic representation of a type.
