@@ -300,6 +300,7 @@ deriving via (AsMovable (Ur a)) instance Dupable (Ur a)
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
 
+{-
 instance Prelude.Functor Ur where
   fmap f (Ur a) = Ur (f a)
 
@@ -307,18 +308,21 @@ instance Prelude.Applicative Ur where
   pure = Ur
   Ur f <*> Ur x = Ur (f x)
 
-instance Data.Functor Ur where
-  fmap f (Ur a) = Ur (f a)
+--instance Data.Functor Ur where
+--  fmap f (Ur a) = Ur (f a)
 
+-}
 instance Data.Applicative Ur where
   pure = Ur
   Ur f <*> Ur x = Ur (f x)
 
+{-
 instance Prelude.Foldable Ur where
   foldMap f (Ur x) = f x
 
 instance Prelude.Traversable Ur where
   sequenceA (Ur x) = Prelude.fmap Ur x
+-}
 
 -- Some stock instances
 deriving instance Consumable a => Consumable (Sum a)

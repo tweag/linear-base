@@ -100,6 +100,8 @@ library
         Foreign.Marshal.Pure
         Foreign.Marshal.Pure.Internal
         Prelude.Linear
+        Prelude.Linear.Generically
+        Prelude.Linear.GenericUtil
         Prelude.Linear.Internal
         Streaming.Linear
         Streaming.Linear.Internal.Consume
