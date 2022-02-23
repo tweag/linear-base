@@ -129,7 +129,16 @@ import Prelude.Linear
 -- NOTE: this does NOT require allocation and can be in-lined.
 transfer :: Pull.Array a %1 -> Push.Array a
 transfer (Pull.Array f n) =
-  Push.Array (\k -> NonLinear.foldMap' (\x -> k (f x)) [0 .. (n - 1)])
+  -- 'transfer' was
+  -- > transfer (Pull.Array f n) =
+  -- >   Push.Array (\k -> NonLinear.foldMap' (\x -> k (f x)) [0 .. (n - 1)])
+  -- but 'Linear.Monoid' no longer implies 'NonLinear.Monoid'. So we can have
+  -- @mempty :: a@ and @(<>) :: a -> a -> a@ (by degrading 'Linear.<>'), but we
+  -- no longer have the 'NonLinear.Monoid' instance required to use
+  -- 'NonLinear.foldMap\''. As a result, we just expand 'foldMap\'' to its
+  -- definition in terms of 'foldl\'', which doesn't require 'NonLinear.Monoid':
+  -- > foldMap' f' = foldl' (\acc a -> acc <> f' a) mempty
+  Push.Array (\k -> NonLinear.foldl' (\acc a -> acc <> k (f a)) mempty [0 .. (n - 1)])
 
 -- | This is a shortcut convenience function
 -- for @transfer . Pull.fromVector@.

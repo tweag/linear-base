@@ -36,10 +36,10 @@ pairTest =
   testProperty "traverse via genericTraverse with WithLog and Pair" $
     property $
       ( Data.traverse
-          (\x -> (Adding (1 :: Int), 2 * x))
+          (\x -> (Sum (1 :: Int), 2 * x))
           (MkPair 3 4 :: Pair Int)
       )
-        === (Adding 2, (MkPair 6 8))
+        === (Sum 2, (MkPair 6 8))
 
 genericTraverseTests :: TestTree
 genericTraverseTests =

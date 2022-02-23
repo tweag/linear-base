@@ -2,6 +2,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
 -- Linear versions of 'Data.List' functions.
@@ -374,3 +375,16 @@ unzip = Unsafe.toLinear NonLinear.unzip
 
 unzip3 :: [(a, b, c)] %1 -> ([a], [b], [c])
 unzip3 = Unsafe.toLinear NonLinear.unzip3
+
+-- # Instances
+--------------------------------------------------
+
+instance Semigroup (NonEmpty a) where
+  (x :| xs) <> (y :| ys) = x :| (xs ++ (y : ys))
+
+instance Semigroup [a] where
+  (<>) = (++)
+  {-# INLINE (<>) #-}
+
+instance Monoid [a] where
+  mempty = []

@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
@@ -170,8 +171,10 @@ build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Cons
 getConst' :: Const a b %1 -> a
 getConst' (Const x) = x
 
-lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Adding r))) s t a b -> s -> r
-lengthOf l s = getAdded (gets l (const (Adding one)) s)
+lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Sum r))) s t a b -> s -> r
+lengthOf l s =
+  (gets l (const (Sum one)) s) & \case
+    Sum r -> r
 
 -- XXX: the below two functions will be made redundant with multiplicity
 -- polymorphism on over and traverseOfU

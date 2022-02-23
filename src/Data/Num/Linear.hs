@@ -4,6 +4,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- | This module provides a linear 'Num' class with instances.
 -- Import this module to use linear versions of @(+)@, @(-)@, etc, on numeric
@@ -153,37 +154,59 @@ liftU2 f x y = lifted f (move x) (move y)
     lifted :: (a -> b -> c) %1 -> (Ur a %1 -> Ur b %1 -> c)
     lifted g (Ur a) (Ur b) = g a b
 
--- A newtype wrapper to give the underlying monoid for an additive structure.
+-- | A newtype wrapper to give the underlying monoid for an additive structure.
+--
+-- Deprecated because 'Data.Semigroup.Sum' (reexported as
+-- 'Data.Monoid.Linear.Sum') now has a linear 'Semigroup' and
+-- 'Data.Monoid.Linear.Monoid' instance.
 newtype Adding a = Adding a
   deriving (Prelude.Eq, Prelude.Ord, Prelude.Show)
   deriving (Prelude.Semigroup) via NonLinear (Adding a)
+  deriving (Prelude.Monoid) via NonLinear (Adding a)
+{-# DEPRECATED Adding "Use 'Data.Semigroup.Sum' (reexported as 'Data.Monoid.Linear.Sum') instead" #-}
 
 getAdded :: Adding a %1 -> a
 getAdded (Adding x) = x
+{-# DEPRECATED getAdded "Use 'Data.Semigroup.Sum' (reexported as 'Data.Monoid.Linear.Sum') and pattern-match to extract the inner value linearly" #-}
 
 instance Additive a => Semigroup (Adding a) where
   Adding a <> Adding b = Adding (a + b)
 
-instance AddIdentity a => Prelude.Monoid (Adding a) where
+instance AddIdentity a => Monoid (Adding a) where
   mempty = Adding zero
 
-instance AddIdentity a => Monoid (Adding a)
-
--- A newtype wrapper to give the underlying monoid for a multiplicative structure.
+-- | A newtype wrapper to give the underlying monoid for a multiplicative structure.
+--
+-- Deprecated because 'Data.Semigroup.Product' (reexported as
+-- 'Data.Monoid.Linear.Product') now has a linear 'Semigroup' and
+-- 'Data.Monoid.Linear.Monoid' instance.
 newtype Multiplying a = Multiplying a
   deriving (Prelude.Eq, Prelude.Ord, Prelude.Show)
   deriving (Prelude.Semigroup) via NonLinear (Multiplying a)
+  deriving (Prelude.Monoid) via NonLinear (Multiplying a)
+{-# DEPRECATED Multiplying "Use 'Data.Semigroup.Product' (reexported as 'Data.Monoid.Linear.Product') instead" #-}
 
 getMultiplied :: Multiplying a %1 -> a
 getMultiplied (Multiplying x) = x
+{-# DEPRECATED getMultiplied "Use 'Data.Semigroup.Product' (reexported as 'Data.Monoid.Linear.Product') and pattern-match to extract the inner value linearly" #-}
 
 instance Multiplicative a => Semigroup (Multiplying a) where
   Multiplying a <> Multiplying b = Multiplying (a * b)
 
-instance MultIdentity a => Prelude.Monoid (Multiplying a) where
+instance MultIdentity a => Monoid (Multiplying a) where
   mempty = Multiplying one
 
-instance MultIdentity a => Monoid (Multiplying a)
+instance Multiplicative a => Semigroup (Product a) where
+  (Product x) <> (Product y) = Product (x * y)
+
+instance Additive a => Semigroup (Sum a) where
+  (Sum x) <> (Sum y) = Sum (x + y)
+
+instance MultIdentity a => Monoid (Product a) where
+  mempty = Product one
+
+instance AddIdentity a => Monoid (Sum a) where
+  mempty = Sum zero
 
 deriving via MovableNum Prelude.Int instance Additive Prelude.Int
 
