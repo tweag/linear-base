@@ -120,7 +120,7 @@ type family Fixup1 (f :: Type -> Type) (g :: k -> Type) :: k -> Type where
   Fixup1 (f :*: g) (f' :*: g') = Fixup1 f f' :*: Fixup1 g g'
   Fixup1 (f :+: g) (f' :+: g') = Fixup1 f f' :+: Fixup1 g g'
   Fixup1 (S1 c _f) (S1 _c g) = S1 c g
-  Fixup V1 V1 = V1
+  Fixup1 V1 V1 = V1
   Fixup1 _ _ = TypeError ('Text "Fixup1MetaData1: representations do not match.")
 
 type family RemoveMetaData (f :: k -> Type) :: k -> Type where

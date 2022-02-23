@@ -36,6 +36,7 @@ import qualified Data.Semigroup as Semigroup
 import qualified Data.Monoid as Monoid
 import GHC.Tuple (Solo)
 import qualified Data.Vector as Vector
+import Data.Void (Void)
 
 class Consumable a where
   consume :: a %1 -> ()
@@ -78,6 +79,8 @@ deriving via Generically Prelude.Bool
 
 deriving via Generically ()
   instance Consumable ()
+instance Consumable Void where
+  consume = \case
 deriving via Generically (Solo a)
   instance _ => Consumable (Solo a)
 deriving via Generically (a, b)

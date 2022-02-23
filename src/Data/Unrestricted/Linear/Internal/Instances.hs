@@ -64,18 +64,12 @@ instance Movable a => Dupable (AsMovable a) where
     move x & \case
       Ur x' -> Data.pure x'
 
-deriving via (AsMovable ()) instance Dupable ()
-
 instance Movable () where
   move () = Ur ()
-
-deriving via (AsMovable Bool) instance Dupable Bool
 
 instance Movable Bool where
   move True = Ur True
   move False = Ur False
-
-deriving via (AsMovable Int) instance Dupable Int
 
 instance Movable Int where
   -- /!\ 'Int#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -127,8 +121,6 @@ instance Movable Int64 where
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Int64#' and using it several times. /!\
   move (I64# i) = Unsafe.toLinear (\j -> Ur (I64# j)) i
-
-deriving via (AsMovable Double) instance Dupable Double
 
 instance Movable Double where
   -- /!\ 'Double#' is an unboxed unlifted data-types, therefore it cannot have any
@@ -190,8 +182,6 @@ instance Movable Word64 where
   -- copying an 'Word64#' and using it several times. /!\
   move (W64# i) = Unsafe.toLinear (\j -> Ur (W64# j)) i
 
-deriving via (AsMovable Char) instance Dupable Char
-
 instance Movable Char where
   move (C# c) = Unsafe.toLinear (\x -> Ur (C# x)) c
 
@@ -205,14 +195,8 @@ instance Movable Ordering where
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
 
-instance (Dupable a, Dupable b) => Dupable (a, b) where
-  dupR (a, b) = (,) Data.<$> dupR a Data.<*> dupR b
-
 instance (Movable a, Movable b) => Movable (a, b) where
   move (a, b) = (,) Data.<$> move a Data.<*> move b
-
-instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c) where
-  dupR (a, b, c) = (,,) Data.<$> dupR a Data.<*> dupR b Data.<*> dupR c
 
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
@@ -228,55 +212,30 @@ instance (KnownNat n, Dupable a) => Dupable (V n a) where
     V . Unsafe.toLinear (Vector.fromListN (V.theLength @n))
       Data.<$> dupR (Unsafe.toLinear Vector.toList xs)
 
-instance Dupable a => Dupable (Prelude.Maybe a) where
-  dupR Prelude.Nothing = Data.pure Prelude.Nothing
-  dupR (Prelude.Just x) = Data.fmap Prelude.Just (dupR x)
-
 instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
   move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
-
-instance (Dupable a, Dupable b) => Dupable (Prelude.Either a b) where
-  dupR (Prelude.Left a) = Data.fmap Prelude.Left (dupR a)
-  dupR (Prelude.Right b) = Data.fmap Prelude.Right (dupR b)
 
 instance (Movable a, Movable b) => Movable (Prelude.Either a b) where
   move (Prelude.Left a) = Data.fmap Prelude.Left (move a)
   move (Prelude.Right b) = Data.fmap Prelude.Right (move b)
 
-instance Dupable a => Dupable [a] where
-  dupR [] = Data.pure []
-  dupR (a : l) = (:) Data.<$> dupR a Data.<*> dupR l
-
 instance Movable a => Movable [a] where
   move [] = Ur []
   move (a : l) = (:) Data.<$> move a Data.<*> move l
 
-instance Dupable a => Dupable (NonEmpty a) where
-  dupR (x :| xs) = (:|) Data.<$> dupR x Data.<*> dupR xs
-
 instance Movable a => Movable (NonEmpty a) where
   move (x :| xs) = (:|) Data.<$> move x Data.<*> move xs
-
-deriving via (AsMovable (Ur a)) instance Dupable (Ur a)
 
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
 
 -- Some stock instances
-deriving instance Dupable a => Dupable (Sum a)
-
 deriving instance Movable a => Movable (Sum a)
-
-deriving instance Dupable a => Dupable (Product a)
 
 deriving instance Movable a => Movable (Product a)
 
-deriving instance Dupable All
-
 deriving instance Movable All
-
-deriving instance Dupable Any
 
 deriving instance Movable Any
 
