@@ -26,6 +26,7 @@ module Data.Unrestricted.Linear.Internal.Dupable
     dup5,
     dup6,
     dup7,
+    GDupable,
   )
 where
 
@@ -115,6 +116,12 @@ deriving via Generically Prelude.Bool
 
 deriving via Generically Prelude.Int
   instance Dupable Prelude.Int
+
+deriving via Generically Prelude.Word
+  instance Dupable Prelude.Word
+
+deriving via Generically Prelude.Ordering
+  instance Dupable Prelude.Ordering
 
 deriving via Generically Prelude.Char
   instance Dupable Prelude.Char
