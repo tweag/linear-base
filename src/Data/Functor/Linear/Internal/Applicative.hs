@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
@@ -102,6 +103,12 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
 instance Applicative m => Applicative (NonLinear.ReaderT r m) where
   pure x = NonLinear.ReaderT (\_ -> pure x)
   NonLinear.ReaderT f <*> NonLinear.ReaderT x = NonLinear.ReaderT (\r -> f r <*> x r)
+
+instance (Applicative f, Semigroup a) => Semigroup (Ap f a) where
+  (Ap x) <> (Ap y) = Ap $ liftA2 (<>) x y
+
+instance (Applicative f, Monoid a) => Monoid (Ap f a) where
+  mempty = Ap $ pure mempty
 
 -- ----------------
 -- Generic deriving
