@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeOperators #-}
@@ -26,10 +27,11 @@ import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Functor.Compose
 import Data.Functor.Const
-import Data.Functor.Identity (Identity (..))
+import Data.Functor.Identity
 import Data.Functor.Sum
+import Data.Functor.Product
 import Data.Unrestricted.Linear.Internal.Consumable
-import Data.Unrestricted.Linear.Internal.Ur (Ur (..))
+import Data.Unrestricted.Linear.Internal.Ur
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
@@ -65,19 +67,26 @@ void = fmap consume
 -------------------------------------------------------------------------------
 
 instance Functor [] where
-  fmap _f [] = []
-  fmap f (a : as) = f a : fmap f as
+  fmap (f :: a %1 -> b) = go
+    where
+      go :: [a] %1 -> [b]
+      go [] = []
+      go (a : as) = f a : go as
 
-instance Functor (Const x) where
-  fmap _ (Const x) = Const x
+deriving via
+  Generically1 (Const x)
+  instance
+    Functor (Const x)
 
-instance Functor Maybe where
-  fmap _ Nothing = Nothing
-  fmap f (Just x) = Just (f x)
+deriving via
+  Generically1 Maybe
+  instance
+    Functor Maybe
 
-instance Functor (Either e) where
-  fmap _ (Left x) = Left x
-  fmap f (Right x) = Right (f x)
+deriving via
+  Generically1 (Either e)
+  instance
+    Functor (Either e)
 
 deriving via
   Generically1 ((,) a)
@@ -107,6 +116,9 @@ deriving via
 instance (Functor f, Functor g) => Functor (Sum f g) where
   fmap f (InL fa) = InL (fmap f fa)
   fmap f (InR ga) = InR (fmap f ga)
+
+instance (Functor f, Functor g) => Functor (Product f g) where
+  fmap f (Pair fa ga) = Pair (fmap f fa) (fmap f ga)
 
 instance (Functor f, Functor g) => Functor (Compose f g) where
   fmap f (Compose x) = Compose (fmap (fmap f) x)

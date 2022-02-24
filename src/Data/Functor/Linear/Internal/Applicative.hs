@@ -26,9 +26,10 @@ import qualified Control.Monad.Trans.Reader as NonLinear
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
+import Data.Functor.Product
 import Data.Functor.Linear.Internal.Functor
 import Data.Monoid (Ap (..))
-import Data.Monoid.Linear hiding (Sum)
+import Data.Monoid.Linear hiding (Product)
 import Data.Unrestricted.Linear.Internal.Ur (Ur (..))
 import GHC.TypeLits
 import Generics.Linear
@@ -93,6 +94,16 @@ deriving via
   Generically1 ((,) a)
   instance
     Monoid a => Applicative ((,) a)
+
+deriving via
+  Generically1 (Product f g)
+  instance
+    (Applicative f, Applicative g) => Applicative (Product f g)
+
+deriving via
+  Generically1 (f :*: g)
+  instance
+    (Applicative f, Applicative g) => Applicative (f :*: g)
 
 deriving via
   Generically1 ((,,) a b)

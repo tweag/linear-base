@@ -47,7 +47,7 @@ import Data.Functor.Compose (Compose (..))
 import Data.Functor.Identity (Identity (..))
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
-import qualified Data.Functor.Sum as Sum
+import qualified Data.Functor.Sum
 import Data.Monoid.Linear
 import Data.Type.Bool
 import Data.Unrestricted.Linear.Internal.Consumable
@@ -155,8 +155,8 @@ instance (Monoid a, Monoid b, Monoid c) => Applicative ((,,,) a b c) where
   pure x = (mempty, mempty, mempty, x)
   (a1, a2, a3, f) <*> (b1, b2, b3, x) = (a1 <> b1, a2 <> b2, a3 <> b3, f x)
 
-instance Functor Identity where
-  fmap f (Identity x) = Identity (f x)
+deriving via Generically1 Identity
+  instance Functor Identity
 
 instance Applicative Identity where
   pure = Identity
@@ -240,9 +240,9 @@ instance Monoid a => Monad ((,) a) where
       go b1 (b2, y) = (b1 <> b2, y)
 
 deriving via
-  Generically1 (Sum.Sum f g)
+  Generically1 (Data.Functor.Sum.Sum f g)
   instance
-    (Functor f, Functor g) => Functor (Sum.Sum f g)
+    (Functor f, Functor g) => Functor (Data.Functor.Sum.Sum f g)
 
 deriving via
   Generically1 (Compose f g)

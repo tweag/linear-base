@@ -123,7 +123,13 @@ instance Control.Applicative (StateR s) where
 ------------------------
 
 instance Traversable [] where
-  traverse = genericTraverse
+  -- We define traverse explicitly both to allow specialization
+  -- to the appropriate Applicative and to allow specialization to
+  -- the passed function. The generic definition allows neither, sadly.
+  traverse f = go
+    where
+      go [] = Control.pure []
+      go (x : xs) = Control.liftA2 (:) (f x) (go xs)
 
 instance Traversable ((,) a) where
   traverse = genericTraverse
@@ -261,6 +267,11 @@ instance GTraversable UWord where
 
 -- | Implementation of 'Data.Functor.Linear.traverse' for types which derive
 -- (linear) 'Generics.Linear.Generic1'.
+--
+-- ### Performance note
+--
+-- At present, this function does not perform well for recursive types like lists;
+-- it will not specialize to either
 --
 -- ### Example
 --

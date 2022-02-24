@@ -34,7 +34,7 @@ import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
--- import GHC.Exts (Char(..), Int(..), Word(..), Double(..), Float(..))
+import GHC.Tuple (Solo)
 
 import qualified Unsafe.Linear as Unsafe
 import Prelude (Bool (..), Char, Double, Float, Int, Ordering (..), Word)
@@ -61,12 +61,10 @@ class Dupable a => Movable a where
 -- -------------
 -- Instances
 
-instance Movable () where
-  move () = Ur ()
-
-instance Movable Bool where
-  move True = Ur True
-  move False = Ur False
+deriving via
+  Generically Bool
+  instance
+    Movable Bool
 
 deriving via
   Generically Char
@@ -93,16 +91,27 @@ deriving via
   instance
     Movable Word
 
-instance Movable Prelude.Ordering where
-  move LT = Ur LT
-  move GT = Ur GT
-  move EQ = Ur EQ
+deriving via
+  Generically Prelude.Ordering
+  instance
+    Movable Prelude.Ordering
 
-instance (Movable a, Movable b) => Movable (a, b) where
-  move (a, b) = (,) Data.<$> move a Data.<*> move b
+instance Movable () where
+  move () = Ur ()
 
-instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
-  move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
+deriving via
+  Generically (Solo a)
+  instance Movable a => Movable (Solo a)
+
+deriving via
+  Generically (a, b)
+  instance
+    (Movable a, Movable b) => Movable (a, b)
+
+deriving via
+  Generically (a, b, c)
+  instance
+    (Movable a, Movable b, Movable c) => Movable (a, b, c)
 
 deriving via
   Generically (a, b, c, d)

@@ -1,4 +1,3 @@
-{- options_ghc -ddump-simpl -dsuppress-type-applications -dsuppress-coercions #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE EmptyCase #-}
@@ -63,6 +62,12 @@ import qualified Prelude
 --
 -- Implementation of 'Dupable' for 'Data.Unrestricted.Movable' types should
 -- be done with @deriving via 'Data.Unrestricted.AsMovable'@.
+--
+-- Implementation of 'Dupable' for other types can be done with
+-- @deriving via 'Generically'@. Note that at present this mechanism
+-- can have performance problems for recursive parameterized types.
+-- Specifically, the methods will not specialize to underlying 'Dupable'
+-- instances.
 class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
