@@ -205,7 +205,7 @@ class GTraversable t where
   gtraverse :: Control.Applicative f => (a %1 -> f b) -> t a %1 -> Curried (Yoneda f) (Yoneda f) (t b)
 
 instance GTraversable t => GTraversable (M1 i c t) where
-  gtraverse f (M1 x) = M1 Control.<$> gtraverse f x
+  gtraverse f (M1 x) = lcoerce (gtraverse f x)
   {-# INLINE gtraverse #-}
 
 -- Can m be polymorphic? I'm not optimistic.
@@ -214,11 +214,11 @@ instance (m ~ 'One, GTraversable t) => GTraversable (MP1 m t) where
   {-# INLINE gtraverse #-}
 
 instance GTraversable Par1 where
-  gtraverse f (Par1 x) = Par1 Control.<$> liftCurriedYonedaC (f x)
+  gtraverse f (Par1 x) = lcoerce (liftCurriedYonedaC (f x))
   {-# INLINE gtraverse #-}
 
 instance (GTraversable f, Traversable g) => GTraversable (f :.: g) where
-  gtraverse f (Comp1 x) = Comp1 Control.<$> gtraverse (traverse f) x
+  gtraverse f (Comp1 x) = lcoerce (gtraverse (traverse f) x)
   {-# INLINE gtraverse #-}
 
 instance (GTraversable f, GTraversable g) => GTraversable (f :+: g) where
