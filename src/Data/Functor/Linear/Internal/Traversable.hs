@@ -29,15 +29,15 @@ where
 
 import qualified Control.Functor.Linear.Internal.Class as Control
 import qualified Control.Functor.Linear.Internal.Instances as Control
+import Control.Functor.Linear.Internal.Kan
 import qualified Control.Functor.Linear.Internal.State as Control
 import Data.Functor.Const
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
-import Prelude.Linear.Internal
-import Prelude (Either (..), Maybe (..))
 import GHC.Types (Multiplicity (..))
 import Generics.Linear
-import Control.Functor.Linear.Internal.Kan
+import Prelude.Linear.Internal
+import Prelude (Either (..), Maybe (..))
 
 -- traversable
 
@@ -127,10 +127,13 @@ instance Traversable [] where
 
 instance Traversable ((,) a) where
   traverse = genericTraverse
+
 instance Traversable ((,,) a b) where
   traverse = genericTraverse
+
 instance Traversable ((,,,) a b c) where
   traverse = genericTraverse
+
 instance Traversable ((,,,,) a b c d) where
   traverse = genericTraverse
 
@@ -145,30 +148,43 @@ instance Traversable (Either a) where
 
 instance Traversable U1 where
   traverse = genericTraverse
+
 instance Traversable V1 where
   traverse = genericTraverse
+
 instance (Traversable f, Traversable g) => Traversable (f :*: g) where
   traverse = genericTraverse
+
 instance (Traversable f, Traversable g) => Traversable (f :+: g) where
   traverse = genericTraverse
+
 instance Traversable f => Traversable (M1 i c f) where
   traverse = genericTraverse
+
 instance Traversable Par1 where
   traverse = genericTraverse
+
 instance (Traversable f, Traversable g) => Traversable (f :.: g) where
   traverse = genericTraverse
+
 instance Traversable (K1 i v) where
   traverse = genericTraverse
+
 instance Traversable UAddr where
   traverse = genericTraverse
+
 instance Traversable UChar where
   traverse = genericTraverse
+
 instance Traversable UDouble where
   traverse = genericTraverse
+
 instance Traversable UFloat where
   traverse = genericTraverse
+
 instance Traversable UInt where
   traverse = genericTraverse
+
 instance Traversable UWord where
   traverse = genericTraverse
 

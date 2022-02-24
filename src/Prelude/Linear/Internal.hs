@@ -10,9 +10,9 @@
 -- in the linear-base library.
 module Prelude.Linear.Internal where
 
+import Data.Coerce
 import Data.Functor.Identity
 import GHC.Exts (TYPE)
-import Data.Coerce
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
 -- simply reimplemented here. For harder function, we reuse the Prelude

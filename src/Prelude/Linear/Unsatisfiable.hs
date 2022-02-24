@@ -11,14 +11,15 @@
 -- the @trivial-constraint@ package and the
 -- <https://github.com/adamgundry/ghc-proposals/blob/unsatisfiable/proposals/0000-unsatisfiable.rst Unsatisfiable proposal>
 -- Once that proposal is implemented, we can use it.
-
 module Prelude.Linear.Unsatisfiable
-  ( Unsatisfiable
-  , unsatisfiable
-  , Bottom
-  ) where
+  ( Unsatisfiable,
+    unsatisfiable,
+    Bottom,
+  )
+where
+
 import GHC.Exts (Any, TYPE)
-import GHC.TypeLits (TypeError, ErrorMessage)
+import GHC.TypeLits (ErrorMessage, TypeError)
 
 -- The 'Any' constraint prevents anyone from instantiating 'Bottom' with
 -- unsatisfiable' = undefined if they don't understand what it's for.

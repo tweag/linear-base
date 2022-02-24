@@ -83,13 +83,13 @@ liftA2 f (ReplicationStream sa givea dupsa consumesa) (ReplicationStream sb give
   ReplicationStream
     (sa, sb)
     (\(sa', sb') -> f (givea sa') (giveb sb'))
-    (\(sa', sb') ->
-       (dupsa sa', dupsb sb') & \case
-         ((sa1, sa2), (sb1, sb2)) -> ((sa1, sb1), (sa2, sb2))
+    ( \(sa', sb') ->
+        (dupsa sa', dupsb sb') & \case
+          ((sa1, sa2), (sb1, sb2)) -> ((sa1, sb1), (sa2, sb2))
     )
-    (\(sa', sb') ->
-       consumesa sa' & \case
-         () -> consumesb sb'
+    ( \(sa', sb') ->
+        consumesa sa' & \case
+          () -> consumesb sb'
     )
 -- We need to inline this to get good results with generic deriving
 -- of Dupable.

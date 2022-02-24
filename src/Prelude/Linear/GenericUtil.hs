@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | @'FixupMetaData' a g@ copies the metadata from the
@@ -57,14 +57,16 @@
 -- polymorphic fields, just under the @S1@ type constructor. The first type
 -- argument of @MP1@ will indicate the multiplicity.
 module Prelude.Linear.GenericUtil
-  ( FixupMetaData
-  , FixupMetaData1
-  , RemoveMetaData
-  ) where
-import qualified GHC.Generics
-import Generics.Linear
+  ( FixupMetaData,
+    FixupMetaData1,
+    RemoveMetaData,
+  )
+where
+
 import Data.Kind (Type)
+import qualified GHC.Generics
 import GHC.TypeLits
+import Generics.Linear
 
 -- | @FixupMetaData a g@ copies the metadata from the
 -- @"GHC.Generics".'GHC.Generics.Generic'@ representation of @a@ to the

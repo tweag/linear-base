@@ -5,7 +5,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -15,6 +14,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | This module contains all the classes eventually exported by
@@ -43,21 +43,21 @@ module Control.Functor.Linear.Internal.Class
 where
 
 import qualified Control.Monad as NonLinear ()
+import Data.Functor.Compose (Compose (..))
+import Data.Functor.Identity (Identity (..))
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Functor.Sum as Sum
+import Data.Monoid.Linear
 import Data.Type.Bool
 import Data.Unrestricted.Linear.Internal.Consumable
-import Prelude.Linear.Internal
-import Prelude (String, Bool (..))
-import Generics.Linear
-import GHC.Types (Type)
 import GHC.TypeLits
-import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
+import GHC.Types (Type)
+import Generics.Linear
 import Prelude.Linear.Generically
-import Data.Monoid.Linear
-import Data.Functor.Identity (Identity (..))
-import qualified Data.Functor.Sum as Sum
-import Data.Functor.Compose (Compose (..))
+import Prelude.Linear.Internal
+import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
+import Prelude (Bool (..), String)
 
 -- # Control Functors
 -------------------------------------------------------------------------------
@@ -213,23 +213,41 @@ foldM f i (x : xs) = f i x >>= \i' -> foldM f i' xs
 -- Instances --
 ---------------
 
-deriving via Generically1 ((,) a)
-  instance Functor ((,) a)
-deriving via Generically1 ((,,) a b)
-  instance Functor ((,,) a b)
-deriving via Generically1 ((,,,) a b c)
-  instance Functor ((,,,) a b c)
-deriving via Generically1 ((,,,,) a b c d)
-  instance Functor ((,,,,) a b c d)
+deriving via
+  Generically1 ((,) a)
+  instance
+    Functor ((,) a)
+
+deriving via
+  Generically1 ((,,) a b)
+  instance
+    Functor ((,,) a b)
+
+deriving via
+  Generically1 ((,,,) a b c)
+  instance
+    Functor ((,,,) a b c)
+
+deriving via
+  Generically1 ((,,,,) a b c d)
+  instance
+    Functor ((,,,,) a b c d)
+
 instance Monoid a => Monad ((,) a) where
   (a, x) >>= f = go a (f x)
-    where go :: a %1-> (a,b) %1-> (a,b)
-          go b1 (b2, y) = (b1 <> b2, y)
+    where
+      go :: a %1 -> (a, b) %1 -> (a, b)
+      go b1 (b2, y) = (b1 <> b2, y)
 
-deriving via Generically1 (Sum.Sum f g)
-  instance (Functor f, Functor g) => Functor (Sum.Sum f g)
-deriving via Generically1 (Compose f g)
-  instance (Functor f, Functor g) => Functor (Compose f g)
+deriving via
+  Generically1 (Sum.Sum f g)
+  instance
+    (Functor f, Functor g) => Functor (Sum.Sum f g)
+
+deriving via
+  Generically1 (Compose f g)
+  instance
+    (Functor f, Functor g) => Functor (Compose f g)
 
 ------------------------
 -- Generics instances --
@@ -250,55 +268,73 @@ type family NoPar1 (f :: Type -> Type) :: Bool where
 
 -- If the generic type does not use its parameter, we can linearly coerce the parameter to any other type.
 class NoPar1 f ~ 'True => Unused f where
-  unused :: f a %1-> f b
+  unused :: f a %1 -> f b
+
 instance Unused U1 where
   unused U1 = U1
+
 instance Unused (K1 i v) where
   unused (K1 c) = K1 c
+
 instance (Unused l, Unused r) => Unused (l :*: r) where
   unused (l :*: r) = unused l :*: unused r
+
 instance (Unused l, Unused r) => Unused (l :+: r) where
   unused (L1 l) = L1 (unused l)
   unused (R1 r) = R1 (unused r)
+
 instance Unused f => Unused (M1 i c f) where
   unused (M1 a) = M1 (unused a)
+
 instance (Unused' (NoPar1 l) l r, (NoPar1 l || NoPar1 r) ~ 'True) => Unused (l :.: r) where
   unused (Comp1 a) = Comp1 (unused' @(NoPar1 l) a)
+
 class Unused' (left_unused :: Bool) l r where
-  unused' :: l (r a) %1-> l (r b)
+  unused' :: l (r a) %1 -> l (r b)
+
 instance Unused l => Unused' 'True l r where
   unused' = unused
+
 instance (Functor l, Unused r) => Unused' 'False l r where
   unused' = fmap unused
 
 -- A linear map on a pair is only possible if only one side uses its parameter.
 -- To get the right type, the other side can then be coerced (instead of mapped) using `unused`.
 class (noPar1l ~ NoPar1 l, noPar1r ~ NoPar1 r) => EitherNoPar1 (noPar1l :: Bool) (noPar1r :: Bool) l r where
-  eitherNoPar1Map :: (a %1-> b) %1-> (l :*: r) a %1-> (l :*: r) b
+  eitherNoPar1Map :: (a %1 -> b) %1 -> (l :*: r) a %1 -> (l :*: r) b
+
 instance (Unused l, Functor r, NoPar1 r ~ 'False) => EitherNoPar1 'True 'False l r where
   eitherNoPar1Map f (l :*: r) = unused l :*: fmap f r
+
 instance (Unused r, Functor l, NoPar1 l ~ 'False) => EitherNoPar1 'False 'True l r where
   eitherNoPar1Map f (l :*: r) = fmap f l :*: unused r
 
-type MessageMany = 'Text "Can't derive an instance of Functor. One of the constructors" ':$$:
-                   'Text "of your datatype uses the type parameter more than once."
+type MessageMany =
+  'Text "Can't derive an instance of Functor. One of the constructors"
+    ':$$: 'Text "of your datatype uses the type parameter more than once."
 
 instance ('False ~ NoPar1 l, 'False ~ NoPar1 r, Unsatisfiable MessageMany) => EitherNoPar1 'False 'False l r where
   eitherNoPar1Map = unsatisfiable
 
-type MessageZero = 'Text "Can't derive an instance of Functor. One of the constructors" ':$$:
-                   'Text "of your datatype does not use the type parameter."
+type MessageZero =
+  'Text "Can't derive an instance of Functor. One of the constructors"
+    ':$$: 'Text "of your datatype does not use the type parameter."
+
 instance ('True ~ NoPar1 l, 'True ~ NoPar1 r, Unsatisfiable MessageZero) => EitherNoPar1 'True 'True l r where
   eitherNoPar1Map = unsatisfiable
 
 instance (Functor l, Functor r) => Functor (l :+: r) where
   fmap f (L1 a) = L1 (fmap f a)
   fmap f (R1 a) = R1 (fmap f a)
+
 instance Functor f => Functor (M1 j c f) where
   fmap f (M1 a) = M1 (fmap f a)
+
 instance Functor Par1 where
   fmap f (Par1 a) = Par1 (f a)
+
 instance (Functor f, Functor g) => Functor (f :.: g) where
   fmap f (Comp1 fga) = Comp1 (fmap (fmap f) fga)
+
 instance (Data.Functor l, Data.Functor r, EitherNoPar1 b1 b2 l r) => Functor (l :*: r) where
   fmap = eitherNoPar1Map

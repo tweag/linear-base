@@ -1,11 +1,13 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+
 module Prelude.Linear.Generically
-  ( Generically (..)
-  , unGenerically
-  , Generically1 (..)
-  , unGenerically1
-  ) where
+  ( Generically (..),
+    unGenerically,
+    Generically1 (..),
+    unGenerically1,
+  )
+where
 
 -- | A datatype whose instances are defined generically, using the
 -- 'Generics.Linear.Generic' representation.
@@ -13,7 +15,7 @@ module Prelude.Linear.Generically
 -- @-XDerivingVia@.
 newtype Generically a = Generically a
 
-unGenerically :: Generically a %1-> a
+unGenerically :: Generically a %1 -> a
 unGenerically (Generically a) = a
 
 -- | A type whose instances are defined generically, using the
@@ -24,5 +26,5 @@ unGenerically (Generically a) = a
 -- @'Generically1' F@ using @-XDerivingVia@.
 newtype Generically1 f a = Generically1 (f a)
 
-unGenerically1 :: Generically1 f a %1-> f a
+unGenerically1 :: Generically1 f a %1 -> f a
 unGenerically1 (Generically1 fa) = fa

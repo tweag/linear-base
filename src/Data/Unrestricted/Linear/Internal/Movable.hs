@@ -1,19 +1,19 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE EmptyCase #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 module Data.Unrestricted.Linear.Internal.Movable
@@ -24,20 +24,21 @@ module Data.Unrestricted.Linear.Internal.Movable
   )
 where
 
+import qualified Data.Functor.Linear.Internal.Applicative as Data
+import qualified Data.Functor.Linear.Internal.Functor as Data
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.Semigroup as Semigroup
 import Data.Unrestricted.Linear.Internal.Dupable
 import Data.Unrestricted.Linear.Internal.Ur
 import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
-import qualified Data.Functor.Linear.Internal.Functor as Data
-import qualified Data.Functor.Linear.Internal.Applicative as Data
-import qualified Prelude as Prelude
-import qualified Data.Semigroup as Semigroup
-import Data.List.NonEmpty (NonEmpty (..))
---import GHC.Exts (Char(..), Int(..), Word(..), Double(..), Float(..))
-import Prelude (Ordering (..), Bool (..), Char, Int, Word, Double, Float)
+-- import GHC.Exts (Char(..), Int(..), Word(..), Double(..), Float(..))
+
 import qualified Unsafe.Linear as Unsafe
+import Prelude (Bool (..), Char, Double, Float, Int, Ordering (..), Word)
+import qualified Prelude as Prelude
 
 -- | Use @'Movable' a@ to represent a type which can be used many times even
 -- when given linearly. Simple data types such as 'Bool' or @[]@ are 'Movable'.
@@ -67,16 +68,30 @@ instance Movable Bool where
   move True = Ur True
   move False = Ur False
 
-deriving via Generically Char
-  instance Movable Char
-deriving via Generically Double
-  instance Movable Double
-deriving via Generically Float
-  instance Movable Float
-deriving via Generically Int
-  instance Movable Int
-deriving via Generically Word
-  instance Movable Word
+deriving via
+  Generically Char
+  instance
+    Movable Char
+
+deriving via
+  Generically Double
+  instance
+    Movable Double
+
+deriving via
+  Generically Float
+  instance
+    Movable Float
+
+deriving via
+  Generically Int
+  instance
+    Movable Int
+
+deriving via
+  Generically Word
+  instance
+    Movable Word
 
 instance Movable Prelude.Ordering where
   move LT = Ur LT
@@ -89,8 +104,10 @@ instance (Movable a, Movable b) => Movable (a, b) where
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
 
-deriving via Generically (a, b, c, d)
-  instance (Movable a, Movable b, Movable c, Movable d) => Movable (a, b, c, d)
+deriving via
+  Generically (a, b, c, d)
+  instance
+    (Movable a, Movable b, Movable c, Movable d) => Movable (a, b, c, d)
 
 instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
@@ -106,7 +123,7 @@ instance Movable a => Movable [a] where
     where
       go :: [a] %1 -> Ur [a]
       go [] = Ur []
-      go (a:l) = (:) Data.<$> move a Data.<*> go l
+      go (a : l) = (:) Data.<$> move a Data.<*> go l
 
 instance Movable a => Movable (NonEmpty a) where
   move (x :| xs) = (:|) Data.<$> move x Data.<*> move xs
@@ -116,10 +133,12 @@ instance Movable (Ur a) where
 
 -- Some stock instances
 deriving newtype instance Movable a => Movable (Semigroup.Sum a)
-deriving newtype instance Movable a => Movable (Semigroup.Product a)
-deriving newtype instance Movable Semigroup.All
-deriving newtype instance Movable Semigroup.Any
 
+deriving newtype instance Movable a => Movable (Semigroup.Product a)
+
+deriving newtype instance Movable Semigroup.All
+
+deriving newtype instance Movable Semigroup.Any
 
 -- -------------
 -- Generic deriving
@@ -127,14 +146,14 @@ deriving newtype instance Movable Semigroup.Any
 instance (Generic a, GMovable (Rep a)) => Movable (Generically a) where
   move = Data.fmap (Generically . to) . gmove . from . unGenerically
 
-genericMove :: (Generic a, GMovable (Rep a)) => a %1-> Ur a
+genericMove :: (Generic a, GMovable (Rep a)) => a %1 -> Ur a
 genericMove = Data.fmap to . gmove . from
 
 class GDupable f => GMovable f where
-  gmove :: f p %1-> Ur (f p)
+  gmove :: f p %1 -> Ur (f p)
 
 instance GMovable V1 where
-  gmove = \case
+  gmove = \case {}
 
 instance GMovable U1 where
   gmove U1 = Ur U1
@@ -144,9 +163,11 @@ instance (GMovable f, GMovable g) => GMovable (f :+: g) where
   gmove (R1 a) = gmove a & \case (Ur x) -> Ur (R1 x)
 
 instance (GMovable f, GMovable g) => GMovable (f :*: g) where
-  gmove (a :*: b) = gmove a & \case
-    (Ur x) -> gmove b & \case
-      (Ur y) -> Ur (x :*: y)
+  gmove (a :*: b) =
+    gmove a & \case
+      (Ur x) ->
+        gmove b & \case
+          (Ur y) -> Ur (x :*: y)
 
 instance Movable c => GMovable (K1 i c) where
   gmove (K1 c) = lcoerce (move c)

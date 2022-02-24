@@ -13,8 +13,8 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 module Data.Unrestricted.Linear.Internal.Dupable
@@ -30,22 +30,21 @@ module Data.Unrestricted.Linear.Internal.Dupable
   )
 where
 
+import Data.List.NonEmpty (NonEmpty)
 import Data.Replicator.Linear.Internal (Replicator (..))
 import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
 import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
+import qualified Data.Semigroup as Semigroup
 import Data.Unrestricted.Linear.Internal.Consumable
-import Prelude.Linear.Internal
+import Data.Unrestricted.Linear.Internal.Ur (Ur)
+import GHC.Tuple (Solo (..))
+import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Generically
+import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
-import GHC.Types (Multiplicity (..))
 import qualified Prelude
-import Data.List.NonEmpty (NonEmpty)
-
-import Data.Unrestricted.Linear.Internal.Ur (Ur)
-import qualified Data.Semigroup as Semigroup
-import GHC.Tuple (Solo (..))
 
 -- | The laws of 'Dupable' are dual to those of 'Monoid':
 --
@@ -117,32 +116,50 @@ instance Dupable (ReplicationStream a) where
 instance Dupable (Replicator a) where
   dupR = Replicator.duplicate
 
-deriving via Generically Prelude.Bool
-  instance Dupable Prelude.Bool
+deriving via
+  Generically Prelude.Bool
+  instance
+    Dupable Prelude.Bool
 
-deriving via Generically Prelude.Int
-  instance Dupable Prelude.Int
+deriving via
+  Generically Prelude.Int
+  instance
+    Dupable Prelude.Int
 
-deriving via Generically Prelude.Word
-  instance Dupable Prelude.Word
+deriving via
+  Generically Prelude.Word
+  instance
+    Dupable Prelude.Word
 
-deriving via Generically Prelude.Ordering
-  instance Dupable Prelude.Ordering
+deriving via
+  Generically Prelude.Ordering
+  instance
+    Dupable Prelude.Ordering
 
-deriving via Generically Prelude.Char
-  instance Dupable Prelude.Char
+deriving via
+  Generically Prelude.Char
+  instance
+    Dupable Prelude.Char
 
-deriving via Generically Prelude.Double
-  instance Dupable Prelude.Double
+deriving via
+  Generically Prelude.Double
+  instance
+    Dupable Prelude.Double
 
-deriving via Generically Prelude.Float
-  instance Dupable Prelude.Float
+deriving via
+  Generically Prelude.Float
+  instance
+    Dupable Prelude.Float
 
-deriving via Generically (Prelude.Maybe a)
-  instance Dupable a => Dupable (Prelude.Maybe a)
+deriving via
+  Generically (Prelude.Maybe a)
+  instance
+    Dupable a => Dupable (Prelude.Maybe a)
 
-deriving via Generically (Prelude.Either a b)
-  instance (Dupable a, Dupable b) => Dupable (Prelude.Either a b)
+deriving via
+  Generically (Prelude.Either a b)
+  instance
+    (Dupable a, Dupable b) => Dupable (Prelude.Either a b)
 
 -- This instance is written manually because I (David Feuer) haven't
 -- been able to find a way to get the generic version to specialize
@@ -155,29 +172,45 @@ instance Dupable a => Dupable [a] where
       go [] = Replicator.pure []
       go (x : xs) = Replicator.liftA2 (:) (dupR x) (go xs)
 
-deriving via Generically (NonEmpty a)
-  instance Dupable a => Dupable (NonEmpty a)
+deriving via
+  Generically (NonEmpty a)
+  instance
+    Dupable a => Dupable (NonEmpty a)
 
-deriving via Generically (Ur a)
-  instance Dupable (Ur a)
+deriving via
+  Generically (Ur a)
+  instance
+    Dupable (Ur a)
 
-deriving via Generically ()
-  instance Dupable ()
+deriving via
+  Generically ()
+  instance
+    Dupable ()
 
-deriving via Generically (Solo a)
-  instance Dupable a => Dupable (Solo a)
+deriving via
+  Generically (Solo a)
+  instance
+    Dupable a => Dupable (Solo a)
 
-deriving via Generically (a, b)
-  instance (Dupable a, Dupable b) => Dupable (a, b)
+deriving via
+  Generically (a, b)
+  instance
+    (Dupable a, Dupable b) => Dupable (a, b)
 
-deriving via Generically (a, b, c)
-  instance (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c)
+deriving via
+  Generically (a, b, c)
+  instance
+    (Dupable a, Dupable b, Dupable c) => Dupable (a, b, c)
 
-deriving via Generically (a, b, c, d)
-  instance (Dupable a, Dupable b, Dupable c, Dupable d) => Dupable (a, b, c, d)
+deriving via
+  Generically (a, b, c, d)
+  instance
+    (Dupable a, Dupable b, Dupable c, Dupable d) => Dupable (a, b, c, d)
 
-deriving via Generically (a, b, c, d, e)
-  instance (Dupable a, Dupable b, Dupable c, Dupable d, Dupable e) => Dupable (a, b, c, d, e)
+deriving via
+  Generically (a, b, c, d, e)
+  instance
+    (Dupable a, Dupable b, Dupable c, Dupable d, Dupable e) => Dupable (a, b, c, d, e)
 
 deriving newtype instance Dupable a => Dupable (Semigroup.Sum a)
 
@@ -195,7 +228,7 @@ instance (Generic a, GDupable (Rep a)) => Dupable (Generically a) where
   dupR (Generically x) = lcoerce (Replicator.map (to :: Rep a x %1 -> a) (gdupR (from x)))
 
 genericdupR :: (Generic a, GDupable (Rep a)) => a %1 -> Replicator a
-genericdupR x =  Replicator.map to (gdupR (from x))
+genericdupR x = Replicator.map to (gdupR (from x))
 
 class GConsumable f => GDupable f where
   gdupR :: f a %1 -> Replicator (f a)
@@ -222,7 +255,7 @@ instance GDupable U1 where
   {-# INLINE gdupR #-}
 
 instance GDupable V1 where
-  gdupR = \case
+  gdupR = \case {}
   {-# INLINE gdupR #-}
 
 instance GDupable (MP1 'Many f) where

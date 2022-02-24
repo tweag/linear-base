@@ -4,11 +4,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 module Data.Functor.Linear.Internal.Functor
@@ -26,14 +26,14 @@ import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Functor.Compose
 import Data.Functor.Const
+import Data.Functor.Identity (Identity (..))
 import Data.Functor.Sum
 import Data.Unrestricted.Linear.Internal.Consumable
-import Prelude.Linear.Internal
-import Prelude (Either (..), Maybe (..))
+import Data.Unrestricted.Linear.Internal.Ur (Ur (..))
 import Generics.Linear
 import Prelude.Linear.Generically
-import Data.Unrestricted.Linear.Internal.Ur (Ur (..))
-import Data.Functor.Identity (Identity (..))
+import Prelude.Linear.Internal
+import Prelude (Either (..), Maybe (..))
 
 -- # Functor definition
 -------------------------------------------------------------------------------
@@ -79,20 +79,30 @@ instance Functor (Either e) where
   fmap _ (Left x) = Left x
   fmap f (Right x) = Right (f x)
 
-deriving via Generically1 ((,) a)
-  instance Functor ((,) a)
+deriving via
+  Generically1 ((,) a)
+  instance
+    Functor ((,) a)
 
-deriving via Generically1 ((,,) a b)
-  instance Functor ((,,) a b)
+deriving via
+  Generically1 ((,,) a b)
+  instance
+    Functor ((,,) a b)
 
-deriving via Generically1 ((,,,) a b c)
-  instance Functor ((,,,) a b c)
+deriving via
+  Generically1 ((,,,) a b c)
+  instance
+    Functor ((,,,) a b c)
 
-deriving via Generically1 ((,,,,) a b c d)
-  instance Functor ((,,,,) a b c d)
+deriving via
+  Generically1 ((,,,,) a b c d)
+  instance
+    Functor ((,,,,) a b c d)
 
-deriving via Generically1 Identity
-  instance Functor Identity
+deriving via
+  Generically1 Identity
+  instance
+    Functor Identity
 
 instance (Functor f, Functor g) => Functor (Sum f g) where
   fmap f (InL fa) = InL (fmap f fa)
@@ -140,32 +150,46 @@ instance (Generic1 f, Functor (Rep1 f)) => Functor (Generically1 f) where
 
 instance Functor U1 where
   fmap _ U1 = U1
+
 instance Functor V1 where
-  fmap _ = \case
+  fmap _ = \case {}
+
 instance (Functor f, Functor g) => Functor (f :*: g) where
   fmap f (l :*: r) = fmap f l :*: fmap f r
+
 instance (Functor f, Functor g) => Functor (f :+: g) where
   fmap f (L1 a) = L1 (fmap f a)
   fmap f (R1 a) = R1 (fmap f a)
+
 instance Functor (K1 i v) where
   fmap _ (K1 c) = K1 c
+
 instance Functor f => Functor (M1 i c f) where
   fmap f (M1 a) = M1 (fmap f a)
+
 instance Functor Par1 where
   fmap f (Par1 a) = Par1 (f a)
+
 instance (Functor f, Functor g) => Functor (f :.: g) where
   fmap f (Comp1 a) = Comp1 (fmap (fmap f) a)
+
 instance Functor f => Functor (MP1 m f) where
   fmap f (MP1 x) = MP1 (fmap f x)
+
 instance Functor UAddr where
   fmap _ (UAddr c) = UAddr c
+
 instance Functor UChar where
   fmap _ (UChar c) = UChar c
+
 instance Functor UDouble where
   fmap _ (UDouble c) = UDouble c
+
 instance Functor UFloat where
   fmap _ (UFloat c) = UFloat c
+
 instance Functor UInt where
   fmap _ (UInt c) = UInt c
+
 instance Functor UWord where
   fmap _ (UWord c) = UWord c
