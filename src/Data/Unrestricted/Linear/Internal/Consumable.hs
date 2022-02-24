@@ -37,6 +37,8 @@ import qualified Data.Monoid as Monoid
 import GHC.Tuple (Solo)
 import qualified Data.Vector as Vector
 import Data.Void (Void)
+import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
+import qualified Data.Replicator.Linear.Internal as Replicator
 
 class Consumable a where
   consume :: a %1 -> ()
@@ -56,6 +58,12 @@ infixr 0 `lseq` -- same fixity as base.seq
 
 -- ----------------
 -- Instances
+
+instance Consumable (ReplicationStream.ReplicationStream a) where
+  consume = ReplicationStream.consume
+
+instance Consumable (Replicator.Replicator a) where
+  consume = Replicator.consume
 
 instance Consumable a => Consumable (Vector.Vector a) where
   consume xs = consume (Unsafe.toLinear Vector.toList xs)

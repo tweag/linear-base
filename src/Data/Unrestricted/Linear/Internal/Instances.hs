@@ -24,11 +24,7 @@ module Data.Unrestricted.Linear.Internal.Instances where
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.Monoid.Linear
-import Data.Replicator.Linear.Internal (Replicator (..))
-import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.Instances ()
-import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
-import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Dupable
 import Data.Unrestricted.Linear.Internal.Movable
@@ -177,15 +173,3 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
 
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a) where
   mempty = MovableMonoid Prelude.mempty
-
-instance Consumable (ReplicationStream a) where
-  consume = ReplicationStream.consume
-
-instance Dupable (ReplicationStream a) where
-  dupR = Streamed . ReplicationStream.duplicate
-
-instance Consumable (Replicator a) where
-  consume = Replicator.consume
-
-instance Dupable (Replicator a) where
-  dupR = Replicator.duplicate

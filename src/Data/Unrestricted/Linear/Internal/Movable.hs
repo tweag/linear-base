@@ -89,6 +89,9 @@ instance (Movable a, Movable b) => Movable (a, b) where
 instance (Movable a, Movable b, Movable c) => Movable (a, b, c) where
   move (a, b, c) = (,,) Data.<$> move a Data.<*> move b Data.<*> move c
 
+deriving via Generically (a, b, c, d)
+  instance (Movable a, Movable b, Movable c, Movable d) => Movable (a, b, c, d)
+
 instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
   move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
@@ -146,10 +149,10 @@ instance (GMovable f, GMovable g) => GMovable (f :*: g) where
       (Ur y) -> Ur (x :*: y)
 
 instance Movable c => GMovable (K1 i c) where
-  gmove (K1 c) = move c & \case (Ur x) -> Ur (K1 x)
+  gmove (K1 c) = lcoerce (move c)
 
 instance GMovable f => GMovable (M1 i t f) where
-  gmove (M1 a) = gmove a & \case (Ur x) -> Ur (M1 x)
+  gmove (M1 a) = lcoerce (gmove a)
 
 instance GMovable (MP1 'Many f) where
   gmove (MP1 x) = Ur (MP1 x)

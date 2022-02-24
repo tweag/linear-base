@@ -33,10 +33,10 @@ where
 import Data.Replicator.Linear.Internal (Replicator (..))
 import qualified Data.Replicator.Linear.Internal as Replicator
 import Data.Replicator.Linear.Internal.ReplicationStream (ReplicationStream (..))
+import qualified Data.Replicator.Linear.Internal.ReplicationStream as ReplicationStream
 import Data.Unrestricted.Linear.Internal.Consumable
 import Prelude.Linear.Internal
 import Generics.Linear
-import Data.Coerce
 import Prelude.Linear.Generically
 import qualified Unsafe.Linear as Unsafe
 import GHC.Types (Multiplicity (..))
@@ -110,6 +110,12 @@ dup = dup2
 ------------
 -- Instances
 ------------
+
+instance Dupable (ReplicationStream a) where
+  dupR = Streamed . ReplicationStream.duplicate
+
+instance Dupable (Replicator a) where
+  dupR = Replicator.duplicate
 
 deriving via Generically Prelude.Bool
   instance Dupable Prelude.Bool
@@ -241,7 +247,3 @@ instance GDupable UInt where
 
 instance GDupable UWord where
   gdupR = Unsafe.toLinear Replicator.pure
-
-lcoerce :: forall a b. Coercible a b => a %1 -> b
-lcoerce = coerce ((\a -> a) :: a %1 -> a)
-{-# INLINE lcoerce #-}
