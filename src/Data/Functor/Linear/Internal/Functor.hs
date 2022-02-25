@@ -28,8 +28,8 @@ import qualified Control.Monad.Trans.State.Strict as Strict
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
-import Data.Functor.Sum
 import Data.Functor.Product
+import Data.Functor.Sum
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Ur
 import Generics.Linear

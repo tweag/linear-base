@@ -26,8 +26,8 @@ import qualified Control.Monad.Trans.Reader as NonLinear
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
-import Data.Functor.Product
 import Data.Functor.Linear.Internal.Functor
+import Data.Functor.Product
 import Data.Monoid (Ap (..))
 import Data.Monoid.Linear hiding (Product)
 import Data.Unrestricted.Linear.Internal.Ur (Ur (..))

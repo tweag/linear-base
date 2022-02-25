@@ -155,8 +155,10 @@ instance (Monoid a, Monoid b, Monoid c) => Applicative ((,,,) a b c) where
   pure x = (mempty, mempty, mempty, x)
   (a1, a2, a3, f) <*> (b1, b2, b3, x) = (a1 <> b1, a2 <> b2, a3 <> b3, f x)
 
-deriving via Generically1 Identity
-  instance Functor Identity
+deriving via
+  Generically1 Identity
+  instance
+    Functor Identity
 
 instance Applicative Identity where
   pure = Identity

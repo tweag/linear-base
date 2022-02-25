@@ -30,12 +30,11 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Semigroup as Semigroup
 import Data.Unrestricted.Linear.Internal.Dupable
 import Data.Unrestricted.Linear.Internal.Ur
+import GHC.Tuple (Solo)
 import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
-import GHC.Tuple (Solo)
-
 import qualified Unsafe.Linear as Unsafe
 import Prelude (Bool (..), Char, Double, Float, Int, Ordering (..), Word)
 import qualified Prelude as Prelude
@@ -101,7 +100,8 @@ instance Movable () where
 
 deriving via
   Generically (Solo a)
-  instance Movable a => Movable (Solo a)
+  instance
+    Movable a => Movable (Solo a)
 
 deriving via
   Generically (a, b)
