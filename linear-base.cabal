@@ -43,6 +43,8 @@ library
         Control.Optics.Linear.Lens
         Control.Optics.Linear.Prism
         Control.Optics.Linear.Traversal
+        Data.Arity.Linear
+        Data.Arity.Linear.Internal
         Data.Array.Destination
         Data.Array.Destination.Internal
         Data.Array.Mutable.Linear
@@ -89,7 +91,6 @@ library
         Data.Replicator.Linear.Internal
         Data.Replicator.Linear.Internal.ReplicationStream
         Data.Replicator.Linear.Internal.Instances
-        Data.Arity.Linear.Internal
         Data.V.Linear
         Data.V.Linear.Internal
         Data.V.Linear.Internal.Instances

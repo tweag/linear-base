@@ -133,13 +133,27 @@ extend f = map f . duplicate
 --
 -- > elim (,) :: Replicator a %1 -> (a, a)
 -- > elim (,,) :: Replicator a %1 -> (a, a, a)
-elim :: forall (n :: Nat) a b f. (Elim (NatToPeano n) a b, IsFunN a b f, f ~ FunN (NatToPeano n) a b, n ~ Arity b f) => f %1 -> Replicator a %1 -> b
+--
+-- About the constraints of this function (they won't get in your way):
+--
+-- * @'Elim' ('NatToPeano' n) a b@ provides the actual implementation of 'elim'; there is an instance of this class for any @(n, a, b)@
+-- * @'IsFunN' a b f, f ~ 'FunN' ('NatToPeano' n) a b, n ~ 'Arity' b f@ indicate the shape of @f@ to the typechecker (see documentation of 'IsFunN').
+elim ::
+  forall (n :: Nat) a b f.
+  ( Elim (NatToPeano n) a b,
+    IsFunN a b f,
+    f ~ FunN (NatToPeano n) a b,
+    n ~ Arity b f
+  ) =>
+  f %1 ->
+  Replicator a %1 ->
+  b
 elim f r = elim' @(NatToPeano n) f r
 
--- | @'Elim' n a b f@ asserts that @f@ is a function taking @n@ linear arguments
--- of type @a@ and then returning a value of type @b@.
+-- | @'Elim' n a b@ is used to implement 'elim' without recursion
+-- so that we can guarantee that 'elim' will be inlined and unrolled.
 --
--- It is solely used to define the type of the 'elim' function.
+-- 'Elim' is solely used in the signature of 'elim'.
 type Elim :: Peano -> Type -> Type -> Constraint
 class Elim n a b where
   -- Note that 'elim' is, in particular, used to force eta-expansion of
