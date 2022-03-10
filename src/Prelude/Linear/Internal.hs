@@ -33,9 +33,6 @@ id x = x
 const :: a %q -> b -> a
 const x _ = x
 
-asTypeOf :: a %q -> a -> a
-asTypeOf = const
-
 -- | @seq x y@ only forces @x@ to head normal form, therefore is not guaranteed
 -- to consume @x@ when the resulting computation is consumed. Therefore, @seq@
 -- cannot be linear in it's first argument.

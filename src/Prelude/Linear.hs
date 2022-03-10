@@ -82,7 +82,6 @@ module Prelude.Linear
     ($),
     (&),
     Prelude.until,
-    asTypeOf,
     Prelude.error,
     Prelude.errorWithoutStackTrace,
     Prelude.undefined,
