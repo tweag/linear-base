@@ -28,11 +28,9 @@ jobs:
     - name: Update Cabal's database
       run: nix-shell --pure --run "cabal update"
     - name: Build Cabal's dependencies
-      run: nix-shell --pure --run "cabal build --enable-tests --enable-benchmarks --dependencies-only"
+      run: nix-shell --pure --run "cabal build --disable-tests --disable-benchmarks --dependencies-only"
     - name: Build
-      run: nix-shell --pure --run "cabal build"
-    - name: Test
-      run: nix-shell --pure --run "cabal test"
+      run: nix-shell --pure --run "cabal build --disable-tests --disable-benchmarks"
     - name: Haddock
       run: nix-shell --pure --run "cabal haddock"
     - name: cabal-docspec
@@ -74,4 +72,4 @@ jobs:
     - name: Build Nix dependencies
       run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Build
-      run: nix-shell --pure --run "stack build --pedantic --test --bench --no-run-tests --no-run-benchmarks"
+      run: nix-shell --pure --run "stack build --pedantic --test --bench --no-run-benchmarks"
