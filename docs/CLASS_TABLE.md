@@ -530,7 +530,7 @@ class Foldable t where
 </td>
 <td>
 
-No linear counterpart available at the moment.
+No linear counterpart available at the moment, but individual fold functions can be found in `Data.List.Linear`
 
 </td>
 </tr>
