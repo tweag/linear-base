@@ -18,7 +18,7 @@
 
 module Data.Unrestricted.Linear.Internal.Dupable
   ( Dupable (..),
-    genericdupR,
+    genericDupR,
     dup,
     dup3,
     dup4,
@@ -232,8 +232,8 @@ deriving newtype instance Dupable Semigroup.Any
 instance (Generic a, GDupable (Rep a)) => Dupable (Generically a) where
   dupR (Generically x) = lcoerce (Replicator.map (to :: Rep a x %1 -> a) (gdupR (from x)))
 
-genericdupR :: (Generic a, GDupable (Rep a)) => a %1 -> Replicator a
-genericdupR x = Replicator.map to (gdupR (from x))
+genericDupR :: (Generic a, GDupable (Rep a)) => a %1 -> Replicator a
+genericDupR x = Replicator.map to (gdupR (from x))
 
 class GConsumable f => GDupable f where
   gdupR :: f a %1 -> Replicator (f a)

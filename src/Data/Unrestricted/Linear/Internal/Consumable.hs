@@ -141,11 +141,6 @@ deriving via
     _ => Consumable (a, b, c, d, e)
 
 deriving via
-  Generically (a, b, c, d, e, f)
-  instance
-    _ => Consumable (a, b, c, d, e, f)
-
-deriving via
   Generically (Prelude.Maybe a)
   instance
     _ => Consumable (Prelude.Maybe a)

@@ -6,7 +6,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -117,6 +116,11 @@ deriving via
   Generically (a, b, c, d)
   instance
     (Movable a, Movable b, Movable c, Movable d) => Movable (a, b, c, d)
+
+deriving via
+  Generically (a, b, c, d, e)
+  instance
+    (Movable a, Movable b, Movable c, Movable d, Movable e) => Movable (a, b, c, d, e)
 
 instance Movable a => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing

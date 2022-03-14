@@ -9,7 +9,6 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -43,12 +42,12 @@ module Control.Functor.Linear.Internal.Class
 where
 
 import qualified Control.Monad as NonLinear ()
-import Data.Functor.Compose (Compose (..))
-import Data.Functor.Identity (Identity (..))
+import Data.Functor.Compose
+import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
-import qualified Data.Functor.Sum
-import Data.Monoid.Linear
+import Data.Functor.Sum
+import Data.Monoid.Linear hiding (Sum)
 import Data.Type.Bool
 import Data.Unrestricted.Linear.Internal.Consumable
 import GHC.TypeLits
@@ -242,9 +241,9 @@ instance Monoid a => Monad ((,) a) where
       go b1 (b2, y) = (b1 <> b2, y)
 
 deriving via
-  Generically1 (Data.Functor.Sum.Sum f g)
+  Generically1 (Sum f g)
   instance
-    (Functor f, Functor g) => Functor (Data.Functor.Sum.Sum f g)
+    (Functor f, Functor g) => Functor (Sum f g)
 
 deriving via
   Generically1 (Compose f g)

@@ -125,7 +125,7 @@ library
         containers,
         ghc-prim,
         hashable,
-        linear-generics >= 0.2 && < 0.3,
+        linear-generics >= 0.2,
         storable-tuple,
         text,
         transformers,
