@@ -1,9 +1,9 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
@@ -18,9 +18,9 @@ module Prelude.Linear.Unsatisfiable
   )
 where
 
+import Data.Void
 import GHC.Exts (Any, TYPE)
 import GHC.TypeLits (ErrorMessage, TypeError)
-import Data.Void
 
 -- The 'Any' constraint prevents anyone from instantiating 'Bottom' with
 -- unsatisfiable' = undefined if they don't understand what it's for.
@@ -46,4 +46,4 @@ class (Bottom, TypeError e) => Unsatisfiable (e :: ErrorMessage)
 -- | Produce a value of any type (and runtime representation) under
 -- an 'Unsatisfiable' or 'Bottom' constraint.
 unsatisfiable :: forall {rep} (a :: TYPE rep). Bottom => a
-unsatisfiable = case unsatisfiable' of
+unsatisfiable = case unsatisfiable' of {}
