@@ -63,7 +63,6 @@ library
         Data.Functor.Linear.Internal.Functor
         Data.Functor.Linear.Internal.Applicative
         Data.Functor.Linear.Internal.Traversable
-        Data.Functor.Linear.Internal.Traversable.Generic
         Data.HashMap.Mutable.Linear
         Data.HashMap.Mutable.Linear.Internal
         Data.List.Linear
@@ -100,7 +99,10 @@ library
         Foreign.Marshal.Pure
         Foreign.Marshal.Pure.Internal
         Prelude.Linear
+        Prelude.Linear.Generically
+        Prelude.Linear.GenericUtil
         Prelude.Linear.Internal
+        Prelude.Linear.Unsatisfiable
         Streaming.Linear
         Streaming.Linear.Internal.Consume
         Streaming.Linear.Internal.Interop
@@ -123,7 +125,7 @@ library
         containers,
         ghc-prim,
         hashable,
-        linear-generics,
+        linear-generics >= 0.2,
         storable-tuple,
         text,
         transformers,

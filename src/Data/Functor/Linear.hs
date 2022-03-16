@@ -44,4 +44,3 @@ import Data.Functor.Const
 import Data.Functor.Linear.Internal.Applicative
 import Data.Functor.Linear.Internal.Functor
 import Data.Functor.Linear.Internal.Traversable
-import Data.Functor.Linear.Internal.Traversable.Generic

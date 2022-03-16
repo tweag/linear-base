@@ -22,3 +22,4 @@ instance Data.Functor Replicator where
 instance Data.Applicative Replicator where
   pure = Replicator.pure
   f <*> x = f Replicator.<*> x
+  liftA2 = Replicator.liftA2

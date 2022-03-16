@@ -24,6 +24,7 @@ module Data.Replicator.Linear.Internal
     map,
     pure,
     (<*>),
+    liftA2,
     next,
     next#,
     take,
@@ -68,15 +69,21 @@ pure :: a -> Replicator a
 pure = Moved
 
 (<*>) :: Replicator (a %1 -> b) %1 -> Replicator a %1 -> Replicator b
-(Moved f) <*> (Moved x) = Moved (f x)
-sf <*> sx = Streamed (toStream sf ReplicationStream.<*> toStream sx)
-  where
-    toStream :: Replicator a %1 -> ReplicationStream a
-    toStream = \case
-      Moved x -> ReplicationStream.pure x
-      Streamed stream -> stream
+Moved f <*> Moved x = Moved (f x)
+Moved f <*> Streamed s = Streamed (ReplicationStream.map f s)
+Streamed fs <*> Moved x = Streamed (ReplicationStream.map (\f -> f x) fs)
+Streamed sf <*> Streamed sx = Streamed (sf ReplicationStream.<*> sx)
 
 infixl 4 <*> -- same fixity as base.<*>
+
+liftA2 :: (a %1 -> b %1 -> c) -> Replicator a %1 -> Replicator b %1 -> Replicator c
+liftA2 f (Moved a) (Moved b) = Moved (f a b)
+liftA2 f (Moved a) (Streamed s) = Streamed (ReplicationStream.map (f a) s)
+liftA2 f (Streamed s) (Moved b) = Streamed (ReplicationStream.map (\a -> f a b) s)
+liftA2 f (Streamed sa) (Streamed sb) = Streamed (ReplicationStream.liftA2 f sa sb)
+-- We need to inline this to get good results with generic deriving of
+-- Dupable.
+{-# INLINE liftA2 #-}
 
 -- | Extracts the next item from the \"infinite stream\" @'Replicator' a@.
 next :: Replicator a %1 -> (a, Replicator a)

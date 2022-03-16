@@ -10,6 +10,7 @@
 -- in the linear-base library.
 module Prelude.Linear.Internal where
 
+import Data.Coerce
 import Data.Functor.Identity
 import GHC.Exts (TYPE)
 
@@ -67,3 +68,8 @@ forget f a = f a
 -- XXX: Temporary, until newtype record projections are linear.
 runIdentity' :: Identity a %p -> a
 runIdentity' (Identity x) = x
+
+-- | A linear version of 'Data.Coerce.coerce' for types of kind 'Data.Kind.Type'.
+lcoerce :: forall a b. Coercible a b => a %1 -> b
+lcoerce = coerce ((\x -> x) :: a %1 -> a)
+{-# INLINE CONLIKE lcoerce #-}
