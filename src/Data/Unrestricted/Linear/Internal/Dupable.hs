@@ -67,7 +67,7 @@ import qualified Prelude
 -- @deriving via 'Generically'@. Note that at present this mechanism
 -- can have performance problems for recursive parameterized types.
 -- Specifically, the methods will not specialize to underlying 'Dupable'
--- instances.
+-- instances. See [this GHC issue](https://gitlab.haskell.org/ghc/ghc/-/issues/21131).
 class Consumable a => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
