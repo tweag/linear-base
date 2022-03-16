@@ -3,7 +3,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
@@ -20,6 +20,7 @@ where
 
 import GHC.Exts (Any, TYPE)
 import GHC.TypeLits (ErrorMessage, TypeError)
+import Data.Void
 
 -- The 'Any' constraint prevents anyone from instantiating 'Bottom' with
 -- unsatisfiable' = undefined if they don't understand what it's for.
@@ -27,7 +28,7 @@ import GHC.TypeLits (ErrorMessage, TypeError)
 -- | A constraint that cannot be satisfied. Users should normally use
 -- 'Unsatisfiable' instead of using this class directly.
 class Any => Bottom where
-  unsatisfiable' :: a
+  unsatisfiable' :: Void
 
 -- | An unsatisfiable constraint with a user-provided error message.  Under an
 -- @Unsatisfiable@ constraint, users can use 'unsatisfiable' to get a value of
@@ -45,4 +46,4 @@ class (Bottom, TypeError e) => Unsatisfiable (e :: ErrorMessage)
 -- | Produce a value of any type (and runtime representation) under
 -- an 'Unsatisfiable' or 'Bottom' constraint.
 unsatisfiable :: forall {rep} (a :: TYPE rep). Bottom => a
-unsatisfiable = unsatisfiable' (##)
+unsatisfiable = case unsatisfiable' of
