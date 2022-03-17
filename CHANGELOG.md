@@ -15,8 +15,6 @@
   - **Remove superclass constraint** on `Prelude.{Semigroup,Monoid}` for `Data.Monoid.Linear.{Semigroup,Monoid}`. `Data.Monoid.Linear.Monoid` instances now have to define `mempty`
   - Add many missing instances of `Data.Monoid.Linear.{Semigroup,Monoid}`
   - Deprecate `Data.Monoid.Linear.{Adding,Multiplying,getAdded,getMultiplied}` in favor of `Data.Semigroup.{Sum,Product}` (reexported under `Data.Monoid.Linear`) which now have linear `Semigroup` and `Monoid` instance. `Sum` and `Product` inner values can be extracted linearly with pattern-matching
-  - As a side-effect of the deprecation, `Control.Optics.Linear.lengthOf` signature changed from<br/>`lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Adding r))) s t a b -> s -> r` to<br/>
-  `lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Sum r))) s t a b -> s -> r`
   - **`Data.Semigroup` is no longer reexported as a whole under `Data.Monoid.Linear`**. Instead, only newtypes with a linear `Semigroup` instance are reexported
 - Add missing fixity declarations for every operator of `linear-base` [\#386](https://github.com/tweag/linear-base/pull/386), ([tbagrel1](https://github.com/tbagrel1))
   - **Unchanged** (already present):<br/>`infixr 0 $`, `infixl 1 &`, `infixr 2 ||`, `infixr 3 &&`,<br/> `infix 4 ==, /=, <=, <, >, >=`, `infixr 5 :>`
@@ -33,9 +31,6 @@
   - **Previously missing fixity declarations defaulted to `infixl 9`, so some code might subtly break when updating to v0.2.0**
 - Improve consistency of module naming [\#383](https://github.com/tweag/linear-base/pull/383) ([tbagrel1](https://github.com/tbagrel1))
   - **`System.IO.Resource` -> `System.IO.Resource.Linear`**
-  - `Streaming.Internal` -> `System.Linear.Internal`
-  - `Data.Unrestricted.Internal` -> `Data.Unrestricted.Linear.Internal`
-  - `Data.Arity.Linear.Internal.Arity` -> `Data.Arity.Linear.Internal`
 - Rework `Data.V.Linear` API [\#360](https://github.com/tweag/linear-base/pull/360) ([tbagrel1](https://github.com/tbagrel1))
   - `Data.Functor.Linear.Applicative` instance
   - `empty :: forall a. V 0 a`
