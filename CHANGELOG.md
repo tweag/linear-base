@@ -1,6 +1,6 @@
 # Change Log
 
-## [v0.2.0](https://github.com/tweag/linear-base/tree/v0.2.0) - 2022-03-17
+## [v0.2.0](https://github.com/tweag/linear-base/tree/v0.2.0) - 2022-03-25
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.1.0...v0.2.0)
 
@@ -116,6 +116,7 @@
 
 ### Documentation improvements
 
+- Change relative links for absolute ones in the README [\#401](https://github.com/tweag/linear-base/pull/401) ([tbagrel1](https://github.com/tbagrel1))
 - Add comparison table between `Prelude` and `Prelude.Linear` classes [\#368](https://github.com/tweag/linear-base/pull/368) ([tbagrel1](https://github.com/tbagrel1))
 - Add Hackage and Stackage badges [\#336](https://github.com/tweag/linear-base/pull/336) ([utdemir](https://github.com/utdemir))
 - Hide internal modules from `haddock` documentation [\#326](https://github.com/tweag/linear-base/pull/326) ([utdemir](https://github.com/utdemir)), [\#363](https://github.com/tweag/linear-base/pull/363) ([tbagrel1](https://github.com/tbagrel1))

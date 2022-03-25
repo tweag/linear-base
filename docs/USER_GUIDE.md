@@ -24,7 +24,7 @@ if you are unfamiliar).
    library](https://hackage.haskell.org/package/streaming) is in
    `Streaming.Linear` and `Streaming.Prelude.Linear`.
  * How `Prelude.Linear` classes relate to their `base` (non-linear) counterpart is
-   described in the [class comparison table](./CLASS_TABLE.md).
+   described in the [class comparison table](https://github.com/tweag/linear-base/blob/master/docs/CLASS_TABLE.md).
 
 There are many other modules of course but a lot of the ones not already listed
 are still experimental, such as system-heap memory management in `Foreign.Marshall.Pure`.
@@ -169,6 +169,6 @@ useSubfunction arr = fromRead (read arr 0)
     fromRead = undefined
 ```
 
-[`Data.Unrestricted`]: ../src/Data/Unrestricted/Linear.hs
-[`Prelude.Linear`]: ../src/Prelude/Linear.hs
-[`README`]: ../README.md
+[`Data.Unrestricted`]: https://github.com/tweag/linear-base/blob/master/src/Data/Unrestricted/Linear.hs
+[`Prelude.Linear`]: https://github.com/tweag/linear-base/blob/master/src/Prelude/Linear.hs
+[`README`]: https://github.com/tweag/linear-base/blob/master/README.md
