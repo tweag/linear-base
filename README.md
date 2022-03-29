@@ -43,10 +43,10 @@ the top:
 
 If you already know what `-XLinearTypes` does and what the linear
 arrow `a %1-> b` means, then read the [User Guide] and explore the
-[`examples/`](./examples) folder to know how to use `linear-base`.
+[`examples/`](https://github.com/tweag/linear-base/blob/master/examples) folder to know how to use `linear-base`.
 
 You can also find a table comparing `base` and `linear-base` typeclasses
-[here](./docs/CLASS_TABLE.md).
+[here](https://github.com/tweag/linear-base/blob/master/docs/CLASS_TABLE.md).
 
 ## Learning about `-XLinearTypes`
 
@@ -55,7 +55,7 @@ There are plenty of excellent resources and examples to help you.
 
 ### Tutorials and examples
 
- * See the [`examples/`](./examples) folder.
+ * See the [`examples/`](https://github.com/tweag/linear-base/blob/master/examples) folder.
  * [Linear examples on watertight 3D models](https://github.com/gelisam/linear-examples)
 
 ### Reading material
@@ -87,13 +87,13 @@ making pull requests.
 
 ## Licence
 
-See the [Licence file](./LICENSE).
+See the [Licence file](https://github.com/tweag/linear-base/blob/master/LICENSE).
 
 Copyright © Tweag Holding and its affiliates.
 
 [Tweag]: https://www.tweag.io/
 [`base`]: https://hackage.haskell.org/package/base
-[User Guide]: ./docs/USER_GUIDE.md
-[Design Document]: ./docs/DESIGN.md
+[User Guide]: https://github.com/tweag/linear-base/blob/master/docs/USER_GUIDE.md
+[Design Document]: https://github.com/tweag/linear-base/blob/master/docs/DESIGN.md
 [hackage-pkg]: https://hackage.haskell.org/package/linear-base
 [stackage-pkg]: https://www.stackage.org/nightly/package/linear-base
