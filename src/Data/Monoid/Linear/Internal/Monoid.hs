@@ -106,7 +106,7 @@ instance Monoid (Endo a) where
 -- See System.IO.Linear for instance ... => Monoid (IO a)
 -- See System.IO.Resource.Internal for instance ... => Monoid (RIO a)
 
-instance Monoid a => Monoid (Maybe a) where
+instance Semigroup a => Monoid (Maybe a) where
   mempty = Nothing
 
 -- See Data.List.Linear for instance ... => Monoid [a]
