@@ -12,7 +12,7 @@ module Data.Tuple.Linear
 where
 
 import Data.Unrestricted.Linear.Internal.Consumable
-import Prelude.Linear.Internal ( curry, uncurry )
+import Prelude.Linear.Internal (curry, uncurry)
 
 fst :: Consumable b => (a, b) %1 -> a
 fst (a, b) = lseq b a
