@@ -183,7 +183,8 @@ test-suite examples
         base,
         linear-base,
         tasty,
-        tasty-hedgehog,
+        tasty-hedgehog < 1.2,
+          -- tasty-hedgehog deprecates 'testProperty' in test/Test/Data/Destination.hs
         hedgehog,
         storable-tuple,
         vector,
