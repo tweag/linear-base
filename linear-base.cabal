@@ -183,7 +183,7 @@ test-suite examples
         base,
         linear-base,
         tasty,
-        tasty-hedgehog,
+        tasty-hedgehog < 1.2,
         hedgehog,
         storable-tuple,
         vector,
