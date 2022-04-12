@@ -1,7 +1,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
--- | This module provides linear functions commonly used on tuples
+-- | This module provides linear functions commonly used on tuples.
 module Data.Tuple.Linear
   ( fst,
     snd,
@@ -11,8 +11,8 @@ module Data.Tuple.Linear
   )
 where
 
-import Data.Unrestricted.Linear
-import Prelude.Linear.Internal
+import Data.Unrestricted.Linear.Internal.Consumable
+import Prelude.Linear.Internal ( curry, uncurry )
 
 fst :: Consumable b => (a, b) %1 -> a
 fst (a, b) = lseq b a
