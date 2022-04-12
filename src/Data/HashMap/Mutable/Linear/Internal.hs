@@ -135,8 +135,8 @@ empty ::
   forall k v b.
   Keyed k =>
   Int ->
-  (HashMap k v %1 -> Ur b) %1 ->
-  Ur b
+  (HashMap k v %1 -> b) %1 ->
+  b
 empty size scope =
   let cap = max 1 size
    in Array.alloc cap Nothing (\arr -> scope (HashMap 0 cap arr))

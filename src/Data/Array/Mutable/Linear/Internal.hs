@@ -65,8 +65,8 @@ alloc ::
   HasCallStack =>
   Int ->
   a ->
-  (Array a %1 -> Ur b) %1 ->
-  Ur b
+  (Array a %1 -> b) %1 ->
+  b
 alloc s x f
   | s < 0 =
       (error ("Array.alloc: negative size: " ++ show s) :: x %1 -> x)

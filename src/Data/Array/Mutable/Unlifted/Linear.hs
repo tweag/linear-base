@@ -60,7 +60,7 @@ infixr 0 `lseq` -- same fixity as base.seq
 -- | Allocate a mutable array of given size using a default value.
 --
 -- The size should be non-negative.
-alloc :: Int -> a -> (Array# a %1 -> Ur b) %1 -> Ur b
+alloc :: Int -> a -> (Array# a %1 -> b) %1 -> b
 alloc (GHC.I# s) a f =
   let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
