@@ -4,8 +4,10 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -18,6 +20,7 @@
 module Data.Unrestricted.Linear.Internal.Movable
   ( -- * Movable
     Movable (..),
+    ($^),
     GMovable,
     genericMove,
   )
@@ -30,12 +33,11 @@ import qualified Data.Semigroup as Semigroup
 import Data.Unrestricted.Linear.Internal.Dupable
 import Data.Unrestricted.Linear.Internal.Ur
 import GHC.Tuple (Solo)
-import GHC.Types (Multiplicity (..))
+import GHC.Types
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
-import Prelude (Bool (..), Char, Double, Float, Int, Ordering (..), Word)
 import qualified Prelude as Prelude
 
 -- | Use @'Movable' a@ to represent a type which can be used many times even
@@ -55,6 +57,11 @@ import qualified Prelude as Prelude
 -- * @case move x of {Ur x -> (x, x)} = dup2 x@
 class Dupable a => Movable a where
   move :: a %1 -> Ur a
+
+($^) :: forall {rep} a (b :: TYPE rep). Movable a => (a -> b) %1 -> a %1 -> b
+f $^ a =
+  move a & \case
+    Ur a' -> f a'
 
 -- -------------
 -- Instances
