@@ -21,6 +21,8 @@ module Control.Functor.Linear.Internal.State
     runState,
     mapStateT,
     mapState,
+    evalStateT,
+    evalState,
     execStateT,
     execState,
     withStateT,
@@ -36,6 +38,7 @@ import qualified Control.Monad.Trans.State.Strict as NonLinear
 import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
+import qualified Data.Tuple.Linear as Linear
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Dupable
 import Prelude.Linear.Internal
@@ -80,6 +83,11 @@ withStateT r (StateT f) = StateT (f . r)
 execStateT :: Functor m => StateT s m () %1 -> s %1 -> m s
 execStateT f = fmap (\((), s) -> s) . (runStateT f)
 
+-- | Use with care!
+--   This consumes the final state, so might be costly at runtime.
+evalStateT :: (Functor m, Consumable s) => StateT s m a %1 -> s %1 -> m a
+evalStateT f = fmap Linear.fst . runStateT f
+
 mapState :: ((a, s) %1 -> (b, s)) %1 -> State s a %1 -> State s b
 mapState f = mapStateT (Identity . f . runIdentity')
 
@@ -88,6 +96,11 @@ withState = withStateT
 
 execState :: State s () %1 -> s %1 -> s
 execState f = runIdentity' . execStateT f
+
+-- | Use with care!
+--   This consumes the final state, so might be costly at runtime.
+evalState :: Consumable s => State s a %1 -> s %1 -> a
+evalState f = runIdentity' . evalStateT f
 
 modify :: Applicative m => (s %1 -> s) %1 -> StateT s m ()
 modify f = state $ \s -> ((), f s)

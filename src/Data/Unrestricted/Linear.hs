@@ -22,8 +22,8 @@
 -- If a type is 'Consumable', you can __consume__ it in a linear function that
 -- doesn't need that value to produce it's result:
 --
--- > first :: Consumable b => (a,b) %1-> a
--- > first (a,b) = withConsume (consume b) a
+-- > fst :: Consumable b => (a,b) %1-> a
+-- > fst (a,b) = withConsume (consume b) a
 -- >   where
 -- >     withConsume :: () %1-> a %1-> a
 -- >     withConsume () x = x
