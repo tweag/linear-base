@@ -3,6 +3,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
@@ -17,7 +18,7 @@ import Generics.Linear.TH
 import Hedgehog
 import Prelude.Linear
 import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 import qualified Prelude
 
 data Pair a = MkPair a a
@@ -31,18 +32,21 @@ instance Data.Functor Pair where
 instance Data.Traversable Pair where
   traverse = genericTraverse
 
-pairTest :: TestTree
-pairTest =
-  testProperty "traverse via genericTraverse with WithLog and Pair" $
-    property $
-      ( Data.traverse
-          (\x -> (Sum (1 :: Int), 2 * x))
-          (MkPair 3 4 :: Pair Int)
-      )
-        === (Sum 2, (MkPair 6 8))
-
 genericTraverseTests :: TestTree
 genericTraverseTests =
   testGroup
     "genericTraverse examples"
     [pairTest]
+
+pairTest :: TestTree
+pairTest =
+  testPropertyNamed "traverse via genericTraverse with WithLog and Pair" "propertyPairTest" propertyPairTest
+
+propertyPairTest :: Property
+propertyPairTest =
+  property $
+    ( Data.traverse
+        (\x -> (Sum (1 :: Int), 2 * x))
+        (MkPair 3 4 :: Pair Int)
+    )
+      === (Sum 2, (MkPair 6 8))

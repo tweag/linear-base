@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Test.Quicksort (quickSortTests) where
 
 import Data.List (sort)
@@ -6,10 +8,10 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Simple.Quicksort (quickSort)
 import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 
 quickSortTests :: TestTree
-quickSortTests = testProperty "quicksort sorts" testQuicksort
+quickSortTests = testPropertyNamed "quicksort sorts" "testQuicksort" testQuicksort
 
 testQuicksort :: Property
 testQuicksort = property $ do

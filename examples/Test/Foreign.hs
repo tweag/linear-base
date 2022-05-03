@@ -1,4 +1,5 @@
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -18,7 +19,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Prelude.Linear
 import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 import qualified Prelude
 
 -- # Organizing tests
@@ -36,16 +37,16 @@ listExampleTests :: TestTree
 listExampleTests =
   testGroup
     "list tests"
-    [ testProperty "List.toList . List.fromList = id" invertNonGCList,
-      testProperty "map id = id" mapIdNonGCList,
-      testProperty "memory freed post-exception" testExecptionOnMem
+    [ testPropertyNamed "List.toList . List.fromList = id" "invertNonGCList" invertNonGCList,
+      testPropertyNamed "map id = id" "mapIdNonGCList" mapIdNonGCList,
+      testPropertyNamed "memory freed post-exception" "testExceptionOnMem" testExceptionOnMem
     ]
 
 heapExampleTests :: TestTree
 heapExampleTests =
   testGroup
     "heap tests"
-    [testProperty "sort = heapsort" nonGCHeapSort]
+    [testPropertyNamed "sort = heapsort" "nonGCHeapSort" nonGCHeapSort]
 
 -- # Internal library
 -------------------------------------------------------------------------------
@@ -86,8 +87,8 @@ mapIdNonGCList = property $ do
             eqList (List.ofList xs p0) (List.map id (List.ofList xs p1) p2)
   assert boolTest
 
-testExecptionOnMem :: Property
-testExecptionOnMem = property $ do
+testExceptionOnMem :: Property
+testExceptionOnMem = property $ do
   xs <- forAll list
   let bs = xs ++ (throw InjectedError)
   let writeBadList = Manual.withPool (move . List.toList . List.ofRList bs)
