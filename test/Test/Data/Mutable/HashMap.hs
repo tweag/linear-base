@@ -37,7 +37,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear
 import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 
 -- # Exported Tests
 --------------------------------------------------------------------------------
@@ -48,31 +48,33 @@ mutHMTests = testGroup "Mutable hashmap tests" group
 group :: [TestTree]
 group =
   [ -- Axiomatic tests
-    testProperty "∀ k,v,m. lookup k (insert m k v) = Just v" lookupInsert1,
-    testProperty
+    testPropertyNamed "∀ k,v,m. lookup k (insert m k v) = Just v" "lookupInsert1" lookupInsert1,
+    testPropertyNamed
       "∀ k,v,m,k'/=k. lookup k'(insert m k v) = lookup k' m"
+      "lookuInsert2"
       lookupInsert2,
-    testProperty "∀ k,m. lookup k (delete m k) = Nothing" lookupDelete1,
-    testProperty
+    testPropertyNamed "∀ k,m. lookup k (delete m k) = Nothing" "lookupDelete1" lookupDelete1,
+    testPropertyNamed
       "∀ k,m,k'/=k. lookup k' (delete m k) = lookup k' m"
+      "lookupDelete2"
       lookupDelete2,
-    testProperty "∀ k,v,m. member k (insert m k v) = True" memberInsert,
-    testProperty "∀ k,m. member k (delete m k) = False" memberDelete,
-    testProperty "∀ k,v,m. size (insert (m-k) k v) = 1+ size (m-k)" sizeInsert,
-    testProperty "∀ k,m with k. size (delete m k) + 1 = size m" deleteSize,
+    testPropertyNamed "∀ k,v,m. member k (insert m k v) = True" "memberInsert" memberInsert,
+    testPropertyNamed "∀ k,m. member k (delete m k) = False" "memberDelete" memberDelete,
+    testPropertyNamed "∀ k,v,m. size (insert (m-k) k v) = 1+ size (m-k)" "sizeInsert" sizeInsert,
+    testPropertyNamed "∀ k,m with k. size (delete m k) + 1 = size m" "deleteSize" deleteSize,
     -- Homorphism tests against a reference implementation
-    testProperty "insert k v h = fromList (toList h ++ [(k,v)])" refInsert,
-    testProperty "delete k h = fromList (filter (!= k . fst) (toList h))" refDelete,
-    testProperty "fst . lookup k h = lookup k (toList h)" refLookup,
-    testProperty "mapMaybe f h = fromList . mapMaybe (uncurry f) . toList" refMap,
-    testProperty "size = length . toList" refSize,
-    testProperty "toList . fromList = id" refToListFromList,
-    testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter,
-    testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend,
-    testProperty "unionWith reference" refUnionWith,
-    testProperty "intersectionWith reference" refIntersectionWith,
+    testPropertyNamed "insert k v h = fromList (toList h ++ [(k,v)])" "refInsert" refInsert,
+    testPropertyNamed "delete k h = fromList (filter (!= k . fst) (toList h))" "refDelete" refDelete,
+    testPropertyNamed "fst . lookup k h = lookup k (toList h)" "refLookup" refLookup,
+    testPropertyNamed "mapMaybe f h = fromList . mapMaybe (uncurry f) . toList" "refMap" refMap,
+    testPropertyNamed "size = length . toList" "refSize" refSize,
+    testPropertyNamed "toList . fromList = id" "refToListFromList" refToListFromList,
+    testPropertyNamed "filter f (fromList xs) = fromList (filter f xs)" "refFilter" refFilter,
+    testPropertyNamed "fromList xs <> fromList ys = fromList (xs <> ys)" "refMappend" refMappend,
+    testPropertyNamed "unionWith reference" "refUnionWith" refUnionWith,
+    testPropertyNamed "intersectionWith reference" "refIntersectionWith" refIntersectionWith,
     -- Misc
-    testProperty "toList . shrinkToFit = toList" shrinkToFitTest
+    testPropertyNamed "toList . shrinkToFit = toList" "shrinkToFitTest" shrinkToFitTest
   ]
 
 -- # Internal Library

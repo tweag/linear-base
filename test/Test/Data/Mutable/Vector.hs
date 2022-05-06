@@ -32,7 +32,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 
 -- # Exported Tests
 --------------------------------------------------------------------------------
@@ -43,43 +43,45 @@ mutVecTests = testGroup "Mutable vector tests" group
 group :: [TestTree]
 group =
   -- All tests for exprs of the form (read (const ...) i)
-  [ testProperty "∀ s,i,x. read (constant s x) i = x" readConst,
-    testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1,
-    testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2,
-    testProperty "∀ a,x,(i < len a). read (push a x) i = read a i" readPush1,
-    testProperty "∀ a,x. read (push a x) (len a) = x" readPush2,
+  [ testPropertyNamed "∀ s,i,x. read (constant s x) i = x" "readConst" readConst,
+    testPropertyNamed "∀ a,i,x. read (write a i x) i = x " "readWrite1" readWrite1,
+    testPropertyNamed "∀ a,i,j/=i,x. read (write a j x) i = read a i" "readWrite2" readWrite2,
+    testPropertyNamed "∀ a,x,(i < len a). read (push a x) i = read a i" "readPush1" readPush1,
+    testPropertyNamed "∀ a,x. read (push a x) (len a) = x" "readPush2" readPush2,
     -- All tests for exprs of the form (length (const ...))
-    testProperty "∀ s,x. len (constant s x) = s" lenConst,
-    testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite,
-    testProperty "∀ a,x. len (push a x) = 1 + len a" lenPush,
+    testPropertyNamed "∀ s,x. len (constant s x) = s" "lenConst" lenConst,
+    testPropertyNamed "∀ a,i,x. len (write a i x) = len a" "lenWrite" lenWrite,
+    testPropertyNamed "∀ a,x. len (push a x) = 1 + len a" "lenPush" lenPush,
     -- Tests against a reference implementation
-    testProperty
+    testPropertyNamed
       "write ix a v = (\\l -> take ix l ++ [a] ++ drop (ix+1) l) . toList"
+      "refWrite"
       refWrite,
-    testProperty "fst $ modify f ix v = snd $ f ((toList v) !! ix)" refModify1,
-    testProperty
+    testPropertyNamed "fst $ modify f ix v = snd $ f ((toList v) !! ix)" "refModify1" refModify1,
+    testPropertyNamed
       "snd (modify f i v) = write (toList v) i (fst (f ((toList v) !! i))))"
+      "refModify2"
       refModify2,
-    testProperty "toList . push x = snoc x . toList" refPush,
-    testProperty "toList . pop = init . toList" refPop,
-    testProperty "read ix v = (toList v) !! ix" refRead,
-    testProperty "size = length . toList" refSize,
-    testProperty "toList . shrinkToFit = toList" refShrinkToFit,
-    testProperty "pop . push _ = id" refPopPush,
-    testProperty "push . pop = id" refPushPop,
-    testProperty "slice s n = take s . drop n" refSlice,
-    testProperty "toList . fromList = id" refToListFromList,
-    testProperty "toList can be implemented with repeated pops" refToListViaPop,
-    testProperty "fromList can be implemented with repeated pushes" refFromListViaPush,
-    testProperty "toList works with extra capacity" refToListWithExtraCapacity,
-    testProperty "fromList xs <> fromList ys = fromList (xs <> ys)" refMappend,
-    testProperty "mapMaybe f (fromList xs) = fromList (mapMaybe f xs)" refMapMaybe,
-    testProperty "filter f (fromList xs) = fromList (filter f xs)" refFilter,
-    testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap,
-    testProperty "toList . freeze . fromList = id" refFreeze,
+    testPropertyNamed "toList . push x = snoc x . toList" "refPush" refPush,
+    testPropertyNamed "toList . pop = init . toList" "refPop" refPop,
+    testPropertyNamed "read ix v = (toList v) !! ix" "refRead" refRead,
+    testPropertyNamed "size = length . toList" "refSize" refSize,
+    testPropertyNamed "toList . shrinkToFit = toList" "refShrinkToFit" refShrinkToFit,
+    testPropertyNamed "pop . push _ = id" "refPopPush" refPopPush,
+    testPropertyNamed "push . pop = id" "refPushPop" refPushPop,
+    testPropertyNamed "slice s n = take s . drop n" "refSlice" refSlice,
+    testPropertyNamed "toList . fromList = id" "refToListFromList" refToListFromList,
+    testPropertyNamed "toList can be implemented with repeated pops" "refToListViaPop" refToListViaPop,
+    testPropertyNamed "fromList can be implemented with repeated pushes" "refFromListViaPush" refFromListViaPush,
+    testPropertyNamed "toList works with extra capacity" "refToListWithExtraCapacity" refToListWithExtraCapacity,
+    testPropertyNamed "fromList xs <> fromList ys = fromList (xs <> ys)" "refMappend" refMappend,
+    testPropertyNamed "mapMaybe f (fromList xs) = fromList (mapMaybe f xs)" "refMapMaybe" refMapMaybe,
+    testPropertyNamed "filter f (fromList xs) = fromList (filter f xs)" "refFilter" refFilter,
+    testPropertyNamed "f <$> fromList xs == fromList (f <$> xs)" "refFmap" refFmap,
+    testPropertyNamed "toList . freeze . fromList = id" "refFreeze" refFreeze,
     -- Regression tests
-    testProperty "push on an empty vector should succeed" snocOnEmptyVector,
-    testProperty "do not reorder reads and writes" readAndWriteTest
+    testPropertyNamed "push on an empty vector should succeed" "snocOnEmptyVector" snocOnEmptyVector,
+    testPropertyNamed "do not reorder reads and writes" "readAndWriteTest" readAndWriteTest
   ]
 
 -- # Internal Library

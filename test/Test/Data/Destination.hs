@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Test.Data.Destination (destArrayTests) where
@@ -9,7 +10,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Prelude.Linear
 import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 import qualified Prelude
 
 -- # Tests and Utlities
@@ -19,10 +20,10 @@ destArrayTests :: TestTree
 destArrayTests =
   testGroup
     "Destination array tests"
-    [ testProperty "alloc . mirror = id" roundTrip,
-      testProperty "alloc . replicate = V.replicate" replicateTest,
-      testProperty "alloc . fill = V.singleton" fillTest,
-      testProperty "alloc n . fromFunction (+s) = V.fromEnum n s" fromFuncEnum
+    [ testPropertyNamed "alloc . mirror = id" "roundTrip" roundTrip,
+      testPropertyNamed "alloc . replicate = V.replicate" "replicateTest" replicateTest,
+      testPropertyNamed "alloc . fill = V.singleton" "fillTest" fillTest,
+      testPropertyNamed "alloc n . fromFunction (+s) = V.fromEnum n s" "fromFuncEnum" fromFuncEnum
     ]
 
 list :: Gen [Int]

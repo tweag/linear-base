@@ -70,7 +70,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 
 -- # Exported Tests
 --------------------------------------------------------------------------------
@@ -81,23 +81,25 @@ mutSetTests = testGroup "Mutable set tests" group
 group :: [TestTree]
 group =
   -- Tests of the form [accessor (mutator)]
-  [ testProperty "∀ x. member (insert s x) x = True" memberInsert1,
-    testProperty "∀ x,y/=x. member (insert s x) y = member s y" memberInsert2,
-    testProperty "∀ x. member (delete s x) x = False" memberDelete1,
-    testProperty "∀ x,y/=x. member (delete s x) y = member s y" memberDelete2,
-    testProperty "∀ s, x \\in s. size (insert s x) = size s" sizeInsert1,
-    testProperty "∀ s, x \\notin s. size (insert s x) = size s + 1" sizeInsert2,
-    testProperty "∀ s, x \\in s. size (delete s x) = size s - 1" sizeDelete1,
-    testProperty "∀ s, x \\notin s. size (delete s x) = size s" sizeDelete2,
+  [ testPropertyNamed "∀ x. member (insert s x) x = True" "memberInsert1" memberInsert1,
+    testPropertyNamed "∀ x,y/=x. member (insert s x) y = member s y" "memberInsert2" memberInsert2,
+    testPropertyNamed "∀ x. member (delete s x) x = False" "memberDelete1" memberDelete1,
+    testPropertyNamed "∀ x,y/=x. member (delete s x) y = member s y" "memberDelete2" memberDelete2,
+    testPropertyNamed "∀ s, x \\in s. size (insert s x) = size s" "sizeInsert1" sizeInsert1,
+    testPropertyNamed "∀ s, x \\notin s. size (insert s x) = size s + 1" "sizeInsert2" sizeInsert2,
+    testPropertyNamed "∀ s, x \\in s. size (delete s x) = size s - 1" "sizeDelete1" sizeDelete1,
+    testPropertyNamed "∀ s, x \\notin s. size (delete s x) = size s" "sizeDelete2" sizeDelete2,
     -- Homomorphism tests
-    testProperty "sort . nub = sort . toList" toListFromList,
-    testProperty "member x s = elem x (toList s)" memberHomomorphism,
-    testProperty "size = length . toList" sizeHomomorphism,
-    testProperty
+    testPropertyNamed "sort . nub = sort . toList" "toListFromList" toListFromList,
+    testPropertyNamed "member x s = elem x (toList s)" "memberHomomorphism" memberHomomorphism,
+    testPropertyNamed "size = length . toList" "sizeHomomorphism" sizeHomomorphism,
+    testPropertyNamed
       "sort . nub ((toList s) ∪ (toList s')) = sort . toList (s ∪ s')"
+      "unionHomomorphism"
       unionHomomorphism,
-    testProperty
+    testPropertyNamed
       "sort . nub ((toList s) ∩ (toList s')) = sort . toList (s ∩ s')"
+      "intersecHomomorphism"
       intersectHomomorphism
   ]
 

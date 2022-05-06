@@ -30,7 +30,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import qualified Prelude.Linear as Linear hiding ((>))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 
 -- # Exported Tests
 --------------------------------------------------------------------------------
@@ -41,30 +41,31 @@ mutArrTests = testGroup "Mutable array tests" group
 group :: [TestTree]
 group =
   -- All tests for exprs of the form (read (const ...) i)
-  [ testProperty "∀ s,i,x. read (alloc s x) i = x" readAlloc,
-    testProperty "∀ a,s,x,i. read (snd (allocBeside s x a)) i = x" allocBeside,
-    testProperty "∀ s,a,i. i < length a, read (resize s 42 a) i = read a i" readResize,
-    testProperty "∀ a,i,x. read (write a i x) i = x " readWrite1,
-    testProperty "∀ a,i,j/=i,x. read (write a j x) i = read a i" readWrite2,
+  [ testPropertyNamed "∀ s,i,x. read (alloc s x) i = x" "readAlloc" readAlloc,
+    testPropertyNamed "∀ a,s,x,i. read (snd (allocBeside s x a)) i = x" "allocBeside" allocBeside,
+    testPropertyNamed "∀ s,a,i. i < length a, read (resize s 42 a) i = read a i" "readResize" readResize,
+    testPropertyNamed "∀ a,i,x. read (write a i x) i = x " "readWrite1" readWrite1,
+    testPropertyNamed "∀ a,i,j/=i,x. read (write a j x) i = read a i" "readWrite2" readWrite2,
     -- All tests for exprs of the form (length (const ...))
-    testProperty "∀ s,x. len (alloc s x) = s" lenAlloc,
-    testProperty "∀ a,i,x. len (write a i x) = len a" lenWrite,
-    testProperty "∀ a,s,x. len (resize s x a) = s" lenResizeSeed,
+    testPropertyNamed "∀ s,x. len (alloc s x) = s" "lenAlloc" lenAlloc,
+    testPropertyNamed "∀ a,i,x. len (write a i x) = len a" "lenWrite" lenWrite,
+    testPropertyNamed "∀ a,s,x. len (resize s x a) = s" "lenResizeSeed" lenResizeSeed,
     -- Tests against a reference implementation
-    testProperty
+    testPropertyNamed
       "∀ a,ix. toList . write a ix = (\\l -> take ix l ++ [a] ++ drop (ix+1) l) . toList"
+      "writeRef"
       writeRef,
-    testProperty "∀ ix. read ix a = (toList a) !! i" readRef,
-    testProperty "size = length . toList" sizeRef,
-    testProperty "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" resizeRef,
-    testProperty "∀ s,n. slice s n = take s . drop n" sliceRef,
-    testProperty "f <$> fromList xs == fromList (f <$> xs)" refFmap,
-    testProperty "toList . fromList = id" refToListFromList,
-    testProperty "toList . freeze . fromList = id" refFreeze,
-    testProperty "dup2 produces identical arrays" refDupable,
+    testPropertyNamed "∀ ix. read ix a = (toList a) !! i" "readRef" readRef,
+    testPropertyNamed "size = length . toList" "sizeRef" sizeRef,
+    testPropertyNamed "∀ a,s,x. resize s x a = take s (toList a ++ repeat x)" "resizeRef" resizeRef,
+    testPropertyNamed "∀ s,n. slice s n = take s . drop n" "sliceRef" sliceRef,
+    testPropertyNamed "f <$> fromList xs == fromList (f <$> xs)" "refFmap" refFmap,
+    testPropertyNamed "toList . fromList = id" "refToListFromList" refToListFromList,
+    testPropertyNamed "toList . freeze . fromList = id" "refFreeze" refFreeze,
+    testPropertyNamed "dup2 produces identical arrays" "refDupable" refDupable,
     -- Regression tests
-    testProperty "do not reorder reads and writes" readAndWriteTest,
-    testProperty "do not evaluate values unnecesesarily" strictnessTest
+    testPropertyNamed "do not reorder reads and writes" "readAndWriteTest" readAndWriteTest,
+    testPropertyNamed "do not evaluate values unnecesesarily" "strictnessTest" strictnessTest
   ]
 
 -- # Internal Library

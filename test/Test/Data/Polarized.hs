@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Test.Data.Polarized (polarizedArrayTests) where
@@ -11,7 +12,7 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Prelude.Linear
 import Test.Tasty
-import Test.Tasty.Hedgehog (testProperty)
+import Test.Tasty.Hedgehog (testPropertyNamed)
 import qualified Prelude
 
 {- TODO:
@@ -28,15 +29,15 @@ polarizedArrayTests :: TestTree
 polarizedArrayTests =
   testGroup
     "Polarized arrays"
-    [ testProperty "Push.alloc . transfer . Pull.fromVector = id" polarRoundTrip,
-      testProperty "Push.append ~ Vec.append" pushAppend,
-      testProperty "Push.make ~ Vec.replicate" pushMake,
-      testProperty "Pull.append ~ Vec.append" pullAppend,
-      testProperty "Pull.asList . Pull.fromVector ~ id" pullAsList,
-      testProperty "Pull.singleton x = [x]" pullSingleton,
-      testProperty "Pull.splitAt ~ splitAt" pullSplitAt,
-      testProperty "Pull.make ~ Vec.replicate" pullMake,
-      testProperty "Pull.zip ~ zip" pullZip
+    [ testPropertyNamed "Push.alloc . transfer . Pull.fromVector = id" "polarRoundTrip" polarRoundTrip,
+      testPropertyNamed "Push.append ~ Vec.append" "pushAppend" pushAppend,
+      testPropertyNamed "Push.make ~ Vec.replicate" "pushMake" pushMake,
+      testPropertyNamed "Pull.append ~ Vec.append" "pullAppend" pullAppend,
+      testPropertyNamed "Pull.asList . Pull.fromVector ~ id" "pullAsList" pullAsList,
+      testPropertyNamed "Pull.singleton x = [x]" "pullSingleton" pullSingleton,
+      testPropertyNamed "Pull.splitAt ~ splitAt" "pullSplitAt" pullSplitAt,
+      testPropertyNamed "Pull.make ~ Vec.replicate" "pullMake" pullMake,
+      testPropertyNamed "Pull.zip ~ zip" "pullZip" pullZip
     ]
 
 list :: Gen [Int]
