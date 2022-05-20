@@ -12,7 +12,9 @@ module Data.Ord.Linear.Internal.Eq
 where
 
 import Data.Bool.Linear
+import Data.Int (Int16, Int32, Int64, Int8)
 import Data.Unrestricted.Linear
+import Data.Word (Word16, Word32, Word64, Word8)
 import Prelude.Linear.Internal
 import qualified Prelude
 
@@ -81,6 +83,22 @@ deriving via MovableEq Prelude.Bool instance Eq Prelude.Bool
 deriving via MovableEq Prelude.Char instance Eq Prelude.Char
 
 deriving via MovableEq Prelude.Ordering instance Eq Prelude.Ordering
+
+deriving via MovableEq Int16 instance Eq Int16
+
+deriving via MovableEq Int32 instance Eq Int32
+
+deriving via MovableEq Int64 instance Eq Int64
+
+deriving via MovableEq Int8 instance Eq Int8
+
+deriving via MovableEq Word16 instance Eq Word16
+
+deriving via MovableEq Word32 instance Eq Word32
+
+deriving via MovableEq Word64 instance Eq Word64
+
+deriving via MovableEq Word8 instance Eq Word8
 
 newtype MovableEq a = MovableEq a
 

@@ -1,6 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -56,7 +57,7 @@ import qualified Prelude
 -- | @'V' n a@ represents an immutable sequence of @n@ elements of type @a@
 -- (like a n-tuple), with a linear 'Data.Functor.Linear.Applicative' instance.
 newtype V (n :: Nat) (a :: Type) = V (Vector a)
-  deriving (Prelude.Eq, Prelude.Ord, Prelude.Functor)
+  deriving (Prelude.Eq, Prelude.Ord, Prelude.Show, Prelude.Foldable, Prelude.Functor, Prelude.Traversable)
 
 -- Using vector rather than, say, 'Array' (or directly 'Array#') because it
 -- offers many convenience function. Since all these unsafeCoerces probably

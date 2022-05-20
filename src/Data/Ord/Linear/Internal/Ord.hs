@@ -14,10 +14,12 @@ module Data.Ord.Linear.Internal.Ord
 where
 
 import Data.Bool.Linear (Bool (..), not)
+import Data.Int (Int16, Int32, Int64, Int8)
 import Data.Monoid.Linear
 import Data.Ord (Ordering (..))
 import Data.Ord.Linear.Internal.Eq
 import Data.Unrestricted.Linear
+import Data.Word (Word16, Word32, Word64, Word8)
 import Prelude.Linear.Internal
 import qualified Prelude
 
@@ -140,6 +142,22 @@ deriving via MovableOrd Prelude.Bool instance Ord Prelude.Bool
 deriving via MovableOrd Prelude.Char instance Ord Prelude.Char
 
 deriving via MovableOrd Prelude.Ordering instance Ord Prelude.Ordering
+
+deriving via MovableOrd Int16 instance Ord Int16
+
+deriving via MovableOrd Int32 instance Ord Int32
+
+deriving via MovableOrd Int64 instance Ord Int64
+
+deriving via MovableOrd Int8 instance Ord Int8
+
+deriving via MovableOrd Word16 instance Ord Word16
+
+deriving via MovableOrd Word32 instance Ord Word32
+
+deriving via MovableOrd Word64 instance Ord Word64
+
+deriving via MovableOrd Word8 instance Ord Word8
 
 newtype MovableOrd a = MovableOrd a
 
