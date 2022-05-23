@@ -18,6 +18,7 @@ import qualified Data.Vector as Vector
 import GHC.TypeLits
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
+import qualified Prelude
 
 -- # Instances of V
 -------------------------------------------------------------------------------
@@ -28,6 +29,10 @@ instance Data.Functor (V n) where
 instance KnownNat n => Data.Applicative (V n) where
   pure = V.pure
   a <*> b = a V.<*> b
+
+instance KnownNat n => Prelude.Applicative (V n) where
+  pure = V.pure
+  V fs <*> V xs = V $ Vector.zipWith ($) fs xs
 
 instance KnownNat n => Data.Traversable (V n) where
   traverse f (V xs) =
