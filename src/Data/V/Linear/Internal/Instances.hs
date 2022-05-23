@@ -16,9 +16,9 @@ import Data.V.Linear.Internal (V (..))
 import qualified Data.V.Linear.Internal as V
 import qualified Data.Vector as Vector
 import GHC.TypeLits
-import qualified Prelude
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
+import qualified Prelude
 
 -- # Instances of V
 -------------------------------------------------------------------------------
