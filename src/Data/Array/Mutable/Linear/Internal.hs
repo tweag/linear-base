@@ -120,7 +120,7 @@ size (Array arr) = f (Unlifted.size arr)
 set :: HasCallStack => Int -> a -> Array a %1 -> Array a
 set i x arr = unsafeSet i x (assertIndexInRange i arr)
 
--- | Same as 'set, but does not do bounds-checking. The behaviour is undefined
+-- | Same as 'set', but does not do bounds-checking. The behaviour is undefined
 -- if an out-of-bounds index is provided.
 unsafeSet :: Int -> a -> Array a %1 -> Array a
 unsafeSet ix val (Array arr) =
