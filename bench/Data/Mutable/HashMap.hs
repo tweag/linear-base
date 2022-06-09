@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
@@ -39,7 +40,7 @@ deriving instance Ord Key
 
 deriving instance Generic Key
 
-deriving instance NFData Key
+deriving anyclass instance NFData Key
 
 instance Hashable Key where
   hash (Key x) =

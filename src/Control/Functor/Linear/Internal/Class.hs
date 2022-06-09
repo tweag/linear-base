@@ -241,12 +241,12 @@ instance Monoid a => Monad ((,) a) where
       go b1 (b2, y) = (b1 <> b2, y)
 
 deriving via
-  Generically1 (Sum f g)
+  Generically1 (Sum (f :: Type -> Type) g)
   instance
     (Functor f, Functor g) => Functor (Sum f g)
 
 deriving via
-  Generically1 (Compose f g)
+  Generically1 (Compose (f :: Type -> Type) (g :: Type -> Type))
   instance
     (Functor f, Functor g) => Functor (Compose f g)
 

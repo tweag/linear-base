@@ -1,4 +1,4 @@
-{ system ? builtins.currentSystem, sources ? import ./nix/sources.nix, ghcVersion ? "902" }:
+{ system ? builtins.currentSystem, sources ? import ./nix/sources.nix, ghcVersion ? "922" }:
 
 let
   selectHls = self: super: {
@@ -19,9 +19,6 @@ let
         "
     '';
   };
-  brokenIn92 = if ghcVersion == "921" then [] else [
-    pkgs.haskell-language-server
-  ];
 in with pkgs;
 
 mkShell {
@@ -35,5 +32,6 @@ mkShell {
     stack-wrapped
     nix
     cabal-docspec
-  ] ++ brokenIn92;
+    pkgs.haskell-language-server
+  ];
 }

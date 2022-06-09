@@ -3,45 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    pantry-tree:
-      sha256: 31987ee70107c5c204137d6f75b401cf8ed5e57df1047ee17d9eb0d4a6f7bc24
-      size: 330
-    hackage: tasty-hedgehog-1.2.0.0@sha256:3deb98e9a9de9e27c25d02b7fe92ad5cf68d5163fdaaf35bca3923b3e671d46d,1803
-  original:
-    hackage: tasty-hedgehog-1.2.0.0
-- completed:
-    pantry-tree:
-      sha256: 59c9524f7e7a40b5be044fc805a6b9d6de898dfc4d156767b2429c06e1fba724
-      size: 84091
-    hackage: ormolu-0.4.0.0@sha256:cd5d2aee5fdeaee39fd0020b6c222578319cd79d5b09ece63d7c3346d363dcf2,4803
-  original:
-    hackage: ormolu-0.4.0.0
-- completed:
-    pantry-tree:
-      sha256: 4a5049fc88e0f97447501b4daf6f2f21576db16b3e500812342b23c77a3570c9
-      size: 19757
-    hackage: Cabal-3.6.2.0@sha256:ae204c95edd633538c3e502eee8838dc41d8b13c8f333955a39ff9df7b6de9e8,12852
-  original:
-    hackage: Cabal-3.6.2.0@sha256:ae204c95edd633538c3e502eee8838dc41d8b13c8f333955a39ff9df7b6de9e8,12852
-- completed:
-    pantry-tree:
-      sha256: adcd797fed395273b05a0e7fdf254cba76c6a9ceab573d78211447c6430ebb2a
-      size: 27578
-    hackage: ghc-lib-parser-9.2.1.20220109@sha256:5da80d84452a31b7d0dab46d849a9c3552897405048d466b766136d852d20cfe,12705
-  original:
-    hackage: ghc-lib-parser-9.2.1.20220109@sha256:5da80d84452a31b7d0dab46d849a9c3552897405048d466b766136d852d20cfe,12705
-- completed:
-    pantry-tree:
-      sha256: 62c6d4bb56b01f240bbc8cf276ddbe7f65ffa3f73cc430772a26d8769c08066b
-      size: 2818
-    hackage: linear-generics-0.2@sha256:c1db1fcb96333be867978abfbed71e99dfbdcafa07d7d9642a89405e6bc971b1,5818
-  original:
-    hackage: linear-generics-0.2@sha256:c1db1fcb96333be867978abfbed71e99dfbdcafa07d7d9642a89405e6bc971b1,5818
+packages: []
 snapshots:
 - completed:
-    sha256: df0d2c3ff3cd0424bf178914a068d76f3e48c89edfdcf9b015698836a106b507
-    size: 621061
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/1/13.yaml
-  original: nightly-2022-01-13
+    sha256: eb778a9c971802e22068265fb7b14d357c3eb7d76229402b9444a3db1a2bc153
+    size: 554661
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/4/28.yaml
+  original: nightly-2022-04-28

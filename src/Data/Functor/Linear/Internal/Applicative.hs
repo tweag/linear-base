@@ -32,6 +32,7 @@ import Data.Monoid (Ap (..))
 import Data.Monoid.Linear hiding (Product)
 import Data.Unrestricted.Linear.Internal.Ur (Ur (..))
 import GHC.TypeLits
+import GHC.Types
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
@@ -96,12 +97,12 @@ deriving via
     Monoid a => Applicative ((,) a)
 
 deriving via
-  Generically1 (Product f g)
+  Generically1 (Product (f :: Type -> Type) g)
   instance
     (Applicative f, Applicative g) => Applicative (Product f g)
 
 deriving via
-  Generically1 (f :*: g)
+  Generically1 ((f :: Type -> Type) :*: g)
   instance
     (Applicative f, Applicative g) => Applicative (f :*: g)
 
