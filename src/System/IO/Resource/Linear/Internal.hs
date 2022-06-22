@@ -157,7 +157,7 @@ data UnsafeResource a where
 -- Note that both components are unrestricted.
 
 -- | Given an unsafe resource, release it with the linear IO action provided
--- when the resrouce was acquired.
+-- when the resource was acquired.
 unsafeRelease :: UnsafeResource a %1 -> RIO ()
 unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
