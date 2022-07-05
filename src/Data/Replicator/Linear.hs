@@ -13,7 +13,7 @@
 -- 'Replicator' returns /the same/ value on each call to 'next'. That is, the
 -- pointer is always shared. This will allow 'Data.Unrestricted.Linear.Movable'
 -- types to be given an efficient instance of 'Data.Unrestricted.Linear.Dupable'.
--- Instances of both 'Data.Unrestricted.Linear.Movable' and 
+-- Instances of both 'Data.Unrestricted.Linear.Movable' and
 -- 'Data.Unrestricted.Linear.Dupable' typically involve deep copies. The
 -- implementation of 'pure' lets us make sure that, for @Movable@ types, only one
 -- deep copy is performed, rather than one per additional replica.
