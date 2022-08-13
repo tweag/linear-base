@@ -168,6 +168,12 @@ hSeek h mode i = coerce hSeek' h
     hSeek' =
       coerce (unsafeFromSystemIOResource_ (\h' -> System.hSeek h' mode i))
 
+-- | See @System.IO.'System.IO.hTell'@.
+--
+-- @since 0.2.1
+hTell :: Handle %1 -> RIO (Ur Integer, Handle)
+hTell = coerce (unsafeFromSystemIOResource System.hTell)
+
 -- new-resources
 
 -- | The type of system resources.  To create and use resources, you need to

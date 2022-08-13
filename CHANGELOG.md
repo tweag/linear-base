@@ -5,6 +5,7 @@
 ### New additions
 
 - Add `System.IO.Resource.Linear.hSeek`
+- Add `System.IO.Resource.Linear.hTell`
 - Add `System.IO.Resource.Linear.openBinaryFile`
 - Re-export `System.IO.SeekMode(..)` from `System.IO.Resource.Linear`
 
