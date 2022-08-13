@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### New additions
+
+- Add `System.IO.Resource.Linear.openBinaryFile`
+
 ## [v0.2.0](https://github.com/tweag/linear-base/tree/v0.2.0) - 2022-03-25
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.1.0...v0.2.0)

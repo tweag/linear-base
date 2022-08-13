@@ -114,6 +114,17 @@ openFile path mode = Control.do
       (\h -> Linear.fromSystemIO $ System.hClose h)
   Control.return $ Handle h
 
+-- | See @System.IO.'System.IO.openBinaryFile'@
+--
+-- @since 0.2.1
+openBinaryFile :: FilePath -> System.IOMode -> RIO Handle
+openBinaryFile path mode = Control.do
+  h <-
+    unsafeAcquire
+      (Linear.fromSystemIOU $ System.openFile path mode)
+      (\h -> Linear.fromSystemIO $ System.hClose h)
+  Control.pure $ Handle h
+
 hClose :: Handle %1 -> RIO ()
 hClose (Handle h) = unsafeRelease h
 
