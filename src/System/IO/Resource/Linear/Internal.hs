@@ -105,7 +105,7 @@ instance Control.Monad RIO where
 
 newtype Handle = Handle (UnsafeResource System.Handle)
 
--- | See 'System.IO.openFile'
+-- | See @System.IO.'System.IO.openFile'@
 openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = Control.do
   h <-
