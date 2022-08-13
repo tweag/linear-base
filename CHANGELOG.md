@@ -4,7 +4,9 @@
 
 ### New additions
 
+- Add `System.IO.Resource.Linear.hSeek`
 - Add `System.IO.Resource.Linear.openBinaryFile`
+- Re-export `System.IO.SeekMode(..)` from `System.IO.Resource.Linear`
 
 ## [v0.2.0](https://github.com/tweag/linear-base/tree/v0.2.0) - 2022-03-25
 

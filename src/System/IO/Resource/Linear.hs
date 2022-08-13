@@ -50,6 +50,8 @@ module System.IO.Resource.Linear
     hGetLine,
     hPutStr,
     hPutStrLn,
+    hSeek,
+    System.SeekMode(..),
 
     -- * Creating new types of resources
     -- $new-resources

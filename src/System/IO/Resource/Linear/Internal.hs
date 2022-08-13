@@ -158,6 +158,16 @@ hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
     flipHPutStrLn s =
       coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s))
 
+-- | See @System.IO.'System.IO.hSeek'@.
+--
+-- @since 0.2.1
+hSeek :: Handle %1 -> System.SeekMode -> Integer -> RIO Handle
+hSeek h mode i = coerce hSeek' h
+  where
+    hSeek' :: Handle %1 -> RIO Handle
+    hSeek' =
+      coerce (unsafeFromSystemIOResource_ (\h' -> System.hSeek h' mode i))
+
 -- new-resources
 
 -- | The type of system resources.  To create and use resources, you need to
