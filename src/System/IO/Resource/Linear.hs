@@ -51,16 +51,20 @@ module System.IO.Resource.Linear
     hPutStr,
     hPutStrLn,
     hSeek,
-    System.SeekMode(..),
+    System.SeekMode (..),
     hTell,
 
     -- * Creating new types of resources
     -- $new-resources
-    UnsafeResource,
-    unsafeRelease,
+    Resource,
+    release,
     unsafeAcquire,
     unsafeFromSystemIOResource,
     unsafeFromSystemIOResource_,
+
+    -- * Deprecated symbols
+    UnsafeResource,
+    unsafeRelease,
   )
 where
 

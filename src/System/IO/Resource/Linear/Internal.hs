@@ -6,6 +6,8 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE QualifiedDo #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
 
@@ -14,7 +16,6 @@ module System.IO.Resource.Linear.Internal where
 import Control.Exception (finally, mask, onException)
 import qualified Control.Functor.Linear as Control
 import qualified Control.Monad as Ur (fmap)
-import Data.Coerce
 import qualified Data.Functor.Linear as Data
 import Data.IORef (IORef)
 import qualified Data.IORef as System
@@ -23,7 +24,21 @@ import qualified Data.IntMap.Strict as IntMap
 import Data.Monoid (Ap (..))
 import Data.Text (Text)
 import qualified Data.Text.IO as Text
-import Prelude.Linear hiding (IO)
+import Prelude.Linear
+  ( Additive ((+)),
+    Bool (..),
+    Char,
+    FilePath,
+    Int,
+    Integer,
+    Monoid,
+    Movable (..),
+    Semigroup,
+    Ur (..),
+    fst,
+    snd,
+    ($),
+  )
 import qualified System.IO as System
 import qualified System.IO.Linear as Linear
 import qualified Prelude
@@ -98,100 +113,85 @@ instance Control.Monad RIO where
 
 -- files
 
--- Remark: Handle needs to be private otherwise `Data.Coerce.coerce` could wreak
--- Havoc on the abstraction. But we could provide a smart constructor/view to
--- unsafely convert to file handles in order for the Handle API to be
--- extensible.
-
-newtype Handle = Handle (UnsafeResource System.Handle)
+type Handle = Resource System.Handle
 
 -- | See @System.IO.'System.IO.openFile'@
 openFile :: FilePath -> System.IOMode -> RIO Handle
-openFile path mode = Control.do
-  h <-
-    unsafeAcquire
-      (Linear.fromSystemIOU $ System.openFile path mode)
-      (\h -> Linear.fromSystemIO $ System.hClose h)
-  Control.return $ Handle h
+openFile path mode =
+  unsafeAcquire
+    (Linear.fromSystemIOU $ System.openFile path mode)
+    (\h -> Linear.fromSystemIO $ System.hClose h)
 
 -- | See @System.IO.'System.IO.openBinaryFile'@
 --
 -- @since 0.3.0
 openBinaryFile :: FilePath -> System.IOMode -> RIO Handle
-openBinaryFile path mode = Control.do
-  h <-
-    unsafeAcquire
-      (Linear.fromSystemIOU $ System.openFile path mode)
-      (\h -> Linear.fromSystemIO $ System.hClose h)
-  Control.pure $ Handle h
+openBinaryFile path mode =
+  unsafeAcquire
+    (Linear.fromSystemIOU $ System.openFile path mode)
+    (\h -> Linear.fromSystemIO $ System.hClose h)
 
+-- | Specialised alias for 'release'
 hClose :: Handle %1 -> RIO ()
-hClose (Handle h) = unsafeRelease h
+hClose = release
 
 hIsEOF :: Handle %1 -> RIO (Ur Bool, Handle)
-hIsEOF = coerce (unsafeFromSystemIOResource System.hIsEOF)
+hIsEOF = unsafeFromSystemIOResource System.hIsEOF
 
 hGetChar :: Handle %1 -> RIO (Ur Char, Handle)
-hGetChar = coerce (unsafeFromSystemIOResource System.hGetChar)
+hGetChar = unsafeFromSystemIOResource System.hGetChar
 
 hPutChar :: Handle %1 -> Char -> RIO Handle
-hPutChar h c = flipHPutChar c h -- needs a multiplicity polymorphic flip
-  where
-    flipHPutChar :: Char -> Handle %1 -> RIO Handle
-    flipHPutChar c =
-      coerce (unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c))
+hPutChar h c = unsafeFromSystemIOResource_ (\h' -> System.hPutChar h' c) h
 
 hGetLine :: Handle %1 -> RIO (Ur Text, Handle)
-hGetLine = coerce (unsafeFromSystemIOResource Text.hGetLine)
+hGetLine = unsafeFromSystemIOResource Text.hGetLine
 
 hPutStr :: Handle %1 -> Text -> RIO Handle
-hPutStr h s = flipHPutStr s h -- needs a multiplicity polymorphic flip
-  where
-    flipHPutStr :: Text -> Handle %1 -> RIO Handle
-    flipHPutStr s =
-      coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStr h' s))
+hPutStr h s = unsafeFromSystemIOResource_ (\h' -> Text.hPutStr h' s) h
 
 hPutStrLn :: Handle %1 -> Text -> RIO Handle
-hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
-  where
-    flipHPutStrLn :: Text -> Handle %1 -> RIO Handle
-    flipHPutStrLn s =
-      coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s))
+hPutStrLn h s = unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s) h
 
 -- | See @System.IO.'System.IO.hSeek'@.
 --
 -- @since 0.3.0
 hSeek :: Handle %1 -> System.SeekMode -> Integer -> RIO Handle
-hSeek h mode i = coerce hSeek' h
-  where
-    hSeek' :: Handle %1 -> RIO Handle
-    hSeek' =
-      coerce (unsafeFromSystemIOResource_ (\h' -> System.hSeek h' mode i))
+hSeek h mode i = unsafeFromSystemIOResource_ (\h' -> System.hSeek h' mode i) h
 
 -- | See @System.IO.'System.IO.hTell'@.
 --
 -- @since 0.3.0
 hTell :: Handle %1 -> RIO (Ur Integer, Handle)
-hTell = coerce (unsafeFromSystemIOResource System.hTell)
+hTell = unsafeFromSystemIOResource System.hTell
 
 -- new-resources
 
 -- | The type of system resources.  To create and use resources, you need to
 -- use the API since the constructor is not released.
-data UnsafeResource a where
-  UnsafeResource :: Int -> a -> UnsafeResource a
+data Resource a where
+  UnsafeResource :: Int -> a -> Resource a
+
+-- | Deprecated alias for 'Resource'
+type UnsafeResource = Resource
+
+{-# DEPRECATED UnsafeResource "UnsafeResource has been renamed to Resource" #-}
 
 -- Note that both components are unrestricted.
 
--- | Given an unsafe resource, release it with the linear IO action provided
--- when the resource was acquired.
-unsafeRelease :: UnsafeResource a %1 -> RIO ()
-unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
+-- | @'release' r@ calls the release function provided when @r@ was acquired.
+release :: Resource a %1 -> RIO ()
+release (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
     releaseWith key rrm = Control.do
       Ur (ReleaseMap releaseMap) <- Linear.readIORef rrm
       () <- releaseMap IntMap.! key
       Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
+
+-- | Deprecated alias of the 'release' function
+unsafeRelease :: Resource a %1 -> RIO ()
+unsafeRelease = release
+{-# DEPRECATED unsafeRelease "unsafeRelease has been renamed to release" #-}
 
 -- | Given a resource in the "System.IO.Linear.IO" monad, and
 -- given a function to release that resource, provides that resource in
@@ -201,7 +201,7 @@ unsafeRelease (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key
 unsafeAcquire ::
   Linear.IO (Ur a) ->
   (a -> Linear.IO ()) ->
-  RIO (UnsafeResource a)
+  RIO (Resource a)
 unsafeAcquire acquire release = RIO $ \rrm ->
   Linear.mask_
     ( Control.do
@@ -224,13 +224,16 @@ unsafeAcquire acquire release = RIO $ \rrm ->
 -- | Given a "System.IO" computation on an unsafe resource,
 -- lift it to @RIO@ computaton on the acquired resource.
 -- That is function of type @a -> IO b@ turns into a function of type
--- @UnsafeResource a %1-> RIO (Ur b)@
--- along with threading the @UnsafeResource a@.
+-- @Resource a %1-> RIO (Ur b)@
+-- along with threading the @Resource a@.
+--
+-- 'unsafeFromSystemIOResource' is only safe to use on actions which do not release
+-- the resource.
 --
 -- Note that the result @b@ can be used non-linearly.
 unsafeFromSystemIOResource ::
   (a -> System.IO b) ->
-  (UnsafeResource a %1 -> RIO (Ur b, UnsafeResource a))
+  (Resource a %1 -> RIO (Ur b, Resource a))
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
   unsafeFromSystemIO
     ( do
@@ -238,9 +241,11 @@ unsafeFromSystemIOResource action (UnsafeResource key resource) =
         Prelude.return (Ur c, UnsafeResource key resource)
     )
 
+-- | Specialised variant of 'unsafeFromSystemIOResource' for actions that don't
+-- return a value.
 unsafeFromSystemIOResource_ ::
   (a -> System.IO ()) ->
-  (UnsafeResource a %1 -> RIO (UnsafeResource a))
+  (Resource a %1 -> RIO (Resource a))
 unsafeFromSystemIOResource_ action resource = Control.do
   (Ur _, resource) <- unsafeFromSystemIOResource action resource
   Control.return resource
