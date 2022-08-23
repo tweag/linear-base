@@ -116,7 +116,7 @@ openFile path mode = Control.do
 
 -- | See @System.IO.'System.IO.openBinaryFile'@
 --
--- @since 0.2.1
+-- @since 0.3.0
 openBinaryFile :: FilePath -> System.IOMode -> RIO Handle
 openBinaryFile path mode = Control.do
   h <-
@@ -160,7 +160,7 @@ hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
 
 -- | See @System.IO.'System.IO.hSeek'@.
 --
--- @since 0.2.1
+-- @since 0.3.0
 hSeek :: Handle %1 -> System.SeekMode -> Integer -> RIO Handle
 hSeek h mode i = coerce hSeek' h
   where
@@ -170,7 +170,7 @@ hSeek h mode i = coerce hSeek' h
 
 -- | See @System.IO.'System.IO.hTell'@.
 --
--- @since 0.2.1
+-- @since 0.3.0
 hTell :: Handle %1 -> RIO (Ur Integer, Handle)
 hTell = coerce (unsafeFromSystemIOResource System.hTell)
 
