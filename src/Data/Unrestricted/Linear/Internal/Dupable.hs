@@ -39,7 +39,7 @@ import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Ur (Ur)
 import GHC.Tuple (Solo (..))
 import GHC.Types (Multiplicity (..))
-import Generics.Linear
+-- import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe

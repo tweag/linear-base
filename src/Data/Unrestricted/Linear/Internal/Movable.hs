@@ -31,7 +31,6 @@ import Data.Unrestricted.Linear.Internal.Dupable
 import Data.Unrestricted.Linear.Internal.Ur
 import GHC.Tuple (Solo)
 import GHC.Types (Multiplicity (..))
-import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe

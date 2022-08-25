@@ -2,6 +2,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | A few things lifted from kan-extensions and lens for generic deriving of
