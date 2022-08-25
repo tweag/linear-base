@@ -8,15 +8,20 @@
 
 -- | This is a very very simple prelude, which doesn't depend on anything else
 -- in the linear-base library.
-module Prelude.Linear.Internal where
+module Prelude.Linear.Internal
+  ( module Prelude.Linear.Internal
+  , module Data.Type.Equality
+  ) where
 
 import Data.Coerce
 import Data.Functor.Identity
 import GHC.Exts (TYPE)
+import Data.Type.Equality
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
 -- simply reimplemented here. For harder function, we reuse the Prelude
 -- definition and make an unsafe cast.
+
 
 ($) :: forall {rep} a (b :: TYPE rep) p q. (a %p -> b) %q -> a %p -> b
 ($) f x = f x
