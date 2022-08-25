@@ -1,5 +1,8 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+-- TODO: Disabled while we still support GHC 9.2 to enable
+-- the import of the empty TypeEq module there.
+{-# OPTIONS_GHC -Wno-dodgy-exports -Wno-unused-imports #-}
 
 -- | This module provides a replacement for 'Prelude' with
 -- support for linear programming via linear versions of
@@ -30,6 +33,7 @@ module Prelude.Linear
     Prelude.Char,
     module Data.Maybe.Linear,
     module Data.Either.Linear,
+    module Prelude.Linear.Internal.TypeEq,
 
     -- * Tuples
     Prelude.fst,
@@ -158,6 +162,7 @@ import Data.String
 import Data.Tuple.Linear
 import Data.Unrestricted.Linear
 import Prelude.Linear.Internal
+import Prelude.Linear.Internal.TypeEq
 import qualified Prelude
 
 -- | Replacement for the flip function with generalized multiplicities.
