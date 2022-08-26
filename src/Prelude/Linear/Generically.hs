@@ -1,11 +1,11 @@
 {-# LANGUAGE LinearTypes #-}
 
 module Prelude.Linear.Generically
-  (
-    unGenerically,
+  ( unGenerically,
     unGenerically1,
-    module Prelude.Linear.Generically.Types
-  ) where
+    module Prelude.Linear.Generically.Types,
+  )
+where
 
 import Prelude.Linear.Generically.Types
 

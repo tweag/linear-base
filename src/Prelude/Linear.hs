@@ -1,6 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module provides a replacement for 'Prelude' with
 -- support for linear programming via linear versions of
@@ -97,7 +97,6 @@ module Prelude.Linear
     -- TODO: Implement a linear counterpart of this
     module Data.String,
     module Data.Type.Equality,
-
 
     -- * Converting to and from String
     Prelude.ShowS,

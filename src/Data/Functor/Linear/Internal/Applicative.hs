@@ -168,7 +168,8 @@ class GApplicative (s :: ErrorMessage) f where
 
 instance
   Unsatisfiable
-    ( 'Text "Cannot derive a data Applicative instance for" ':$$: s
+    ( 'Text "Cannot derive a data Applicative instance for"
+        ':$$: s
         ':$$: 'Text "because empty types cannot implement pure."
     ) =>
   GApplicative s V1
@@ -208,7 +209,8 @@ instance (GApplicative s f, GApplicative s g) => GApplicative s (f :*: g) where
 
 instance
   Unsatisfiable
-    ( 'Text "Cannot derive a data Applicative instance for" ':$$: s
+    ( 'Text "Cannot derive a data Applicative instance for"
+        ':$$: s
         ':$$: 'Text "because sum types do not admit a uniform Applicative definition."
     ) =>
   GApplicative s (x :+: y)
@@ -230,7 +232,8 @@ instance Monoid c => GApplicative s (K1 i c) where
 
 instance
   Unsatisfiable
-    ( 'Text "Cannot derive a data Applicative instance for" ':$$: s
+    ( 'Text "Cannot derive a data Applicative instance for"
+        ':$$: s
         ':$$: 'Text "because it contains one or more primitive unboxed fields."
         ':$$: 'Text "Such unboxed types lack canonical monoid operations."
     ) =>

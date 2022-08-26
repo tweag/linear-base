@@ -1,14 +1,11 @@
-{-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-
--- | Prior to GHC 9.4, linear-base defined its own versions of @Generically@ and 
--- @Generically1@. As a temporary workaround to enable compilation on both GHC 
--- 9.4 and 9.2, this module exposes linear-base's own implementations of those 
+-- | Prior to GHC 9.4, linear-base defined its own versions of @Generically@ and
+-- @Generically1@. As a temporary workaround to enable compilation on both GHC
+-- 9.4 and 9.2, this module exposes linear-base's own implementations of those
 -- types, while the 9.4 version simply re-exports @Generics.Linear@.
 module Prelude.Linear.Generically.Types
   ( Generically (..),
     Generically1 (..),
-    module Generics.Linear
+    module Generics.Linear,
   )
 where
 
