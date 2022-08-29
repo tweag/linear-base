@@ -277,7 +277,8 @@ untilM = loop
           testResult & \case
             False ->
               Control.return $
-                Step $ a :> loop test (AffineStream next step end)
+                Step $
+                  a :> loop test (AffineStream next step end)
             True -> Control.fmap Control.return $ end next
 {-# INLINEABLE untilM #-}
 
@@ -320,7 +321,8 @@ zip = loop
       stream & \case
         Return r1 ->
           Effect $
-            Control.fmap (\r2 -> Control.return $ (r1, r2)) $ end s
+            Control.fmap (\r2 -> Control.return $ (r1, r2)) $
+              end s
         Effect m ->
           Effect $
             Control.fmap (\str -> loop str (AffineStream s step end)) m
@@ -367,7 +369,8 @@ iterate a step =
     stepper :: Ur a %1 -> m (Either (Of a (Ur a)) ())
     stepper (Ur a) =
       Control.return $
-        Left $ a :> Ur (step a)
+        Left $
+          a :> Ur (step a)
 
 -- | An affine stream monadically iterating an initial state forever.
 iterateM ::
@@ -413,7 +416,8 @@ cycle stream =
           m Control.>>= (\stream -> stepStream (Ur s, stream))
         Step f ->
           Control.return $
-            Left $ Control.fmap ((,) (Ur s)) f
+            Left $
+              Control.fmap ((,) (Ur s)) f
 
 -- | An affine stream iterating an enumerated stream forever.
 enumFrom :: (Control.Monad m, Enum e) => e -> AffineStream (Of e) m ()

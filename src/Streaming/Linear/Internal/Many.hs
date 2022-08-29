@@ -128,10 +128,10 @@ Zip functions have two design choices:
 (2) If the streams are of different length, do we keep or throw out the
 remainder of the longer stream?
 
-* We are assuming not to take infinite streams as input and instead deal with
+\* We are assuming not to take infinite streams as input and instead deal with
 reasonably small finite streams.
-* To avoid making choices for the user, we keep both end-of-stream payloads
-* The default zips (ones without a prime in the name) use @effects@ to consume
+\* To avoid making choices for the user, we keep both end-of-stream payloads
+\* The default zips (ones without a prime in the name) use @effects@ to consume
 the remainder stream after zipping. We include zip function variants that
 return no remainder (for equal length streams), or the remainder of the
 longer stream.
