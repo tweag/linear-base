@@ -39,6 +39,7 @@ module System.IO.Resource.Linear
 
     -- ** File I/O
     openFile,
+    openBinaryFile,
     System.IOMode (..),
 
     -- ** Working with Handles
@@ -49,6 +50,9 @@ module System.IO.Resource.Linear
     hGetLine,
     hPutStr,
     hPutStrLn,
+    hSeek,
+    System.SeekMode(..),
+    hTell,
 
     -- * Creating new types of resources
     -- $new-resources

@@ -105,7 +105,7 @@ instance Control.Monad RIO where
 
 newtype Handle = Handle (UnsafeResource System.Handle)
 
--- | See 'System.IO.openFile'
+-- | See @System.IO.'System.IO.openFile'@
 openFile :: FilePath -> System.IOMode -> RIO Handle
 openFile path mode = Control.do
   h <-
@@ -113,6 +113,17 @@ openFile path mode = Control.do
       (Linear.fromSystemIOU $ System.openFile path mode)
       (\h -> Linear.fromSystemIO $ System.hClose h)
   Control.return $ Handle h
+
+-- | See @System.IO.'System.IO.openBinaryFile'@
+--
+-- @since 0.3.0
+openBinaryFile :: FilePath -> System.IOMode -> RIO Handle
+openBinaryFile path mode = Control.do
+  h <-
+    unsafeAcquire
+      (Linear.fromSystemIOU $ System.openFile path mode)
+      (\h -> Linear.fromSystemIO $ System.hClose h)
+  Control.pure $ Handle h
 
 hClose :: Handle %1 -> RIO ()
 hClose (Handle h) = unsafeRelease h
@@ -146,6 +157,22 @@ hPutStrLn h s = flipHPutStrLn s h -- needs a multiplicity polymorphic flip
     flipHPutStrLn :: Text -> Handle %1 -> RIO Handle
     flipHPutStrLn s =
       coerce (unsafeFromSystemIOResource_ (\h' -> Text.hPutStrLn h' s))
+
+-- | See @System.IO.'System.IO.hSeek'@.
+--
+-- @since 0.3.0
+hSeek :: Handle %1 -> System.SeekMode -> Integer -> RIO Handle
+hSeek h mode i = coerce hSeek' h
+  where
+    hSeek' :: Handle %1 -> RIO Handle
+    hSeek' =
+      coerce (unsafeFromSystemIOResource_ (\h' -> System.hSeek h' mode i))
+
+-- | See @System.IO.'System.IO.hTell'@.
+--
+-- @since 0.3.0
+hTell :: Handle %1 -> RIO (Ur Integer, Handle)
+hTell = coerce (unsafeFromSystemIOResource System.hTell)
 
 -- new-resources
 
