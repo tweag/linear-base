@@ -36,6 +36,36 @@ jobs:
     - name: cabal-docspec
       run: nix-shell --pure --run cabal-docspec
 
+  cabal-test-941:
+    name: cabal test with GHC 9.4.1
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v15
+      with:
+        nix_path: "${{ env.nixpkgs-url }}"
+    - name: Cache Cabal dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cabal/packages
+          ~/.cabal/store
+          dist-newstyle
+        key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
+    - name: Build Nix dependencies
+      run: nix-shell --arg ghcVersion '"941"' --pure --run "echo '=== Nix dependencies installed ==='"
+    - name: Update Cabal's database
+      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal update"
+    - name: Build Cabal's dependencies
+      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks --dependencies-only"
+    - name: Build
+      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks"
+    - name: Haddock
+      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal --allow-newer haddock"
+    - name: cabal-docspec
+      run: nix-shell --arg ghcVersion '"941"' --pure --run cabal-docspec
+
   ormolu:
     name: check formatting with ormolu
     runs-on: ubuntu-latest
