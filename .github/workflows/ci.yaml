@@ -7,7 +7,7 @@ env:
 
 jobs:
   cabal-test:
-    name: cabal test with GHC 9.4.1
+    name: cabal test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
