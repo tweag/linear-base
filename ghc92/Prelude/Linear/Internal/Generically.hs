@@ -2,7 +2,7 @@
 -- @Generically1@. As a temporary workaround to enable compilation on both GHC
 -- 9.4 and 9.2, this module exposes linear-base's own implementations of those
 -- types, while the 9.4 version simply re-exports @Generics.Linear@.
-module Prelude.Linear.Generically.Types
+module Prelude.Linear.Internal.Generically
   ( Generically (..),
     Generically1 (..),
     module Generics.Linear,

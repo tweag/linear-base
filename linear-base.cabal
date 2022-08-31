@@ -102,6 +102,8 @@ library
         Prelude.Linear.Generically
         Prelude.Linear.GenericUtil
         Prelude.Linear.Internal
+        Prelude.Linear.Internal.Generically
+        Prelude.Linear.Internal.TypeEq
         Prelude.Linear.Unsatisfiable
         Streaming.Linear
         Streaming.Linear.Internal.Consume
@@ -115,9 +117,6 @@ library
         System.IO.Resource.Linear
         System.IO.Resource.Linear.Internal
         Unsafe.Linear
-    other-modules: 
-        Prelude.Linear.Generically.Types
-        Prelude.Linear.Internal.TypeEq
 
     hs-source-dirs:   src
     if impl(ghc >= 9.4.0)
