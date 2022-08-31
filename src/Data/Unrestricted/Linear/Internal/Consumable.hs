@@ -36,7 +36,6 @@ import qualified Data.Vector as Vector
 import Data.Void (Void)
 import GHC.Tuple (Solo)
 import GHC.Types (Multiplicity (..))
-import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe

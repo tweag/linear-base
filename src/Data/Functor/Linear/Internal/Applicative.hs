@@ -33,7 +33,6 @@ import Data.Monoid.Linear hiding (Product)
 import Data.Unrestricted.Linear.Internal.Ur (Ur (..))
 import GHC.TypeLits
 import GHC.Types
-import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
 import Prelude.Linear.Unsatisfiable

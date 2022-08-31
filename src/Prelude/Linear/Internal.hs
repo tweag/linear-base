@@ -3,16 +3,25 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+-- TODO: Disabled while we still support GHC 9.2 to enable
+-- the import of the empty TypeEq module there.
+{-# OPTIONS_GHC -Wno-dodgy-exports -Wno-unused-imports #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | This is a very very simple prelude, which doesn't depend on anything else
 -- in the linear-base library.
-module Prelude.Linear.Internal where
+module Prelude.Linear.Internal
+  ( module Prelude.Linear.Internal,
+    module Prelude.Linear.Internal.TypeEq,
+  )
+where
 
 import Data.Coerce
 import Data.Functor.Identity
 import GHC.Exts (TYPE)
+import Prelude.Linear.Internal.TypeEq
 
 -- A note on implementation: to avoid silly mistakes, very easy functions are
 -- simply reimplemented here. For harder function, we reuse the Prelude
