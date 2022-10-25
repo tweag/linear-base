@@ -56,11 +56,15 @@ module System.IO.Resource.Linear
 
     -- * Creating new types of resources
     -- $new-resources
-    UnsafeResource,
-    unsafeRelease,
+    Resource,
+    release,
     unsafeAcquire,
     unsafeFromSystemIOResource,
     unsafeFromSystemIOResource_,
+
+    -- * Deprecated symbols
+    UnsafeResource,
+    unsafeRelease,
   )
 where
 
