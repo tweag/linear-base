@@ -1,5 +1,32 @@
 # Change Log
 
+## [v0.3.0](https://github.com/tweag/linear-base/tree/v0.3.0) (2022-10-26)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.2.0...v0.3.0)
+
+### Headline changes
+
+- Support GHC 9.4 in addition to GHC 9.2 and GHC 9.0 (GHC 9.0 is no longer tested though) [\#427](https://github.com/tweag/linear-base/pull/427) ([matthew-healy](https://github.com/matthew-healy))
+  - Update `nix-shell` to enable building with GHC 9.4.1 [\#429](https://github.com/tweag/linear-base/pull/429) ([matthew-healy](https://github.com/matthew-healy))
+- Improvement of the resource-aware `IO` (`RIO`) monad's interface
+  - Add some Handle operations to RIO [\#425](https://github.com/tweag/linear-base/pull/425) ([endgame](https://github.com/endgame))
+  - The `Handle` type is now transparent, to make extensions of the API possible [\#428](https://github.com/tweag/linear-base/pull/428) ([aspiwack](https://github.com/aspiwack))
+
+### Miscellaneous
+
+- Weaken constraint on `Monoid (Maybe a)` instance [\#409](https://github.com/tweag/linear-base/pull/409) ([treeowl](https://github.com/treeowl))
+- Add `evalState(T)` [\#411](https://github.com/tweag/linear-base/pull/411) ([andreasabel](https://github.com/andreasabel))
+- Add `Movable` instances for several primitive types, as well as (non-linear) `Applicative`, `Foldable`, `Traversable` instances for `V`. [\#416](https://github.com/tweag/linear-base/pull/416) ([sellout](https://github.com/sellout))
+- Fix typo in comment: resrouce -\> resource [\#421](https://github.com/tweag/linear-base/pull/421) ([undergroundquizscene](https://github.com/undergroundquiz- Fix haddock hyperlink reference \(minor typo\) [\#420](https://github.com/tweag/linear-base/pull/420) ([undergroundquizscene](https://github.com/undergroundquizscene))
+scene))
+- Fix haddock links in `Data.Replicator.Linear` [\#423](https://github.com/tweag/linear-base/pull/423) ([undergroundquizscene](https://github.com/undergroundquizscene))
+- Add `CONTRIBUTING.md` [\#426](https://github.com/tweag/linear-base/pull/426) ([tbagrel1](https://github.com/tbagrel1))
+
+### Internal
+
+- Upgrade GHC to 9.2 [\#414](https://github.com/tweag/linear-base/pull/414) ([aspiwack](https://github.com/aspiwack))
+  - Don't use deprecated `testProperty` from tasty-hedgehog [\#415](https://github.com/tweag/linear-base/pull/415) ([aspiwack](https://github.com/aspiwack))
+
 ## [v0.2.0](https://github.com/tweag/linear-base/tree/v0.2.0) - 2022-03-25
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.1.0...v0.2.0)
