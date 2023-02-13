@@ -29,6 +29,8 @@ common warnings
 library
     import: warnings
     exposed-modules:
+        Compact.Pure
+        Compact.Pure.Internal
         Control.Monad.IO.Class.Linear
         Control.Functor.Linear
         Control.Functor.Linear.Internal.Class
@@ -134,6 +136,7 @@ library
 
         base >=4.16 && <5,
         containers,
+        ghc-compact,
         ghc-prim,
         hashable,
         linear-generics >= 0.2,
@@ -157,6 +160,7 @@ test-suite test
         Test.Data.Polarized
         Test.Data.V
         Test.Data.Replicator
+        Test.Compact.Pure
 
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts -with-rtsopts=-N
@@ -164,11 +168,13 @@ test-suite test
         inspection-testing,
         tasty-inspection-testing,
         base,
+        ghc-compact,
         linear-base,
         containers,
         hedgehog,
         tasty,
         tasty-hedgehog >= 1.2,
+        tasty-hunit,
         mmorph,
         vector
 

@@ -3,6 +3,7 @@
 
 module Main where
 
+import Test.Compact.Pure (compactPureTests)
 import Test.Data.Destination (destArrayTests)
 import Test.Data.Mutable.Array (mutArrTests)
 import Test.Data.Mutable.HashMap (mutHMTests)
@@ -27,7 +28,8 @@ allTests =
           mutHMTests,
           mutSetTests,
           destArrayTests,
-          polarizedArrayTests
+          polarizedArrayTests,
+          compactPureTests
         ],
       testGroup
         "Inspection tests"
