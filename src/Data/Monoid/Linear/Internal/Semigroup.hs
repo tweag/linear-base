@@ -53,6 +53,7 @@ import GHC.Tuple
 import GHC.Types hiding (Any)
 import Prelude.Linear.Internal
 import Prelude (Either (..), Maybe (..))
+import qualified Data.Tuple.Linear.Compat as Tuple
 
 -- | A linear semigroup @a@ is a type with an associative binary operation @<>@
 -- that linearly consumes two @a@s.
@@ -165,7 +166,7 @@ instance Semigroup a => Semigroup (Maybe a) where
   Just x <> Just y = Just (x <> y)
 
 instance Semigroup a => Semigroup (Solo a) where
-  Solo x <> Solo y = Solo (x <> y)
+  x <> y = Tuple.mkSolo (Tuple.unSolo x <> Tuple.unSolo y)
 
 -- See Data.List.Linear for instance ... => Semigroup [a]
 

@@ -79,6 +79,7 @@ library
         Data.Set.Mutable.Linear
         Data.Set.Mutable.Linear.Internal
         Data.Tuple.Linear
+        Data.Tuple.Linear.Compat
         Data.Unrestricted.Linear
         Data.Unrestricted.Linear.Internal.Consumable
         Data.Unrestricted.Linear.Internal.Dupable
@@ -123,6 +124,10 @@ library
         hs-source-dirs: src-version-changes/changed-in-ghc94/ghc94
     else
         hs-source-dirs: src-version-changes/changed-in-ghc94/ghc92
+    if impl(ghc >= 9.6.0)
+        hs-source-dirs: src-version-changes/changed-in-ghc96/ghc96
+    else
+        hs-source-dirs: src-version-changes/changed-in-ghc96/ghc94
 
     default-language: Haskell2010
     build-depends:
