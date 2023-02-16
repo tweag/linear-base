@@ -7,7 +7,10 @@ env:
 
 jobs:
   cabal-test:
-    name: cabal test
+    name: cabal test - GHC ${{ matrix.ghc-version }}
+    strategy:
+      matrix:
+        ghc-version: [941]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -24,17 +27,17 @@ jobs:
         key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
         restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
     - name: Build Nix dependencies
-      run: nix-shell --arg ghcVersion '"941"' --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Update Cabal's database
-      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal update"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal update"
     - name: Build Cabal's dependencies
-      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks --dependencies-only"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks --dependencies-only"
     - name: Build
-      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks"
     - name: Haddock
-      run: nix-shell --arg ghcVersion '"941"' --pure --run "cabal --allow-newer haddock"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal --allow-newer haddock"
     - name: cabal-docspec
-      run: nix-shell --arg ghcVersion '"941"' --pure --run cabal-docspec
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run cabal-docspec
 
   ormolu:
     name: check formatting with ormolu
