@@ -5,6 +5,7 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE CPP #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 -- | This module provides a linear version of 'Semigroup'.
@@ -165,7 +166,11 @@ instance Semigroup a => Semigroup (Maybe a) where
   Just x <> Just y = Just (x <> y)
 
 instance Semigroup a => Semigroup (Solo a) where
+#if MIN_VERSION_ghc_prim(0,10,0)
+  MkSolo x <> MkSolo y = MkSolo (x <> y)
+#else
   Solo x <> Solo y = Solo (x <> y)
+#endif
 
 -- See Data.List.Linear for instance ... => Semigroup [a]
 
