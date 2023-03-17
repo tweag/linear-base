@@ -47,13 +47,13 @@ import Data.Semigroup
     Sum (..),
   )
 import qualified Data.Semigroup as Prelude
+import qualified Data.Tuple.Linear.Compat as Tuple
 import Data.Unrestricted.Linear.Internal.Consumable (Consumable, lseq)
 import Data.Void (Void)
 import GHC.Tuple
 import GHC.Types hiding (Any)
 import Prelude.Linear.Internal
 import Prelude (Either (..), Maybe (..))
-import qualified Data.Tuple.Linear.Compat as Tuple
 
 -- | A linear semigroup @a@ is a type with an associative binary operation @<>@
 -- that linearly consumes two @a@s.
