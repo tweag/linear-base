@@ -47,6 +47,7 @@ import Data.Semigroup
     Sum (..),
   )
 import qualified Data.Semigroup as Prelude
+import qualified Data.Tuple.Linear.Compat as Tuple
 import Data.Unrestricted.Linear.Internal.Consumable (Consumable, lseq)
 import Data.Void (Void)
 import GHC.Tuple
@@ -165,7 +166,7 @@ instance Semigroup a => Semigroup (Maybe a) where
   Just x <> Just y = Just (x <> y)
 
 instance Semigroup a => Semigroup (Solo a) where
-  Solo x <> Solo y = Solo (x <> y)
+  x <> y = Tuple.mkSolo (Tuple.unSolo x <> Tuple.unSolo y)
 
 -- See Data.List.Linear for instance ... => Semigroup [a]
 
