@@ -1,6 +1,6 @@
 {-# LANGUAGE LinearTypes #-}
 
-module Data.Tuple.Linear where
+module Data.Tuple.Linear.Compat where
 
 import Data.Tuple
 
