@@ -61,6 +61,7 @@ import qualified Data.Functor.Linear as Data
 import Data.IORef (IORef)
 import qualified Data.IORef as System
 import GHC.Exts (RealWorld, State#)
+import qualified GHC.IO as System (IO (..))
 import Prelude.Linear hiding (IO)
 import qualified System.IO as System
 import qualified Unsafe.Linear as Unsafe
@@ -110,7 +111,7 @@ fromSystemIOU action =
 
 -- | Convert a linear IO action to a "System.IO" action.
 toSystemIO :: IO a %1 -> System.IO a
-toSystemIO = Unsafe.coerce -- basically just subtyping
+toSystemIO (IO f) = System.IO (\s -> f s)
 
 -- | Use at the top of @main@ function in your program to switch to the
 -- linearly typed version of 'IO':
