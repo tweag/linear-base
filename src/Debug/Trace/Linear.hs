@@ -42,7 +42,7 @@ trace = Unsafe.toLinear2 NonLinear.trace
 
 -- | Like 'trace', but uses 'show' on the argument to convert it to
 -- a 'String'.
-traceShow :: Show a => a -> b %1 -> b
+traceShow :: (Show a) => a -> b %1 -> b
 traceShow a = Unsafe.toLinear (NonLinear.traceShow a)
 
 -- | Like 'trace' but returns the message instead of a third value.
@@ -61,7 +61,7 @@ traceIO s = fromSystemIO (Unsafe.toLinear NonLinear.traceIO s)
 
 -- | Like 'trace' but returning unit in an arbitrary 'Applicative'
 -- context. Allows for convenient use in do-notation.
-traceM :: Applicative f => String %1 -> f ()
+traceM :: (Applicative f) => String %1 -> f ()
 traceM s = trace s $ pure ()
 
 -- | Like 'traceM', but uses 'show' on the argument to convert it to a

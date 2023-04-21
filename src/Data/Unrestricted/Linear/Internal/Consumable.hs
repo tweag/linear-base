@@ -52,7 +52,7 @@ seqUnit () b = b
 
 -- | Consume the first argument and return the second argument.
 -- This is like 'seq' but the first argument is restricted to be 'Consumable'.
-lseq :: Consumable a => a %1 -> b %1 -> b
+lseq :: (Consumable a) => a %1 -> b %1 -> b
 lseq a b = seqUnit (consume a) b
 
 infixr 0 `lseq` -- same fixity as base.seq
@@ -66,7 +66,7 @@ instance Consumable (ReplicationStream.ReplicationStream a) where
 instance Consumable (Replicator.Replicator a) where
   consume = Replicator.consume
 
-instance Consumable a => Consumable (Vector.Vector a) where
+instance (Consumable a) => Consumable (Vector.Vector a) where
   consume xs = consume (Unsafe.toLinear Vector.toList xs)
 
 -- Prelude and primitive instances
@@ -117,47 +117,47 @@ instance Consumable Void where
 deriving via
   Generically (Solo a)
   instance
-    _ => Consumable (Solo a)
+    (_) => Consumable (Solo a)
 
 deriving via
   Generically (a, b)
   instance
-    _ => Consumable (a, b)
+    (_) => Consumable (a, b)
 
 deriving via
   Generically (a, b, c)
   instance
-    _ => Consumable (a, b, c)
+    (_) => Consumable (a, b, c)
 
 deriving via
   Generically (a, b, c, d)
   instance
-    _ => Consumable (a, b, c, d)
+    (_) => Consumable (a, b, c, d)
 
 deriving via
   Generically (a, b, c, d, e)
   instance
-    _ => Consumable (a, b, c, d, e)
+    (_) => Consumable (a, b, c, d, e)
 
 deriving via
   Generically (Prelude.Maybe a)
   instance
-    _ => Consumable (Prelude.Maybe a)
+    (_) => Consumable (Prelude.Maybe a)
 
 deriving via
   Generically (Prelude.Either e a)
   instance
-    _ => Consumable (Prelude.Either e a)
+    (_) => Consumable (Prelude.Either e a)
 
 deriving via
   Generically [a]
   instance
-    _ => Consumable [a]
+    (_) => Consumable [a]
 
 deriving via
   Generically (NonEmpty a)
   instance
-    _ => Consumable (NonEmpty a)
+    (_) => Consumable (NonEmpty a)
 
 deriving via
   Generically (Ur a)
@@ -169,37 +169,37 @@ deriving via
 deriving via
   Generically (Semigroup.Arg a b)
   instance
-    _ => Consumable (Semigroup.Arg a b)
+    (_) => Consumable (Semigroup.Arg a b)
 
-deriving newtype instance _ => Consumable (Semigroup.Min a)
+deriving newtype instance (_) => Consumable (Semigroup.Min a)
 
-deriving newtype instance _ => Consumable (Semigroup.Max a)
+deriving newtype instance (_) => Consumable (Semigroup.Max a)
 
-deriving newtype instance _ => Consumable (Semigroup.First a)
+deriving newtype instance (_) => Consumable (Semigroup.First a)
 
-deriving newtype instance _ => Consumable (Semigroup.Last a)
+deriving newtype instance (_) => Consumable (Semigroup.Last a)
 
-deriving newtype instance _ => Consumable (Semigroup.WrappedMonoid a)
+deriving newtype instance (_) => Consumable (Semigroup.WrappedMonoid a)
 
-deriving newtype instance _ => Consumable (Semigroup.Dual a)
+deriving newtype instance (_) => Consumable (Semigroup.Dual a)
 
 deriving newtype instance Consumable Semigroup.All
 
 deriving newtype instance Consumable Semigroup.Any
 
-deriving newtype instance _ => Consumable (Semigroup.Sum a)
+deriving newtype instance (_) => Consumable (Semigroup.Sum a)
 
-deriving newtype instance _ => Consumable (Semigroup.Product a)
+deriving newtype instance (_) => Consumable (Semigroup.Product a)
 
 -- Data.Monoid instances
 
-deriving newtype instance _ => Consumable (Monoid.First a)
+deriving newtype instance (_) => Consumable (Monoid.First a)
 
-deriving newtype instance _ => Consumable (Monoid.Last a)
+deriving newtype instance (_) => Consumable (Monoid.Last a)
 
-deriving newtype instance _ => Consumable (Monoid.Alt f a)
+deriving newtype instance (_) => Consumable (Monoid.Alt f a)
 
-deriving newtype instance _ => Consumable (Monoid.Ap f a)
+deriving newtype instance (_) => Consumable (Monoid.Ap f a)
 
 -- ----------------
 -- Generic deriving
@@ -232,11 +232,11 @@ instance (GConsumable f, GConsumable g) => GConsumable (f :*: g) where
   gconsume (a :*: b) = gconsume a `seqUnit` gconsume b
   {-# INLINE gconsume #-}
 
-instance Consumable c => GConsumable (K1 i c) where
+instance (Consumable c) => GConsumable (K1 i c) where
   gconsume (K1 c) = consume c
   {-# INLINE gconsume #-}
 
-instance GConsumable f => GConsumable (M1 i t f) where
+instance (GConsumable f) => GConsumable (M1 i t f) where
   gconsume (M1 a) = gconsume a
   {-# INLINE gconsume #-}
 
@@ -249,7 +249,7 @@ instance GConsumable (MP1 'Many f) where
   gconsume (MP1 _) = ()
   {-# INLINE gconsume #-}
 
-instance GConsumable f => GConsumable (MP1 'One f) where
+instance (GConsumable f) => GConsumable (MP1 'One f) where
   gconsume (MP1 x) = gconsume x
   {-# INLINE gconsume #-}
 

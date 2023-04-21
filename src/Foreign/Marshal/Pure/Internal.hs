@@ -39,7 +39,7 @@ import Prelude (Eq (..), return, ($), (<$>), (<*>), (=<<))
 -- the one that was released with 8.2, and that `mtl` fails to compile against
 -- it), therefore, I'm redefining `Dict` here, as it's cheap.
 data Dict :: Constraint -> Type where
-  Dict :: c => Dict c
+  Dict :: (c) => Dict c
 
 -- TODO: organise into sections
 
@@ -48,7 +48,7 @@ data Dict :: Constraint -> Type where
 -- base types.
 class KnownRepresentable a where
   storable :: Dict (Storable a)
-  default storable :: Storable a => Dict (Storable a)
+  default storable :: (Storable a) => Dict (Storable a)
   storable = Dict
 
 -- This ought to be read a `newtype` around `Storable`. This type is abstract,
@@ -88,13 +88,13 @@ instance
       (Dict, Dict, Dict) -> Dict
 
 -- TODO: move to the definition of Ur
-instance Storable a => Storable (Ur a) where
+instance (Storable a) => Storable (Ur a) where
   sizeOf _ = sizeOf (undefined :: a)
   alignment _ = alignment (undefined :: a)
   peek ptr = Ur <$> peek (castPtr ptr :: Ptr a)
   poke ptr (Ur a) = poke (castPtr ptr :: Ptr a) a
 
-instance KnownRepresentable a => KnownRepresentable (Ur a) where
+instance (KnownRepresentable a) => KnownRepresentable (Ur a) where
   storable | Dict <- storable @a = Dict
 
 -- Below is a KnownRepresentable instance for Maybe. The Storable instance is
@@ -105,7 +105,7 @@ instance KnownRepresentable a => KnownRepresentable (Ur a) where
 -- case. But I believe that to improve on it we need to rethink the abstraction
 -- in more depths.
 
-instance Storable a => Storable (Maybe a) where
+instance (Storable a) => Storable (Maybe a) where
   sizeOf x = sizeOf (stripMaybe x) + 1
   alignment x = alignment (stripMaybe x)
   peek ptr = do
@@ -130,7 +130,7 @@ stripMaybePtr = castPtr
 stripPtr :: Ptr a -> a
 stripPtr _ = error "stripPtr"
 
-instance KnownRepresentable a => KnownRepresentable (Maybe a) where
+instance (KnownRepresentable a) => KnownRepresentable (Maybe a) where
   storable | Dict <- storable @a = Dict
 
 -- | Laws of 'Representable':
@@ -191,7 +191,7 @@ instance
   toKnown (a, b, c) = (toKnown a, toKnown b, toKnown c)
   ofKnown (x, y, z) = (ofKnown x, ofKnown y, ofKnown z)
 
-instance Representable a => Representable (Maybe a) where
+instance (Representable a) => Representable (Maybe a) where
   type AsKnown (Maybe a) = Maybe (AsKnown a)
   toKnown (Just x) = Just (toKnown x)
   toKnown Nothing = Nothing
@@ -215,7 +215,7 @@ instance Representable a => Representable (Maybe a) where
 -- * 'toRepr' must be total
 -- * 'ofRepr' may be partial, but must be total on the image of 'toRepr'
 -- * @ofRepr . toRepr = id@
-class Representable b => MkRepresentable a b | a -> b where
+class (Representable b) => MkRepresentable a b | a -> b where
   toRepr :: a %1 -> b
   ofRepr :: b %1 -> a
 
@@ -253,7 +253,7 @@ instance Storable (DLL a) where
 
 -- Precondition: in `insertAfter start ptr`, `next start` must be initalised,
 -- and so must be `prev =<< peek (next start)`
-insertAfter :: Storable a => DLL a -> a -> IO (Ptr (DLL a))
+insertAfter :: (Storable a) => DLL a -> a -> IO (Ptr (DLL a))
 insertAfter start ptr = do
   secondLink <- peek $ next start
   newLink <- DLL <$> new start <*> new ptr <*> new secondLink
@@ -344,12 +344,12 @@ instance Representable (Box a) where
 -- Movable. In order to be useful, need some kind of borrowing on the values, I
 -- guess. 'Box' can be realloced, but not RC pointers.
 
-reprPoke :: forall a. Representable a => Ptr a -> a %1 -> IO ()
+reprPoke :: forall a. (Representable a) => Ptr a -> a %1 -> IO ()
 reprPoke ptr a
   | Dict <- storable @(AsKnown a) =
       Unsafe.toLinear (poke (castPtr ptr :: Ptr (AsKnown a))) (toKnown a)
 
-reprNew :: forall a. Representable a => a %1 -> IO (Ptr a)
+reprNew :: forall a. (Representable a) => a %1 -> IO (Ptr a)
 reprNew a =
   Unsafe.toLinear mkPtr a
   where
@@ -369,7 +369,7 @@ reprNew a =
 -- write bespoke constructors).
 
 -- | Store a value @a@ on the system heap that is not managed by the GC.
-alloc :: forall a. Representable a => a %1 -> Pool %1 -> Box a
+alloc :: forall a. (Representable a) => a %1 -> Pool %1 -> Box a
 alloc a (Pool pool) =
   Unsafe.toLinear mkPtr a
   where
@@ -382,13 +382,13 @@ alloc a (Pool pool) =
 
 -- TODO: would be better in linear IO, for we pretend that we are making an
 -- unrestricted 'a', where really we are not.
-reprPeek :: forall a. Representable a => Ptr a -> IO a
+reprPeek :: forall a. (Representable a) => Ptr a -> IO a
 reprPeek ptr | Dict <- storable @(AsKnown a) = do
   knownRepr <- peek (castPtr ptr :: Ptr (AsKnown a))
   return (ofKnown knownRepr)
 
 -- | Retrieve the value stored on system heap memory.
-deconstruct :: Representable a => Box a %1 -> a
+deconstruct :: (Representable a) => Box a %1 -> a
 deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $
   mask_ $ do
     res <- reprPeek ptr

@@ -78,7 +78,7 @@ import qualified Prelude
 newtype Optic_ arr s t a b = Optical (a `arr` b -> s `arr` t)
 
 type Optic c s t a b =
-  forall arr. c arr => Optic_ arr s t a b
+  forall arr. (c arr) => Optic_ arr s t a b
 
 type Iso s t a b = Optic Profunctor s t a b
 
@@ -96,10 +96,10 @@ type Traversal s t a b = Optic Wandering s t a b
 
 type Traversal' s a = Traversal s s a a
 
-swap :: SymmetricMonoidal m u => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
+swap :: (SymmetricMonoidal m u) => Iso (a `m` b) (c `m` d) (b `m` a) (d `m` c)
 swap = iso Bifunctor.swap Bifunctor.swap
 
-assoc :: SymmetricMonoidal m u => Iso (a `m` (b `m` c)) (d `m` (e `m` f)) ((a `m` b) `m` c) ((d `m` e) `m` f)
+assoc :: (SymmetricMonoidal m u) => Iso (a `m` (b `m` c)) (d `m` (e `m` f)) ((a `m` b) `m` c) ((d `m` e) `m` f)
 assoc = iso Bifunctor.lassoc Bifunctor.rassoc
 
 (.>) :: Optic_ arr s t a b -> Optic_ arr a b x y -> Optic_ arr s t x y
@@ -113,7 +113,7 @@ lens k = Optical $ \f -> dimap k (\(x, g) -> g $ x) (first f)
 prism :: (b %1 -> t) -> (s %1 -> Either t a) -> Prism s t a b
 prism b s = Optical $ \f -> dimap s (either id id) (second (rmap b f))
 
-traversal :: (forall f. Control.Applicative f => (a %1 -> f b) -> s %1 -> f t) -> Traversal s t a b
+traversal :: (forall f. (Control.Applicative f) => (a %1 -> f b) -> s %1 -> f t) -> Traversal s t a b
 traversal trav = Optical $ wander trav
 
 _1 :: Lens (a, c) (b, c) a b
@@ -134,7 +134,7 @@ _Just = prism Just (maybe (Left Nothing) Right)
 _Nothing :: Prism' (Maybe a) ()
 _Nothing = prism (\() -> Nothing) Left
 
-traversed :: Traversable t => Traversal (t a) (t b) a b
+traversed :: (Traversable t) => Traversal (t a) (t b) a b
 traversed = Optical $ wander traverse
 
 over :: Optic_ (FUN 'One) s t a b -> (a %1 -> b) -> s %1 -> t
@@ -171,7 +171,7 @@ build (Optical l) x = Linear.runCoKleisli (l (Linear.CoKleisli getConst')) (Cons
 getConst' :: Const a b %1 -> a
 getConst' (Const x) = x
 
-lengthOf :: MultIdentity r => Optic_ (NonLinear.Kleisli (Const (Sum r))) s t a b -> s -> r
+lengthOf :: (MultIdentity r) => Optic_ (NonLinear.Kleisli (Const (Sum r))) s t a b -> s -> r
 lengthOf l s =
   (gets l (const (Sum one)) s) & \case
     Sum r -> r

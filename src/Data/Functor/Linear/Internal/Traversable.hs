@@ -65,14 +65,14 @@ import Prelude (Either (..), Maybe (..))
 --    by Mauro Jaskelioff and Ondrej Rypacek,
 --    in /Mathematically-Structured Functional Programming/, 2012, online at
 --    <http://arxiv.org/pdf/1202.2919>.
-class Data.Functor t => Traversable t where
+class (Data.Functor t) => Traversable t where
   {-# MINIMAL traverse | sequence #-}
 
-  traverse :: Control.Applicative f => (a %1 -> f b) -> t a %1 -> f (t b)
+  traverse :: (Control.Applicative f) => (a %1 -> f b) -> t a %1 -> f (t b)
   {-# INLINE traverse #-}
   traverse f x = sequence (Data.fmap f x)
 
-  sequence :: Control.Applicative f => t (f a) %1 -> f (t a)
+  sequence :: (Control.Applicative f) => t (f a) %1 -> f (t a)
   {-# INLINE sequence #-}
   sequence = traverse id
 
@@ -92,10 +92,10 @@ forM :: (Traversable t, Control.Monad m) => t a %1 -> (a %1 -> m b) -> m (t b)
 forM = for
 {-# INLINE forM #-}
 
-mapAccumL :: Traversable t => (a %1 -> b %1 -> (a, c)) -> a %1 -> t b %1 -> (a, t c)
+mapAccumL :: (Traversable t) => (a %1 -> b %1 -> (a, c)) -> a %1 -> t b %1 -> (a, t c)
 mapAccumL f s t = swap $ Control.runState (traverse (\b -> Control.state $ \i -> swap $ f i b) t) s
 
-mapAccumR :: Traversable t => (a %1 -> b %1 -> (a, c)) -> a %1 -> t b %1 -> (a, t c)
+mapAccumR :: (Traversable t) => (a %1 -> b %1 -> (a, c)) -> a %1 -> t b %1 -> (a, t c)
 mapAccumR f s t = swap $ runStateR (traverse (\b -> StateR $ \i -> swap $ f i b) t) s
 
 swap :: (a, b) %1 -> (b, a)
@@ -164,7 +164,7 @@ instance (Traversable f, Traversable g) => Traversable (f :*: g) where
 instance (Traversable f, Traversable g) => Traversable (f :+: g) where
   traverse = genericTraverse
 
-instance Traversable f => Traversable (M1 i c f) where
+instance (Traversable f) => Traversable (M1 i c f) where
   traverse = genericTraverse
 
 instance Traversable Par1 where
@@ -202,9 +202,9 @@ class GTraversable t where
   -- TODO: developer documentation on why we use this type rather than the more
   -- straightforward type of `traverse`. Used, for instance, in the
   -- generic-deriving package.
-  gtraverse :: Control.Applicative f => (a %1 -> f b) -> t a %1 -> Curried (Yoneda f) (Yoneda f) (t b)
+  gtraverse :: (Control.Applicative f) => (a %1 -> f b) -> t a %1 -> Curried (Yoneda f) (Yoneda f) (t b)
 
-instance GTraversable t => GTraversable (M1 i c t) where
+instance (GTraversable t) => GTraversable (M1 i c t) where
   gtraverse f (M1 x) = lcoerce (gtraverse f x)
   {-# INLINE gtraverse #-}
 

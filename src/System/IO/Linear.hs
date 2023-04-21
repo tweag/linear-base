@@ -157,10 +157,10 @@ instance Control.Monad IO where
       cont :: (# State# RealWorld, () #) %1 -> IO b %1 -> (# State# RealWorld, b #)
       cont (# s', () #) y' = unIO y' s'
 
-instance Semigroup a => Semigroup (IO a) where
+instance (Semigroup a) => Semigroup (IO a) where
   (<>) = Control.liftA2 (<>)
 
-instance Monoid a => Monoid (IO a) where
+instance (Monoid a) => Monoid (IO a) where
   mempty = Control.pure mempty
 
 -- $ioref
@@ -187,11 +187,11 @@ writeIORef r a = fromSystemIO $ System.writeIORef r a
 -- See [here](http://dev.stephendiehl.com/hask/index.html#control.exception)
 -- to learn about exceptions.
 
-throwIO :: Exception e => e -> IO a
+throwIO :: (Exception e) => e -> IO a
 throwIO e = fromSystemIO $ System.throwIO e
 
 catch ::
-  Exception e =>
+  (Exception e) =>
   IO (Ur a) ->
   (e -> IO (Ur a)) ->
   IO (Ur a)

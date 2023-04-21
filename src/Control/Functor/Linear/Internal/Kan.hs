@@ -62,11 +62,11 @@ import Prelude.Linear.Internal
 newtype Curried g h a = Curried
   {runCurried :: forall r. g (a %1 -> r) %1 -> h r}
 
-instance Data.Functor g => Data.Functor (Curried g h) where
+instance (Data.Functor g) => Data.Functor (Curried g h) where
   fmap f (Curried g) = Curried (g . Data.fmap (. f))
   {-# INLINE fmap #-}
 
-instance Functor g => Functor (Curried g h) where
+instance (Functor g) => Functor (Curried g h) where
   fmap f (Curried g) = Curried (\x -> g (fmap (\y -> y . f) x))
   {-# INLINE fmap #-}
 
@@ -82,7 +82,7 @@ instance (Functor g, g ~ h) => Applicative (Curried g h) where
   Curried mf <*> Curried ma = Curried (ma . mf . fmap (.))
   {-# INLINE (<*>) #-}
 
-lowerCurriedC :: Applicative f => Curried f g a %1 -> g a
+lowerCurriedC :: (Applicative f) => Curried f g a %1 -> g a
 lowerCurriedC (Curried f) = f (pure id)
 {-# INLINE lowerCurriedC #-}
 
@@ -96,13 +96,13 @@ instance Functor (Yoneda f) where
   fmap f (Yoneda m) = Yoneda (\k -> m (k . f))
   {-# INLINE fmap #-}
 
-instance Applicative f => Data.Applicative (Yoneda f) where
+instance (Applicative f) => Data.Applicative (Yoneda f) where
   pure a = Yoneda (\f -> pure (f a))
   {-# INLINE pure #-}
   Yoneda m <*> Yoneda n = Yoneda (\f -> m (\g -> f . g) <*> n id)
   {-# INLINE (<*>) #-}
 
-instance Applicative f => Applicative (Yoneda f) where
+instance (Applicative f) => Applicative (Yoneda f) where
   pure a = Yoneda (\f -> pure (f a))
   {-# INLINE pure #-}
   Yoneda m <*> Yoneda n = Yoneda (\f -> m (\g -> f . g) <*> n id)
@@ -113,10 +113,10 @@ lowerYoneda (Yoneda m) = m id
 {-# INLINE lowerYoneda #-}
 
 -- This bit comes from lens.
-liftCurriedYonedaC :: Applicative f => f a %1 -> Curried (Yoneda f) (Yoneda f) a
+liftCurriedYonedaC :: (Applicative f) => f a %1 -> Curried (Yoneda f) (Yoneda f) a
 liftCurriedYonedaC fa = Curried (`yap` fa)
 {-# INLINE liftCurriedYonedaC #-}
 
-yap :: Applicative f => Yoneda f (a %1 -> b) %1 -> f a %1 -> Yoneda f b
+yap :: (Applicative f) => Yoneda f (a %1 -> b) %1 -> f a %1 -> Yoneda f b
 yap (Yoneda k) fa = Yoneda (\ab_r -> k (\g -> ab_r . g) <*> fa)
 {-# INLINE yap #-}

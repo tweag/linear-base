@@ -133,7 +133,7 @@ data ProbeResult k v where
 -- | Run a computation with an empty 'HashMap' with given capacity.
 empty ::
   forall k v b.
-  Keyed k =>
+  (Keyed k) =>
   Int ->
   (HashMap k v %1 -> Ur b) %1 ->
   Ur b
@@ -142,7 +142,7 @@ empty size scope =
    in Array.alloc cap Nothing (\arr -> scope (HashMap 0 cap arr))
 
 -- | Create an empty HashMap, using another as a uniqueness proof.
-allocBeside :: Keyed k => Int -> HashMap k' v' %1 -> (HashMap k v, HashMap k' v')
+allocBeside :: (Keyed k) => Int -> HashMap k' v' %1 -> (HashMap k v, HashMap k' v')
 allocBeside size (HashMap s' c' arr) =
   let cap = max 1 size
    in Array.allocBeside cap Nothing arr & \(arr', arr'') ->
@@ -151,7 +151,7 @@ allocBeside size (HashMap s' c' arr) =
 -- | Run a computation with an 'HashMap' containing given key-value pairs.
 fromList ::
   forall k v b.
-  Keyed k =>
+  (Keyed k) =>
   [(k, v)] ->
   (HashMap k v %1 -> Ur b) %1 ->
   Ur b
@@ -229,7 +229,7 @@ alterF f key hm =
 
 -- | A general modification function; which can insert, update or delete
 -- a value of the key. See 'alterF', for an even more general function.
-alter :: Keyed k => (Maybe v -> Maybe v) -> k -> HashMap k v %1 -> HashMap k v
+alter :: (Keyed k) => (Maybe v -> Maybe v) -> k -> HashMap k v %1 -> HashMap k v
 alter f key hm = runIdentity $ alterF (\v -> Identity (Ur (f v))) key hm
   where
     runIdentity :: Identity a %1 -> a
@@ -238,17 +238,17 @@ alter f key hm = runIdentity $ alterF (\v -> Identity (Ur (f v))) key hm
 
 -- | Insert a key value pair to a 'HashMap'. It overwrites the previous
 -- value if it exists.
-insert :: Keyed k => k -> v -> HashMap k v %1 -> HashMap k v
+insert :: (Keyed k) => k -> v -> HashMap k v %1 -> HashMap k v
 insert k v = alter (\_ -> Just v) k
 
 -- | Delete a key from a 'HashMap'. Does nothing if the key does not
 -- exist.
-delete :: Keyed k => k -> HashMap k v %1 -> HashMap k v
+delete :: (Keyed k) => k -> HashMap k v %1 -> HashMap k v
 delete = alter (\_ -> Nothing)
 
 -- | 'insert' (in the provided order) the given key-value pairs to
 -- the hashmap.
-insertAll :: Keyed k => [(k, v)] -> HashMap k v %1 -> HashMap k v
+insertAll :: (Keyed k) => [(k, v)] -> HashMap k v %1 -> HashMap k v
 insertAll [] hmap = hmap
 insertAll ((k, v) : xs) hmap = insertAll xs (insert k v hmap)
 
@@ -257,13 +257,13 @@ insertAll ((k, v) : xs) hmap = insertAll xs (insert k v hmap)
 -- | A version of 'fmap' which can throw out the elements.
 --
 -- Complexity: O(capacity hm)
-mapMaybe :: Keyed k => (v -> Maybe v') -> HashMap k v %1 -> HashMap k v'
+mapMaybe :: (Keyed k) => (v -> Maybe v') -> HashMap k v %1 -> HashMap k v'
 mapMaybe f = mapMaybeWithKey (\_k v -> f v)
 
 -- | Same as 'mapMaybe', but also has access to the keys.
 mapMaybeWithKey ::
   forall k v v'.
-  Keyed k =>
+  (Keyed k) =>
   (k -> v -> Maybe v') ->
   HashMap k v %1 ->
   HashMap k v'
@@ -321,20 +321,20 @@ mapMaybeWithKey f (HashMap _ cap arr) =
                           & \arr3 -> mapAndPushBack (ix + 1) end (True, dec) (count + 1) arr3
 
 -- | Complexity: O(capacity hm)
-filterWithKey :: Keyed k => (k -> v -> Bool) -> HashMap k v %1 -> HashMap k v
+filterWithKey :: (Keyed k) => (k -> v -> Bool) -> HashMap k v %1 -> HashMap k v
 filterWithKey f =
   mapMaybeWithKey
     (\k v -> if f k v then Just v else Nothing)
 
 -- | Complexity: O(capacity hm)
-filter :: Keyed k => (v -> Bool) -> HashMap k v %1 -> HashMap k v
+filter :: (Keyed k) => (v -> Bool) -> HashMap k v %1 -> HashMap k v
 filter f = filterWithKey (\_k v -> f v)
 
 -- | Union of two maps using the provided function on conflicts.
 --
 -- Complexity: O(min(capacity hm1, capacity hm2)
 unionWith ::
-  Keyed k =>
+  (Keyed k) =>
   (v -> v -> v) ->
   HashMap k v %1 ->
   HashMap k v %1 ->
@@ -367,14 +367,14 @@ unionWith onConflict (hm1 :: HashMap k v) hm2 =
 -- | A right-biased union.
 --
 -- Complexity: O(min(capacity hm1, capacity hm2)
-union :: Keyed k => HashMap k v %1 -> HashMap k v %1 -> HashMap k v
+union :: (Keyed k) => HashMap k v %1 -> HashMap k v %1 -> HashMap k v
 union hm1 hm2 = unionWith (\_v1 v2 -> v2) hm1 hm2
 
 -- | Intersection of two maps with the provided combine function.
 --
 -- Complexity: O(min(capacity hm1, capacity hm2)
 intersectionWith ::
-  Keyed k =>
+  (Keyed k) =>
   (a -> b -> c) ->
   HashMap k a %1 ->
   HashMap k b %1 ->
@@ -408,7 +408,7 @@ intersectionWith combine (hm1 :: HashMap k a') hm2 =
 -- This is only useful after a lot of deletes.
 --
 -- Complexity: O(capacity hm)
-shrinkToFit :: Keyed k => HashMap k a %1 -> HashMap k a
+shrinkToFit :: (Keyed k) => HashMap k a %1 -> HashMap k a
 shrinkToFit hm =
   size hm & \(Ur size, hm') ->
     let targetSize =
@@ -432,7 +432,7 @@ capacity :: HashMap k v %1 -> (Ur Int, HashMap k v)
 capacity (HashMap ct cap arr) = (Ur cap, HashMap ct cap arr)
 
 -- | Look up a value from a 'HashMap'.
-lookup :: Keyed k => k -> HashMap k v %1 -> (Ur (Maybe v), HashMap k v)
+lookup :: (Keyed k) => k -> HashMap k v %1 -> (Ur (Maybe v), HashMap k v)
 lookup k hm =
   idealIndexForKey k hm & \(Ur idx, hm') ->
     probeFrom k 0 idx hm' `chainU` \case
@@ -444,7 +444,7 @@ lookup k hm =
         (Ur Nothing, h)
 
 -- | Check if the given key exists.
-member :: Keyed k => k -> HashMap k v %1 -> (Ur Bool, HashMap k v)
+member :: (Keyed k) => k -> HashMap k v %1 -> (Ur Bool, HashMap k v)
 member k hm =
   lookup k hm & \case
     (Ur Nothing, hm') -> (Ur False, hm')
@@ -484,7 +484,7 @@ instance Data.Functor (HashMap k) where
 instance Prelude.Semigroup (HashMap k v) where
   (<>) = error "Prelude.<>: invariant violation, unrestricted HashMap"
 
-instance Keyed k => Semigroup (HashMap k v) where
+instance (Keyed k) => Semigroup (HashMap k v) where
   (<>) = union
 
 -- # Internal library
@@ -495,7 +495,7 @@ _debugShow (HashMap _ _ robinArr) =
   Array.toList robinArr & \(Ur xs) -> show xs
 
 idealIndexForKey ::
-  Keyed k =>
+  (Keyed k) =>
   k ->
   HashMap k v %1 ->
   (Ur Int, HashMap k v)
@@ -506,7 +506,7 @@ idealIndexForKey k (HashMap sz cap arr) =
 -- a full hashmap, return a probe result: the place the key already
 -- exists, a place to swap from, or an unfilled cell to write over.
 probeFrom ::
-  Keyed k =>
+  (Keyed k) =>
   k ->
   PSL ->
   Int ->
@@ -528,7 +528,7 @@ probeFrom k p ix (HashMap ct cap arr) =
 -- | Try to insert at a given index with a given PSL. So the
 -- probing starts from the given index (with the given PSL).
 tryInsertAtIndex ::
-  Keyed k =>
+  (Keyed k) =>
   HashMap k v %1 ->
   Int ->
   RobinVal k v ->
@@ -550,7 +550,7 @@ tryInsertAtIndex hmap ix (RobinVal psl key val) =
 -- following the deleted cell, backwards by one and decrement
 -- their PSLs.
 shiftSegmentBackward ::
-  Keyed k =>
+  (Keyed k) =>
   Int ->
   Int ->
   RobinArr k v %1 ->
@@ -574,7 +574,7 @@ shiftSegmentBackward dec s arr ix =
 
 -- | Makes sure that the map is not exceeding its utilization threshold
 -- (constMaxUtilization), resizes (constGrowthFactor) if necessary.
-growMapIfNecessary :: Keyed k => HashMap k v %1 -> HashMap k v
+growMapIfNecessary :: (Keyed k) => HashMap k v %1 -> HashMap k v
 growMapIfNecessary (HashMap sz cap arr) =
   let load = fromIntegral sz / fromIntegral cap
    in if load Prelude.< constMaxLoadFactor
@@ -587,7 +587,7 @@ growMapIfNecessary (HashMap sz cap arr) =
 --
 -- Invariant: Given capacity should be greater than the size, this is not
 -- checked.
-resize :: Keyed k => Int -> HashMap k v %1 -> HashMap k v
+resize :: (Keyed k) => Int -> HashMap k v %1 -> HashMap k v
 resize targetSize (HashMap _ _ arr) =
   Array.allocBeside targetSize Nothing arr & \(newArr, oldArr) ->
     Array.toList oldArr & \(Ur elems) ->

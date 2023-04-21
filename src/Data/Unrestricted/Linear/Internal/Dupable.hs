@@ -67,7 +67,7 @@ import qualified Prelude
 -- can have performance problems for recursive parameterized types.
 -- Specifically, the methods will not specialize to underlying 'Dupable'
 -- instances. See [this GHC issue](https://gitlab.haskell.org/ghc/ghc/-/issues/21131).
-class Consumable a => Dupable a where
+class (Consumable a) => Dupable a where
   {-# MINIMAL dupR | dup2 #-}
 
   -- | Creates a 'Replicator' for the given @a@.
@@ -87,27 +87,27 @@ class Consumable a => Dupable a where
   dup2 x = Replicator.elim (,) (dupR x)
 
 -- | Creates 3 @a@s from a @'Dupable' a@, in a linear fashion.
-dup3 :: Dupable a => a %1 -> (a, a, a)
+dup3 :: (Dupable a) => a %1 -> (a, a, a)
 dup3 x = Replicator.elim (,,) (dupR x)
 
 -- | Creates 4 @a@s from a @'Dupable' a@, in a linear fashion.
-dup4 :: Dupable a => a %1 -> (a, a, a, a)
+dup4 :: (Dupable a) => a %1 -> (a, a, a, a)
 dup4 x = Replicator.elim (,,,) (dupR x)
 
 -- | Creates 5 @a@s from a @'Dupable' a@, in a linear fashion.
-dup5 :: Dupable a => a %1 -> (a, a, a, a, a)
+dup5 :: (Dupable a) => a %1 -> (a, a, a, a, a)
 dup5 x = Replicator.elim (,,,,) (dupR x)
 
 -- | Creates 6 @a@s from a @'Dupable' a@, in a linear fashion.
-dup6 :: Dupable a => a %1 -> (a, a, a, a, a, a)
+dup6 :: (Dupable a) => a %1 -> (a, a, a, a, a, a)
 dup6 x = Replicator.elim (,,,,,) (dupR x)
 
 -- | Creates 7 @a@s from a @'Dupable' a@, in a linear fashion.
-dup7 :: Dupable a => a %1 -> (a, a, a, a, a, a, a)
+dup7 :: (Dupable a) => a %1 -> (a, a, a, a, a, a, a)
 dup7 x = Replicator.elim (,,,,,,) (dupR x)
 
 -- | Creates two @a@s from a @'Dupable' a@. Same function as 'dup2'.
-dup :: Dupable a => a %1 -> (a, a)
+dup :: (Dupable a) => a %1 -> (a, a)
 dup = dup2
 
 ------------
@@ -158,7 +158,7 @@ deriving via
 deriving via
   Generically (Prelude.Maybe a)
   instance
-    Dupable a => Dupable (Prelude.Maybe a)
+    (Dupable a) => Dupable (Prelude.Maybe a)
 
 deriving via
   Generically (Prelude.Either a b)
@@ -169,7 +169,7 @@ deriving via
 -- been able to find a way to get the generic version to specialize
 -- to a particular underlying Dupable. The recursion leads to the
 -- whole thing being a loop breaker and I don't know how to fix that.
-instance Dupable a => Dupable [a] where
+instance (Dupable a) => Dupable [a] where
   dupR = go
     where
       go :: [a] %1 -> Replicator [a]
@@ -179,7 +179,7 @@ instance Dupable a => Dupable [a] where
 deriving via
   Generically (NonEmpty a)
   instance
-    Dupable a => Dupable (NonEmpty a)
+    (Dupable a) => Dupable (NonEmpty a)
 
 deriving via
   Generically (Ur a)
@@ -194,7 +194,7 @@ deriving via
 deriving via
   Generically (Solo a)
   instance
-    Dupable a => Dupable (Solo a)
+    (Dupable a) => Dupable (Solo a)
 
 deriving via
   Generically (a, b)
@@ -216,9 +216,9 @@ deriving via
   instance
     (Dupable a, Dupable b, Dupable c, Dupable d, Dupable e) => Dupable (a, b, c, d, e)
 
-deriving newtype instance Dupable a => Dupable (Semigroup.Sum a)
+deriving newtype instance (Dupable a) => Dupable (Semigroup.Sum a)
 
-deriving newtype instance Dupable a => Dupable (Semigroup.Product a)
+deriving newtype instance (Dupable a) => Dupable (Semigroup.Product a)
 
 deriving newtype instance Dupable Semigroup.All
 
@@ -234,10 +234,10 @@ instance (Generic a, GDupable (Rep a)) => Dupable (Generically a) where
 genericDupR :: (Generic a, GDupable (Rep a)) => a %1 -> Replicator a
 genericDupR x = Replicator.map to (gdupR (from x))
 
-class GConsumable f => GDupable f where
+class (GConsumable f) => GDupable f where
   gdupR :: f a %1 -> Replicator (f a)
 
-instance GDupable f => GDupable (M1 i c f) where
+instance (GDupable f) => GDupable (M1 i c f) where
   gdupR (M1 x) = lcoerce (gdupR x)
   {-# INLINE gdupR #-}
 
@@ -250,7 +250,7 @@ instance (GDupable f, GDupable g) => GDupable (f :+: g) where
   gdupR (R1 y) = Replicator.map R1 (gdupR y)
   {-# INLINE gdupR #-}
 
-instance Dupable c => GDupable (K1 i c) where
+instance (Dupable c) => GDupable (K1 i c) where
   gdupR = lcoerce (dupR @c)
   {-# INLINE gdupR #-}
 
@@ -266,7 +266,7 @@ instance GDupable (MP1 'Many f) where
   gdupR (MP1 x) = Replicator.pure (MP1 x)
   {-# INLINE gdupR #-}
 
-instance GDupable f => GDupable (MP1 'One f) where
+instance (GDupable f) => GDupable (MP1 'One f) where
   gdupR (MP1 x) = Replicator.map MP1 (gdupR x)
   {-# INLINE gdupR #-}
 

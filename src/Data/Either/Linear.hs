@@ -29,13 +29,13 @@ either f _ (Left x) = f x
 either _ g (Right y) = g y
 
 -- | Get all the left elements in order, and consume the right ones.
-lefts :: Consumable b => [Either a b] %1 -> [a]
+lefts :: (Consumable b) => [Either a b] %1 -> [a]
 lefts [] = []
 lefts (Left a : xs) = a : lefts xs
 lefts (Right b : xs) = lseq b (lefts xs)
 
 -- | Get all the right elements in order, and consume the left ones.
-rights :: Consumable a => [Either a b] %1 -> [b]
+rights :: (Consumable a) => [Either a b] %1 -> [b]
 rights [] = []
 rights (Left a : xs) = lseq a (rights xs)
 rights (Right b : xs) = b : rights xs

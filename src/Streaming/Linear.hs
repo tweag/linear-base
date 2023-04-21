@@ -436,7 +436,7 @@ hoistUnexposed trans = loop
 -- are linear.
 inspectC ::
   forall f m r a.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (r %1 -> m a) ->
   (f (Stream f m r) %1 -> m a) ->
   Stream f m r %1 ->
@@ -502,7 +502,7 @@ groups = loop
 -- > Streaming.Prelude.unfoldr StreamingPrelude.next = id
 inspect ::
   forall f m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream f m r %1 ->
   m (Either r (f (Stream f m r)))
 inspect = loop
@@ -809,10 +809,10 @@ mapsM_ f = run . maps f
 {-# INLINE mapsM_ #-}
 
 -- | Run the effects in a stream that merely layers effects.
-run :: Control.Monad m => Stream m m r %1 -> m r
+run :: (Control.Monad m) => Stream m m r %1 -> m r
 run = loop
   where
-    loop :: Control.Monad m => Stream m m r %1 -> m r
+    loop :: (Control.Monad m) => Stream m m r %1 -> m r
     loop stream =
       stream & \case
         Return r -> Control.return r

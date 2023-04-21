@@ -55,7 +55,7 @@ partition arr pivot lx rx
                   & \arr3 -> partition arr3 pivot (lx + 1) (rx - 1)
 
 -- | @swap a i j@ exchanges the positions of values at @i@ and @j@ of @a@.
-swap :: HasCallStack => Array Int %1 -> Int -> Int -> Array Int
+swap :: (HasCallStack) => Array Int %1 -> Int -> Int -> Array Int
 swap arr i j =
   Array.read arr i
     & \(Ur ival, arr1) ->

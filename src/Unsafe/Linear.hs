@@ -116,7 +116,7 @@ toLinear3 f = case unsafeEqualityProof @'(p, q, r) @'(x, y, z) of
 --   :: (a %m-> b -> c %1-> d) %1-> (a %1-> b %1-> c %x-> d)
 -- 'toLinear3' = toLinearN \@3
 -- @
-toLinearN :: forall n f g. ToLinearN n f g => f %1 -> g
+toLinearN :: forall n f g. (ToLinearN n f g) => f %1 -> g
 -- See Note: Core size
 toLinearN f = case unsafeLinearityProofN @n @f @g of
   UnsafeRefl -> f
@@ -168,7 +168,7 @@ type ToLinearN' :: forall {rep :: RuntimeRep}. INat -> TYPE rep -> TYPE rep -> C
 class ToLinearN' arrs f g where
   prf :: UnsafeEquality f g
 
-instance a ~ b => ToLinearN' 'Z (a :: TYPE rep) (b :: TYPE rep) where
+instance (a ~ b) => ToLinearN' 'Z (a :: TYPE rep) (b :: TYPE rep) where
   prf = UnsafeRefl
 
 -- We use heterogeneous equality here to shift @rep ~ 'LiftedRep@ to the left

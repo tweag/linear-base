@@ -87,7 +87,7 @@ newtype NonLinear a = NonLinear a
 -- Instances --
 ---------------
 
-instance Semigroup a => Prelude.Semigroup (NonLinear a) where
+instance (Semigroup a) => Prelude.Semigroup (NonLinear a) where
   NonLinear a <> NonLinear b = NonLinear (a <> b)
 
 -- Instances below are listed in the same order as in https://hackage.haskell.org/package/base-4.16.0.0/docs/Data-Semigroup.html
@@ -119,36 +119,36 @@ instance Semigroup Ordering where
 instance Semigroup () where
   () <> () = ()
 
-instance Semigroup a => Semigroup (Identity a) where
+instance (Semigroup a) => Semigroup (Identity a) where
   Identity x <> Identity y = Identity (x <> y)
 
-instance Consumable a => Semigroup (Monoid.First a) where
+instance (Consumable a) => Semigroup (Monoid.First a) where
   (Monoid.First Nothing) <> y = y
   x <> (Monoid.First y) =
     y & \case
       Nothing -> x
       Just y' -> y' `lseq` x
 
-instance Consumable a => Semigroup (Monoid.Last a) where
+instance (Consumable a) => Semigroup (Monoid.Last a) where
   x <> (Monoid.Last Nothing) = x
   (Monoid.Last x) <> y =
     x & \case
       Nothing -> y
       Just x' -> x' `lseq` y
 
-instance Semigroup a => Semigroup (Down a) where
+instance (Semigroup a) => Semigroup (Down a) where
   (Down x) <> (Down y) = Down (x <> y)
 
-instance Consumable a => Semigroup (First a) where
+instance (Consumable a) => Semigroup (First a) where
   x <> (First y) = y `lseq` x
 
-instance Consumable a => Semigroup (Last a) where
+instance (Consumable a) => Semigroup (Last a) where
   (Last x) <> y = x `lseq` y
 
 -- Cannot add instance Ord a => Semigroup (Max a); would require (NonLinear.Ord a, Consumable a)
 -- Cannot add instance Ord a => Semigroup (Min a); would require (NonLinear.Ord a, Consumable a)
 
-instance Semigroup a => Semigroup (Dual a) where
+instance (Semigroup a) => Semigroup (Dual a) where
   Dual x <> Dual y = Dual (y <> x)
 
 instance Semigroup (Endo a) where
@@ -160,12 +160,12 @@ instance Semigroup (Endo a) where
 -- See System.IO.Resource.Internal for instance ... => Semigroup (RIO a)
 -- See Data.List.Linear for instance ... => Semigroup (NonEmpty a)
 
-instance Semigroup a => Semigroup (Maybe a) where
+instance (Semigroup a) => Semigroup (Maybe a) where
   x <> Nothing = x
   Nothing <> y = y
   Just x <> Just y = Just (x <> y)
 
-instance Semigroup a => Semigroup (Solo a) where
+instance (Semigroup a) => Semigroup (Solo a) where
   x <> y = Tuple.mkSolo (Tuple.unSolo x <> Tuple.unSolo y)
 
 -- See Data.List.Linear for instance ... => Semigroup [a]
@@ -188,7 +188,7 @@ instance Semigroup (Proxy a) where
 instance (Semigroup a, Semigroup b) => Semigroup (a, b) where
   (x1, x2) <> (y1, y2) = (x1 <> y1, x2 <> y2)
 
-instance Semigroup a => Semigroup (Const a b) where
+instance (Semigroup a) => Semigroup (Const a b) where
   Const x <> Const y = Const (x <> y)
 
 -- See Data.Functor.Linear.Applicative for instance ... => Semigroup (Ap f a)

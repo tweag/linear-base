@@ -27,7 +27,7 @@ import GHC.TypeLits (ErrorMessage, TypeError)
 
 -- | A constraint that cannot be satisfied. Users should normally use
 -- 'Unsatisfiable' instead of using this class directly.
-class Any => Bottom where
+class (Any) => Bottom where
   unsatisfiable' :: Void
 
 -- | An unsatisfiable constraint with a user-provided error message.  Under an
@@ -45,5 +45,5 @@ class (Bottom, TypeError e) => Unsatisfiable (e :: ErrorMessage)
 
 -- | Produce a value of any type (and runtime representation) under
 -- an 'Unsatisfiable' or 'Bottom' constraint.
-unsatisfiable :: forall {rep} (a :: TYPE rep). Bottom => a
+unsatisfiable :: forall {rep} (a :: TYPE rep). (Bottom) => a
 unsatisfiable = case unsatisfiable' of {}

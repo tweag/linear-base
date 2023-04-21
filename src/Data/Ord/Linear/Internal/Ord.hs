@@ -41,7 +41,7 @@ import qualified Prelude
 -- @<=@ since it requires calls: one to @<=@ and one to @==@. However,
 -- from a linear @compare@ it is easy to implement the others. Hence, the
 -- minimal complete definition only contains @compare@.
-class Eq a => Ord a where
+class (Eq a) => Ord a where
   {-# MINIMAL compare #-}
 
   -- | @compare x y@ returns an @Ordering@ which is
@@ -91,7 +91,7 @@ min x y =
 
 -- * Instances
 
-instance Prelude.Ord a => Ord (Ur a) where
+instance (Prelude.Ord a) => Ord (Ur a) where
   Ur x `compare` Ur y = x `Prelude.compare` y
 
 instance (Consumable a, Ord a) => Ord (Prelude.Maybe a) where

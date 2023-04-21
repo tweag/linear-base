@@ -51,10 +51,10 @@ newtype ReaderT r m a = ReaderT (r %1 -> m a)
 runReaderT :: ReaderT r m a %1 -> r %1 -> m a
 runReaderT (ReaderT f) = f
 
-instance Data.Functor m => Data.Functor (ReaderT r m) where
+instance (Data.Functor m) => Data.Functor (ReaderT r m) where
   fmap f = mapReaderT (Data.fmap f)
 
-instance Functor m => Functor (ReaderT r m) where
+instance (Functor m) => Functor (ReaderT r m) where
   fmap f = mapReaderT (fmap f)
 
 instance (Data.Applicative m, Dupable r) => Data.Applicative (ReaderT r m) where
@@ -70,7 +70,7 @@ instance (Monad m, Dupable r) => Monad (ReaderT r m) where
 
 type Reader r = ReaderT r Identity
 
-ask :: Applicative m => ReaderT r m r
+ask :: (Applicative m) => ReaderT r m r
 ask = ReaderT pure
 
 withReaderT :: (r' %1 -> r) %1 -> ReaderT r m a %1 -> ReaderT r' m a
@@ -79,7 +79,7 @@ withReaderT f m = ReaderT $ runReaderT m . f
 local :: (r %1 -> r) %1 -> ReaderT r m a %1 -> ReaderT r m a
 local = withReaderT
 
-reader :: Monad m => (r %1 -> a) %1 -> ReaderT r m a
+reader :: (Monad m) => (r %1 -> a) %1 -> ReaderT r m a
 reader f = ReaderT (return . f)
 
 runReader :: Reader r a %1 -> r %1 -> a
@@ -94,23 +94,23 @@ mapReaderT f m = ReaderT (f . runReaderT m)
 withReader :: (r' %1 -> r) %1 -> Reader r a %1 -> Reader r' a
 withReader = withReaderT
 
-asks :: Monad m => (r %1 -> a) %1 -> ReaderT r m a
+asks :: (Monad m) => (r %1 -> a) %1 -> ReaderT r m a
 asks f = ReaderT (return . f)
 
-instance Dupable r => MonadTrans (ReaderT r) where
+instance (Dupable r) => MonadTrans (ReaderT r) where
   lift x = ReaderT (`lseq` x)
 
 -- # Instances for nonlinear ReaderT
 -------------------------------------------------------------------------------
 
-instance Functor m => Functor (NonLinear.ReaderT r m) where
+instance (Functor m) => Functor (NonLinear.ReaderT r m) where
   fmap f (NonLinear.ReaderT g) = NonLinear.ReaderT $ \r -> fmap f (g r)
 
-instance Applicative m => Applicative (NonLinear.ReaderT r m) where
+instance (Applicative m) => Applicative (NonLinear.ReaderT r m) where
   pure x = NonLinear.ReaderT $ \_ -> pure x
   NonLinear.ReaderT f <*> NonLinear.ReaderT x = NonLinear.ReaderT $ \r -> f r <*> x r
 
-instance Monad m => Monad (NonLinear.ReaderT r m) where
+instance (Monad m) => Monad (NonLinear.ReaderT r m) where
   NonLinear.ReaderT x >>= f = NonLinear.ReaderT $ \r -> x r >>= (\a -> runReaderT' (f a) r)
 
 -- XXX: Temporary, until newtype record projections are linear.

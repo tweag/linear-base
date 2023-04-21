@@ -40,7 +40,7 @@ import qualified Prelude
 --
 -- Laws (same as 'Data.Monoid.Monoid'):
 --   * ∀ x ∈ G, x <> mempty = mempty <> x = x
-class Semigroup a => Monoid a where
+class (Semigroup a) => Monoid a where
   {-# MINIMAL mempty #-}
   mempty :: a
 
@@ -49,14 +49,14 @@ instance (Prelude.Semigroup a, Monoid a) => Prelude.Monoid (NonLinear a) where
 
 -- convenience redefine
 
-mconcat :: Monoid a => [a] %1 -> a
+mconcat :: (Monoid a) => [a] %1 -> a
 mconcat (xs' :: [a]) = go mempty xs'
   where
     go :: a %1 -> [a] %1 -> a
     go acc [] = acc
     go acc (x : xs) = go (acc <> x) xs
 
-mappend :: Monoid a => a %1 -> a %1 -> a
+mappend :: (Monoid a) => a %1 -> a %1 -> a
 mappend = (<>)
 
 ---------------
@@ -80,22 +80,22 @@ instance Monoid Ordering where
 instance Monoid () where
   mempty = ()
 
-instance Monoid a => Monoid (Identity a) where
+instance (Monoid a) => Monoid (Identity a) where
   mempty = Identity mempty
 
-instance Consumable a => Monoid (Monoid.First a) where
+instance (Consumable a) => Monoid (Monoid.First a) where
   mempty = Monoid.First Nothing
 
-instance Consumable a => Monoid (Monoid.Last a) where
+instance (Consumable a) => Monoid (Monoid.Last a) where
   mempty = Monoid.Last Nothing
 
-instance Monoid a => Monoid (Down a) where
+instance (Monoid a) => Monoid (Down a) where
   mempty = Down mempty
 
 -- Cannot add instance (Ord a, Bounded a) => Monoid (Max a); would require (NonLinear.Ord a, Consumable a)
 -- Cannot add instance (Ord a, Bounded a) => Monoid (Min a); would require (NonLinear.Ord a, Consumable a)
 
-instance Monoid a => Monoid (Dual a) where
+instance (Monoid a) => Monoid (Dual a) where
   mempty = Dual mempty
 
 instance Monoid (Endo a) where
@@ -106,7 +106,7 @@ instance Monoid (Endo a) where
 -- See System.IO.Linear for instance ... => Monoid (IO a)
 -- See System.IO.Resource.Internal for instance ... => Monoid (RIO a)
 
-instance Semigroup a => Monoid (Maybe a) where
+instance (Semigroup a) => Monoid (Maybe a) where
   mempty = Nothing
 
 -- See Data.List.Linear for instance ... => Monoid [a]
@@ -121,7 +121,7 @@ instance Monoid (Proxy a) where
 instance (Monoid a, Monoid b) => Monoid (a, b) where
   mempty = (mempty, mempty)
 
-instance Monoid a => Monoid (Const a b) where
+instance (Monoid a) => Monoid (Const a b) where
   mempty = mempty
 
 -- See Data.Functor.Linear.Applicative for instance ... => Monoid (Ap f a)
@@ -136,7 +136,7 @@ instance (Monoid (f a), Monoid (g a)) => Monoid (Functor.Product f g a) where
 instance (Monoid a, Monoid b, Monoid c, Monoid d) => Monoid (a, b, c, d) where
   mempty = (mempty, mempty, mempty, mempty)
 
-instance Monoid (f (g a)) => Monoid (Functor.Compose f g a) where
+instance (Monoid (f (g a))) => Monoid (Functor.Compose f g a) where
   mempty = Compose mempty
 
 instance (Monoid a, Monoid b, Monoid c, Monoid d, Monoid e) => Monoid (a, b, c, d, e) where

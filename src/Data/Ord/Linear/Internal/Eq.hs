@@ -38,7 +38,7 @@ class Eq a where
 
 -- * Instances
 
-instance Prelude.Eq a => Eq (Ur a) where
+instance (Prelude.Eq a) => Eq (Ur a) where
   Ur x == Ur y = x Prelude.== y
   Ur x /= Ur y = x Prelude./= y
 

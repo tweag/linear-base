@@ -50,7 +50,7 @@ data Vector a where
 -- equal to the size of the given array.
 --
 -- This is a constant time operation.
-fromArray :: HasCallStack => Array a %1 -> Vector a
+fromArray :: (HasCallStack) => Array a %1 -> Vector a
 fromArray arr =
   Array.size arr
     & \(Ur size', arr') -> Vec size' arr'
@@ -62,7 +62,7 @@ empty f = Array.fromList [] (f . fromArray)
 -- | Allocate a constant vector of a given non-negative size (and error on a
 -- bad size)
 constant ::
-  HasCallStack =>
+  (HasCallStack) =>
   Int ->
   a ->
   (Vector a %1 -> Ur b) %1 ->
@@ -74,7 +74,7 @@ constant size' x f
   | otherwise = Array.alloc size' x (f . fromArray)
 
 -- | Allocator from a list
-fromList :: HasCallStack => [a] -> (Vector a %1 -> Ur b) %1 -> Ur b
+fromList :: (HasCallStack) => [a] -> (Vector a %1 -> Ur b) %1 -> Ur b
 fromList xs f = Array.fromList xs (f . fromArray)
 
 -- | Number of elements inside the vector.
@@ -112,32 +112,32 @@ pop vec =
 
 -- | Write to an element . Note: this will not write to elements beyond the
 -- current size of the vector and will error instead.
-set :: HasCallStack => Int -> a -> Vector a %1 -> Vector a
+set :: (HasCallStack) => Int -> a -> Vector a %1 -> Vector a
 set ix val vec =
   unsafeSet ix val (assertIndexInRange ix vec)
 
 -- | Same as 'write', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
-unsafeSet :: HasCallStack => Int -> a -> Vector a %1 -> Vector a
+unsafeSet :: (HasCallStack) => Int -> a -> Vector a %1 -> Vector a
 unsafeSet ix val (Vec size' arr) =
   Vec size' (Array.unsafeSet ix val arr)
 
 -- | Read from a vector, with an in-range index and error for an index that is
 -- out of range (with the usual range @0..size-1@).
-get :: HasCallStack => Int -> Vector a %1 -> (Ur a, Vector a)
+get :: (HasCallStack) => Int -> Vector a %1 -> (Ur a, Vector a)
 get ix vec =
   unsafeGet ix (assertIndexInRange ix vec)
 
 -- | Same as 'read', but does not do bounds-checking. The behaviour is undefined
 -- when passed an invalid index.
-unsafeGet :: HasCallStack => Int -> Vector a %1 -> (Ur a, Vector a)
+unsafeGet :: (HasCallStack) => Int -> Vector a %1 -> (Ur a, Vector a)
 unsafeGet ix (Vec size' arr) =
   Array.unsafeGet ix arr
     & \(val, arr') -> (val, Vec size' arr')
 
 -- | Same as 'modify', but does not do bounds-checking.
 unsafeModify ::
-  HasCallStack =>
+  (HasCallStack) =>
   (a -> (a, b)) ->
   Int ->
   Vector a %1 ->
@@ -152,7 +152,7 @@ unsafeModify f ix (Vec size' arr) =
 -- | Modify a value inside a vector, with an ability to return an extra
 -- information. Errors if the index is out of bounds.
 modify ::
-  HasCallStack =>
+  (HasCallStack) =>
   (a -> (a, b)) ->
   Int ->
   Vector a %1 ->
@@ -160,7 +160,7 @@ modify ::
 modify f ix vec = unsafeModify f ix (assertIndexInRange ix vec)
 
 -- | Same as 'modify', but without the ability to return extra information.
-modify_ :: HasCallStack => (a -> a) -> Int -> Vector a %1 -> Vector a
+modify_ :: (HasCallStack) => (a -> a) -> Int -> Vector a %1 -> Vector a
 modify_ f ix vec =
   modify (\a -> (f a, ())) ix vec
     & \(Ur (), vec') -> vec'
@@ -244,7 +244,7 @@ freeze (Vec sz arr) =
     & \(Ur vec) -> Ur (Vector.take sz vec)
 
 -- | Same as 'set', but takes the 'Vector' as the first parameter.
-write :: HasCallStack => Vector a %1 -> Int -> a -> Vector a
+write :: (HasCallStack) => Vector a %1 -> Int -> a -> Vector a
 write arr i a = set i a arr
 
 -- | Same as 'unsafeSafe', but takes the 'Vector' as the first parameter.
@@ -252,7 +252,7 @@ unsafeWrite :: Vector a %1 -> Int -> a -> Vector a
 unsafeWrite arr i a = unsafeSet i a arr
 
 -- | Same as 'get', but takes the 'Vector' as the first parameter.
-read :: HasCallStack => Vector a %1 -> Int -> (Ur a, Vector a)
+read :: (HasCallStack) => Vector a %1 -> Int -> (Ur a, Vector a)
 read arr i = get i arr
 
 -- | Same as 'unsafeGet', but takes the 'Vector' as the first parameter.
@@ -297,7 +297,7 @@ instance Data.Functor Vector where
 
 -- | Grows the vector to the closest power of growthFactor to
 -- fit at least n more elements.
-growToFit :: HasCallStack => Int -> Vector a %1 -> Vector a
+growToFit :: (HasCallStack) => Int -> Vector a %1 -> Vector a
 growToFit n vec =
   capacity vec & \(Ur cap, vec') ->
     size vec' & \(Ur s', vec'') ->
@@ -321,7 +321,7 @@ growToFit n vec =
 
 -- | Resize the vector to a non-negative size. In-range elements are preserved,
 -- the possible new elements are bottoms.
-unsafeResize :: HasCallStack => Int -> Vector a %1 -> Vector a
+unsafeResize :: (HasCallStack) => Int -> Vector a %1 -> Vector a
 unsafeResize newSize (Vec size' ma) =
   Vec
     (min size' newSize)
@@ -332,7 +332,7 @@ unsafeResize newSize (Vec size' ma) =
     )
 
 -- | Check if given index is within the Vector, otherwise panic.
-assertIndexInRange :: HasCallStack => Int -> Vector a %1 -> Vector a
+assertIndexInRange :: (HasCallStack) => Int -> Vector a %1 -> Vector a
 assertIndexInRange i vec =
   size vec & \(Ur s, vec') ->
     if 0 <= i && i < s
