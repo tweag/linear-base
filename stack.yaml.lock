@@ -3,10 +3,17 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: linear-generics-0.2.1@sha256:dfe005e94e9080a12a6e30ce2f2bd552f4085cea380161b785b04a3c2fd39a8a,5894
+    pantry-tree:
+      sha256: b5e5d4fadb4f3603647fffbee0626d14ac4076b1cc2256c721835a32db25f513
+      size: 2818
+  original:
+    hackage: linear-generics-0.2.1@sha256:dfe005e94e9080a12a6e30ce2f2bd552f4085cea380161b785b04a3c2fd39a8a,5894
 snapshots:
 - completed:
-    sha256: ff431937a638ebfaa5e6fec13c7ae575f01e02744d6ca5e5b1554f78cb5f88ad
-    size: 631953
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/8/24.yaml
-  original: nightly-2022-08-24
+    sha256: 9f8b7563aeafe035eae2304131454e6c1a96611ad9921dde6981474e988a5873
+    size: 608629
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2023/4/21.yaml
+  original: nightly-2023-04-21
