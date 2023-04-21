@@ -28,6 +28,8 @@ jobs:
         restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
     - name: Build Nix dependencies
       run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "echo '=== Nix dependencies installed ==='"
+    - name: Init Cabal's config file
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal --config-file=/home/runner/.cabal/config user-config -f init"
     - name: Update Cabal's database
       run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal update"
     - name: Build Cabal's dependencies
