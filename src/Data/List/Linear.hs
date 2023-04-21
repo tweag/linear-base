@@ -16,6 +16,7 @@ module Data.List.Linear
     filter,
     NonLinear.head,
     uncons,
+    break,
     NonLinear.tail,
     NonLinear.last,
     NonLinear.init,
@@ -126,6 +127,16 @@ filter p (x : xs) =
 uncons :: [a] %1 -> Maybe (a, [a])
 uncons [] = Nothing
 uncons (x : xs) = Just (x, xs)
+
+break :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> ([a], [a])
+break _ [] = ([], [])
+break p (x : xs) =
+  dup x & \case
+    (x', x'') ->
+      if p x'
+        then ([], x'' : xs)
+        else break p xs & \case
+          (ys, zs) -> (x'' : ys, zs)
 
 reverse :: [a] %1 -> [a]
 reverse = Unsafe.toLinear NonLinear.reverse

@@ -230,3 +230,20 @@ benchmark mutable-data
         tasty-bench >= 0.3,
         unordered-containers,
         MonadRandom
+
+benchmark memory
+    import: warnings
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    hs-source-dirs:   memory
+    other-modules:
+        Compact.Pure
+        Compact.SExpr
+
+    default-language: Haskell2010
+    build-depends:
+        base,
+        deepseq,
+        gauge,
+        ghc-compact,
+        linear-base

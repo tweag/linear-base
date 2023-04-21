@@ -16,7 +16,6 @@ import Compact.Pure
 import Compact.Pure.Internal
 import Control.Functor.Linear ((<&>))
 import Control.Monad (return)
-import Data.Unrestricted.Linear (dup4, dup5)
 import GHC.Generics (Generic)
 import Prelude.Linear
 import Test.Tasty
@@ -38,44 +37,44 @@ compactDemo :: IO String
 compactDemo = do
   let s1 :: Ur (Int, Int)
       !s1 = withRegion $ \r ->
-        case dup4 r of
-          (r1, r2, r3, r4) ->
+        case dup r of
+          (r1, r2) ->
             complete $
               alloc r1
                 <&> ( \dp ->
                         case dp <| C @"(,)" of
                           (dl, dr) ->
-                            dl <|. intoR r2 1 `lseq`
+                            dl <|.. 1 `lseq`
                               dr
-                                <|. alloc r3
-                                <|. intoR r4 2
+                                <|. alloc r2
+                                <|.. 2
                     )
   let s2 :: Ur (Int, (Int, Int))
-      !s2 = withRegion $ \r -> case dup5 r of
-        (r1, r2, r3, r4, r5) ->
+      !s2 = withRegion $ \r -> case dup r of
+        (r1, r2) ->
           complete $
             alloc r1
               <&> ( \dp ->
                       case dp <| C @"(,)" of
                         (dl, dr) ->
-                          dl <|. intoR r2 1 `lseq`
+                          dl <|.. 1 `lseq`
                             dr
-                              <|. (alloc r3 <&> (\dp' -> case dp' <| C @"(,)" of (dr1, dr2) -> dr1 <|. intoR r4 2 `lseq` dr2))
-                              <|. intoR r5 3
+                              <|. (alloc r2 <&> (\dp' -> case dp' <| C @"(,)" of (dr1, dr2) -> dr1 <|.. 2 `lseq` dr2))
+                              <|.. 3
                   )
-  let s3 :: Ur (Foo Int Char)
-      !s3 = withRegion $ \r -> case dup5 r of
-        (r1, r2, r3, r4, r5) ->
-          complete $
-            alloc r1
+  let s3 :: Ur (Foo Int Char, Int)
+      !s3 = withRegion $ \r -> 
+          completeExtract $
+            alloc r
               <&> ( \d ->
                       case d <| C @"MkFoo" of
                         (dBar, dBaz, dBoo) ->
-                          dBar <|. intoR r2 1
+                          dBar <|.. 1
                             `lseq` ( case dBaz <| C @"(,)" of
-                                       (dl, dr) -> dl <|. intoR r3 'a' `lseq` dr <|. intoR r4 'b'
+                                       (dl, dr) -> dl <|.. 'a' `lseq` dr <|.. 'b'
                                    )
-                            `lseq` dBoo <|. intoR r5 2
+                            `lseq` dBoo <|.. 2
+                            `lseq` Ur 14
                   )
 
   putStrLn "\nConstruction ok\n"

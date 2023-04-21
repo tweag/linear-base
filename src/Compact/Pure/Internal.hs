@@ -11,6 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_HADDOCK hide #-}
+{-# OPTIONS_GHC -O -ddump-to-file #-}
 
 module Compact.Pure.Internal where
 
@@ -44,8 +45,10 @@ getHeaderSize :: IO Int
 getHeaderSize = return 8
 
 debugEnabled :: Bool
-debugEnabled = True
+debugEnabled = False
 
+-- TODO: is this any useful?
+{-# INLINE putDebugLn #-}
 putDebugLn :: String -> IO ()
 putDebugLn x = if debugEnabled then putStrLn $ "[DEBUG] " ++ x else return ()
 
@@ -364,6 +367,9 @@ d <| C = fill @symCtor d
 (<|.) :: Dest a r %1 -> Incomplete a b r %1 -> b
 (<|.) = fillComp
 
+(<|..) :: Dest a r %1 -> a -> ()
+(<|..) = fillLeaf
+
 -- (.<|.) :: Control.Functor f => Dest a1 r %1 -> Incomplete a1 (a2 %1 -> b) r %1 -> f a2 %1 -> f b
 -- x .<|. y = (<&> (x <|. y))
 
@@ -372,6 +378,9 @@ d <| C = fill @symCtor d
 
 fillComp :: Dest a r %1 -> Incomplete a b r %1 -> b
 fillComp = toLinear2 _fillComp
+
+fillLeaf :: Dest a r %1 -> a -> ()
+fillLeaf = toLinear2 _fillLeaf
 
 isNullPtr :: Ptr a -> Bool
 isNullPtr (Ptr addr#) = isTrue# (addr2Int# addr# ==# 0#)
@@ -408,12 +417,35 @@ _fillComp Dest {parentWriteLoc = bParentWriteLoc} Incomplete {rootReceiver = sRo
             ++ " (changing slot carried by initial dest of small struct)"
     return $! sDests
 
+{-# NOINLINE _fillLeaf #-}
+_fillLeaf :: Dest a r -> a -> ()
+_fillLeaf Dest {region = CompactRegion c, parentWriteLoc} x =
+  unsafePerformIO $ do
+    !xInRegion <- getCompact <$> (compactAdd c x)
+    let pXAsWord = aToWord xInRegion
+    poke parentWriteLoc pXAsWord
+    putDebugLn $
+      "fillLeaf: @"
+        ++ show (ptrToWord parentWriteLoc)
+        ++ " <- #"
+        ++ show pXAsWord
+        ++ ": [value]"
+
 complete :: Incomplete a () r %1 -> Ur a
 complete = toLinear _complete
 
+completeExtract :: Incomplete a (Ur b) r %1 -> Ur (a, b)
+completeExtract = toLinear _completeExtract
+
 {-# NOINLINE _complete #-}
 _complete :: Incomplete a () r -> Ur a
-_complete (Incomplete u d _) = d `lseq` u
+_complete (Incomplete u d _) = case d of () -> _hide u
+
+-- TODO: should we put the new Ur wrapper inside the compact region?
+{-# NOINLINE _completeExtract #-}
+_completeExtract :: Incomplete a (Ur b) r -> Ur (a, b)
+_completeExtract (Incomplete u d _) = case d of
+  Ur y -> case _hide u of Ur x -> Ur (x, y)
 
 type family DestsOf (ctor :: (Meta, [(Meta, Type)])) (a :: Type) (r :: RegionId) where
   -- DestsOf '( ('MetaCons "leaf" _ _), '[]) a r = a %1 -> ()
@@ -627,6 +659,10 @@ instance Control.Functor (Incomplete' r a) where
 
 alloc :: CompactRegion r %1 -> Incomplete a (Dest a r) r
 alloc = toLinear _alloc
+
+{-# NOINLINE _hide #-}
+_hide :: a -> a
+_hide x = x
 
 {-# NOINLINE _alloc #-}
 _alloc :: CompactRegion r -> Incomplete a (Dest a r) r
