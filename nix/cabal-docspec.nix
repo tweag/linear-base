@@ -4,8 +4,8 @@ pkgs.stdenv.mkDerivation {
   name = "cabal-docspec";
 
   src = pkgs.fetchurl {
-    url = "https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20211114/cabal-docspec-0.0.0.20211114.xz";
-    sha256 = "12lgpv4g5lcv5b37crimbmd95n9w8fx45xf3dgncg7lckq6p0972";
+    url = "https://github.com/phadej/cabal-extras/releases/download/cabal-docspec-0.0.0.20230406/cabal-docspec-0.0.0.20230406-x86_64-linux.xz";
+    sha256 = "68fa9addd5dc453d533a74a763950499d4593b1297c9a05c3ea5bd1acc04c9dd";
   };
 
   phases = ["installPhase"];
