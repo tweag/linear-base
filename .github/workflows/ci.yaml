@@ -10,7 +10,7 @@ jobs:
     name: cabal test - GHC ${{ matrix.ghc-version }}
     strategy:
       matrix:
-        ghc-version: [941]
+        ghc-version: [944, 961]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -24,8 +24,8 @@ jobs:
           ~/.cabal/packages
           ~/.cabal/store
           dist-newstyle
-        key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
-        restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
+        key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
     - name: Build Nix dependencies
       run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Update Cabal's database
