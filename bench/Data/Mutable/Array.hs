@@ -3,6 +3,10 @@
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE TypeApplications #-}
 
+-- Uncomment the line below to observe the generated (optimised) Core. It will
+-- land in a file named “Array.dump-simpl”
+-- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
+
 module Data.Mutable.Array (benchmarks) where
 
 import Control.DeepSeq (rnf)
