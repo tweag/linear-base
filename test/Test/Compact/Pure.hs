@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
@@ -19,9 +19,9 @@ import Control.Functor.Linear ((<&>))
 import Control.Monad (return)
 import GHC.Generics (Generic)
 import Prelude.Linear hiding (Eq)
-import Prelude (Eq)
 import Test.Tasty
 import Test.Tasty.HUnit
+import Prelude (Eq)
 
 compactPureTests :: TestTree
 compactPureTests =
@@ -33,6 +33,7 @@ compactPureTests =
     ]
 
 -- Launch with
+
 -- $ stack test --ta '-p "Using dests to fill compact region"'
 
 data Foo a b = MkFoo {unBar :: a, unBaz :: (b, b), unBoo :: a} deriving (Eq, Generic, Show)
@@ -83,19 +84,19 @@ compOnUsedAlloc = do
 fillCustomDataAndExtract :: IO String
 fillCustomDataAndExtract = do
   let actual :: Ur (Foo Int Char, Int)
-      !actual = withRegion $ \r -> 
-          completeExtract $
-            alloc r
-              <&> ( \d ->
-                      case d <| C @"MkFoo" of
-                        (dBar, dBaz, dBoo) ->
-                          dBar <|.. 1
-                            `lseq` ( case dBaz <| C @"(,)" of
-                                       (dl, dr) -> dl <|.. 'a' `lseq` dr <|.. 'b'
-                                   )
-                            `lseq` dBoo <|.. 2
-                            `lseq` Ur 14
-                  )
+      !actual = withRegion $ \r ->
+        completeExtract $
+          alloc r
+            <&> ( \d ->
+                    case d <| C @"MkFoo" of
+                      (dBar, dBaz, dBoo) ->
+                        dBar <|.. 1
+                          `lseq` ( case dBaz <| C @"(,)" of
+                                     (dl, dr) -> dl <|.. 'a' `lseq` dr <|.. 'b'
+                                 )
+                          `lseq` dBoo <|.. 2
+                          `lseq` Ur 14
+                )
       expected :: Ur (Foo Int Char, Int)
       !expected = Ur (MkFoo 1 ('a', 'b') 2, 14)
       fancyDisp = showHeap actual

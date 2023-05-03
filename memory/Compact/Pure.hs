@@ -1,8 +1,8 @@
 module Compact.Pure (benchmarks) where
 
-import Test.Tasty.Bench
 import Compact.SExpr
 import GHC.Compact (compact, getCompact)
+import Test.Tasty.Bench
 
 benchmarks :: Benchmark
 benchmarks =
@@ -12,6 +12,6 @@ benchmarks =
         sampleData <- loadSampleData
         let res = parseWithoutDest sampleData
         resInRegion <- compact res
-        return $ getCompact resInRegion
-    , bench "parser using dest" . nfIO $ parseUsingDest <$> loadSampleData
+        return $ getCompact resInRegion,
+      bench "parser using dest" . nfIO $ parseUsingDest <$> loadSampleData
     ]

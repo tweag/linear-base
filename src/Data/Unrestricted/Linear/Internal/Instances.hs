@@ -174,5 +174,5 @@ instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a) where
   mempty = MovableMonoid Prelude.mempty
 
-instance Prelude.Show a => Prelude.Show (Ur a) where
+instance (Prelude.Show a) => Prelude.Show (Ur a) where
   show (Ur x) = "Ur " Prelude.++ (Prelude.show x)

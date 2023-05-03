@@ -135,8 +135,9 @@ break p (x : xs) =
     (x', x'') ->
       if p x'
         then ([], x'' : xs)
-        else break p xs & \case
-          (ys, zs) -> (x'' : ys, zs)
+        else
+          break p xs & \case
+            (ys, zs) -> (x'' : ys, zs)
 
 reverse :: [a] %1 -> [a]
 reverse = Unsafe.toLinear NonLinear.reverse

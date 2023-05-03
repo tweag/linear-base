@@ -1,17 +1,17 @@
+{-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_HADDOCK hide #-}
 {-# OPTIONS_GHC -O -ddump-to-file #-}
+{-# OPTIONS_HADDOCK hide #-}
 
 module Compact.Pure.Internal where
 
@@ -70,7 +70,7 @@ ptrToPtr' p = let !r = p in unsafeCoerce# r
 ptr'ToPtr :: Ptr' a -> Ptr a
 ptr'ToPtr p = let !r = p in unsafeCoerce# r
 
-instance Show a => Show (Ptr' a) where
+instance (Show a) => Show (Ptr' a) where
   show (Ptr' x) = "Ptr' " ++ show x
 
 {-# INLINE align# #-}
@@ -165,7 +165,7 @@ data DatatypeData = DatatypeData
     dtypeIsNewType :: Bool
   }
 
-getDatatypeData :: forall meta. Datatype meta => DatatypeData
+getDatatypeData :: forall meta. (Datatype meta) => DatatypeData
 getDatatypeData =
   DatatypeData
     { dtypeName = datatypeName @meta undefined,
@@ -176,7 +176,7 @@ getDatatypeData =
 
 data CtorData = CtorData {ctorName :: String, ctorFixity :: Fixity, ctorIsRecord :: Bool}
 
-getCtorData :: forall meta. Constructor meta => CtorData
+getCtorData :: forall meta. (Constructor meta) => CtorData
 getCtorData =
   CtorData
     { ctorName = conName @meta undefined,
@@ -191,7 +191,7 @@ data SelectorData = SelectorData
     selecFinalStrictness :: DecidedStrictness
   }
 
-getSelectorData :: forall meta. Selector meta => SelectorData
+getSelectorData :: forall meta. (Selector meta) => SelectorData
 getSelectorData =
   SelectorData
     { selecName = let n = selName @meta undefined in if null n then "" else "." ++ n ++ " ", -- TODO: detect when no sel and return Nothing
@@ -318,7 +318,7 @@ instance GShallow n (U1 p) where
 instance GShallow n (K1 i c p) where
   gShallowTerm = K1 (unsafeCoerce# placeholder :: c)
 
-instance GShallow n (f p) => GShallow n (M1 i c f p) where
+instance (GShallow n (f p)) => GShallow n (M1 i c f p) where
   gShallowTerm = M1 (gShallowTerm @n @(f p))
 
 instance (b ~ IsJust (GCtorInfoOf symCtor (f p)), IfT b (GShallow symCtor (f p)) (GShallow symCtor (g p)), KnownBool b) => GShallow symCtor ((f :+: g) p) where
@@ -628,7 +628,7 @@ type family IfT (a :: Bool) (x :: k) (y :: k) :: k where
   IfT 'False _ y = y
 
 class KnownBool (b :: Bool) where
-  ifV :: ((b ~ 'True) => a) -> (b ~ 'False => a) -> a
+  ifV :: ((b ~ 'True) => a) -> ((b ~ 'False) => a) -> a
 
 instance KnownBool 'True where
   ifV t _ = t
