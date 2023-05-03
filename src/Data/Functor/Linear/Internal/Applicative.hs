@@ -68,7 +68,7 @@ import qualified Prelude
 -- It is a simple exercise to verify that these are equivalent to the definition
 -- of 'Applicative'. Hence that the choice of linearity of the various arrow is
 -- indeed natural.
-class Functor f => Applicative f where
+class (Functor f) => Applicative f where
   {-# MINIMAL pure, (liftA2 | (<*>)) #-}
   pure :: a -> f a
   (<*>) :: f (a %1 -> b) %1 -> f a %1 -> f b
@@ -83,7 +83,7 @@ class Functor f => Applicative f where
 deriving via
   Generically1 (Const x)
   instance
-    Monoid x => Applicative (Const x)
+    (Monoid x) => Applicative (Const x)
 
 deriving via
   Generically1 Ur
@@ -93,7 +93,7 @@ deriving via
 deriving via
   Generically1 ((,) a)
   instance
-    Monoid a => Applicative ((,) a)
+    (Monoid a) => Applicative ((,) a)
 
 deriving via
   Generically1 (Product (f :: Type -> Type) g)
@@ -125,7 +125,7 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
   (Compose f) <*> (Compose x) = Compose (liftA2 (<*>) f x)
   liftA2 f (Compose x) (Compose y) = Compose (liftA2 (liftA2 f) x y)
 
-instance Applicative m => Applicative (NonLinear.ReaderT r m) where
+instance (Applicative m) => Applicative (NonLinear.ReaderT r m) where
   pure x = NonLinear.ReaderT (\_ -> pure x)
   NonLinear.ReaderT f <*> NonLinear.ReaderT x = NonLinear.ReaderT (\r -> f r <*> x r)
 
@@ -167,11 +167,12 @@ class GApplicative (s :: ErrorMessage) f where
   gliftA2 :: (a %1 -> b %1 -> c) -> f a %1 -> f b %1 -> f c
 
 instance
-  Unsatisfiable
-    ( 'Text "Cannot derive a data Applicative instance for"
-        ':$$: s
-        ':$$: 'Text "because empty types cannot implement pure."
-    ) =>
+  ( Unsatisfiable
+      ( 'Text "Cannot derive a data Applicative instance for"
+          ':$$: s
+          ':$$: 'Text "because empty types cannot implement pure."
+      )
+  ) =>
   GApplicative s V1
   where
   gpure = unsatisfiable
@@ -183,7 +184,7 @@ instance GApplicative s U1 where
   {-# INLINE gpure #-}
   {-# INLINE gliftA2 #-}
 
-instance GApplicative s f => GApplicative s (M1 i c f) where
+instance (GApplicative s f) => GApplicative s (M1 i c f) where
   gpure = M1 Prelude.. gpure @s
   gliftA2 f (M1 x) (M1 y) = M1 (gliftA2 @s f x y)
   {-# INLINE gpure #-}
@@ -208,35 +209,37 @@ instance (GApplicative s f, GApplicative s g) => GApplicative s (f :*: g) where
   {-# INLINE gliftA2 #-}
 
 instance
-  Unsatisfiable
-    ( 'Text "Cannot derive a data Applicative instance for"
-        ':$$: s
-        ':$$: 'Text "because sum types do not admit a uniform Applicative definition."
-    ) =>
+  ( Unsatisfiable
+      ( 'Text "Cannot derive a data Applicative instance for"
+          ':$$: s
+          ':$$: 'Text "because sum types do not admit a uniform Applicative definition."
+      )
+  ) =>
   GApplicative s (x :+: y)
   where
   gpure = unsatisfiable
   gliftA2 = unsatisfiable
 
-instance GApplicative s f => GApplicative s (MP1 m f) where
+instance (GApplicative s f) => GApplicative s (MP1 m f) where
   gpure a = MP1 (gpure @s a)
   gliftA2 f (MP1 a) (MP1 b) = MP1 (gliftA2 @s f a b)
   {-# INLINE gpure #-}
   {-# INLINE gliftA2 #-}
 
-instance Monoid c => GApplicative s (K1 i c) where
+instance (Monoid c) => GApplicative s (K1 i c) where
   gpure _ = K1 mempty
   gliftA2 _ (K1 x) (K1 y) = K1 (x <> y)
   {-# INLINE gpure #-}
   {-# INLINE gliftA2 #-}
 
 instance
-  Unsatisfiable
-    ( 'Text "Cannot derive a data Applicative instance for"
-        ':$$: s
-        ':$$: 'Text "because it contains one or more primitive unboxed fields."
-        ':$$: 'Text "Such unboxed types lack canonical monoid operations."
-    ) =>
+  ( Unsatisfiable
+      ( 'Text "Cannot derive a data Applicative instance for"
+          ':$$: s
+          ':$$: 'Text "because it contains one or more primitive unboxed fields."
+          ':$$: 'Text "Such unboxed types lack canonical monoid operations."
+      )
+  ) =>
   GApplicative s (URec a)
   where
   gpure = unsatisfiable

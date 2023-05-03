@@ -1,3 +1,6 @@
-resolver: nightly-2022-08-24 
+resolver: nightly-2023-04-21 
 packages:
 - '.'
+extra-deps:
+# linear-generic has been temporarily removed from Stackage nightly, see https://github.com/commercialhaskell/stackage/pull/6951
+- linear-generics-0.2.1@sha256:dfe005e94e9080a12a6e30ce2f2bd552f4085cea380161b785b04a3c2fd39a8a,5894

@@ -59,7 +59,7 @@ zipWith :: (a %1 -> b %1 -> c) -> Array a %1 -> Array b %1 -> Array c
 zipWith f x y = Data.fmap (uncurry f) (zip x y)
 
 -- | Fold a pull array using a monoid.
-foldMap :: Monoid m => (a %1 -> m) -> Array a %1 -> m
+foldMap :: (Monoid m) => (a %1 -> m) -> Array a %1 -> m
 foldMap f = foldr ((<>) . f) mempty
 
 -- I'm fairly sure this can be used safely

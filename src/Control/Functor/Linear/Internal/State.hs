@@ -68,7 +68,7 @@ gets f = state ((\(s1, s2) -> (f s1, s2)) . dup)
 runStateT :: StateT s m a %1 -> s %1 -> m (a, s)
 runStateT (StateT f) = f
 
-state :: Applicative m => (s %1 -> (a, s)) %1 -> StateT s m a
+state :: (Applicative m) => (s %1 -> (a, s)) %1 -> StateT s m a
 state f = StateT (pure . f)
 
 runState :: State s a %1 -> s %1 -> (a, s)
@@ -80,7 +80,7 @@ mapStateT r (StateT f) = StateT (r . f)
 withStateT :: (s %1 -> s) %1 -> StateT s m a %1 -> StateT s m a
 withStateT r (StateT f) = StateT (f . r)
 
-execStateT :: Functor m => StateT s m () %1 -> s %1 -> m s
+execStateT :: (Functor m) => StateT s m () %1 -> s %1 -> m s
 execStateT f = fmap (\((), s) -> s) . (runStateT f)
 
 -- | Use with care!
@@ -99,39 +99,39 @@ execState f = runIdentity' . execStateT f
 
 -- | Use with care!
 --   This consumes the final state, so might be costly at runtime.
-evalState :: Consumable s => State s a %1 -> s %1 -> a
+evalState :: (Consumable s) => State s a %1 -> s %1 -> a
 evalState f = runIdentity' . evalStateT f
 
-modify :: Applicative m => (s %1 -> s) %1 -> StateT s m ()
+modify :: (Applicative m) => (s %1 -> s) %1 -> StateT s m ()
 modify f = state $ \s -> ((), f s)
 
 -- TODO: add strict version of `modify`
 
 -- | @replace s@ will replace the current state with the new given state, and
 -- return the old state.
-replace :: Applicative m => s %1 -> StateT s m s
+replace :: (Applicative m) => s %1 -> StateT s m s
 replace s = state $ (\s' -> (s', s))
 
 -- # Instances of StateT
 -------------------------------------------------------------------------------
 
-instance Functor m => Functor (NonLinear.StateT s m) where
+instance (Functor m) => Functor (NonLinear.StateT s m) where
   fmap f (NonLinear.StateT x) = NonLinear.StateT $ \s -> fmap (\(a, s') -> (f a, s')) $ x s
 
-instance Data.Functor m => Data.Functor (StateT s m) where
+instance (Data.Functor m) => Data.Functor (StateT s m) where
   fmap f (StateT x) = StateT (\s -> Data.fmap (\(a, s') -> (f a, s')) (x s))
 
-instance Functor m => Functor (StateT s m) where
+instance (Functor m) => Functor (StateT s m) where
   fmap f (StateT x) = StateT (\s -> fmap (\(a, s') -> (f a, s')) (x s))
 
-instance Monad m => Applicative (StateT s m) where
+instance (Monad m) => Applicative (StateT s m) where
   pure x = StateT (\s -> return (x, s))
   StateT mf <*> StateT mx = StateT $ \s -> do
     (f, s') <- mf s
     (x, s'') <- mx s'
     return (f x, s'')
 
-instance Monad m => Monad (StateT s m) where
+instance (Monad m) => Monad (StateT s m) where
   StateT mx >>= f = StateT $ \s -> do
     (x, s') <- mx s
     runStateT (f x) s'

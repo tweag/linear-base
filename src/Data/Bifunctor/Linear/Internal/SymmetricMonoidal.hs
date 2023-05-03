@@ -31,7 +31,7 @@ import Prelude.Linear
 --  * @lassoc . rassoc = id@
 --  * @second swap . rassoc . first swap = rassoc . swap . rassoc@
 class
-  Bifunctor m =>
+  (Bifunctor m) =>
   SymmetricMonoidal (m :: Type -> Type -> Type) (u :: Type)
     | m -> u,
       u -> m

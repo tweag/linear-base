@@ -27,9 +27,9 @@ newtype Data f a = Data (f a)
 -- # Basic instances
 -------------------------------------------------------------------------------
 
-instance Functor f => Data.Functor (Data f) where
+instance (Functor f) => Data.Functor (Data f) where
   fmap f (Data x) = Data (fmap f x)
 
-instance Applicative f => Data.Applicative (Data f) where
+instance (Applicative f) => Data.Applicative (Data f) where
   pure x = Data (pure x)
   Data f <*> Data x = Data (f <*> x)

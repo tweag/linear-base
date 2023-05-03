@@ -57,12 +57,12 @@ class Additive a where
   infixl 6 + -- same fixity as base.+
 
 -- | An 'Additive' type with an identity on @(+)@.
-class Additive a => AddIdentity a where
+class (Additive a) => AddIdentity a where
   zero :: a
 
 -- | An 'AddIdentity' with inverses that satisfies
 -- the laws of an [abelian group](https://en.wikipedia.org/wiki/Abelian_group)
-class AddIdentity a => AdditiveGroup a where
+class (AddIdentity a) => AdditiveGroup a where
   {-# MINIMAL negate | (-) #-}
   negate :: a %1 -> a
   negate x = zero - x
@@ -76,7 +76,7 @@ class Multiplicative a where
   infixl 7 * -- same fixity as base.*
 
 -- | A 'Multiplicative' type with an identity for @(*)@
-class Multiplicative a => MultIdentity a where
+class (Multiplicative a) => MultIdentity a where
   one :: a
 
 -- | A [semiring](https://en.wikipedia.org/wiki/Semiring) class. This is
@@ -169,10 +169,10 @@ getAdded :: Adding a %1 -> a
 getAdded (Adding x) = x
 {-# DEPRECATED getAdded "Use 'Data.Semigroup.Sum' (reexported as 'Data.Monoid.Linear.Sum') and pattern-match to extract the inner value linearly" #-}
 
-instance Additive a => Semigroup (Adding a) where
+instance (Additive a) => Semigroup (Adding a) where
   Adding a <> Adding b = Adding (a + b)
 
-instance AddIdentity a => Monoid (Adding a) where
+instance (AddIdentity a) => Monoid (Adding a) where
   mempty = Adding zero
 
 -- | A newtype wrapper to give the underlying monoid for a multiplicative structure.
@@ -190,22 +190,22 @@ getMultiplied :: Multiplying a %1 -> a
 getMultiplied (Multiplying x) = x
 {-# DEPRECATED getMultiplied "Use 'Data.Semigroup.Product' (reexported as 'Data.Monoid.Linear.Product') and pattern-match to extract the inner value linearly" #-}
 
-instance Multiplicative a => Semigroup (Multiplying a) where
+instance (Multiplicative a) => Semigroup (Multiplying a) where
   Multiplying a <> Multiplying b = Multiplying (a * b)
 
-instance MultIdentity a => Monoid (Multiplying a) where
+instance (MultIdentity a) => Monoid (Multiplying a) where
   mempty = Multiplying one
 
-instance Multiplicative a => Semigroup (Product a) where
+instance (Multiplicative a) => Semigroup (Product a) where
   (Product x) <> (Product y) = Product (x * y)
 
-instance Additive a => Semigroup (Sum a) where
+instance (Additive a) => Semigroup (Sum a) where
   (Sum x) <> (Sum y) = Sum (x + y)
 
-instance MultIdentity a => Monoid (Product a) where
+instance (MultIdentity a) => Monoid (Product a) where
   mempty = Product one
 
-instance AddIdentity a => Monoid (Sum a) where
+instance (AddIdentity a) => Monoid (Sum a) where
   mempty = Sum zero
 
 deriving via MovableNum Prelude.Int instance Additive Prelude.Int

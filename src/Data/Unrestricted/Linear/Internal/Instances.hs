@@ -43,17 +43,17 @@ import qualified Prelude
 -- and 'Consumable' implementations for 'Movable' types.
 newtype AsMovable a = AsMovable a
 
-instance Movable a => Movable (AsMovable a) where
+instance (Movable a) => Movable (AsMovable a) where
   move (AsMovable x) =
     move x & \case
       Ur x' -> Ur (AsMovable x')
 
-instance Movable a => Consumable (AsMovable a) where
+instance (Movable a) => Consumable (AsMovable a) where
   consume x =
     move x & \case
       Ur _ -> ()
 
-instance Movable a => Dupable (AsMovable a) where
+instance (Movable a) => Dupable (AsMovable a) where
   dupR x =
     move x & \case
       Ur x' -> Data.pure x'
@@ -168,7 +168,7 @@ newtype MovableMonoid a = MovableMonoid a
 instance (Movable a, Prelude.Semigroup a) => Semigroup (MovableMonoid a) where
   MovableMonoid a <> MovableMonoid b = MovableMonoid (combine (move a) (move b))
     where
-      combine :: Prelude.Semigroup a => Ur a %1 -> Ur a %1 -> a
+      combine :: (Prelude.Semigroup a) => Ur a %1 -> Ur a %1 -> a
       combine (Ur x) (Ur y) = x Prelude.<> y
 
 instance (Movable a, Prelude.Monoid a) => Monoid (MovableMonoid a) where

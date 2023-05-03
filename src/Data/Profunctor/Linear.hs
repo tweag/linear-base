@@ -131,7 +131,7 @@ class (Strong (,) () arr, Strong Either Void arr) => Wandering arr where
   -- | Equivalently but less efficient in general:
   --
   -- > wander :: Data.Traversable f => a `arr` b -> f a `arr` f b
-  wander :: forall s t a b. (forall f. Control.Applicative f => (a %1 -> f b) -> s %1 -> f t) -> a `arr` b -> s `arr` t
+  wander :: forall s t a b. (forall f. (Control.Applicative f) => (a %1 -> f b) -> s %1 -> f t) -> a `arr` b -> s `arr` t
 
 ---------------
 -- Instances --
@@ -184,23 +184,23 @@ data Exchange a b s t = Exchange (s %1 -> a) (b %1 -> t)
 instance Profunctor (Exchange a b) where
   dimap f g (Exchange p q) = Exchange (p . f) (g . q)
 
-instance Prelude.Functor f => Profunctor (Kleisli f) where
+instance (Prelude.Functor f) => Profunctor (Kleisli f) where
   dimap f g (Kleisli h) = Kleisli (\x -> forget g Prelude.<$> h (f x))
 
-instance Prelude.Functor f => Strong (,) () (Kleisli f) where
+instance (Prelude.Functor f) => Strong (,) () (Kleisli f) where
   first (Kleisli f) = Kleisli (\(a, b) -> (,b) Prelude.<$> f a)
   second (Kleisli g) = Kleisli (\(a, b) -> (a,) Prelude.<$> g b)
 
-instance Prelude.Applicative f => Strong Either Void (Kleisli f) where
+instance (Prelude.Applicative f) => Strong Either Void (Kleisli f) where
   first (Kleisli f) = Kleisli $ \case
     Left x -> Prelude.fmap Left (f x)
     Right y -> Prelude.pure (Right y)
 
-instance Prelude.Applicative f => Monoidal (,) () (Kleisli f) where
+instance (Prelude.Applicative f) => Monoidal (,) () (Kleisli f) where
   Kleisli f *** Kleisli g = Kleisli (\(x, y) -> (,) Prelude.<$> f x Prelude.<*> g y)
   unit = Kleisli Prelude.pure
 
-instance Prelude.Functor f => Monoidal Either Void (Kleisli f) where
+instance (Prelude.Functor f) => Monoidal Either Void (Kleisli f) where
   Kleisli f *** Kleisli g = Kleisli $ \case
     Left a -> Left Prelude.<$> f a
     Right b -> Right Prelude.<$> g b

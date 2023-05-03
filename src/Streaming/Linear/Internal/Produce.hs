@@ -86,7 +86,7 @@ import qualified Prelude
 -- \>\>\> S.sum $ do {yield 1; yield 2; yield 3}
 -- 6 :> ()
 -- @
-yield :: Control.Monad m => a -> Stream (Of a) m ()
+yield :: (Control.Monad m) => a -> Stream (Of a) m ()
 yield x = Step $ x :> Return ()
 {-# INLINE yield #-}
 
@@ -98,21 +98,21 @@ yield x = Step $ x :> Return ()
 -- 2
 -- 3
 -- @
-each' :: Control.Monad m => [a] -> Stream (Of a) m ()
+each' :: (Control.Monad m) => [a] -> Stream (Of a) m ()
 each' xs = Prelude.foldr (\a stream -> Step $ a :> stream) (Return ()) xs
 {-# INLINEABLE each' #-}
 
 -- | Build a @Stream@ by unfolding steps starting from a seed. In particular note
 --    that @S.unfoldr S.next = id@.
 unfoldr ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   (s %1 -> m (Either r (Ur a, s))) ->
   s %1 ->
   Stream (Of a) m r
 unfoldr step s = unfoldr' step s
   where
     unfoldr' ::
-      Control.Monad m =>
+      (Control.Monad m) =>
       (s %1 -> m (Either r (Ur a, s))) ->
       s %1 ->
       Stream (Of a) m r
@@ -154,7 +154,7 @@ replicate n a
   | n < 0 = Prelude.error "Cannot replicate a stream of negative length"
   | otherwise = loop n a
   where
-    loop :: Control.Monad m => Int -> a -> Stream (Of a) m ()
+    loop :: (Control.Monad m) => Int -> a -> Stream (Of a) m ()
     loop n a
       | n == 0 = Return ()
       | otherwise = Effect $ Control.return $ Step $ a :> loop (n - 1) a
@@ -171,7 +171,7 @@ replicate n a
 -- 2015-08-18 00:57:36.124785 UTC
 -- @
 replicateM ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   Int ->
   m (Ur a) ->
   Stream (Of a) m ()
@@ -179,7 +179,7 @@ replicateM n ma
   | n < 0 = Prelude.error "Cannot replicate a stream of negative length"
   | otherwise = loop n ma
   where
-    loop :: Control.Monad m => Int -> m (Ur a) -> Stream (Of a) m ()
+    loop :: (Control.Monad m) => Int -> m (Ur a) -> Stream (Of a) m ()
     loop n ma
       | n == 0 = Return ()
       | otherwise = Effect $ Control.do
@@ -189,7 +189,7 @@ replicateM n ma
 -- | Replicate a constant element and zip it with the finite stream which
 -- is the first argument.
 replicateZip ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of x) m r ->
   a ->
   Stream (Of (a, x)) m r
@@ -198,7 +198,7 @@ replicateZip stream a = map ((,) a) stream
 
 untilRight ::
   forall m a r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   m (Either (Ur a) r) ->
   Stream (Of a) m r
 untilRight mEither = Effect loop
@@ -261,7 +261,7 @@ take = loop
 -- Drop the element it succeeds on.
 untilM ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> m Bool) ->
   AffineStream (Of a) m r %1 ->
   Stream (Of a) m r
@@ -285,7 +285,7 @@ untilM = loop
 -- | Like 'untilM' but without the monadic test.
 until ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   AffineStream (Of a) m r %1 ->
   Stream (Of a) m r
@@ -307,7 +307,7 @@ until = loop
 -- | Zip a finite stream with an affine stream.
 zip ::
   forall a x m r1 r2.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of x) m r1 %1 ->
   AffineStream (Of a) m r2 %1 ->
   Stream (Of (x, a)) m (r1, r2)
@@ -348,10 +348,10 @@ stdinLn = AffineStream () getALine Control.pure
       Control.return $ Left (Text.pack line :> ())
 
 -- | An affine stream of reading lines, crashing on failed parse.
-readLn :: Read a => AffineStream (Of a) IO ()
+readLn :: (Read a) => AffineStream (Of a) IO ()
 readLn = AffineStream () readALine Control.pure
   where
-    readALine :: Read a => () %1 -> IO (Either (Of a ()) ())
+    readALine :: (Read a) => () %1 -> IO (Either (Of a ()) ())
     readALine () = Control.do
       Ur line <- fromSystemIOU System.getLine
       Control.return $ Left (Prelude.read line :> ())
@@ -359,7 +359,7 @@ readLn = AffineStream () readALine Control.pure
 -- | An affine stream iterating an initial state forever.
 iterate ::
   forall a m.
-  Control.Monad m =>
+  (Control.Monad m) =>
   a ->
   (a -> a) ->
   AffineStream (Of a) m ()
@@ -375,7 +375,7 @@ iterate a step =
 -- | An affine stream monadically iterating an initial state forever.
 iterateM ::
   forall a m.
-  Control.Monad m =>
+  (Control.Monad m) =>
   m (Ur a) ->
   (a -> m (Ur a)) ->
   AffineStream (Of a) m ()
@@ -406,7 +406,7 @@ cycle stream =
     leftoverEffects (Ur _, str) = effects str
 
     stepStream ::
-      Control.Functor f =>
+      (Control.Functor f) =>
       (Ur (Stream f m r), Stream f m r) %1 ->
       m (Either (f (Ur (Stream f m r), Stream f m r)) r)
     stepStream (Ur s, str) =
@@ -467,30 +467,30 @@ stdinLnZip :: Stream (Of x) IO r %1 -> Stream (Of (x, Text)) IO r
 stdinLnZip stream = Control.fmap (\(r, ()) -> r) $ zip stream stdinLn
 {-# INLINE stdinLnZip #-}
 
-readLnN :: Read a => Int -> Stream (Of a) IO ()
+readLnN :: (Read a) => Int -> Stream (Of a) IO ()
 readLnN n = take n readLn
 {-# INLINE readLnN #-}
 
-readLnUntilM :: Read a => (a -> IO Bool) -> Stream (Of a) IO ()
+readLnUntilM :: (Read a) => (a -> IO Bool) -> Stream (Of a) IO ()
 readLnUntilM test = untilM test readLn
 {-# INLINE readLnUntilM #-}
 
-readLnUntil :: Read a => (a -> Bool) -> Stream (Of a) IO ()
+readLnUntil :: (Read a) => (a -> Bool) -> Stream (Of a) IO ()
 readLnUntil test = until test readLn
 {-# INLINE readLnUntil #-}
 
-readLnZip :: Read a => Stream (Of x) IO r %1 -> Stream (Of (x, a)) IO r
+readLnZip :: (Read a) => Stream (Of x) IO r %1 -> Stream (Of (x, a)) IO r
 readLnZip stream = Control.fmap (\(r, ()) -> r) $ zip stream readLn
 {-# INLINE readLnZip #-}
 
 -- | Iterate a pure function from a seed value,
 -- streaming the results forever.
-iterateN :: Control.Monad m => Int -> (a -> a) -> a -> Stream (Of a) m ()
+iterateN :: (Control.Monad m) => Int -> (a -> a) -> a -> Stream (Of a) m ()
 iterateN n step a = take n $ iterate a step
 {-# INLINE iterateN #-}
 
 iterateZip ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of x) m r ->
   (a -> a) ->
   a ->
@@ -502,7 +502,7 @@ iterateZip stream step a =
 -- | Iterate a monadic function from a seed value,
 -- streaming the results forever.
 iterateMN ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   Int ->
   (a -> m (Ur a)) ->
   m (Ur a) ->
@@ -511,7 +511,7 @@ iterateMN n step ma = take n $ iterateM ma step
 {-# INLINE iterateMN #-}
 
 iterateMZip ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of x) m r %1 ->
   (a -> m (Ur a)) ->
   m (Ur a) ->

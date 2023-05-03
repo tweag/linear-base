@@ -114,7 +114,7 @@ map = fmap
 -- | @filter p xs@ returns a list with elements satisfying the predicate.
 --
 -- See 'Data.Maybe.Linear.mapMaybe' if you do not want the 'Dupable' constraint.
-filter :: Dupable a => (a %1 -> Bool) -> [a] %1 -> [a]
+filter :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> [a]
 filter _ [] = []
 filter p (x : xs) =
   dup x & \case
@@ -146,7 +146,7 @@ splitAt i = Unsafe.toLinear (Prelude.splitAt i)
 -- | 'span', applied to a predicate @p@ and a list @xs@, returns a tuple where
 -- first element is longest prefix (possibly empty) of @xs@ of elements that
 -- satisfy @p@ and second element is the remainder of the list.
-span :: Dupable a => (a %1 -> Bool) -> [a] %1 -> ([a], [a])
+span :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> ([a], [a])
 span _ [] = ([], [])
 span f (x : xs) =
   dup x & \case
@@ -158,7 +158,7 @@ span f (x : xs) =
 -- The partition function takes a predicate a list and returns the
 -- pair of lists of elements which do and do not satisfy the predicate,
 -- respectively.
-partition :: Dupable a => (a %1 -> Bool) -> [a] %1 -> ([a], [a])
+partition :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> ([a], [a])
 partition p (xs :: [a]) = foldr select ([], []) xs
   where
     select :: a %1 -> ([a], [a]) %1 -> ([a], [a])
@@ -170,7 +170,7 @@ partition p (xs :: [a]) = foldr select ([], []) xs
 
 -- | __NOTE__: This does not short-circuit and always traverses the
 -- entire list to consume the rest of the elements.
-takeWhile :: Dupable a => (a %1 -> Bool) -> [a] %1 -> [a]
+takeWhile :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> [a]
 takeWhile _ [] = []
 takeWhile p (x : xs) =
   dup2 x & \(x', x'') ->
@@ -178,7 +178,7 @@ takeWhile p (x : xs) =
       then x'' : takeWhile p xs
       else (x'', xs) `lseq` []
 
-dropWhile :: Dupable a => (a %1 -> Bool) -> [a] %1 -> [a]
+dropWhile :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> [a]
 dropWhile _ [] = []
 dropWhile p (x : xs) =
   dup2 x & \(x', x'') ->
@@ -188,13 +188,13 @@ dropWhile p (x : xs) =
 
 -- | __NOTE__: This does not short-circuit and always traverses the
 -- entire list to consume the rest of the elements.
-take :: Consumable a => Int -> [a] %1 -> [a]
+take :: (Consumable a) => Int -> [a] %1 -> [a]
 take _ [] = []
 take i (x : xs)
   | i Prelude.< 0 = (x, xs) `lseq` []
   | otherwise = x : take (i - 1) xs
 
-drop :: Consumable a => Int -> [a] %1 -> [a]
+drop :: (Consumable a) => Int -> [a] %1 -> [a]
 drop _ [] = []
 drop i (x : xs)
   | i Prelude.< 0 = x : xs
@@ -215,7 +215,7 @@ intercalate sep = Unsafe.toLinear (NonLinear.intercalate sep)
 transpose :: [[a]] %1 -> [[a]]
 transpose = Unsafe.toLinear NonLinear.transpose
 
-traverse' :: Data.Applicative f => (a %1 -> f b) -> [a] %1 -> f [b]
+traverse' :: (Data.Applicative f) => (a %1 -> f b) -> [a] %1 -> f [b]
 traverse' _ [] = Data.pure []
 traverse' f (a : as) = (:) <$> f a <*> traverse' f as
 
@@ -225,7 +225,7 @@ traverse' f (a : as) = (:) <$> f a <*> traverse' f as
 foldr :: (a %1 -> b %1 -> b) -> b %1 -> [a] %1 -> b
 foldr f = Unsafe.toLinear2 (NonLinear.foldr (\a b -> f a b))
 
-foldr1 :: HasCallStack => (a %1 -> a %1 -> a) -> [a] %1 -> a
+foldr1 :: (HasCallStack) => (a %1 -> a %1 -> a) -> [a] %1 -> a
 foldr1 f = Unsafe.toLinear (NonLinear.foldr1 (\a b -> f a b))
 
 foldl :: (b %1 -> a %1 -> b) -> b %1 -> [a] %1 -> b
@@ -234,19 +234,19 @@ foldl f = Unsafe.toLinear2 (NonLinear.foldl (\b a -> f b a))
 foldl' :: (b %1 -> a %1 -> b) -> b %1 -> [a] %1 -> b
 foldl' f = Unsafe.toLinear2 (NonLinear.foldl' (\b a -> f b a))
 
-foldl1 :: HasCallStack => (a %1 -> a %1 -> a) -> [a] %1 -> a
+foldl1 :: (HasCallStack) => (a %1 -> a %1 -> a) -> [a] %1 -> a
 foldl1 f = Unsafe.toLinear (NonLinear.foldl1 (\a b -> f a b))
 
-foldl1' :: HasCallStack => (a %1 -> a %1 -> a) -> [a] %1 -> a
+foldl1' :: (HasCallStack) => (a %1 -> a %1 -> a) -> [a] %1 -> a
 foldl1' f = Unsafe.toLinear (NonLinear.foldl1' (\a b -> f a b))
 
 -- | Map each element of the structure to a monoid,
 -- and combine the results.
-foldMap :: Monoid m => (a %1 -> m) -> [a] %1 -> m
+foldMap :: (Monoid m) => (a %1 -> m) -> [a] %1 -> m
 foldMap f = foldr ((<>) . f) mempty
 
 -- | A variant of 'foldMap' that is strict in the accumulator.
-foldMap' :: Monoid m => (a %1 -> m) -> [a] %1 -> m
+foldMap' :: (Monoid m) => (a %1 -> m) -> [a] %1 -> m
 foldMap' f = foldl' (\acc a -> acc <> f a) mempty
 
 concat :: [[a]] %1 -> [a]
@@ -255,10 +255,10 @@ concat = Unsafe.toLinear NonLinear.concat
 concatMap :: (a %1 -> [b]) -> [a] %1 -> [b]
 concatMap f = Unsafe.toLinear (NonLinear.concatMap (forget f))
 
-sum :: AddIdentity a => [a] %1 -> a
+sum :: (AddIdentity a) => [a] %1 -> a
 sum = foldl' (+) zero
 
-product :: MultIdentity a => [a] %1 -> a
+product :: (MultIdentity a) => [a] %1 -> a
 product = foldl' (*) one
 
 -- | __NOTE:__ This does not short-circuit, and always consumes the
@@ -284,27 +284,27 @@ or = foldl' (||) False
 -- # Building Lists
 --------------------------------------------------
 
-iterate :: Dupable a => (a %1 -> a) -> a %1 -> [a]
+iterate :: (Dupable a) => (a %1 -> a) -> a %1 -> [a]
 iterate f a =
   dup2 a & \(a', a'') ->
     a' : iterate f (f a'')
 
-repeat :: Dupable a => a %1 -> [a]
+repeat :: (Dupable a) => a %1 -> [a]
 repeat = iterate id
 
 cycle :: (HasCallStack, Dupable a) => [a] %1 -> [a]
 cycle [] = Prelude.error "cycle: empty list"
 cycle xs = dup2 xs & \(xs', xs'') -> xs' ++ cycle xs''
 
-scanl :: Dupable b => (b %1 -> a %1 -> b) -> b %1 -> [a] %1 -> [b]
+scanl :: (Dupable b) => (b %1 -> a %1 -> b) -> b %1 -> [a] %1 -> [b]
 scanl _ b [] = [b]
 scanl f b (x : xs) = dup2 b & \(b', b'') -> b' : scanl f (f b'' x) xs
 
-scanl1 :: Dupable a => (a %1 -> a %1 -> a) -> [a] %1 -> [a]
+scanl1 :: (Dupable a) => (a %1 -> a %1 -> a) -> [a] %1 -> [a]
 scanl1 _ [] = []
 scanl1 f (x : xs) = scanl f x xs
 
-scanr :: Dupable b => (a %1 -> b %1 -> b) -> b %1 -> [a] %1 -> [b]
+scanr :: (Dupable b) => (a %1 -> b %1 -> b) -> b %1 -> [a] %1 -> [b]
 scanr _ b [] = [b]
 scanr f b (a : as) =
   scanr f b as & \case
@@ -315,7 +315,7 @@ scanr f b (a : as) =
       -- this branch is impossible since scanr never returns an empty list.
       Prelude.error "impossible" a
 
-scanr1 :: Dupable a => (a %1 -> a %1 -> a) -> [a] %1 -> [a]
+scanr1 :: (Dupable a) => (a %1 -> a %1 -> a) -> [a] %1 -> [a]
 scanr1 _ [] = []
 scanr1 _ [a] = [a]
 scanr1 f (a : as) =
@@ -328,7 +328,7 @@ scanr1 f (a : as) =
       -- be non-empty since 'as' is also non-empty.
       Prelude.error "impossible" a
 
-replicate :: Dupable a => Int -> a %1 -> [a]
+replicate :: (Dupable a) => Int -> a %1 -> [a]
 replicate i a
   | i Prelude.< 1 = a `lseq` []
   | i Prelude.== 1 = [a]

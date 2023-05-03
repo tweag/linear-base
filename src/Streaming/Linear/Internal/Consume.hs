@@ -121,7 +121,7 @@ stdoutLn' stream = loop stream
 {-# INLINEABLE stdoutLn' #-}
 
 -- | Print the elements of a stream as they arise.
-print :: Show a => Stream (Of a) IO r %1 -> IO r
+print :: (Show a) => Stream (Of a) IO r %1 -> IO r
 print = stdoutLn' . map (Text.pack Prelude.. Prelude.show)
 
 -- | Write a stream to a handle and return the handle.
@@ -165,7 +165,7 @@ writeFile filepath stream = Control.do
 -- > hoist S.effects . S.copy = id
 --
 --    The similar @effects@ and @copy@ operations in @Data.ByteString.Streaming@ obey the same rules.
-effects :: forall a m r. Control.Monad m => Stream (Of a) m r %1 -> m r
+effects :: forall a m r. (Control.Monad m) => Stream (Of a) m r %1 -> m r
 effects stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m r
@@ -177,7 +177,7 @@ effects stream = loop stream
 {-# INLINEABLE effects #-}
 
 -- | Remove the elements from a stream of values, retaining the structure of layers.
-erase :: forall a m r. Control.Monad m => Stream (Of a) m r %1 -> Stream Identity m r
+erase :: forall a m r. (Control.Monad m) => Stream (Of a) m r %1 -> Stream Identity m r
 erase stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream Identity m r
@@ -292,7 +292,7 @@ mapM_ f stream = loop stream
 -- @
 fold ::
   forall x a b m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (x -> a -> x) ->
   x ->
   (x -> b) ->
@@ -360,7 +360,7 @@ fold_ f x g stream = loop stream
 -- @
 foldM ::
   forall x a m b r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (x %1 -> a -> m x) ->
   m x ->
   (x %1 -> m b) ->
@@ -398,7 +398,7 @@ foldM_ f mx g stream = loop stream
 {-# INLINEABLE foldM_ #-}
 
 -- | Note: does not short circuit
-all :: Control.Monad m => (a -> Bool) -> Stream (Of a) m r %1 -> m (Of Bool r)
+all :: (Control.Monad m) => (a -> Bool) -> Stream (Of a) m r %1 -> m (Of Bool r)
 all f stream = fold (&&) True id (map f stream)
 {-# INLINEABLE all #-}
 
@@ -408,7 +408,7 @@ all_ f stream = fold_ (&&) True id (map f stream)
 {-# INLINEABLE all_ #-}
 
 -- | Note: does not short circuit
-any :: Control.Monad m => (a -> Bool) -> Stream (Of a) m r %1 -> m (Of Bool r)
+any :: (Control.Monad m) => (a -> Bool) -> Stream (Of a) m r %1 -> m (Of Bool r)
 any f stream = fold (||) False id (map f stream)
 {-# INLINEABLE any #-}
 
@@ -462,7 +462,7 @@ product_ stream = fold_ (*) 1 id stream
 
 -- | Note that 'head' exhausts the rest of the stream following the
 -- first element, performing all monadic effects via 'effects'
-head :: Control.Monad m => Stream (Of a) m r %1 -> m (Of (Maybe a) r)
+head :: (Control.Monad m) => Stream (Of a) m r %1 -> m (Of (Maybe a) r)
 head str =
   str & \case
     Return r -> Control.return (Nothing :> r)
@@ -482,11 +482,11 @@ head_ str =
       effects rest Control.>>= \r -> lseq r $ Control.return (Just a)
 {-# INLINEABLE head_ #-}
 
-last :: Control.Monad m => Stream (Of a) m r %1 -> m (Of (Maybe a) r)
+last :: (Control.Monad m) => Stream (Of a) m r %1 -> m (Of (Maybe a) r)
 last = loop Nothing
   where
     loop ::
-      Control.Monad m =>
+      (Control.Monad m) =>
       Maybe a ->
       Stream (Of a) m r %1 ->
       m (Of (Maybe a) r)
@@ -571,7 +571,7 @@ notElem_ a stream = Control.fmap Linear.not $ elem_ a stream
 -- 3
 -- 1
 -- @
-length :: Control.Monad m => Stream (Of a) m r %1 -> m (Of Int r)
+length :: (Control.Monad m) => Stream (Of a) m r %1 -> m (Of Int r)
 length = fold (\n _ -> n + 1) 0 id
 {-# INLINE length #-}
 
@@ -608,7 +608,7 @@ length_ = fold_ (\n _ -> n + 1) 0 id
 -- v<Enter>
 -- ["u","v"]
 -- @
-toList :: Control.Monad m => Stream (Of a) m r %1 -> m (Of [a] r)
+toList :: (Control.Monad m) => Stream (Of a) m r %1 -> m (Of [a] r)
 toList = fold (\diff a ls -> diff (a : ls)) id (\diff -> diff [])
 {-# INLINE toList #-}
 
@@ -618,7 +618,7 @@ toList = fold (\diff a ls -> diff (a : ls)) id (\diff -> diff [])
 --    It is basically the same as Prelude 'mapM' which, like 'replicateM',
 --    'sequence' and similar operations on traversable containers
 --    is a leading cause of space leaks.
-toList_ :: Control.Monad m => Stream (Of a) m () %1 -> m [a]
+toList_ :: (Control.Monad m) => Stream (Of a) m () %1 -> m [a]
 toList_ = fold_ (\diff a ls -> diff (a : ls)) id (\diff -> diff [])
 {-# INLINE toList_ #-}
 
@@ -656,13 +656,13 @@ maximum_ ::
 maximum_ = fold_ getMax Nothing id . map Just
 {-# INLINE maximum_ #-}
 
-getMin :: Ord a => Maybe a -> Maybe a -> Maybe a
+getMin :: (Ord a) => Maybe a -> Maybe a -> Maybe a
 getMin = mCompare Prelude.min
 
-getMax :: Ord a => Maybe a -> Maybe a -> Maybe a
+getMax :: (Ord a) => Maybe a -> Maybe a -> Maybe a
 getMax = mCompare Prelude.max
 
-mCompare :: Ord a => (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
+mCompare :: (Ord a) => (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
 mCompare _ Nothing Nothing = Nothing
 mCompare _ (Just a) Nothing = Just a
 mCompare _ Nothing (Just a) = Just a
@@ -673,7 +673,7 @@ mCompare comp (Just x) (Just y) = Just $ comp x y
 --    still more general 'destroy'
 foldrM ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> m r %1 -> m r) ->
   Stream (Of a) m r %1 ->
   m r

@@ -62,7 +62,7 @@ data Array a = Array (Array# a)
 -- | Allocate a constant array given a size and an initial value
 -- The size must be non-negative, otherwise this errors.
 alloc ::
-  HasCallStack =>
+  (HasCallStack) =>
   Int ->
   a ->
   (Array a %1 -> Ur b) %1 ->
@@ -89,7 +89,7 @@ allocBeside s x (Array orig)
 
 -- | Allocate an array from a list
 fromList ::
-  HasCallStack =>
+  (HasCallStack) =>
   [a] ->
   (Array a %1 -> Ur b) %1 ->
   Ur b
@@ -117,7 +117,7 @@ size (Array arr) = f (Unlifted.size arr)
 
 -- | Sets the value of an index. The index should be less than the arrays
 -- size, otherwise this errors.
-set :: HasCallStack => Int -> a -> Array a %1 -> Array a
+set :: (HasCallStack) => Int -> a -> Array a %1 -> Array a
 set i x arr = unsafeSet i x (assertIndexInRange i arr)
 
 -- | Same as 'set', but does not do bounds-checking. The behaviour is undefined
@@ -128,7 +128,7 @@ unsafeSet ix val (Array arr) =
 
 -- | Get the value of an index. The index should be less than the arrays 'size',
 -- otherwise this errors.
-get :: HasCallStack => Int -> Array a %1 -> (Ur a, Array a)
+get :: (HasCallStack) => Int -> Array a %1 -> (Ur a, Array a)
 get i arr = unsafeGet i (assertIndexInRange i arr)
 
 -- | Same as 'get', but does not do bounds-checking. The behaviour is undefined
@@ -151,7 +151,7 @@ unsafeGet ix (Array arr) = wrap (Unlifted.get ix arr)
 --   and b[i] = a[i] for i < size a,
 --   and b[i] = x for size a <= i < n.
 -- @
-resize :: HasCallStack => Int -> a -> Array a %1 -> Array a
+resize :: (HasCallStack) => Int -> a -> Array a %1 -> Array a
 resize newSize seed (Array arr :: Array a)
   | newSize < 0 =
       Unlifted.lseq
@@ -182,7 +182,7 @@ toList (Array arr) = Unlifted.toList arr
 --   and b[j] = a[i+j] for 0 <= j < n
 -- @
 slice ::
-  HasCallStack =>
+  (HasCallStack) =>
   -- | Start offset
   Int ->
   -- | Target size
@@ -223,7 +223,7 @@ map f (Array arr) = Array (Unlifted.map f arr)
 -------------------------------------------------------------------------------
 
 -- | Same as 'set', but takes the 'Array' as the first parameter.
-write :: HasCallStack => Array a %1 -> Int -> a -> Array a
+write :: (HasCallStack) => Array a %1 -> Int -> a -> Array a
 write arr i a = set i a arr
 
 -- | Same as 'unsafeSet', but takes the 'Array' as the first parameter.
@@ -231,7 +231,7 @@ unsafeWrite :: Array a %1 -> Int -> a -> Array a
 unsafeWrite arr i a = unsafeSet i a arr
 
 -- | Same as 'get', but takes the 'Array' as the first parameter.
-read :: HasCallStack => Array a %1 -> Int -> (Ur a, Array a)
+read :: (HasCallStack) => Array a %1 -> Int -> (Ur a, Array a)
 read arr i = get i arr
 
 -- | Same as 'unsafeGet', but takes the 'Array' as the first parameter.
@@ -259,7 +259,7 @@ instance Data.Functor Array where
 -------------------------------------------------------------------------------
 
 -- | Check if given index is within the Array, otherwise panic.
-assertIndexInRange :: HasCallStack => Int -> Array a %1 -> Array a
+assertIndexInRange :: (HasCallStack) => Int -> Array a %1 -> Array a
 assertIndexInRange i arr =
   size arr & \(Ur s, arr') ->
     if 0 <= i && i < s

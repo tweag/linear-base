@@ -56,28 +56,28 @@ import Prelude.Linear.Internal
 -- properties still hold in this weaker setting.
 newtype Kleisli m a b = Kleisli {runKleisli :: a %1 -> m b}
 
-instance Data.Functor f => Profunctor (Kleisli f) where
+instance (Data.Functor f) => Profunctor (Kleisli f) where
   dimap f g (Kleisli h) = Kleisli (Data.fmap g . h . f)
 
-instance Control.Functor f => Strong (,) () (Kleisli f) where
+instance (Control.Functor f) => Strong (,) () (Kleisli f) where
   first (Kleisli f) = Kleisli (\(a, b) -> (,b) Control.<$> f a)
   second (Kleisli g) = Kleisli (\(a, b) -> (a,) Control.<$> g b)
 
-instance Control.Applicative f => Strong Either Void (Kleisli f) where
+instance (Control.Applicative f) => Strong Either Void (Kleisli f) where
   first (Kleisli f) = Kleisli (either (Data.fmap Left . f) (Control.pure . Right))
   second (Kleisli g) = Kleisli (either (Control.pure . Left) (Data.fmap Right . g))
 
-instance Data.Applicative f => Monoidal (,) () (Kleisli f) where
+instance (Data.Applicative f) => Monoidal (,) () (Kleisli f) where
   Kleisli f *** Kleisli g = Kleisli $ \(x, y) -> (,) Data.<$> f x Data.<*> g y
   unit = Kleisli $ \() -> Data.pure ()
 
-instance Data.Functor f => Monoidal Either Void (Kleisli f) where
+instance (Data.Functor f) => Monoidal Either Void (Kleisli f) where
   Kleisli f *** Kleisli g = Kleisli $ \case
     Left a -> Left Data.<$> f a
     Right b -> Right Data.<$> g b
   unit = Kleisli $ \case {}
 
-instance Control.Applicative f => Wandering (Kleisli f) where
+instance (Control.Applicative f) => Wandering (Kleisli f) where
   wander traverse (Kleisli f) = Kleisli (traverse f)
 
 -- | Linear co-Kleisli arrows for the comonad `w`. These arrows are still
@@ -87,7 +87,7 @@ instance Control.Applicative f => Wandering (Kleisli f) where
 -- strength, so we have fewer instances.
 newtype CoKleisli w a b = CoKleisli {runCoKleisli :: w a %1 -> b}
 
-instance Data.Functor f => Profunctor (CoKleisli f) where
+instance (Data.Functor f) => Profunctor (CoKleisli f) where
   dimap f g (CoKleisli h) = CoKleisli (g . h . Data.fmap f)
 
 instance Strong Either Void (CoKleisli (Data.Const x)) where

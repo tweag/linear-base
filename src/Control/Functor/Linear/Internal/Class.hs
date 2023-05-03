@@ -77,16 +77,16 @@ import Prelude (Bool (..), String)
 -- @f a@ holds only one value of type @a@ and represents a computation
 -- producing an @a@ with an effect. All control functors are data functors,
 -- but not all data functors are control functors.
-class Data.Functor f => Functor f where
+class (Data.Functor f) => Functor f where
   -- | Map a linear function @g@ over a control functor @f a@.
   -- Note that @g@ is used linearly over the single @a@ in @f a@.
   fmap :: (a %1 -> b) %1 -> f a %1 -> f b
 
 -- | Apply the control @fmap@ over a data functor.
-dataFmapDefault :: Functor f => (a %1 -> b) -> f a %1 -> f b
+dataFmapDefault :: (Functor f) => (a %1 -> b) -> f a %1 -> f b
 dataFmapDefault f = fmap f
 
-(<$>) :: Functor f => (a %1 -> b) %1 -> f a %1 -> f b
+(<$>) :: (Functor f) => (a %1 -> b) %1 -> f a %1 -> f b
 (<$>) = fmap
 {-# INLINE (<$>) #-}
 
@@ -95,7 +95,7 @@ infixl 4 <$> -- same fixity as base.<$>
 -- |  @
 --    ('<&>') = 'flip' 'fmap'
 --    @
-(<&>) :: Functor f => f a %1 -> (a %1 -> b) %1 -> f b
+(<&>) :: (Functor f) => f a %1 -> (a %1 -> b) %1 -> f b
 (<&>) a f = f <$> a
 {-# INLINE (<&>) #-}
 
@@ -139,10 +139,10 @@ class (Data.Applicative f, Functor f) => Applicative f where
   liftA2 f x y = f <$> x <*> y
 
 -- | Apply the control @pure@ over a data applicative.
-dataPureDefault :: Applicative f => a -> f a
+dataPureDefault :: (Applicative f) => a -> f a
 dataPureDefault x = pure x
 
-instance Monoid a => Applicative ((,) a) where
+instance (Monoid a) => Applicative ((,) a) where
   pure x = (mempty, x)
   (a, f) <*> (b, x) = (a <> b, f x)
 
@@ -172,7 +172,7 @@ instance Monad Identity where
 -- | Control linear monads.
 -- A linear monad is one in which you sequence linear functions in a context,
 -- i.e., you sequence functions of the form @a %1-> m b@.
-class Applicative m => Monad m where
+class (Applicative m) => Monad m where
   {-# MINIMAL (>>=) #-}
 
   -- | @x >>= g@ applies a /linear/ function @g@ linearly (i.e., using it
@@ -187,26 +187,26 @@ class Applicative m => Monad m where
 
 -- | This class handles pattern-matching failure in do-notation.
 -- See "Control.Monad.Fail" for details.
-class Monad m => MonadFail m where
+class (Monad m) => MonadFail m where
   fail :: String -> m a
 
-return :: Monad m => a %1 -> m a
+return :: (Monad m) => a %1 -> m a
 return x = pure x
 {-# INLINE return #-}
 
 -- | Given an effect-producing computation that produces an effect-producing computation
 -- that produces an @a@, simplify it to an effect-producing
 -- computation that produces an @a@.
-join :: Monad m => m (m a) %1 -> m a
+join :: (Monad m) => m (m a) %1 -> m a
 join action = action >>= id
 
 -- | Use this operator to define Applicative instances in terms of Monad instances.
-ap :: Monad m => m (a %1 -> b) %1 -> m a %1 -> m b
+ap :: (Monad m) => m (a %1 -> b) %1 -> m a %1 -> m b
 ap f x = f >>= (\f' -> fmap f' x)
 
 -- | Fold from left to right with a linear monad.
 -- This is a linear version of 'NonLinear.foldM'.
-foldM :: forall m a b. Monad m => (b %1 -> a %1 -> m b) -> b %1 -> [a] %1 -> m b
+foldM :: forall m a b. (Monad m) => (b %1 -> a %1 -> m b) -> b %1 -> [a] %1 -> m b
 foldM _ i [] = return i
 foldM f i (x : xs) = f i x >>= \i' -> foldM f i' xs
 
@@ -234,7 +234,7 @@ deriving via
   instance
     Functor ((,,,,) a b c d)
 
-instance Monoid a => Monad ((,) a) where
+instance (Monoid a) => Monad ((,) a) where
   (a, x) >>= f = go a (f x)
     where
       go :: a %1 -> (a, b) %1 -> (a, b)
@@ -268,7 +268,7 @@ type family NoPar1 (f :: Type -> Type) :: Bool where
   NoPar1 Par1 = 'False
 
 -- If the generic type does not use its parameter, we can linearly coerce the parameter to any other type.
-class NoPar1 f ~ 'True => Unused f where
+class (NoPar1 f ~ 'True) => Unused f where
   unused :: f a %1 -> f b
 
 instance Unused U1 where
@@ -284,7 +284,7 @@ instance (Unused l, Unused r) => Unused (l :+: r) where
   unused (L1 l) = L1 (unused l)
   unused (R1 r) = R1 (unused r)
 
-instance Unused f => Unused (M1 i c f) where
+instance (Unused f) => Unused (M1 i c f) where
   unused (M1 a) = M1 (unused a)
 
 instance (Unused' (NoPar1 l) l r, (NoPar1 l || NoPar1 r) ~ 'True) => Unused (l :.: r) where
@@ -293,7 +293,7 @@ instance (Unused' (NoPar1 l) l r, (NoPar1 l || NoPar1 r) ~ 'True) => Unused (l :
 class Unused' (left_unused :: Bool) l r where
   unused' :: l (r a) %1 -> l (r b)
 
-instance Unused l => Unused' 'True l r where
+instance (Unused l) => Unused' 'True l r where
   unused' = unused
 
 instance (Functor l, Unused r) => Unused' 'False l r where
@@ -328,7 +328,7 @@ instance (Functor l, Functor r) => Functor (l :+: r) where
   fmap f (L1 a) = L1 (fmap f a)
   fmap f (R1 a) = R1 (fmap f a)
 
-instance Functor f => Functor (M1 j c f) where
+instance (Functor f) => Functor (M1 j c f) where
   fmap f (M1 a) = M1 (fmap f a)
 
 instance Functor Par1 where

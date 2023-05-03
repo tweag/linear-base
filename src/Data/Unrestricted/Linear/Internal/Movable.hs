@@ -53,7 +53,7 @@ import qualified Prelude as Prelude
 --
 -- * @case move x of {Ur _ -> ()} = consume x@
 -- * @case move x of {Ur x -> (x, x)} = dup2 x@
-class Dupable a => Movable a where
+class (Dupable a) => Movable a where
   move :: a %1 -> Ur a
 
 -- -------------
@@ -100,7 +100,7 @@ instance Movable () where
 deriving via
   Generically (Solo a)
   instance
-    Movable a => Movable (Solo a)
+    (Movable a) => Movable (Solo a)
 
 deriving via
   Generically (a, b)
@@ -122,7 +122,7 @@ deriving via
   instance
     (Movable a, Movable b, Movable c, Movable d, Movable e) => Movable (a, b, c, d, e)
 
-instance Movable a => Movable (Prelude.Maybe a) where
+instance (Movable a) => Movable (Prelude.Maybe a) where
   move (Prelude.Nothing) = Ur Prelude.Nothing
   move (Prelude.Just x) = Data.fmap Prelude.Just (move x)
 
@@ -130,7 +130,7 @@ instance (Movable a, Movable b) => Movable (Prelude.Either a b) where
   move (Prelude.Left a) = Data.fmap Prelude.Left (move a)
   move (Prelude.Right b) = Data.fmap Prelude.Right (move b)
 
-instance Movable a => Movable [a] where
+instance (Movable a) => Movable [a] where
   -- The explicit go function lets this specialize.
   move = go
     where
@@ -138,16 +138,16 @@ instance Movable a => Movable [a] where
       go [] = Ur []
       go (a : l) = (:) Data.<$> move a Data.<*> go l
 
-instance Movable a => Movable (NonEmpty a) where
+instance (Movable a) => Movable (NonEmpty a) where
   move (x :| xs) = (:|) Data.<$> move x Data.<*> move xs
 
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
 
 -- Some stock instances
-deriving newtype instance Movable a => Movable (Semigroup.Sum a)
+deriving newtype instance (Movable a) => Movable (Semigroup.Sum a)
 
-deriving newtype instance Movable a => Movable (Semigroup.Product a)
+deriving newtype instance (Movable a) => Movable (Semigroup.Product a)
 
 deriving newtype instance Movable Semigroup.All
 
@@ -162,7 +162,7 @@ instance (Generic a, GMovable (Rep a)) => Movable (Generically a) where
 genericMove :: (Generic a, GMovable (Rep a)) => a %1 -> Ur a
 genericMove = Data.fmap to . gmove . from
 
-class GDupable f => GMovable f where
+class (GDupable f) => GMovable f where
   gmove :: f p %1 -> Ur (f p)
 
 instance GMovable V1 where
@@ -182,16 +182,16 @@ instance (GMovable f, GMovable g) => GMovable (f :*: g) where
         gmove b & \case
           (Ur y) -> Ur (x :*: y)
 
-instance Movable c => GMovable (K1 i c) where
+instance (Movable c) => GMovable (K1 i c) where
   gmove (K1 c) = lcoerce (move c)
 
-instance GMovable f => GMovable (M1 i t f) where
+instance (GMovable f) => GMovable (M1 i t f) where
   gmove (M1 a) = lcoerce (gmove a)
 
 instance GMovable (MP1 'Many f) where
   gmove (MP1 x) = Ur (MP1 x)
 
-instance GMovable f => GMovable (MP1 'One f) where
+instance (GMovable f) => GMovable (MP1 'One f) where
   gmove (MP1 a) = gmove a & \case Ur x -> Ur (MP1 x)
 
 instance GMovable UChar where

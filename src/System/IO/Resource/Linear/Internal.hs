@@ -83,7 +83,7 @@ run (RIO action) = do
       Linear.withLinearIO (moveLinearIO finalizer)
         `finally` safeRelease fs
     -- Should be just an application of a linear `(<$>)`.
-    moveLinearIO :: Movable a => Linear.IO a %1 -> Linear.IO (Ur a)
+    moveLinearIO :: (Movable a) => Linear.IO a %1 -> Linear.IO (Ur a)
     moveLinearIO action' = Control.do
       result <- action'
       Control.return $ move result

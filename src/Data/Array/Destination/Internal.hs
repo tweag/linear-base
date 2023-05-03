@@ -45,7 +45,7 @@ replicate a = fromFunction (const a)
 
 -- | @fill a dest@ fills a singleton destination array.
 -- Caution, @'fill' a dest@ will fail is @dest@ isn't of length exactly one.
-fill :: HasCallStack => a %1 -> DArray a %1 -> ()
+fill :: (HasCallStack) => a %1 -> DArray a %1 -> ()
 fill a (DArray mvec) =
   if MVector.length mvec /= 1
     then error "Destination.fill: requires a destination of size 1" $ a
@@ -54,7 +54,7 @@ fill a (DArray mvec) =
         & Unsafe.toLinear (\x -> unsafeDupablePerformIO (MVector.write mvec 0 x))
 
 -- | @dropEmpty dest@ consumes and empty array and fails otherwise.
-dropEmpty :: HasCallStack => DArray a %1 -> ()
+dropEmpty :: (HasCallStack) => DArray a %1 -> ()
 dropEmpty (DArray mvec)
   | MVector.length mvec > 0 = error "Destination.dropEmpty on non-empty array."
   | otherwise = mvec `seq` ()
@@ -71,7 +71,7 @@ split n (DArray mvec)
 -- | Fills the destination array with the contents of given vector.
 --
 -- Errors if the given vector is smaller than the destination array.
-mirror :: HasCallStack => Vector a -> (a %1 -> b) -> DArray b %1 -> ()
+mirror :: (HasCallStack) => Vector a -> (a %1 -> b) -> DArray b %1 -> ()
 mirror v f arr =
   size arr & \(Ur sz, arr') ->
     if Vector.length v < sz

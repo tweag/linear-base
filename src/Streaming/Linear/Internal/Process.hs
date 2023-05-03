@@ -123,7 +123,7 @@ import qualified Prelude
 -- that can add an element to the functor that is itself a stream.
 -- Basically `consFirstChunk 42 [[1,2,3],[4,5]] = [[42,1,2,3],[4,5]]`.
 consFirstChunk ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   a ->
   Stream (Stream (Of a) m) m r %1 ->
   Stream (Stream (Of a) m) m r
@@ -173,7 +173,7 @@ destroyExposed stream0 construct theEffect done = loop stream0
 -- > inspect :: Control.Monad m => Stream (Of a) m r %1-> m (Either r (Of a (Stream (Of a) m r)))
 next ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of a) m r %1 ->
   m (Either r (Ur a, Stream (Of a) m r))
 next stream = loop stream
@@ -265,7 +265,7 @@ split x stream = loop stream
 -- @
 break ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m (Stream (Of a) m r)
@@ -295,7 +295,7 @@ break f stream = loop stream
 -- @
 breaks ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Stream (Of a) m) m r
@@ -336,7 +336,7 @@ breaks f stream = loop stream
 -- @
 breakWhen ::
   forall m a x b r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (x -> a -> x) ->
   x ->
   (x -> b) ->
@@ -357,7 +357,7 @@ breakWhen step x end pred stream = loop stream
 
 -- | Breaks on the first element to satisfy the predicate
 breakWhen' ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m (Stream (Of a) m r)
@@ -366,7 +366,7 @@ breakWhen' f stream = breakWhen (\_ a -> f a) True id id stream
 
 -- | Stream elements until one fails the condition, return the rest.
 span ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m (Stream (Of a) m r)
@@ -387,7 +387,7 @@ span f = break (Prelude.not Prelude.. f)
 -- @
 groupBy ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Stream (Of a) m) m r
@@ -543,7 +543,7 @@ unseparate stream =
 -- > filter p = hoist effects (partition p)
 partition ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) (Stream (Of a) m) r
@@ -566,13 +566,13 @@ partition pred = loop
 -- > rights = S.effects . partitionEithers
 -- > rights = S.concat
 partitionEithers ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of (Either a b)) m r %1 ->
   Stream (Of a) (Stream (Of b) m) r
 partitionEithers = loop
   where
     loop ::
-      Control.Monad m =>
+      (Control.Monad m) =>
       Stream (Of (Either a b)) m r %1 ->
       Stream (Of a) (Stream (Of b) m) r
     loop stream =
@@ -588,10 +588,10 @@ partitionEithers = loop
 -- | The 'catMaybes' function takes a 'Stream' of 'Maybe's and returns
 --    a 'Stream' of all of the 'Just' values. 'concat' has the same behavior,
 --    but is more general; it works for any foldable container type.
-catMaybes :: Control.Monad m => Stream (Of (Maybe a)) m r %1 -> Stream (Of a) m r
+catMaybes :: (Control.Monad m) => Stream (Of (Maybe a)) m r %1 -> Stream (Of a) m r
 catMaybes stream = loop stream
   where
-    loop :: Control.Monad m => Stream (Of (Maybe a)) m r %1 -> Stream (Of a) m r
+    loop :: (Control.Monad m) => Stream (Of (Maybe a)) m r %1 -> Stream (Of a) m r
     loop stream =
       stream & \case
         Return r -> Return r
@@ -606,7 +606,7 @@ catMaybes stream = loop stream
 --    is added on to the result 'Stream'. If it is @'Just' b@, then @b@ is included in the result 'Stream'.
 mapMaybe ::
   forall a b m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Maybe b) ->
   Stream (Of a) m r %1 ->
   Stream (Of b) m r
@@ -631,7 +631,7 @@ mapMaybe f stream = loop stream
 --   only containing the 'Just' values.
 mapMaybeM ::
   forall a m b r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> m (Maybe (Ur b))) ->
   Stream (Of a) m r %1 ->
   Stream (Of b) m r
@@ -681,7 +681,7 @@ hoist f stream = loop stream
 -- ahpla
 -- ateb
 -- @
-map :: Control.Monad m => (a -> b) -> Stream (Of a) m r %1 -> Stream (Of b) m r
+map :: (Control.Monad m) => (a -> b) -> Stream (Of a) m r %1 -> Stream (Of b) m r
 map f = maps (\(x :> rest) -> f x :> rest)
 {-# INLINEABLE map #-}
 
@@ -733,14 +733,14 @@ maps phi = loop
 --
 -- See also 'chain' for a variant of this which ignores the return value of the function and just uses the side effects.
 mapM ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> m (Ur b)) ->
   Stream (Of a) m r %1 ->
   Stream (Of b) m r
 mapM f s = loop f s
   where
     loop ::
-      Control.Monad m =>
+      (Control.Monad m) =>
       (a -> m (Ur b)) ->
       Stream (Of a) m r %1 ->
       Stream (Of b) m r
@@ -1053,7 +1053,7 @@ subst = flip with
 -- @
 copy ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of a) m r %1 ->
   Stream (Of a) (Stream (Of a) m) r
 copy = Effect . Control.return . loop
@@ -1069,7 +1069,7 @@ copy = Effect . Control.return . loop
 -- | An alias for @copy@.
 duplicate ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of a) m r %1 ->
   Stream (Of a) (Stream (Of a) m) r
 duplicate = copy
@@ -1158,7 +1158,7 @@ duplicate = copy
 -- goodbye
 -- @
 store ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   (Stream (Of a) (Stream (Of a) m) r %1 -> t) ->
   Stream (Of a) m r %1 ->
   t
@@ -1214,7 +1214,7 @@ chain f = loop
 -- > sequence :: Control.Monad m => Stream (Of (m a)) m r %1-> Stream (Of a) m r
 sequence ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Stream (Of (m (Ur a))) m r %1 ->
   Stream (Of a) m r
 sequence = loop
@@ -1254,7 +1254,7 @@ nubOrdOn f xs = loop Set.empty xs
           False -> Step (a :> loop (Set.insert (f a) set) as)
 
 -- | More efficient versions of above when working with 'Int's that use 'Data.IntSet.IntSet'.
-nubInt :: Control.Monad m => Stream (Of Int) m r %1 -> Stream (Of Int) m r
+nubInt :: (Control.Monad m) => Stream (Of Int) m r %1 -> Stream (Of Int) m r
 nubInt = nubIntOn id
 {-# INLINE nubInt #-}
 
@@ -1278,7 +1278,7 @@ nubIntOn f xs = loop IntSet.empty xs
 -- | Skip elements of a stream that fail a predicate
 filter ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m r
@@ -1297,7 +1297,7 @@ filter pred = loop
 -- | Skip elements of a stream that fail a monadic test
 filterM ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> m Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m r
@@ -1327,7 +1327,7 @@ filterM pred = loop
 -- @
 intersperse ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   a ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m r
@@ -1399,7 +1399,7 @@ drop n stream = case compare n 0 of
 -- @
 dropWhile ::
   forall a m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (a -> Bool) ->
   Stream (Of a) m r %1 ->
   Stream (Of a) m r
@@ -1438,7 +1438,7 @@ dropWhile pred = loop
 -- @
 scan ::
   forall a x b m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (x -> a -> x) ->
   x ->
   (x -> b) ->
@@ -1476,7 +1476,7 @@ scan step begin done stream = Step (done begin :> loop begin stream)
 -- @
 scanM ::
   forall a x b m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (x %1 -> a -> m (Ur x)) ->
   m (Ur x) ->
   (x %1 -> m (Ur b)) ->
@@ -1515,7 +1515,7 @@ scanM step mx done stream = loop stream
 -- @
 scanned ::
   forall a x b m r.
-  Control.Monad m =>
+  (Control.Monad m) =>
   (x -> a -> x) ->
   x ->
   (x -> b) ->
@@ -1587,7 +1587,7 @@ show = map Prelude.show
 -- > Lazy.foldrChunks S.cons (return ()) :: Lazy.ByteString -> Stream (Of Strict.ByteString) m ()
 --
 --    and so on.
-cons :: Control.Monad m => a -> Stream (Of a) m r %1 -> Stream (Of a) m r
+cons :: (Control.Monad m) => a -> Stream (Of a) m r %1 -> Stream (Of a) m r
 cons a str = Step (a :> str)
 {-# INLINE cons #-}
 
@@ -1629,7 +1629,7 @@ wrapEffect ma action stream =
 -- @
 slidingWindow ::
   forall a b m.
-  Control.Monad m =>
+  (Control.Monad m) =>
   Int ->
   Stream (Of a) m b %1 ->
   Stream (Of (Seq.Seq a)) m b

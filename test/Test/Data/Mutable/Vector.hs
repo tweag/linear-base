@@ -105,10 +105,10 @@ compInts ::
 compInts (Ur x) (Ur y) = Ur (x === y)
 
 -- XXX: This is a terrible name
-getFst :: Consumable b => (a, b) %1 -> a
+getFst :: (Consumable b) => (a, b) %1 -> a
 getFst (a, b) = lseq b a
 
-getSnd :: Consumable a => (a, b) %1 -> b
+getSnd :: (Consumable a) => (a, b) %1 -> b
 getSnd (a, b) = lseq a b
 
 -- # Tests

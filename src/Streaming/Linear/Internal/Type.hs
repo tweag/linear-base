@@ -167,7 +167,7 @@ bind (Effect ms) f = Effect $ Control.fmap (Control.>>= f) ms
 -- # MonadTrans for (Stream f m)
 -------------------------------------------------------------------------------
 
-instance Control.Functor f => Control.MonadTrans (Stream f) where
+instance (Control.Functor f) => Control.MonadTrans (Stream f) where
   lift :: (Control.Functor m, Control.Functor f) => m a %1 -> Stream f m a
   lift = Effect . Control.fmap Control.return
   {-# INLINE lift #-}

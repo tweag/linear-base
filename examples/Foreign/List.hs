@@ -22,7 +22,7 @@ data List a
 
 -- TODO: generating appropriate instances using the Generic framework
 instance
-  Manual.Representable a =>
+  (Manual.Representable a) =>
   Manual.MkRepresentable (List a) (Maybe (a, Box (List a)))
   where
   toRepr Nil = Nothing
@@ -31,7 +31,7 @@ instance
   ofRepr Nothing = Nil
   ofRepr (Just (a, l)) = Cons a l
 
-instance Manual.Representable a => Manual.Representable (List a) where
+instance (Manual.Representable a) => Manual.Representable (List a) where
   type AsKnown (List a) = Manual.AsKnown (Maybe (a, Box (List a)))
 
 -- Remark: this is a bit wasteful, we could implement an allocation-free map by
@@ -49,11 +49,11 @@ map f (Cons a l) pool =
     withPools (pool1, pool2) a' l' =
       Cons (f a') (Manual.alloc (map f l' pool1) pool2)
 
-foldr :: forall a b. Manual.Representable a => (a %1 -> b %1 -> b) -> b %1 -> List a %1 -> b
+foldr :: forall a b. (Manual.Representable a) => (a %1 -> b %1 -> b) -> b %1 -> List a %1 -> b
 foldr _f seed Nil = seed
 foldr f seed (Cons a l) = f a (foldr f seed (Manual.deconstruct l))
 
-foldl :: forall a b. Manual.Representable a => (b %1 -> a %1 -> b) -> b %1 -> List a %1 -> b
+foldl :: forall a b. (Manual.Representable a) => (b %1 -> a %1 -> b) -> b %1 -> List a %1 -> b
 foldl _f seed Nil = seed
 foldl f seed (Cons a l) = foldl f (f seed a) (Manual.deconstruct l)
 
@@ -61,7 +61,7 @@ foldl f seed (Cons a l) = foldl f (f seed a) (Manual.deconstruct l)
 
 -- | Make a 'List' from a stream. 'List' is a type of strict lists, therefore
 -- the stream must terminate otherwise 'unfold' will loop. Not tail-recursive.
-unfold :: forall a s. Manual.Representable a => (s -> Maybe (a, s)) -> s -> Pool %1 -> List a
+unfold :: forall a s. (Manual.Representable a) => (s -> Maybe (a, s)) -> s -> Pool %1 -> List a
 unfold step state pool = dispatch (step state) (dup pool)
   where
     -- XXX: ^ The reason why we need to `dup` the pool before we know whether the
@@ -76,7 +76,7 @@ unfold step state pool = dispatch (step state) (dup pool)
 
 -- | Linear variant of 'unfold'. Note how they are implemented exactly
 -- identically. They could be merged if multiplicity polymorphism was supported.
-unfoldL :: forall a s. Manual.Representable a => (s %1 -> Maybe (a, s)) -> s %1 -> Pool %1 -> List a
+unfoldL :: forall a s. (Manual.Representable a) => (s %1 -> Maybe (a, s)) -> s %1 -> Pool %1 -> List a
 unfoldL step state pool = dispatch (step state) (dup pool)
   where
     dispatch :: Maybe (a, s) %1 -> (Pool, Pool) %1 -> List a
@@ -84,14 +84,14 @@ unfoldL step state pool = dispatch (step state) (dup pool)
     dispatch (Just (a, next)) (pool1, pool2) =
       Cons a (Manual.alloc (unfoldL step next pool1) pool2)
 
-ofList :: Manual.Representable a => [a] -> Pool %1 -> List a
+ofList :: (Manual.Representable a) => [a] -> Pool %1 -> List a
 ofList l pool = unfold List.uncons l pool
 
-toList :: Manual.Representable a => List a %1 -> [a]
+toList :: (Manual.Representable a) => List a %1 -> [a]
 toList l = foldr (:) [] l
 
 -- | Like unfold but builds the list in reverse, and tail recursive
-runfold :: forall a s. Manual.Representable a => (s -> Maybe (a, s)) -> s -> Pool %1 -> List a
+runfold :: forall a s. (Manual.Representable a) => (s -> Maybe (a, s)) -> s -> Pool %1 -> List a
 runfold step state pool = loop state Nil pool
   where
     loop :: s -> List a %1 -> Pool %1 -> List a
@@ -102,5 +102,5 @@ runfold step state pool = loop state Nil pool
     dispatch (Just (a, next)) !acc (pool1, pool2) =
       loop next (Cons a (Manual.alloc acc pool1)) pool2
 
-ofRList :: Manual.Representable a => [a] -> Pool %1 -> List a
+ofRList :: (Manual.Representable a) => [a] -> Pool %1 -> List a
 ofRList l pool = runfold List.uncons l pool

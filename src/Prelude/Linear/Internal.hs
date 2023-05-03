@@ -79,6 +79,6 @@ runIdentity' :: Identity a %p -> a
 runIdentity' (Identity x) = x
 
 -- | A linear version of 'Data.Coerce.coerce' for types of kind 'Data.Kind.Type'.
-lcoerce :: forall a b. Coercible a b => a %1 -> b
+lcoerce :: forall a b. (Coercible a b) => a %1 -> b
 lcoerce = coerce ((\x -> x) :: a %1 -> a)
 {-# INLINE CONLIKE lcoerce #-}

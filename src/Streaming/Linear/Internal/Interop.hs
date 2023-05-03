@@ -26,14 +26,14 @@ import Prelude (Maybe (..))
 -- > reread readIORef    :: IORef (Maybe a) -> Stream (Of a) IO ()
 -- > reread Streams.read :: System.IO.Streams.InputStream a -> Stream (Of a) IO ()
 reread ::
-  Control.Monad m =>
+  (Control.Monad m) =>
   (s -> m (Ur (Maybe a))) ->
   s ->
   Stream (Of a) m ()
 reread f s = reread' f s
   where
     reread' ::
-      Control.Monad m =>
+      (Control.Monad m) =>
       (s -> m (Ur (Maybe a))) ->
       s ->
       Stream (Of a) m ()

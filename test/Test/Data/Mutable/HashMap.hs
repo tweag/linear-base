@@ -141,7 +141,7 @@ getFst :: (Consumable b) => (a, b) %1 -> a
 getFst (a, b) = lseq b a
 
 compareMaybes ::
-  Eq a =>
+  (Eq a) =>
   Ur (Maybe a) %1 ->
   Ur (Maybe a) %1 ->
   Ur Bool

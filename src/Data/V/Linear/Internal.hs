@@ -84,18 +84,18 @@ map f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
 infixl 4 <*> -- same fixity as base.<*>
 
 -- | Splits the head and tail of the 'V', returning an unboxed tuple.
-uncons# :: 1 <= n => V n a %1 -> (# a, V (n - 1) a #)
+uncons# :: (1 <= n) => V n a %1 -> (# a, V (n - 1) a #)
 uncons# = Unsafe.toLinear uncons'#
   where
-    uncons'# :: 1 <= n => V n a -> (# a, V (n - 1) a #)
+    uncons'# :: (1 <= n) => V n a -> (# a, V (n - 1) a #)
     uncons'# (V xs) = (# Vector.head xs, V (Vector.tail xs) #)
 {-# INLINEABLE uncons# #-}
 
 -- | Splits the head and tail of the 'V', returning a boxed tuple.
-uncons :: 1 <= n => V n a %1 -> (a, V (n - 1) a)
+uncons :: (1 <= n) => V n a %1 -> (a, V (n - 1) a)
 uncons = Unsafe.toLinear uncons'
   where
-    uncons' :: 1 <= n => V n a -> (a, V (n - 1) a)
+    uncons' :: (1 <= n) => V n a -> (a, V (n - 1) a)
     uncons' (V xs) = (Vector.head xs, V (Vector.tail xs))
 {-# INLINEABLE uncons #-}
 
@@ -234,14 +234,14 @@ instance ((1 + PeanoToNat m) - 1 ~ PeanoToNat m, Make m n a) => Make ('S m) n a 
 -------------------------------------------------------------------------------
 
 -- | Returns the type-level 'Nat' of the context as a term-level integer.
-theLength :: forall n. KnownNat n => Prelude.Int
+theLength :: forall n. (KnownNat n) => Prelude.Int
 theLength = Prelude.fromIntegral (natVal' @n (proxy# @_))
 
-pure :: forall n a. KnownNat n => a -> V n a
+pure :: forall n a. (KnownNat n) => a -> V n a
 pure a = V $ Vector.replicate (theLength @n) a
 
 -- | Creates a 'V' of the specified size by consuming a 'Replicator'.
-fromReplicator :: forall n a. KnownNat n => Replicator a %1 -> V n a
+fromReplicator :: forall n a. (KnownNat n) => Replicator a %1 -> V n a
 fromReplicator = let n' = theLength @n in V . Unsafe.toLinear Vector.fromList . Replicator.take n'
 
 -- | Produces a @'V' n a@ from a 'Dupable' value @a@.

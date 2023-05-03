@@ -29,14 +29,14 @@ newtype UrT m a = UrT (m (Ur a))
 runUrT :: UrT m a %1 -> m (Ur a)
 runUrT (UrT ma) = ma
 
-instance Linear.Functor m => Functor (UrT m) where
+instance (Linear.Functor m) => Functor (UrT m) where
   fmap f (UrT ma) = UrT (Linear.fmap (\(Ur a) -> Ur (f a)) ma)
 
-instance Linear.Applicative m => Applicative (UrT m) where
+instance (Linear.Applicative m) => Applicative (UrT m) where
   pure a = UrT (Linear.pure (Ur a))
   UrT mf <*> UrT ma = UrT (Linear.liftA2 (\(Ur f) (Ur a) -> Ur (f a)) mf ma)
 
-instance Linear.Monad m => Monad (UrT m) where
+instance (Linear.Monad m) => Monad (UrT m) where
   UrT ma >>= f = UrT (ma Linear.>>= (\(Ur a) -> case f a of (UrT mb) -> mb))
 
 -- | Lift a computation to the @UrT@ monad, provided that the type @a@ can be used unrestricted.
@@ -46,5 +46,5 @@ liftUrT ma = UrT (Linear.fmap move ma)
 -- | Extract the inner computation linearly, the inverse of `liftUrT`.
 --
 -- > evalUrT (liftUrT m) = m
-evalUrT :: Linear.Functor m => UrT m a %1 -> m a
+evalUrT :: (Linear.Functor m) => UrT m a %1 -> m a
 evalUrT u = Linear.fmap unur (runUrT u)

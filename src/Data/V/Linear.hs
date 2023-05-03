@@ -11,7 +11,7 @@
 --
 -- >>> :set -XLinearTypes
 -- >>> :set -XTypeApplications
--- >>> :set -XTypeInType
+-- >>> :set -XDataKinds
 -- >>> :set -XTypeFamilies
 -- >>> import Prelude.Linear
 -- >>> import qualified Data.V.Linear as V

@@ -26,15 +26,15 @@ import qualified Prelude
 instance Data.Functor (V n) where
   fmap = V.map
 
-instance KnownNat n => Data.Applicative (V n) where
+instance (KnownNat n) => Data.Applicative (V n) where
   pure = V.pure
   a <*> b = a V.<*> b
 
-instance KnownNat n => Prelude.Applicative (V n) where
+instance (KnownNat n) => Prelude.Applicative (V n) where
   pure = V.pure
   V fs <*> V xs = V $ Vector.zipWith ($) fs xs
 
-instance KnownNat n => Data.Traversable (V n) where
+instance (KnownNat n) => Data.Traversable (V n) where
   traverse f (V xs) =
     (V . Unsafe.toLinear (Vector.fromListN (V.theLength @n)))
       Data.<$> Data.traverse f (Unsafe.toLinear Vector.toList xs)
