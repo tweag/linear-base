@@ -22,8 +22,10 @@ import Data.Functor.Compose
 import Data.Kind
 import qualified Data.Unrestricted.Linear as Linear
 import qualified Data.Vector
+import Prelude.Linear (($), (&))
 import qualified Prelude.Linear as Linear
 import Test.Tasty.Bench
+import Prelude hiding (($))
 
 dontFuse :: a -> a
 dontFuse a = a
@@ -36,20 +38,24 @@ benchmarks :: Benchmark
 benchmarks =
   bgroup
     "arrays"
-    [ runImpl "alloc" bAlloc arr_size,
-      runImpl "toList" bToList arr_size,
-      runImpl "map" bMap arr_size,
-      runImpl "reads" bReads arr_size,
-      runImpl "successive writes (very unfair to vector)" bSets arr_size
-    ]
+    $ runImpls
+      [ bAlloc,
+        bToList,
+        bMap,
+        bReads,
+        bSets
+      ]
 
 --------------------------------------------------------------------------------
 
 data Impl where
-  Impl :: (forall arr. (ArrayThing arr) => arr Int %1 -> ()) -> Impl
+  Impl :: String -> (forall arr. (ArrayThing arr) => arr Int %1 -> ()) -> Impl
 
-runImpl :: String -> Impl -> Int -> Benchmark
-runImpl name (Impl impl) sz0 =
+runImpls :: [Impl] -> [Benchmark]
+runImpls = map (runImpl arr_size)
+
+runImpl :: Int -> Impl -> Benchmark
+runImpl sz0 (Impl name impl) =
   bgroup
     name
     [ bench "Data.Array.Mutable.Linear" $ whnf (runLinear impl) sz0,
@@ -98,56 +104,46 @@ cleanup k a = k (Compose (Linear.Ur a))
 --------------------------------------------------------------------------------
 
 bToList :: Impl
-bToList = Impl impl
+bToList = Impl "toList" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
-    impl arr =
-      arr
-        Linear.& toList
-        Linear.& Linear.lift rnf
-        Linear.& Linear.unur
+    impl arr = arr & toList & Linear.lift rnf & Linear.unur
 {-# NOINLINE bToList #-}
 
 bMap :: Impl
-bMap = Impl impl
+bMap = Impl "map" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr =
-      arr
-        Linear.& amap (+ 1)
-        Linear.& get 5
-        Linear.& \case
-          (Linear.Ur _, arr') -> force arr'
+      case arr & amap (+ 1) & get 5 of
+        (Linear.Ur _, arr') -> force arr'
 {-# NOINLINE bMap #-}
 
 bReads :: Impl
-bReads = Impl impl
+bReads = Impl "reads" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr0 =
-      arr0
-        Linear.& size
-        Linear.& \(Linear.Ur sz, arr) ->
-          arr
-            Linear.& go 0 sz
+      case size arr0 of
+        (Linear.Ur sz, arr) -> go 0 sz arr
       where
         go :: (ArrayThing arr) => Int -> Int -> arr Int %1 -> ()
         go start end arr
           | start < end =
-              get start arr
-                Linear.& \(Linear.Ur i, arr') -> i `Linear.seq` go (start + 1) end arr'
+              case get start arr of
+                (Linear.Ur i, arr') -> i `Linear.seq` go (start + 1) end arr'
           | otherwise = force arr
 {-# NOINLINE bReads #-}
 
 bAlloc :: Impl
-bAlloc = Impl impl
+bAlloc = Impl "alloc" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl = force
 {-# NOINLINE bAlloc #-}
 
 bSets :: Impl
-bSets = Impl impl
+bSets = Impl "successive writes (very unfair to vector)" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr0 =
