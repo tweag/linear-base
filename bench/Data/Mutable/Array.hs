@@ -1,16 +1,17 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE RankNTypes #-}
 -- Uncomment the line below to observe the generated (optimised) Core. It will
 -- land in a file named “Array.dump-simpl”
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Data.Mutable.Array (benchmarks) where
 
@@ -35,28 +36,25 @@ benchmarks :: Benchmark
 benchmarks =
   bgroup
     "arrays"
-    [ runImpls "alloc" bAlloc arr_size,
-      runImpls "toList" bToList arr_size,
-      runImpls "map" bMap arr_size,
-      runImpls "reads" bReads arr_size,
-      runImpls "successive writes (very unfair to vector)" bSets arr_size
+    [ runImpl "alloc" bAlloc arr_size,
+      runImpl "toList" bToList arr_size,
+      runImpl "map" bMap arr_size,
+      runImpl "reads" bReads arr_size,
+      runImpl "successive writes (very unfair to vector)" bSets arr_size
     ]
 
 --------------------------------------------------------------------------------
 
-data Impls
-  = Impls
-      (Array.Linear.Array Int %1 -> ())
-      (Data.Vector.Vector Int -> ())
+data Impl where
+  Impl :: (forall arr. (ArrayThing arr) => arr Int %1 -> ()) -> Impl
 
-runImpls :: String -> Impls -> Int -> Benchmark
-runImpls name impls sz0 =
-  let Impls linear dataVector = impls
-   in bgroup
-        name
-        [ bench "Data.Array.Mutable.Linear" $ whnf (runLinear linear) sz0,
-          bench "Data.Vector" $ whnf (runDataVector dataVector) sz0
-        ]
+runImpl :: String -> Impl -> Int -> Benchmark
+runImpl name (Impl impl) sz0 =
+  bgroup
+    name
+    [ bench "Data.Array.Mutable.Linear" $ whnf (runLinear impl) sz0,
+      bench "Data.Vector" $ whnf (runDataVector (cleanup impl)) sz0
+    ]
   where
     runLinear :: (Array.Linear.Array Int %1 -> ()) -> Int -> ()
     runLinear cb sz = Linear.unur (Array.Linear.alloc sz 0 (\a -> Linear.move (cb a)))
@@ -99,8 +97,8 @@ cleanup k a = k (Compose (Linear.Ur a))
 
 --------------------------------------------------------------------------------
 
-bToList :: Impls
-bToList = Impls linear dataVector
+bToList :: Impl
+bToList = Impl impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr =
@@ -108,16 +106,10 @@ bToList = Impls linear dataVector
         Linear.& toList
         Linear.& Linear.lift rnf
         Linear.& Linear.unur
-
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear = impl
-
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector = cleanup impl
 {-# NOINLINE bToList #-}
 
-bMap :: Impls
-bMap = Impls linear dataVector
+bMap :: Impl
+bMap = Impl impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr =
@@ -126,16 +118,10 @@ bMap = Impls linear dataVector
         Linear.& get 5
         Linear.& \case
           (Linear.Ur _, arr') -> force arr'
-
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear = impl
-
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector = cleanup impl
 {-# NOINLINE bMap #-}
 
-bReads :: Impls
-bReads = Impls linear dataVector
+bReads :: Impl
+bReads = Impl impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr0 =
@@ -151,29 +137,17 @@ bReads = Impls linear dataVector
               get start arr
                 Linear.& \(Linear.Ur i, arr') -> i `Linear.seq` go (start + 1) end arr'
           | otherwise = force arr
-
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear = impl
-
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector = cleanup impl
 {-# NOINLINE bReads #-}
 
-bAlloc :: Impls
-bAlloc = Impls linear dataVector
+bAlloc :: Impl
+bAlloc = Impl impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl = force
-
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear = impl
-
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector = cleanup impl
 {-# NOINLINE bAlloc #-}
 
-bSets :: Impls
-bSets = Impls linear dataVector
+bSets :: Impl
+bSets = Impl impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr0 =
@@ -185,9 +159,3 @@ bSets = Impls linear dataVector
           | start < end =
               go (start + 1) end Linear.$ set start 42 arr
           | otherwise = force arr
-
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear = impl
-
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector = cleanup impl
