@@ -10,8 +10,8 @@ import qualified Data.Array.Mutable.Linear as Array.Linear
 import Data.Function ((&))
 import qualified Data.Unrestricted.Linear as Linear
 import qualified Data.Vector
-import Gauge
 import qualified Prelude.Linear as Linear
+import Test.Tasty.Bench
 
 dontFuse :: a -> a
 dontFuse a = a

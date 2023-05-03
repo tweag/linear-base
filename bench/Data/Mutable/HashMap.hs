@@ -11,7 +11,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 
-module Data.Mutable.HashMap (hmbench) where
+module Data.Mutable.HashMap (benchmarks) where
 
 import Control.DeepSeq (NFData (..), deepseq, force)
 import qualified Control.Monad.Random as Random
@@ -25,9 +25,9 @@ import Data.Hashable (Hashable (..), hashWithSalt)
 import Data.List (foldl')
 import qualified Data.Unrestricted.Linear as Linear
 import GHC.Generics (Generic)
-import Gauge
 import qualified Prelude.Linear as Linear
 import qualified System.Random.Shuffle as Random
+import Test.Tasty.Bench
 
 -- # Exported benchmarks
 -------------------------------------------------------------------------------
@@ -60,8 +60,8 @@ data BenchInput where
 
 instance NFData BenchInput
 
-hmbench :: Benchmark
-hmbench =
+benchmarks :: Benchmark
+benchmarks =
   bgroup
     "hashmaps"
     [ bgroup "linear-base:Data.HashMap.Mutable.Linear" $

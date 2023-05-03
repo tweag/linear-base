@@ -216,11 +216,11 @@ benchmark mutable-data
         base,
         vector,
         deepseq,
-        gauge,
         hashtables,
         hashable,
         linear-base,
         random,
         random-shuffle,
+        tasty-bench >= 0.3,
         unordered-containers,
         MonadRandom
