@@ -459,8 +459,6 @@ type family DestsOf (ctor :: (Meta, [(Meta, Type)])) (a :: Type) (r :: RegionId)
   DestsOf '(_, '[ '(_, t1), '(_, t2), '(_, t3), '(_, t4), '(_, t5), '(_, t6), '(_, t7)]) _ r = (Dest t1 r, Dest t2 r, Dest t3 r, Dest t4 r, Dest t5 r, Dest t6 r, Dest t7 r)
   DestsOf _ _ _ = TypeError ('Text "DestsOf not implemented for constructors with more than 7 fields")
 
-newtype FillComp a b r = FillComp (Incomplete a b r)
-
 fill :: forall (symCtor :: Symbol) a (r :: RegionId) ctor. ('Just ctor ~ GCtorInfoOf symCtor (Rep a ()), Fill ctor a) => Dest a r %1 -> DestsOf ctor a r
 fill = toLinear (\d -> unsafePerformIO (_fill @ctor @a d))
 
