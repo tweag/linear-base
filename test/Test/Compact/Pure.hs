@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
@@ -17,26 +18,29 @@ import Compact.Pure.Internal
 import Control.Functor.Linear ((<&>))
 import Control.Monad (return)
 import GHC.Generics (Generic)
-import Prelude.Linear
+import Prelude.Linear hiding (Eq)
+import Prelude (Eq)
 import Test.Tasty
 import Test.Tasty.HUnit
 
 compactPureTests :: TestTree
 compactPureTests =
   testGroup
-    "Demo for compact regions and destinations"
-    [testCaseInfo "Compact region demo" compactDemo]
+    "Using dests to fill compact region"
+    [ testCaseInfo "Dests for compact region: compose when RHS is freshly allocated" compOnFreshAlloc,
+      testCaseInfo "Dests for compact region: compose when RHS has already been filled" compOnUsedAlloc,
+      testCaseInfo "Dests for compact region: fill custom data (via generic) and return companion value with completeExtract" fillCustomDataAndExtract
+    ]
 
 -- Launch with
+-- $ stack test --ta '-p "Using dests to fill compact region"'
 
--- $ stack test --ta '-p "Compact region demo"'
+data Foo a b = MkFoo {unBar :: a, unBaz :: (b, b), unBoo :: a} deriving (Eq, Generic, Show)
 
-data Foo a b = MkFoo {unBar :: a, unBaz :: (b, b), unBoo :: a} deriving (Generic)
-
-compactDemo :: IO String
-compactDemo = do
-  let s1 :: Ur (Int, Int)
-      !s1 = withRegion $ \r ->
+compOnFreshAlloc :: IO String
+compOnFreshAlloc = do
+  let actual :: Ur (Int, Int)
+      !actual = withRegion $ \r ->
         case dup r of
           (r1, r2) ->
             complete $
@@ -49,8 +53,16 @@ compactDemo = do
                                 <|. alloc r2
                                 <|.. 2
                     )
-  let s2 :: Ur (Int, (Int, Int))
-      !s2 = withRegion $ \r -> case dup r of
+      expected :: Ur (Int, Int)
+      !expected = Ur (1, 2)
+      fancyDisp = showHeap actual
+  assertEqual "" expected actual
+  return fancyDisp
+
+compOnUsedAlloc :: IO String
+compOnUsedAlloc = do
+  let actual :: Ur (Int, (Int, Int))
+      !actual = withRegion $ \r -> case dup r of
         (r1, r2) ->
           complete $
             alloc r1
@@ -62,8 +74,16 @@ compactDemo = do
                               <|. (alloc r2 <&> (\dp' -> case dp' <| C @"(,)" of (dr1, dr2) -> dr1 <|.. 2 `lseq` dr2))
                               <|.. 3
                   )
-  let s3 :: Ur (Foo Int Char, Int)
-      !s3 = withRegion $ \r -> 
+      expected :: Ur (Int, (Int, Int))
+      !expected = Ur (1, (2, 3))
+      fancyDisp = showHeap actual
+  assertEqual "" expected actual
+  return fancyDisp
+
+fillCustomDataAndExtract :: IO String
+fillCustomDataAndExtract = do
+  let actual :: Ur (Foo Int Char, Int)
+      !actual = withRegion $ \r -> 
           completeExtract $
             alloc r
               <&> ( \d ->
@@ -76,12 +96,8 @@ compactDemo = do
                             `lseq` dBoo <|.. 2
                             `lseq` Ur 14
                   )
-
-  putStrLn "\nConstruction ok\n"
-  putStrLn $ showHeap s1
-  putStrLn $ "\n==================================================\n"
-  putStrLn $ showHeap s2
-  putStrLn $ "\n==================================================\n"
-  putStrLn $ showHeap s3
-
-  return "Done"
+      expected :: Ur (Foo Int Char, Int)
+      !expected = Ur (MkFoo 1 ('a', 'b') 2, 14)
+      fancyDisp = showHeap actual
+  assertEqual "" expected actual
+  return fancyDisp
