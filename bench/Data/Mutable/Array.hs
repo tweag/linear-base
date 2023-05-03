@@ -22,7 +22,7 @@ dontFuse a = a
 {-# NOINLINE dontFuse #-}
 
 arr_size :: Int
-arr_size = 10_000_000
+arr_size = 1_000
 
 benchmarks :: Benchmark
 benchmarks =
