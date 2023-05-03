@@ -28,9 +28,11 @@ benchmarks :: Benchmark
 benchmarks =
   bgroup
     "arrays"
-    [ runImpls "toList" bToList arr_size,
+    [ runImpls "alloc" bAlloc arr_size,
+      runImpls "toList" bToList arr_size,
       runImpls "map" bMap arr_size,
-      runImpls "reads" bReads arr_size
+      runImpls "reads" bReads arr_size,
+      runImpls "successive writes (very unfair to vector)" bSets arr_size
     ]
 
 --------------------------------------------------------------------------------
@@ -125,3 +127,38 @@ bReads = Impls linear dataVector
               (v Data.Vector.! start) `seq` go (start + 1) end
           | otherwise = ()
 {-# NOINLINE bReads #-}
+
+bAlloc :: Impls
+bAlloc = Impls linear dataVector
+  where
+    linear :: Array.Linear.Array Int %1 -> ()
+    linear = Linear.consume
+
+    dataVector :: Data.Vector.Vector Int -> ()
+    dataVector = (`seq` ())
+{-# NOINLINE bAlloc #-}
+
+bSets :: Impls
+bSets = Impls linear dataVector
+  where
+    linear :: Array.Linear.Array Int %1 -> ()
+    linear arr0 =
+      case Array.Linear.size arr0 of
+        (Linear.Ur sz, arr) -> go 0 sz arr
+      where
+        go :: Int -> Int -> Array.Linear.Array Int %1 -> ()
+        go start end arr
+          | start < end =
+              go (start + 1) end Linear.$ Array.Linear.unsafeSet start 42 arr
+          | otherwise = arr `Linear.lseq` ()
+
+    dataVector :: Data.Vector.Vector Int -> ()
+    dataVector v0 =
+      let sz = Data.Vector.length v0
+       in go 0 sz v0
+      where
+        go :: Int -> Int -> Data.Vector.Vector Int -> ()
+        go start end v
+          | start < end =
+              go (start + 1) end $ v Data.Vector.// [(start, 42)]
+          | otherwise = v `seq` ()
