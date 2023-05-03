@@ -1,5 +1,6 @@
 module Compact.Pure (benchmarks) where
-import Gauge
+
+import Test.Tasty.Bench
 import Compact.SExpr
 import GHC.Compact (compact, getCompact)
 
