@@ -1,7 +1,6 @@
 module Main (main) where
 
 import qualified Compact.Pure as Compact
-import Compact.SExpr
 import Test.Tasty.Bench (defaultMain)
 
 -- Launch with

@@ -4,7 +4,6 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
-{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -12,14 +11,11 @@ module Compact.SExpr where
 
 import Compact.Pure.Internal
 import Control.DeepSeq (NFData)
-import Control.Functor.Linear ((<$>), (<&>), (>>=))
-import Data.Bifunctor.Linear (Bifunctor (second))
+import Control.Functor.Linear ((<&>))
 import Data.Char (isSpace)
-import qualified Data.Functor.Linear as Data
 import GHC.Generics (Generic)
 import Prelude.Linear
 import Text.Read (readMaybe)
-import Unsafe.Linear (toLinear2)
 import qualified Prelude as NonLinear
 
 loadSampleData :: IO String
@@ -31,7 +27,7 @@ data SExpr
   | SInteger Int
   | SString String
   | SSymbol String
-  deriving (Eq, Generic, NFData)
+  deriving (NonLinear.Eq, Generic, NFData)
 
 showSExpr :: Bool -> Int -> SExpr %1 -> String
 showSExpr cont indent = \case
@@ -40,14 +36,14 @@ showSExpr cont indent = \case
     makeIndent cont indent
       ++ "("
       ++ showSExpr True (indent + 1) x
-      ++ concatMap (\x -> "\n" ++ showSExpr False (indent + 1) x) xs
+      ++ concatMap (\x' -> "\n" ++ showSExpr False (indent + 1) x') xs
       ++ ")"
   SFloat f -> makeIndent cont indent ++ show f
   SInteger i -> makeIndent cont indent ++ show i
   SString s -> makeIndent cont indent ++ show s
   SSymbol s -> makeIndent cont indent ++ s
   where
-    makeIndent cont indent = if cont then "" else replicate indent ' '
+    makeIndent isCont n = if isCont then "" else replicate n ' '
 
 instance Show SExpr where
   show x = showSExpr False 0 x
@@ -55,7 +51,7 @@ instance Show SExpr where
 data SContext
   = NotInSList
   | InSList [SExpr]
-  deriving (Eq, Generic, NFData)
+  deriving (Generic, NFData)
 
 data DSContext r
   = DNotInSList (Dest SExpr r)
@@ -67,7 +63,7 @@ data SExprParseError
   | UnexpectedEOFSList (Maybe [SExpr])
   | UnexpectedEOFSString Bool (Maybe String)
   | UnexpectedContentAfter SExpr (Maybe String)
-  deriving (Eq, Generic, NFData)
+  deriving (Generic, NFData)
 
 instance Show SExprParseError where
   show = \case
@@ -165,18 +161,18 @@ parseUsingDest' = \cases
               Nothing -> appendOrRet ctx (\dExpr -> dExpr <| C @"SSymbol" <|.. raw `lseq` Right) remaining
     where
       appendOrRet :: DSContext r %1 -> (Dest SExpr r %1 -> String -> Either (Ur SExprParseError) String) %1 -> String -> Either (Ur SExprParseError) String
-      appendOrRet ctx f s = case ctx of
-        DNotInSList d -> f d s
+      appendOrRet context f str = case context of
+        DNotInSList d -> f d str
         DInSList d ->
           case d <| C @":" of
-            (dExpr, dRem) -> case f dExpr s of
-              Right s' -> parseUsingDest' (DInSList dRem) s'
+            (dExpr, dRem) -> case f dExpr str of
+              Right str' -> parseUsingDest' (DInSList dRem) str'
               Left err -> dRem <| C @"[]" `lseq` Left err
 
 parseUsingDest :: String -> Either SExprParseError SExpr
-parseUsingDest s =
+parseUsingDest str =
   case withRegion $ \r ->
-    case completeExtract $ alloc r <&> DNotInSList <&> flip parseUsingDest' s <&> finalizeResults of
+    case completeExtract $ alloc r <&> DNotInSList <&> flip parseUsingDest' str <&> finalizeResults of
       Ur (expr, Right ()) -> Ur (Right expr)
       Ur (expr, Left errFn) -> Ur (Left $ errFn expr) of
     Ur res -> res

@@ -13,7 +13,6 @@
 
 module Test.Compact.Pure (compactPureTests) where
 
-import Compact.Pure
 import Compact.Pure.Internal
 import Control.Functor.Linear ((<&>))
 import Control.Monad (return)
