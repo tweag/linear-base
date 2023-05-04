@@ -67,6 +67,7 @@ runImpl sz0 (Impl name impl) =
 
     runSequence :: (Data.Sequence.Seq Int -> ()) -> Int -> ()
     runSequence cb sz = cb (Data.Sequence.replicate sz 0)
+{-# INLINE runImpl #-}
 
 type ArrayThing :: (Type -> Type) -> Constraint
 class ArrayThing arr where
@@ -145,7 +146,6 @@ bToList = Impl "toList" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl arr = arr & toList & Linear.lift rnf & Linear.unur
-{-# NOINLINE bToList #-}
 
 bMap :: Impl
 bMap = Impl "map" impl
@@ -154,7 +154,6 @@ bMap = Impl "map" impl
     impl arr =
       case arr & amap (+ 1) & get 5 of
         (Linear.Ur _, arr') -> force arr'
-{-# NOINLINE bMap #-}
 
 bReads :: Impl
 bReads = Impl "reads" impl
@@ -170,14 +169,12 @@ bReads = Impl "reads" impl
               case get start arr of
                 (Linear.Ur i, arr') -> i `Linear.seq` go (start + 1) end arr'
           | otherwise = force arr
-{-# NOINLINE bReads #-}
 
 bAlloc :: Impl
 bAlloc = Impl "alloc" impl
   where
     impl :: (ArrayThing arr) => arr Int %1 -> ()
     impl = force
-{-# NOINLINE bAlloc #-}
 
 bSets :: Impl
 bSets = Impl "successive writes (very unfair to vector)" impl
