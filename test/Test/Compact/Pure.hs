@@ -1,7 +1,9 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LinearTypes #-}
@@ -13,7 +15,7 @@
 
 module Test.Compact.Pure (compactPureTests) where
 
-import Compact.Pure.Internal
+import Compact.Pure
 import Control.Functor.Linear ((<&>))
 import Control.Monad (return)
 import GHC.Generics (Generic)
@@ -40,19 +42,17 @@ data Foo a b = MkFoo {unBar :: a, unBaz :: (b, b), unBoo :: a} deriving (Eq, Gen
 compOnFreshAlloc :: IO String
 compOnFreshAlloc = do
   let actual :: Ur (Int, Int)
-      !actual = withRegion $ \r ->
-        case dup r of
-          (r1, r2) ->
-            complete $
-              alloc r1
-                <&> ( \dp ->
-                        case dp <| C @"(,)" of
-                          (dl, dr) ->
-                            dl <|.. 1 `lseq`
-                              dr
-                                <|. alloc r2
-                                <|.. 2
-                    )
+      !actual = withRegion $ \(_ :: RegionContext r) ->
+        complete $
+          (alloc @r)
+            <&> ( \dp ->
+                    case dp <| C @"(,)" of
+                      (dl, dr) ->
+                        dl <|.. 1 `lseq`
+                          dr
+                            <|. (alloc @r)
+                            <|.. 2
+                )
       expected :: Ur (Int, Int)
       !expected = Ur (1, 2)
       fancyDisp = showHeap actual
@@ -62,18 +62,17 @@ compOnFreshAlloc = do
 compOnUsedAlloc :: IO String
 compOnUsedAlloc = do
   let actual :: Ur (Int, (Int, Int))
-      !actual = withRegion $ \r -> case dup r of
-        (r1, r2) ->
-          complete $
-            alloc r1
-              <&> ( \dp ->
-                      case dp <| C @"(,)" of
-                        (dl, dr) ->
-                          dl <|.. 1 `lseq`
-                            dr
-                              <|. (alloc r2 <&> (\dp' -> case dp' <| C @"(,)" of (dr1, dr2) -> dr1 <|.. 2 `lseq` dr2))
-                              <|.. 3
-                  )
+      !actual = withRegion $ \(_ :: RegionContext r) ->
+        complete $
+          (alloc @r)
+            <&> ( \dp ->
+                    case dp <| C @"(,)" of
+                      (dl, dr) ->
+                        dl <|.. 1 `lseq`
+                          dr
+                            <|. ((alloc @r) <&> (\dp' -> case dp' <| C @"(,)" of (dr1, dr2) -> dr1 <|.. 2 `lseq` dr2))
+                            <|.. 3
+                )
       expected :: Ur (Int, (Int, Int))
       !expected = Ur (1, (2, 3))
       fancyDisp = showHeap actual
@@ -83,9 +82,9 @@ compOnUsedAlloc = do
 fillCustomDataAndExtract :: IO String
 fillCustomDataAndExtract = do
   let actual :: Ur (Foo Int Char, Int)
-      !actual = withRegion $ \r ->
+      !actual = withRegion $ \(_ :: RegionContext r) ->
         completeExtract $
-          alloc r
+          (alloc @r)
             <&> ( \d ->
                     case d <| C @"MkFoo" of
                       (dBar, dBaz, dBoo) ->

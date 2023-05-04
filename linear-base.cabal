@@ -140,6 +140,7 @@ library
         ghc-prim,
         hashable,
         linear-generics >= 0.2,
+        reflection >= 2.1,
         storable-tuple,
         text,
         transformers,
@@ -237,8 +238,8 @@ benchmark memory
     main-is:          Main.hs
     hs-source-dirs:   memory
     other-modules:
-        Compact.Pure
-        Compact.SExpr
+        Bench.Compact.Pure
+        Bench.Compact.SExpr
 
     default-language: Haskell2010
     build-depends:

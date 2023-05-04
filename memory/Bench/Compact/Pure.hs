@@ -1,6 +1,6 @@
-module Compact.Pure (benchmarks) where
+module Bench.Compact.Pure (benchmarks) where
 
-import Compact.SExpr
+import Bench.Compact.SExpr
 import GHC.Compact (compact, getCompact)
 import Test.Tasty.Bench
 

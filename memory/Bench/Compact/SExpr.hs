@@ -1,15 +1,17 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Compact.SExpr where
+module Bench.Compact.SExpr where
 
-import Compact.Pure.Internal
+import Compact.Pure
 import Control.DeepSeq (NFData)
 import Control.Functor.Linear ((<&>))
 import Data.Char (isSpace)
@@ -19,7 +21,7 @@ import Text.Read (readMaybe)
 import qualified Prelude as NonLinear
 
 loadSampleData :: IO String
-loadSampleData = readFile "memory/Compact/test_data.sexpr"
+loadSampleData = readFile "memory/Bench/Compact/test_data.sexpr"
 
 data SExpr
   = SList [SExpr]
@@ -54,8 +56,8 @@ data SContext
   deriving (Generic, NFData)
 
 data DSContext r
-  = DNotInSList (Dest SExpr r)
-  | DInSList (Dest [SExpr] r)
+  = DNotInSList (Dest r SExpr)
+  | DInSList (Dest r [SExpr])
 
 data SExprParseError
   = UnexpectedClosingParen String
@@ -132,7 +134,7 @@ parseWithoutDest s = case parseWithoutDest' NotInSList s of
 defaultSExpr :: SExpr
 defaultSExpr = SInteger 0
 
-readStringUsingDest :: Dest String r %1 -> Bool -> String -> Either (Ur SExprParseError) String
+readStringUsingDest :: forall r. (IsRegion r) => Dest r String %1 -> Bool -> String -> Either (Ur SExprParseError) String
 readStringUsingDest = \cases
   d escaped [] -> d <| C @"[]" `lseq` Left (Ur $ UnexpectedEOFSString escaped Nothing)
   d True ('n' : xs) -> case d <| C @":" of (dx, dxs) -> dx <|.. '\n' `lseq` readStringUsingDest dxs False xs -- TODO: add other escape chars
@@ -140,7 +142,7 @@ readStringUsingDest = \cases
   d False ('"' : xs) -> d <| C @"[]" `lseq` Right xs
   d _ (x : xs) -> case d <| C @":" of (dx, dxs) -> dx <|.. x `lseq` readStringUsingDest dxs False xs
 
-parseUsingDest' :: DSContext r %1 -> String -> Either (Ur SExprParseError) String
+parseUsingDest' :: forall r. (IsRegion r) => DSContext r %1 -> String -> Either (Ur SExprParseError) String
 parseUsingDest' = \cases
   (DNotInSList d) [] -> d <|.. defaultSExpr `lseq` Left $ Ur UnexpectedEOFSExpr
   (DInSList d) [] -> d <| C @"[]" `lseq` Left (Ur $ UnexpectedEOFSList Nothing)
@@ -160,7 +162,7 @@ parseUsingDest' = \cases
               Just float -> appendOrRet ctx (\dExpr -> dExpr <| C @"SFloat" <|.. float `lseq` Right) remaining
               Nothing -> appendOrRet ctx (\dExpr -> dExpr <| C @"SSymbol" <|.. raw `lseq` Right) remaining
     where
-      appendOrRet :: DSContext r %1 -> (Dest SExpr r %1 -> String -> Either (Ur SExprParseError) String) %1 -> String -> Either (Ur SExprParseError) String
+      appendOrRet :: DSContext r %1 -> (Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String) %1 -> String -> Either (Ur SExprParseError) String
       appendOrRet context f str = case context of
         DNotInSList d -> f d str
         DInSList d ->
@@ -171,8 +173,8 @@ parseUsingDest' = \cases
 
 parseUsingDest :: String -> Either SExprParseError SExpr
 parseUsingDest str =
-  case withRegion $ \r ->
-    case completeExtract $ alloc r <&> DNotInSList <&> flip parseUsingDest' str <&> finalizeResults of
+  case withRegion $ \(_ :: RegionContext r) ->
+    case completeExtract $ (alloc @r) <&> DNotInSList <&> flip parseUsingDest' str <&> finalizeResults of
       Ur (expr, Right ()) -> Ur (Right expr)
       Ur (expr, Left errFn) -> Ur (Left $ errFn expr) of
     Ur res -> res

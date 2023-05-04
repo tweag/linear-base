@@ -1,6 +1,6 @@
 module Main (main) where
 
-import qualified Compact.Pure as Compact
+import qualified Bench.Compact.Pure as Compact
 import Test.Tasty.Bench (defaultMain)
 
 -- Launch with
