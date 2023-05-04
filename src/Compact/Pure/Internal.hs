@@ -641,6 +641,7 @@ data Incomplete' (r :: RegionId) a b = Incomplete {rootReceiver :: Ur a, dests :
 intoR :: CompactRegion r %1 -> a -> Incomplete a () r
 intoR = toLinear2 _intoR
 
+{-# NOINLINE _intoR #-}
 _intoR :: CompactRegion r -> a -> Incomplete a () r
 _intoR (CompactRegion c) x =
   unsafePerformIO $ do
