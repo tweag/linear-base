@@ -1,49 +1,63 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneKindSignatures #-}
+
+-- Uncomment the line below to observe the generated (optimised) Core. It will
+-- land in a file named “Array.dump-simpl”
+-- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
 
 module Data.Mutable.Array (benchmarks) where
 
 import Control.DeepSeq (rnf)
 import qualified Data.Array.Mutable.Linear as Array.Linear
-import Data.Function ((&))
+import qualified Data.Array.Mutable.Linear as Array.Linear.Array
+import qualified Data.Foldable
+import Data.Functor.Compose
+import Data.Kind
+import qualified Data.Sequence
 import qualified Data.Unrestricted.Linear as Linear
 import qualified Data.Vector
+import Prelude.Linear (($), (&))
 import qualified Prelude.Linear as Linear
 import Test.Tasty.Bench
-
-dontFuse :: a -> a
-dontFuse a = a
-{-# NOINLINE dontFuse #-}
+import Prelude hiding (($))
 
 arr_size :: Int
-arr_size = 10_000_000
+arr_size = 1_000
 
 benchmarks :: Benchmark
 benchmarks =
   bgroup
     "arrays"
-    [ runImpls "toList" bToList arr_size,
-      runImpls "map" bMap arr_size,
-      runImpls "reads" bReads arr_size
-    ]
+    $ runImpls
+      [ bAlloc,
+        bToList,
+        bMap,
+        bReads,
+        bSets
+      ]
 
 --------------------------------------------------------------------------------
 
-data Impls
-  = Impls
-      (Array.Linear.Array Int %1 -> ())
-      (Data.Vector.Vector Int -> ())
+data Impl where
+  Impl :: String -> (forall arr. (ArrayThing arr) => arr Int %1 -> ()) -> Impl
 
-runImpls :: String -> Impls -> Int -> Benchmark
-runImpls name impls size =
-  let Impls linear dataVector = impls
-   in bgroup
-        name
-        [ bench "Data.Array.Mutable.Linear" $ whnf (runLinear linear) size,
-          bench "Data.Vector" $ whnf (runDataVector dataVector) size
-        ]
+runImpls :: [Impl] -> [Benchmark]
+runImpls = map (runImpl arr_size)
+
+runImpl :: Int -> Impl -> Benchmark
+runImpl sz0 (Impl name impl) =
+  bgroup
+    name
+    [ bench "Data.Array.Mutable.Linear" $ whnf (runLinear impl) sz0,
+      bench "Data.Vector" $ whnf (runDataVector (cleanup impl)) sz0,
+      bench "Data.Sequence" $ whnf (runSequence (cleanup impl)) sz0
+    ]
   where
     runLinear :: (Array.Linear.Array Int %1 -> ()) -> Int -> ()
     runLinear cb sz = Linear.unur (Array.Linear.alloc sz 0 (\a -> Linear.move (cb a)))
@@ -51,73 +65,127 @@ runImpls name impls size =
     runDataVector :: (Data.Vector.Vector Int -> ()) -> Int -> ()
     runDataVector cb sz = cb (Data.Vector.replicate sz 0)
 
+    runSequence :: (Data.Sequence.Seq Int -> ()) -> Int -> ()
+    runSequence cb sz = cb (Data.Sequence.replicate sz 0)
+{-# INLINE runImpl #-}
+
+type ArrayThing :: (Type -> Type) -> Constraint
+class ArrayThing arr where
+  size :: arr a %1 -> (Linear.Ur Int, arr a)
+  get :: Int -> arr a %1 -> (Linear.Ur a, arr a)
+  set :: Int -> a -> arr a %1 -> arr a
+  toList :: arr a %1 -> Linear.Ur [a]
+  amap :: (a -> b) -> arr a %1 -> arr b
+
+  -- | Note: I [Arnaud Spiwack] initially thought I could use
+  -- 'Consumable'/'consume' for this. But it doesn't work because the natural
+  -- 'consume' function for `Ur x` doesn't evaluate the `x` at all. We need to
+  -- evaluate the `x` in the 'Vector' instance.
+  force :: arr a %1 -> ()
+
+type UArrayThing :: (Type -> Type) -> Constraint
+class UArrayThing arr where
+  usize :: arr a -> Int
+  uget :: Int -> arr a -> a
+  uset :: Int -> a -> arr a -> arr a
+  utoList :: arr a -> [a]
+  uamap :: (a -> b) -> arr a -> arr b
+  uforce :: arr a -> ()
+
+instance ArrayThing Array.Linear.Array where
+  size = Array.Linear.Array.size
+  get = Array.Linear.Array.unsafeGet
+  set = Array.Linear.Array.unsafeSet
+  toList = Array.Linear.Array.toList
+  amap = Array.Linear.Array.map
+  force = Linear.consume
+
+instance (UArrayThing arr) => ArrayThing (Compose Linear.Ur arr) where
+  size (Compose (Linear.Ur arr)) = (Linear.Ur (usize arr), Compose (Linear.Ur arr))
+  get i (Compose (Linear.Ur arr)) = (Linear.Ur (uget i arr), Compose (Linear.Ur arr))
+  set i a (Compose (Linear.Ur arr)) = Compose (Linear.Ur (uset i a arr))
+  toList (Compose (Linear.Ur arr)) = Linear.Ur (utoList arr)
+  amap f (Compose (Linear.Ur arr)) = Compose (Linear.Ur (uamap f arr))
+  force (Compose (Linear.Ur arr)) = uforce arr
+
+instance UArrayThing Data.Vector.Vector where
+  usize = Data.Vector.length
+  uget i v = v Data.Vector.! i
+  uset i a v = v Data.Vector.// [(i, a)]
+  utoList = Data.Vector.toList
+  uamap = Data.Vector.map
+  uforce = (`seq` ())
+
+instance UArrayThing Data.Sequence.Seq where
+  usize = Data.Sequence.length
+  uget i s = Data.Sequence.index s i
+  uset = Data.Sequence.update
+  utoList = Data.Foldable.toList
+  uamap = fmap
+
+  -- I'm not sure about this one: on the one hand it forces the data structure
+  -- to be allocated. On the other hand, it will do an extra traversal. Maybe
+  -- there's a better comparison that can be done.
+  uforce s = (foldMap (\_ -> Strict) s) `seq` ()
+
+cleanup :: ((Compose Linear.Ur f a) %1 -> b) -> (f a -> b)
+cleanup k a = k (Compose (Linear.Ur a))
+
+data Strict = Strict
+
+instance Semigroup Strict where
+  Strict <> x = x
+
+instance Monoid Strict where
+  mempty = Strict
+
 --------------------------------------------------------------------------------
 
-bToList :: Impls
-bToList = Impls linear dataVector
+bToList :: Impl
+bToList = Impl "toList" impl
   where
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear hm =
-      hm
-        Linear.& Array.Linear.toList
-        Linear.& Linear.lift rnf
-        Linear.& Linear.unur
+    impl :: (ArrayThing arr) => arr Int %1 -> ()
+    impl arr = arr & toList & Linear.lift rnf & Linear.unur
 
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector hm =
-      hm
-        & Data.Vector.toList
-        & rnf
-{-# NOINLINE bToList #-}
-
-bMap :: Impls
-bMap = Impls linear dataVector
+bMap :: Impl
+bMap = Impl "map" impl
   where
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear hm =
-      hm
-        Linear.& Array.Linear.map (+ 1)
-        Linear.& Array.Linear.unsafeGet 5
-        Linear.& (`Linear.lseq` ())
+    impl :: (ArrayThing arr) => arr Int %1 -> ()
+    impl arr =
+      case arr & amap (+ 1) & get 5 of
+        (Linear.Ur _, arr') -> force arr'
 
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector hm =
-      hm
-        & Data.Vector.map (+ 1)
-        & dontFuse -- This looks like cheating, I know. But we're trying to measure
-        -- the speed of `map`, and without this, `vector` fuses the `map`
-        -- with the subsequent `index` to skip writing to the rest of the
-        -- vector.
-        & (`Data.Vector.unsafeIndex` 5)
-        & (`seq` ())
-{-# NOINLINE bMap #-}
-
-bReads :: Impls
-bReads = Impls linear dataVector
+bReads :: Impl
+bReads = Impl "reads" impl
   where
-    linear :: Array.Linear.Array Int %1 -> ()
-    linear hm =
-      hm
-        Linear.& Array.Linear.size
-        Linear.& \(Linear.Ur sz, arr) ->
-          arr
-            Linear.& go 0 sz
+    impl :: (ArrayThing arr) => arr Int %1 -> ()
+    impl arr0 =
+      case size arr0 of
+        (Linear.Ur sz, arr) -> go 0 sz arr
       where
-        go :: Int -> Int -> Array.Linear.Array Int %1 -> ()
+        go :: (ArrayThing arr) => Int -> Int -> arr Int %1 -> ()
         go start end arr
           | start < end =
-              Array.Linear.unsafeGet start arr
-                Linear.& \(Linear.Ur i, arr') -> i `Linear.seq` go (start + 1) end arr'
-          | otherwise = arr `Linear.lseq` ()
+              case get start arr of
+                (Linear.Ur i, arr') -> i `Linear.seq` go (start + 1) end arr'
+          | otherwise = force arr
 
-    dataVector :: Data.Vector.Vector Int -> ()
-    dataVector v =
-      let sz = Data.Vector.length v
-       in go 0 sz
+bAlloc :: Impl
+bAlloc = Impl "alloc" impl
+  where
+    impl :: (ArrayThing arr) => arr Int %1 -> ()
+    impl = force
+
+bSets :: Impl
+bSets = Impl "successive writes (very unfair to vector)" impl
+  where
+    impl :: (ArrayThing arr) => arr Int %1 -> ()
+    impl arr0 =
+      case size arr0 of
+        (Linear.Ur sz, arr) -> go 0 sz arr
       where
-        go :: Int -> Int -> ()
-        go start end
+        go :: (ArrayThing arr) => Int -> Int -> arr Int %1 -> ()
+        go start end arr
           | start < end =
-              (v Data.Vector.! start) `seq` go (start + 1) end
-          | otherwise = ()
-{-# NOINLINE bReads #-}
+              go (start + 1) end Linear.$ set start 42 arr
+          | otherwise = force arr
