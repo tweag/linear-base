@@ -1,17 +1,15 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneKindSignatures #-}
+
 -- Uncomment the line below to observe the generated (optimised) Core. It will
 -- land in a file named “Array.dump-simpl”
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
-{-# LANGUAGE StandaloneKindSignatures #-}
 
 module Data.Mutable.Array (benchmarks) where
 
@@ -28,10 +26,6 @@ import Prelude.Linear (($), (&))
 import qualified Prelude.Linear as Linear
 import Test.Tasty.Bench
 import Prelude hiding (($))
-
-dontFuse :: a -> a
-dontFuse a = a
-{-# NOINLINE dontFuse #-}
 
 arr_size :: Int
 arr_size = 1_000
