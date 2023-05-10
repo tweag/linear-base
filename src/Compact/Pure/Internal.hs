@@ -412,7 +412,7 @@ _fillComp Dest {parentWriteLoc = bParentWriteLoc} Incomplete {rootReceiver = sRo
             ++ " <- #"
             ++ (show $ ptrToWord bParentWriteLoc)
             ++ " (changing slot carried by initial dest of small struct)"
-    return $! sDests
+    return $ sDests
 
 {-# NOINLINE _fillLeaf #-}
 _fillLeaf :: forall r a. (IsRegion r) => Dest r a -> a -> ()
@@ -642,7 +642,7 @@ intoR x =
       "intoR: [region] <- #"
         ++ (show $ aToWord rootReceiver)
         ++ ": Ur [value]"
-    return $! Incomplete rootReceiver () nullPtr
+    return $ Incomplete rootReceiver () nullPtr
 
 {-# NOINLINE _hide #-}
 _hide :: a -> a
@@ -667,4 +667,4 @@ alloc =
         ++ " (slot address stored at "
         ++ (show $ ptrToWord pParentWriteLoc)
         ++ ")"
-    return $! Incomplete rootReceiver initialDest pParentWriteLoc
+    return $ Incomplete rootReceiver initialDest pParentWriteLoc
