@@ -78,3 +78,5 @@ jobs:
       run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Build
       run: nix-shell --pure --run "stack build --pedantic --test --bench --no-run-benchmarks"
+    - name: Test in profiling mode (for destination code)
+      run: nix-shell --pure --run "stack test --ta '-p \"Using dests to fill compact region\"' --profile"
