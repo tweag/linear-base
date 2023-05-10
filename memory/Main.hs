@@ -6,6 +6,9 @@ import Test.Tasty.Bench (defaultMain)
 -- Launch with
 -- stack bench linear-base:bench:memory --ba '+RTS -T'
 
+-- remove useless lines in profiling results with
+-- .*?0\.0    0\.0     0\.0    0\.0\n
+
 main :: IO ()
 main = do
   defaultMain

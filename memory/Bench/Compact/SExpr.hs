@@ -113,13 +113,14 @@ parseWithoutDest' = \cases
     _ ->
       if isSpace x
         then parseWithoutDest' ctx xs
-        else case NonLinear.break (\c -> isSpace c || c `NonLinear.elem` ['(', ')', '"']) s of
+        else case splitOnSep s of
           (raw, remaining) -> case readMaybe @Int raw of
             Just int -> appendOrRet ctx $ Right (SInteger int, remaining)
             Nothing -> case readMaybe @Float raw of
               Just float -> appendOrRet ctx $ Right (SFloat float, remaining)
               Nothing -> appendOrRet ctx $ Right (SSymbol raw, remaining)
     where
+      splitOnSep = NonLinear.break (\c -> isSpace c || c `NonLinear.elem` ['(', ')', '"'])
       appendOrRet :: SContext -> Either SExprParseError (SExpr, String) -> Either SExprParseError (SExpr, String)
       appendOrRet = \cases
         (InSList exprs) (Right (expr, remaining)) -> parseWithoutDest' (InSList $ expr : exprs) remaining
@@ -147,21 +148,33 @@ parseUsingDest' = \cases
   (DNotInSList d) [] -> d <|.. defaultSExpr `lseq` Left $ Ur UnexpectedEOFSExpr
   (DInSList d) [] -> d <| C @"[]" `lseq` Left (Ur $ UnexpectedEOFSList Nothing)
   ctx s@(x : xs) -> case x of
-    '(' -> appendOrRet ctx (\dExpr -> parseUsingDest' (DInSList $ dExpr <| C @"SList")) xs
+    '(' -> appendOrRet ctx contClosingParen xs
     ')' -> case ctx of
       DInSList d -> d <| C @"[]" `lseq` Right xs
       DNotInSList d -> d <|.. defaultSExpr `lseq` Left (Ur $ UnexpectedClosingParen s)
-    '"' -> appendOrRet ctx (\dExpr -> readStringUsingDest (dExpr <| C @"SString") False) xs
+    '"' -> appendOrRet ctx contClosingQuote xs
     _ ->
       if isSpace x
         then parseUsingDest' ctx xs
-        else case NonLinear.break (\c -> isSpace c || c `NonLinear.elem` ['(', ')', '"']) s of
+        else case splitOnSep s of
           (raw, remaining) -> case readMaybe @Int raw of
-            Just int -> appendOrRet ctx (\dExpr -> dExpr <| C @"SInteger" <|.. int `lseq` Right) remaining
+            Just int -> appendOrRet ctx (contInt int) remaining
             Nothing -> case readMaybe @Float raw of
-              Just float -> appendOrRet ctx (\dExpr -> dExpr <| C @"SFloat" <|.. float `lseq` Right) remaining
-              Nothing -> appendOrRet ctx (\dExpr -> dExpr <| C @"SSymbol" <|.. raw `lseq` Right) remaining
+              Just float -> appendOrRet ctx (contFloat float) remaining
+              Nothing -> appendOrRet ctx (contSymbol raw) remaining
     where
+      contClosingParen :: Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String
+      contClosingParen = (\dExpr -> parseUsingDest' (DInSList $ dExpr <| C @"SList"))
+      contClosingQuote :: Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String
+      contClosingQuote = (\dExpr -> readStringUsingDest (dExpr <| C @"SString") False)
+      contInt :: Int %1 -> Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String
+      contInt = (\int dExpr -> dExpr <| C @"SInteger" <|.. int `lseq` Right)
+      contFloat :: Float %1 -> Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String
+      contFloat = (\float dExpr -> dExpr <| C @"SFloat" <|.. float `lseq` Right)
+      contSymbol :: String %1 -> Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String
+      contSymbol = (\raw dExpr -> dExpr <| C @"SSymbol" <|.. raw `lseq` Right)
+      splitOnSep :: String -> (String, String)
+      splitOnSep = NonLinear.break (\c -> isSpace c || c `NonLinear.elem` ['(', ')', '"'])
       appendOrRet :: DSContext r %1 -> (Dest r SExpr %1 -> String -> Either (Ur SExprParseError) String) %1 -> String -> Either (Ur SExprParseError) String
       appendOrRet context f str = case context of
         DNotInSList d -> f d str

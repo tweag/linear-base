@@ -29,7 +29,7 @@ import Foreign (Storable (poke), peek, plusPtr)
 import GHC.Compact (Compact, compact, compactAdd, getCompact)
 import GHC.Exts
 import GHC.Generics
-import GHC.IO (unsafePerformIO)
+import GHC.IO (unsafePerformIO, unsafeInterleaveIO)
 import GHC.TypeLits
 import Unsafe.Linear (toLinear, toLinear2)
 
@@ -37,11 +37,25 @@ import Unsafe.Linear (toLinear, toLinear2)
 -- Helpers for display/debug
 -------------------------------------------------------------------------------
 
+{-# INLINE _ioTransform #-}
+_ioTransform :: IO a -> IO a
+_ioTransform = unsafeInterleaveIO
+
+isProfilingEnabled :: IO Bool
+isProfilingEnabled = unsafeInterleaveIO $ do
+  wordSize <- getWordSize
+  intInReg <- getCompact <$> compact (1 :: Word)
+  intAddr <- aToRawPtr intInReg
+  v <- peek $ intAddr `plusPtr` wordSize
+  return $ v /= (1 :: Word)
+
 getWordSize :: IO Int
-getWordSize = return 8
+getWordSize = unsafeInterleaveIO $ return 8
 
 getHeaderSize :: IO Int
-getHeaderSize = return 8
+getHeaderSize = unsafeInterleaveIO $ do
+  enabled <- isProfilingEnabled
+  return $ if enabled then 24 else 8
 
 debugEnabled :: Bool
 debugEnabled = False
@@ -147,7 +161,7 @@ showRaw n x =
     headerSize <- getHeaderSize
     h <- forM [0 .. (headerSize `div` wordSize) - 1] $ \k -> do
       w <- peek (p `plusPtr` (k * wordSize)) :: IO Word
-      return $ "[0]" ++ show w
+      return $ "[" ++ show k ++ "]" ++ show w
     r <- forM [0 .. n - 1] $ \k -> do
       w <- peek (p `plusPtr` headerSize `plusPtr` (k * wordSize)) :: IO Word
       return $ "[h+" ++ show k ++ "]" ++ show w
