@@ -29,7 +29,7 @@ import Foreign (Storable (poke), peek, plusPtr)
 import GHC.Compact (Compact, compact, compactAdd, getCompact)
 import GHC.Exts
 import GHC.Generics
-import GHC.IO (unsafePerformIO, unsafeInterleaveIO)
+import GHC.IO (unsafePerformIO)
 import GHC.TypeLits
 import Unsafe.Linear (toLinear, toLinear2)
 
@@ -37,25 +37,18 @@ import Unsafe.Linear (toLinear, toLinear2)
 -- Helpers for display/debug
 -------------------------------------------------------------------------------
 
-{-# INLINE _ioTransform #-}
-_ioTransform :: IO a -> IO a
-_ioTransform = unsafeInterleaveIO
-
-isProfilingEnabled :: IO Bool
-isProfilingEnabled = unsafeInterleaveIO $ do
-  wordSize <- getWordSize
+isProfilingEnabled :: Bool
+isProfilingEnabled = unsafePerformIO $ do
   intInReg <- getCompact <$> compact (1 :: Word)
-  intAddr <- aToRawPtr intInReg
+  let intAddr = aToRawPtr intInReg
   v <- peek $ intAddr `plusPtr` wordSize
   return $ v /= (1 :: Word)
 
-getWordSize :: IO Int
-getWordSize = unsafeInterleaveIO $ return 8
+wordSize :: Int
+wordSize = 8
 
-getHeaderSize :: IO Int
-getHeaderSize = unsafeInterleaveIO $ do
-  enabled <- isProfilingEnabled
-  return $ if enabled then 24 else 8
+headerSize :: Int
+headerSize = if isProfilingEnabled then 24 else 8
 
 debugEnabled :: Bool
 debugEnabled = False
@@ -102,13 +95,13 @@ addr2Word# addr# = int2Word# (addr2Int# addr#)
 word2Addr# :: Word# -> Addr#
 word2Addr# word# = int2Addr# (word2Int# word#)
 
-align :: Ptr a -> IO (Ptr Word)
+align :: Ptr a -> Ptr Word
 align (Ptr addr#) = do
-  I# wordSize# <- getWordSize
-  let word# = addr2Word# addr#
+  let !(I# wordSize#) = wordSize
+      word# = addr2Word# addr#
       wordAligned# = align# wordSize# word#
       addrAligned# = word2Addr# wordAligned#
-  return $ Ptr addrAligned#
+   in Ptr addrAligned#
 
 ptrToA :: Ptr a -> a
 ptrToA p =
@@ -118,7 +111,7 @@ ptrToA p =
 aToPtr :: a -> Ptr a
 aToPtr x = ptr'ToPtr (Ptr' x)
 
-aToRawPtr :: a -> IO (Ptr Word)
+aToRawPtr :: a -> Ptr Word
 aToRawPtr x = align (aToPtr x)
 
 aToWord :: a -> Word
@@ -147,7 +140,7 @@ ptr'ToWord p = ptrToWord (ptr'ToPtr p)
 
 getInfoPtr :: a -> IO Word
 getInfoPtr x = do
-  rawPtr <- aToRawPtr x
+  let rawPtr = aToRawPtr x
   peek rawPtr
 
 getCtorInfoPtr :: forall (symCtor :: Symbol) (a :: Type). (Generic a, GShallow symCtor (Rep a ())) => IO Word
@@ -156,9 +149,7 @@ getCtorInfoPtr = let !evaluated = shallowTerm @symCtor @a in getInfoPtr evaluate
 showRaw :: Int -> a -> IO String
 showRaw n x =
   unwords <$> do
-    p <- aToRawPtr x
-    wordSize <- getWordSize
-    headerSize <- getHeaderSize
+    let p = aToRawPtr x
     h <- forM [0 .. (headerSize `div` wordSize) - 1] $ \k -> do
       w <- peek (p `plusPtr` (k * wordSize)) :: IO Word
       return $ "[" ++ show k ++ "]" ++ show w
@@ -227,7 +218,7 @@ instance (Generic a, repA ~ Rep a (), ctors ~ GCtorsOf repA, ShowTryCtors ctors 
 
 _showHeapPrim :: String -> Int -> a -> (Int -> String -> a -> IO String)
 _showHeapPrim typeName n representative indent selectorRepr x = do
-  pX <- aToRawPtr x
+  let pX = aToRawPtr x
   evaluatedInfoPtr <- let !r = representative in getInfoPtr r
   actualInfoPtr <- getInfoPtr x
   if actualInfoPtr == evaluatedInfoPtr
@@ -258,9 +249,9 @@ class ShowTryCtors (ctors :: [(Meta, [(Meta, Type)])]) (a :: Type) where
 
 instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA) => ShowTryCtors '[] a where
   _showTryCtors indent selectorRepr x = do
-    pAddr <- ptrToWord <$> aToRawPtr x
+    let pAddr = ptrToWord $ aToRawPtr x
+        DatatypeData {..} = getDatatypeData @metaA
     rawP <- showRaw 0 x
-    let DatatypeData {..} = getDatatypeData @metaA
     return $
       (replicate (2 * indent) ' ')
         ++ selectorRepr
@@ -277,11 +268,11 @@ instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype met
     actualInfoPtr <- getInfoPtr x
     if evaluatedInfoPtr == actualInfoPtr
       then do
-        pX <- aToRawPtr x
-        let arity = fromInteger $ natVal (Proxy :: Proxy arity)
+        let pX = aToRawPtr x
+            arity = fromInteger $ natVal (Proxy :: Proxy arity)
+            DatatypeData {..} = getDatatypeData @metaA
+            CtorData {..} = getCtorData @metaCtor
         rawP <- showRaw arity x
-        let DatatypeData {..} = getDatatypeData @metaA
-        let CtorData {..} = getCtorData @metaCtor
         next <- _showFields @fields (indent + 1) pX 0
         return $
           (replicate (2 * indent) ' ')
@@ -308,10 +299,8 @@ instance ShowFields '[] where
 
 instance (ShowHeap fieldType, ShowFields others, Selector metaSel) => ShowFields ('(metaSel, fieldType) : others) where
   _showFields indent pX fieldOffset = do
-    headerSize <- getHeaderSize
-    wordSize <- getWordSize
-    fieldAsWord <- peek $ pX `plusPtr` headerSize `plusPtr` (wordSize * fieldOffset)
     let SelectorData {..} = getSelectorData @metaSel
+    fieldAsWord <- peek $ pX `plusPtr` headerSize `plusPtr` (wordSize * fieldOffset)
     showField <- case wordToPtr' fieldAsWord :: Ptr' t of Ptr' field -> _showHeap @fieldType indent selecName field
     showNext <- _showFields @others indent pX (fieldOffset + 1)
     return $ showField ++ "\n" ++ showNext
@@ -366,7 +355,7 @@ withRegion :: forall b. (forall (r :: Type). (IsRegion r) => RegionContext r -> 
 withRegion f =
   unsafePerformIO $ do
     c <- (compact firstInhabitant)
-    firstPtr <- ptrToWord <$> (aToRawPtr $ getCompact c)
+    let firstPtr = ptrToWord $ aToRawPtr $ getCompact c
     putDebugLn $
       "withRegion: allocating new region around @"
         ++ (show firstPtr)
@@ -401,8 +390,7 @@ nullPtr = Ptr (int2Addr# 0#)
 _fillComp :: forall r a b. (IsRegion r) => Dest r a -> Incomplete r a b -> b
 _fillComp Dest {parentWriteLoc = bParentWriteLoc} Incomplete {rootReceiver = sRootReceiver, dests = sDests, pInitialParentWriteLoc} =
   unsafePerformIO $ do
-    headerSize <- getHeaderSize
-    pSRootReceiver <- aToRawPtr sRootReceiver
+    let pSRootReceiver = aToRawPtr sRootReceiver
     valueInSRootReceiver <- peek $ pSRootReceiver `plusPtr` headerSize
     poke bParentWriteLoc valueInSRootReceiver -- in case something as already been written to the initial dest, we write the value stored in rootReceiver of the small struct at parentWriteLoc of the big one.
     if (isNullPtr pInitialParentWriteLoc)
@@ -494,13 +482,12 @@ instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype met
 instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, GShallow symCtor repA) => Fill '(metaCtor, '[ '( 'MetaSel f u ss ds, t)]) a where
   _fill :: forall r. (IsRegion r) => Dest r a -> IO (Dest r t)
   _fill Dest {parentWriteLoc} = do
-    headerSize <- getHeaderSize
     !xInRegion <- getCompact <$> (compactAdd (getRegionRoot @r) (shallowTerm @symCtor @a))
-    pXRaw <- aToRawPtr xInRegion
-    let CtorData {..} = getCtorData @metaCtor
+    let pXRaw = aToRawPtr xInRegion
         pXAsWord = aToWord xInRegion
         pF = pXRaw `plusPtr` headerSize
         dF = Dest {parentWriteLoc = pF}
+        CtorData {..} = getCtorData @metaCtor
     poke parentWriteLoc pXAsWord
     putDebugLn $
       "fill1: @"
@@ -515,15 +502,13 @@ instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype met
 
 _untypedFillN :: forall metaCtor a r repA metaA symCtor fix hasSel. (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, GShallow symCtor repA, IsRegion r) => Dest r a -> Int -> IO [Dest r Any]
 _untypedFillN Dest {parentWriteLoc} n = do
-  headerSize <- getHeaderSize
-  wordSize <- getWordSize
   !xInRegion <- getCompact <$> (compactAdd (getRegionRoot @r) (shallowTerm @symCtor @a))
-  pXRaw <- aToRawPtr xInRegion
-  let CtorData {..} = getCtorData @metaCtor
+  let pXRaw = aToRawPtr xInRegion
       pXAsWord = aToWord xInRegion
       pF0 = pXRaw `plusPtr` headerSize
       (fieldsRepr, dests) = unzip (makeDest <$> [0, 1 .. n - 1])
       makeDest k = let pF = pF0 `plusPtr` (k * wordSize) in ("_@" ++ (show $ ptrToWord pF), Dest {parentWriteLoc = pF})
+      CtorData {..} = getCtorData @metaCtor
   poke parentWriteLoc pXAsWord
   putDebugLn $
     "fill"
@@ -667,14 +652,13 @@ _hide x = x
 alloc :: forall r a. (IsRegion r) => Incomplete r a (Dest r a)
 alloc =
   unsafePerformIO $ do
-    headerSize <- getHeaderSize
     !rootReceiver <- getCompact <$> (compactAdd (getRegionRoot @r) $ (unsafeCoerce# (Ur placeholder) :: Ur a))
-    p <- aToRawPtr rootReceiver
-    let parentWriteLoc = p `plusPtr` headerSize
+    let p = aToRawPtr rootReceiver
+        parentWriteLoc = p `plusPtr` headerSize
     !pwlHolder <- getCompact <$> (compactAdd (getRegionRoot @r) $ parentWriteLoc)
     let !initialDest = Dest {parentWriteLoc = pwlHolder}
-    pHolder <- aToRawPtr pwlHolder
-    let !pParentWriteLoc = pHolder `plusPtr` headerSize
+        pHolder = aToRawPtr pwlHolder
+        !pParentWriteLoc = pHolder `plusPtr` headerSize
     putDebugLn $
       "alloc: [region] <- #"
         ++ (show $ aToWord rootReceiver)
