@@ -11,6 +11,7 @@ module Compact.Pure
     withRegion,
     Dest,
     Fill (fill),
+    DestsOf,
     (<|),
     fillComp,
     (<|.),
