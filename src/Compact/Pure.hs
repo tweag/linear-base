@@ -12,7 +12,7 @@ module Compact.Pure
     pattern RegionContext,
     withRegion,
     Dest,
-    fill,
+    Fill (fill),
     (<|),
     fillComp,
     (<|.),
