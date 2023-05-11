@@ -2,10 +2,10 @@ module Main (main) where
 
 import qualified Bench.Compact.Pure as Compact
 import Bench.Compact.SExpr
-import Test.Tasty.Bench (defaultMain)
-import System.Environment
 import Control.DeepSeq (rnf)
 import Control.Exception (evaluate)
+import System.Environment
+import Test.Tasty.Bench (defaultMain)
 
 -- Launch regular benchmark with
 -- stack bench linear-base:bench:memory --ba '+RTS -T'
@@ -27,13 +27,14 @@ main = do
   args <- getArgs
   case args of
     "runParseWithoutDest" : _ -> do
-        sampleData <- loadSampleData
-        let res = parseWithoutDest sampleData
-        evaluate $ rnf $ res
+      sampleData <- loadSampleData
+      let res = parseWithoutDest sampleData
+      evaluate $ rnf $ res
     "runParseUsingDest" : _ -> do
-        sampleData <- loadSampleData
-        let res = parseUsingDest sampleData
-        evaluate $ rnf $ res
-    _ -> defaultMain
-            [ Compact.benchmarks
-            ]
+      sampleData <- loadSampleData
+      let res = parseUsingDest sampleData
+      evaluate $ rnf $ res
+    _ ->
+      defaultMain
+        [ Compact.benchmarks
+        ]
