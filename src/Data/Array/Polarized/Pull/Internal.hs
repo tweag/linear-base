@@ -68,7 +68,7 @@ instance Semigroup (Array a) where
 foldr :: (a %1 -> b %1 -> b) -> b %1 -> Array a %1 -> b
 foldr f z (Array g n) = go f z g n
   where
-    go :: (_ %1 -> _ %1 -> _) -> _ %1 -> _ -> _ -> _
+    go :: (_) => (_ %1 -> _ %1 -> _) -> _ %1 -> _ -> _ -> _
     go _ z' _ 0 = z'
     go f' z' g' k = go f' (f' (g' (k - 1)) z') g' (k - 1)
 
