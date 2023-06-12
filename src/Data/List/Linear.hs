@@ -284,14 +284,17 @@ or = foldl' (||) False
 -- # Building Lists
 --------------------------------------------------
 
+{-# DEPRECATED iterate "The result cannot be consumed linearly, so this function is not useful." #-}
 iterate :: (Dupable a) => (a %1 -> a) -> a %1 -> [a]
 iterate f a =
   dup2 a & \(a', a'') ->
     a' : iterate f (f a'')
 
+{-# DEPRECATED repeat "The result cannot be consumed linearly, so this function is not useful." #-}
 repeat :: (Dupable a) => a %1 -> [a]
 repeat = iterate id
 
+{-# DEPRECATED cycle "The result cannot be consumed linearly, so this function is not useful." #-}
 cycle :: (HasCallStack, Dupable a) => [a] %1 -> [a]
 cycle [] = Prelude.error "cycle: empty list"
 cycle xs = dup2 xs & \(xs', xs'') -> xs' ++ cycle xs''
