@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -30,8 +31,10 @@ import Data.Functor.Const
 import Data.Functor.Identity
 import Data.Functor.Product
 import Data.Functor.Sum
+import Data.Kind (FUN)
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Ur
+import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
@@ -125,6 +128,9 @@ instance (Functor f, Functor g) => Functor (Compose f g) where
 
 instance Functor Ur where
   fmap f (Ur a) = Ur (f a)
+
+instance Functor (FUN 'One a) where
+  fmap = (.)
 
 ---------------------------------
 -- Monad transformer instances --
