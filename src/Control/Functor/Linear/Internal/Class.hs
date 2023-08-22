@@ -47,11 +47,12 @@ import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.Functor.Sum
+import Data.Kind (FUN)
 import Data.Monoid.Linear hiding (Sum)
 import Data.Type.Bool
 import Data.Unrestricted.Linear.Internal.Consumable
 import GHC.TypeLits
-import GHC.Types (Type)
+import GHC.Types (Multiplicity (..), Type)
 import Generics.Linear
 import Prelude.Linear.Generically
 import Prelude.Linear.Internal
@@ -249,6 +250,9 @@ deriving via
   Generically1 (Compose (f :: Type -> Type) (g :: Type -> Type))
   instance
     (Functor f, Functor g) => Functor (Compose f g)
+
+instance Functor (FUN 'One a) where
+  fmap = (.)
 
 ------------------------
 -- Generics instances --
