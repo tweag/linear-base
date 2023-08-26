@@ -49,6 +49,7 @@ import Data.Semigroup
 import qualified Data.Semigroup as Prelude
 import qualified Data.Tuple.Linear.Compat as Tuple
 import Data.Unrestricted.Linear.Internal.Consumable (Consumable, lseq)
+import qualified Data.Unrestricted.Linear.Internal.Ur as Ur
 import Data.Void (Void)
 import GHC.Tuple
 import GHC.Types hiding (Any)
@@ -208,3 +209,8 @@ instance (Semigroup (f (g a))) => Semigroup (Functor.Compose f g a) where
 
 instance (Semigroup a, Semigroup b, Semigroup c, Semigroup d, Semigroup e) => Semigroup (a, b, c, d, e) where
   (x1, x2, x3, x4, x5) <> (y1, y2, y3, y4, y5) = (x1 <> y1, x2 <> y2, x3 <> y3, x4 <> y4, x5 <> y5)
+
+-- | Useful to treat /unrestricted/ semigroups as linear ones.
+instance (Prelude.Semigroup a) => Semigroup (Ur.Ur a) where
+  (<>) = Ur.lift2 (Prelude.<>)
+  {-# INLINE (<>) #-}
