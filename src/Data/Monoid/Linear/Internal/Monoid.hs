@@ -30,6 +30,7 @@ import Data.Monoid.Linear.Internal.Semigroup
 import Data.Ord (Down (Down))
 import Data.Proxy (Proxy (Proxy))
 import Data.Unrestricted.Linear.Internal.Consumable (Consumable)
+import qualified Data.Unrestricted.Linear.Internal.Ur as Ur
 import GHC.Types hiding (Any)
 import Prelude.Linear.Internal
 import Prelude (Maybe (Nothing))
@@ -141,3 +142,8 @@ instance (Monoid (f (g a))) => Monoid (Functor.Compose f g a) where
 
 instance (Monoid a, Monoid b, Monoid c, Monoid d, Monoid e) => Monoid (a, b, c, d, e) where
   mempty = (mempty, mempty, mempty, mempty, mempty)
+
+-- | Useful to treat /unrestricted/ monoids as linear ones.
+instance (Prelude.Monoid a) => Monoid (Ur.Ur a) where
+  mempty = Ur.Ur Prelude.mempty
+  {-# INLINE mempty #-}
