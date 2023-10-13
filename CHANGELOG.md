@@ -1,5 +1,27 @@
 # Change Log
 
+## [v0.4.0](https://github.com/tweag/linear-base/tree/v0.4.0) (2023-10-13)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.3.1...v0.4.0)
+
+### Headline changes
+
+- Deprecate cycle, repeat, and iterate for lists [\#458](https://github.com/tweag/linear-base/pull/458) ([treeowl](https://github.com/treeowl))
+- Compability with GHC 9.8 [\#457](https://github.com/tweag/linear-base/pull/457) ([monoidal](https://github.com/monoidal))
+- Drop compatibility with GHC 9.0 [\#442](https://github.com/tweag/linear-base/pull/442) ([aspiwack](https://github.com/aspiwack))
+- Implements `Semigroup` / `Monoid` instances for `Ur` [\#461](https://github.com/tweag/linear-base/pull/461) ([konn](https://github.com/konn))
+- Adds `Functor` instances for the linear arrow [\#460](https://github.com/tweag/linear-base/pull/460) ([konn](https://github.com/konn))
+  - This fixes an issue with linear lenses \(both `Data` and `Control`\) [\#459](https://github.com/tweag/linear-base/issues/459)
+
+
+### Miscellaneous
+
+- Implement toSystemIO safely [\#444](https://github.com/tweag/linear-base/pull/444) ([treeowl](https://github.com/treeowl))
+- Stop testing with GHC 9.2, though it this version is still expected to work [\#448](https://github.com/tweag/linear-base/pull/448) ([tbagrel1](https://github.com/tbagrel1))
+- Benchmarks:
+  - Moving from gauge to tasty-bench [\#449](https://github.com/tweag/linear-base/pull/449) ([tbagrel1](https://github.com/tbagrel1))
+  - More array benchmarks [\#451](https://github.com/tweag/linear-base/pull/451) ([aspiwack](https://github.com/aspiwack))
+
 ## [v0.3.1](https://github.com/tweag/linear-base/tree/v0.3.1) (2023-03-17)
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.3.0...v0.3.1)
@@ -114,7 +136,7 @@
 - Add `Data.Arity.Linear` module containing type-level helpers to deal with n-ary linear functions and type-level structural integers [\#390](https://github.com/tweag/linear-base/pull/390) ([aspiwack](https://github.com/aspiwack)), [\#391](https://github.com/tweag/linear-base/pull/391) ([tbagrel1](https://github.com/tbagrel1))
 - Add `void` function to consume `Control.Functor.Linear.Functor` inner value [\#387](https://github.com/tweag/linear-base/pull/387) ([tbagrel1](https://github.com/tbagrel1))
 - Add inspection tests to check inlining of `Data.Replicator.Linear.elim` and `Data.V.Linear.{make,elim}` [\#367](https://github.com/tweag/linear-base/pull/367) ([tbagrel1](https://github.com/tbagrel1))
-- Add `genericTraverse` to `Data.Functor.Linear` for `Generics.Linear.Generic1` types [\#366](https://github.com/tweag/linear-base/pull/366) ([tbagrel1](https://github.com/tbagrel1)), [\#384](https://github.com/tweag/linear-base/pull/384) ([aspiwack](https://github.com/aspiwack)), [\#385](https://github.com/tweag/linear-base/pull/385) ([treeowl](https://github.com/treeowl)) 
+- Add `genericTraverse` to `Data.Functor.Linear` for `Generics.Linear.Generic1` types [\#366](https://github.com/tweag/linear-base/pull/366) ([tbagrel1](https://github.com/tbagrel1)), [\#384](https://github.com/tweag/linear-base/pull/384) ([aspiwack](https://github.com/aspiwack)), [\#385](https://github.com/tweag/linear-base/pull/385) ([treeowl](https://github.com/treeowl))
 - Add `Unsafe.toLinearN` (and narrow the scope of some coercions in the module internals) [\#346](https://github.com/tweag/linear-base/pull/346) ([treeowl](https://github.com/treeowl))
 - Add newtype `Data.Unrestricted.Linear.AsMovable` to derive `Consumable` and `Dupable` from `Movable` [\#357](https://github.com/tweag/linear-base/pull/357) ([tbagrel1](https://github.com/tbagrel1))
 - Add `Data.Unrestricted.Linear.{Consumable,Dupable,Moveable}` instances for all Word and Int types [\#352](https://github.com/tweag/linear-base/pull/352) ([googleson78](https://github.com/googleson78))
