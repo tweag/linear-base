@@ -42,13 +42,13 @@ where
 
 -- TODO: flesh out laws
 
+import qualified Data.Int
 import Data.Monoid.Linear
 import Data.Unrestricted.Linear
-import qualified Unsafe.Linear as Unsafe
-import qualified Prelude
 import qualified Data.Word
 import GHC.Num.Natural (Natural)
-import qualified Data.Int
+import qualified Unsafe.Linear as Unsafe
+import qualified Prelude
 
 -- | A type that can be added linearly.  The operation @(+)@ is associative and
 -- commutative, i.e., for all @a@, @b@, @c@
@@ -211,6 +211,7 @@ instance (MultIdentity a) => Monoid (Product a) where
 instance (AddIdentity a) => Monoid (Sum a) where
   mempty = Sum zero
 
+{- ORMOLU_DISABLE -}
 deriving via MovableNum Prelude.Int instance Additive Prelude.Int
 deriving via MovableNum Prelude.Int instance AddIdentity Prelude.Int
 deriving via MovableNum Prelude.Int instance AdditiveGroup Prelude.Int
@@ -310,7 +311,6 @@ deriving via MovableNum Data.Int.Int64 instance Ring Data.Int.Int64
 deriving via MovableNum Data.Int.Int64 instance FromInteger Data.Int.Int64
 deriving via MovableNum Data.Int.Int64 instance Num Data.Int.Int64
 
-
 deriving via MovableNum Data.Word.Word8 instance Additive Data.Word.Word8
 deriving via MovableNum Data.Word.Word8 instance AddIdentity Data.Word.Word8
 deriving via MovableNum Data.Word.Word8 instance AdditiveGroup Data.Word.Word8
@@ -350,3 +350,4 @@ deriving via MovableNum Data.Word.Word64 instance Semiring Data.Word.Word64
 deriving via MovableNum Data.Word.Word64 instance Ring Data.Word.Word64
 deriving via MovableNum Data.Word.Word64 instance FromInteger Data.Word.Word64
 deriving via MovableNum Data.Word.Word64 instance Num Data.Word.Word64
+{- ORMOLU_ENABLE -}

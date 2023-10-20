@@ -33,10 +33,10 @@ import Data.V.Linear.Internal (V (..))
 import qualified Data.V.Linear.Internal as V
 import qualified Data.Vector as Vector
 import GHC.Int
+import GHC.Num.Integer (Integer (..))
+import GHC.Num.Natural (Natural (..))
 import GHC.TypeLits
 import GHC.Word
-import GHC.Num.Integer (Integer(..))
-import GHC.Num.Natural (Natural(..))
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
@@ -156,7 +156,7 @@ instance Movable Integer where
   -- /!\ 'Integer' is a sum type whose three possibilities each are strict wrappers of unboxed unlifed data types.
   -- (source: https://hackage.haskell.org/package/ghc-bignum-1.2/docs/GHC-Num-Integer.html#t:Integer)
   -- Therefore it cannot have any linear values hidden in a closure anywhere. Therefore it is safe to call
-  -- non-linear functions linearly on this type: there is no difference between 
+  -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Integer' and using it several times. /!\
   move (IS i) = Unsafe.toLinear (\j -> Ur (IS j)) i
   move (IP i) = Unsafe.toLinear (\j -> Ur (IP j)) i
@@ -170,7 +170,7 @@ instance Movable Natural where
   -- /!\ 'Natural' is a sum type whose two possibilities each are strict wrappers of unboxed unlifed data types.
   -- (source: https://hackage.haskell.org/package/ghc-bignum-1.2/docs/GHC-Num-Natural.html#t:Natural)
   -- Therefore it cannot have any linear values hidden in a closure anywhere. Therefore it is safe to call
-  -- non-linear functions linearly on this type: there is no difference between 
+  -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Integer' and using it several times. /!\
   move (NS i) = Unsafe.toLinear (\j -> Ur (NS j)) i
   move (NB i) = Unsafe.toLinear (\j -> Ur (NB j)) i
