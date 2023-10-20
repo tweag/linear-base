@@ -167,8 +167,8 @@ deriving via (AsMovable Natural) instance Consumable Natural
 deriving via (AsMovable Natural) instance Dupable Natural
 
 instance Movable Natural where
-  -- /!\ 'Integer' is a sum type whose three possibilities each are strict wrappers of unboxed unlifed data types.
-  -- (source: https://hackage.haskell.org/package/ghc-bignum-1.2/docs/GHC-Num-Integer.html#t:Integer)
+  -- /!\ 'Natural' is a sum type whose two possibilities each are strict wrappers of unboxed unlifed data types.
+  -- (source: https://hackage.haskell.org/package/ghc-bignum-1.2/docs/GHC-Num-Natural.html#t:Natural)
   -- Therefore it cannot have any linear values hidden in a closure anywhere. Therefore it is safe to call
   -- non-linear functions linearly on this type: there is no difference between 
   -- copying an 'Integer' and using it several times. /!\
