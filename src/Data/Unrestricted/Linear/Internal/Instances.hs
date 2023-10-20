@@ -35,6 +35,8 @@ import qualified Data.Vector as Vector
 import GHC.Int
 import GHC.TypeLits
 import GHC.Word
+import GHC.Num.Integer (Integer(..))
+import GHC.Num.Natural (Natural(..))
 import Prelude.Linear.Internal
 import qualified Unsafe.Linear as Unsafe
 import qualified Prelude
@@ -145,6 +147,33 @@ instance Movable Word64 where
   -- non-linear functions linearly on this type: there is no difference between
   -- copying an 'Word64#' and using it several times. /!\
   move (W64# i) = Unsafe.toLinear (\j -> Ur (W64# j)) i
+
+deriving via (AsMovable Integer) instance Consumable Integer
+
+deriving via (AsMovable Integer) instance Dupable Integer
+
+instance Movable Integer where
+  -- /!\ 'Integer' is a sum type whose three possibilities each are strict wrappers of unboxed unlifed data types.
+  -- (source: https://hackage.haskell.org/package/ghc-bignum-1.2/docs/GHC-Num-Integer.html#t:Integer)
+  -- Therefore it cannot have any linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between 
+  -- copying an 'Integer' and using it several times. /!\
+  move (IS i) = Unsafe.toLinear (\j -> Ur (IS j)) i
+  move (IP i) = Unsafe.toLinear (\j -> Ur (IP j)) i
+  move (IN i) = Unsafe.toLinear (\j -> Ur (IN j)) i
+
+deriving via (AsMovable Natural) instance Consumable Natural
+
+deriving via (AsMovable Natural) instance Dupable Natural
+
+instance Movable Natural where
+  -- /!\ 'Integer' is a sum type whose three possibilities each are strict wrappers of unboxed unlifed data types.
+  -- (source: https://hackage.haskell.org/package/ghc-bignum-1.2/docs/GHC-Num-Integer.html#t:Integer)
+  -- Therefore it cannot have any linear values hidden in a closure anywhere. Therefore it is safe to call
+  -- non-linear functions linearly on this type: there is no difference between 
+  -- copying an 'Integer' and using it several times. /!\
+  move (NS i) = Unsafe.toLinear (\j -> Ur (NS j)) i
+  move (NB i) = Unsafe.toLinear (\j -> Ur (NB j)) i
 
 -- TODO: instances for longer primitive tuples
 -- TODO: default instances based on the Generic framework
