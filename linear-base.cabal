@@ -135,6 +135,7 @@ library
         base >=4.16 && <5,
         containers,
         ghc-prim,
+        ghc-bignum,
         hashable,
         linear-generics >= 0.2,
         storable-tuple,
