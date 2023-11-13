@@ -107,39 +107,6 @@ lifetime (i.e, the scope) of `SomeType`.
 
 ## Temporary limitations
 
-### Case statements are not linear
-
-The following definition will **fail** to type check:
-
-```haskell
-maybeFlip :: Int %1-> Int %1-> (a,a) -> a
-maybeFlip i j (x,y) = case i < j of
-  True -> x
-  False -> y
-```
-
-The scrutinee on (i.e., `x` in `case x of ...`) is considered to be
-consumed many times. It's a limitation of the current implementation
-of the type checker.
-
-For now, we can mimic a linear case statement using the
-`-XLambdaCase` language extension and the `(&)` from `Prelude.Linear`:
-
-```haskell
-{-# LANGUAGE LambdaCase #-}
-import Prelude.Linear ((&))
-
-maybeFlip :: Int %1-> Int %1-> (a,a) -> a
-maybeFlip i j (x,y) =  i < j & \case
-  True -> x
-  False -> y
-```
-
-The `(&)` operator is like `($)` with the argument order flipped.
-
-This workaround will no longer be needed in GHC 9.2, where this limitation
-has been lifted and `case` can be used in a linear context.
-
 ### `let` and `where` bindings are not linear
 
 The following will **fail** to type check:

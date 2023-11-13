@@ -47,17 +47,17 @@ newtype AsMovable a = AsMovable a
 
 instance (Movable a) => Movable (AsMovable a) where
   move (AsMovable x) =
-    move x & \case
+    case move x of
       Ur x' -> Ur (AsMovable x')
 
 instance (Movable a) => Consumable (AsMovable a) where
   consume x =
-    move x & \case
+    case move x of
       Ur _ -> ()
 
 instance (Movable a) => Dupable (AsMovable a) where
   dupR x =
-    move x & \case
+    case move x of
       Ur x' -> Data.pure x'
 
 deriving via (AsMovable Int8) instance Consumable Int8

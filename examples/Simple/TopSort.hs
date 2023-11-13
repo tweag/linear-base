@@ -13,7 +13,6 @@ import Data.HashMap.Mutable.Linear (HashMap)
 import qualified Data.HashMap.Mutable.Linear as HMap
 import Data.Maybe.Linear (catMaybes)
 import Data.Unrestricted.Linear
-import Prelude.Linear ((&))
 import qualified Prelude.Linear as Linear
 
 -- # The topological sort of a DAG
@@ -36,7 +35,7 @@ topsort = reverse . postOrder . fmap (\(n, nbrs) -> (n, (nbrs, 0)))
 
 postOrderHM :: [Node] -> InDegGraph %1 -> Ur [Node]
 postOrderHM nodes dag =
-  findSources nodes (computeInDeg nodes dag) & \case
+  case findSources nodes (computeInDeg nodes dag) of
     (dag, Ur sources) -> pluckSources sources [] dag
   where
     -- O(V + N)
@@ -46,7 +45,7 @@ postOrderHM nodes dag =
     -- Increment in-degree of all neighbors
     incChildren :: InDegGraph %1 -> Ur Node %1 -> InDegGraph
     incChildren dag (Ur node) =
-      HMap.lookup node dag & \case
+      case HMap.lookup node dag of
         (Ur Nothing, dag) -> dag
         (Ur (Just (xs, i)), dag) -> incNodes (move xs) dag
       where
@@ -55,7 +54,7 @@ postOrderHM nodes dag =
 
         incNode :: InDegGraph %1 -> Ur Node %1 -> InDegGraph
         incNode dag (Ur node) =
-          HMap.lookup node dag & \case
+          case HMap.lookup node dag of
             (Ur Nothing, dag') -> dag'
             (Ur (Just (n, d)), dag') ->
               HMap.insert node (n, d + 1) dag'
@@ -66,10 +65,10 @@ postOrderHM nodes dag =
 pluckSources :: [Node] -> [Node] -> InDegGraph %1 -> Ur [Node]
 pluckSources [] postOrd dag = lseq dag (move postOrd)
 pluckSources (s : ss) postOrd dag =
-  HMap.lookup s dag & \case
+  case HMap.lookup s dag of
     (Ur Nothing, dag) -> pluckSources ss (s : postOrd) dag
     (Ur (Just (xs, i)), dag) ->
-      walk xs dag & \case
+      case walk xs dag of
         (dag', Ur newSrcs) ->
           pluckSources (newSrcs ++ ss) (s : postOrd) dag'
   where
@@ -81,7 +80,7 @@ pluckSources (s : ss) postOrd dag =
     -- Decrement the degree of a node, save it if it is now a source
     decDegree :: Node -> InDegGraph %1 -> (InDegGraph, Ur (Maybe Node))
     decDegree node dag =
-      HMap.lookup node dag & \case
+      case HMap.lookup node dag of
         (Ur Nothing, dag') -> (dag', Ur Nothing)
         (Ur (Just (n, d)), dag') ->
           checkSource node (HMap.insert node (n, d - 1) dag')
@@ -94,7 +93,7 @@ findSources nodes dag =
 -- | Check if a node is a source, and if so return it
 checkSource :: Node -> InDegGraph %1 -> (InDegGraph, Ur (Maybe Node))
 checkSource node dag =
-  HMap.lookup node dag & \case
+  case HMap.lookup node dag of
     (Ur Nothing, dag) -> (dag, Ur Nothing)
     (Ur (Just (xs, 0)), dag) -> (dag, Ur (Just node))
     (Ur (Just (xs, n)), dag) -> (dag, Ur Nothing)
@@ -103,5 +102,5 @@ mapAccum ::
   (a -> b %1 -> (b, Ur c)) -> [a] -> b %1 -> (b, Ur [c])
 mapAccum f [] b = (b, Ur [])
 mapAccum f (x : xs) b =
-  mapAccum f xs b & \case
+  case mapAccum f xs b of
     (b, Ur cs) -> second (Data.fmap (: cs)) (f x b)

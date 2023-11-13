@@ -101,7 +101,7 @@ push x vec =
 -- 'shrinkToFit' to remove the wasted space.
 pop :: Vector a %1 -> (Ur (Maybe a), Vector a)
 pop vec =
-  size vec & \case
+  case size vec of
     (Ur 0, vec') ->
       (Ur Nothing, vec')
     (Ur s, vec') ->
@@ -201,7 +201,7 @@ mapMaybe vec (f :: a -> Maybe b) =
       -- Otherwise, read an element, write if the predicate is true and advance
       -- the write cursor; otherwise keep the write cursor skipping the element.
       | otherwise =
-          unsafeGet r vec' & \case
+          case unsafeGet r vec' of
             (Ur a, vec'')
               | Just b <- f a ->
                   go (r + 1) (w + 1) s (unsafeSet w (Unsafe.coerce b) vec'')

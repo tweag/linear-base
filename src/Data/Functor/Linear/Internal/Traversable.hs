@@ -239,7 +239,7 @@ instance GTraversable U1 where
   {-# INLINE gtraverse #-}
 
 instance GTraversable V1 where
-  gtraverse _ v = Control.pure ((\case {}) v)
+  gtraverse _ v = Control.pure (case v of {})
 
 instance GTraversable UAddr where
   gtraverse _ (UAddr x) = Control.pure (UAddr x)

@@ -126,14 +126,14 @@ instance (Semigroup a) => Semigroup (Identity a) where
 instance (Consumable a) => Semigroup (Monoid.First a) where
   (Monoid.First Nothing) <> y = y
   x <> (Monoid.First y) =
-    y & \case
+    case y of
       Nothing -> x
       Just y' -> y' `lseq` x
 
 instance (Consumable a) => Semigroup (Monoid.Last a) where
   x <> (Monoid.Last Nothing) = x
   (Monoid.Last x) <> y =
-    x & \case
+    case x of
       Nothing -> y
       Just x' -> x' `lseq` y
 
@@ -174,7 +174,7 @@ instance (Semigroup a) => Semigroup (Solo a) where
 instance (Consumable a, Consumable b) => Semigroup (Either a b) where
   Left x <> y = x `lseq` y
   x <> y =
-    y & \case
+    case y of
       Left y' -> y' `lseq` x
       Right y' -> y' `lseq` x
 

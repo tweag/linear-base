@@ -89,7 +89,7 @@ liftA2 f (Streamed sa) (Streamed sb) = Streamed (ReplicationStream.liftA2 f sa s
 next :: Replicator a %1 -> (a, Replicator a)
 next (Moved x) = (x, Moved x)
 next (Streamed (ReplicationStream s give dups consumes)) =
-  dups s & \case
+  case dups s of
     (s1, s2) -> (give s1, Streamed (ReplicationStream s2 give dups consumes))
 {-# INLINEABLE next #-}
 
@@ -98,18 +98,18 @@ next (Streamed (ReplicationStream s give dups consumes)) =
 next# :: Replicator a %1 -> (# a, Replicator a #)
 next# (Moved x) = (# x, Moved x #)
 next# (Streamed (ReplicationStream s give dups consumes)) =
-  dups s & \case
+  case dups s of
     (s1, s2) -> (# give s1, Streamed (ReplicationStream s2 give dups consumes) #)
 {-# INLINEABLE next# #-}
 
 -- | @'take' n as@ is a list of size @n@, containing @n@ replicas from @as@.
 take :: Prelude.Int -> Replicator a %1 -> [a]
 take 0 r =
-  consume r & \case
+  case consume r of
     () -> []
 take 1 r = [extract r]
 take n r =
-  next r & \case
+  case next r of
     (a, r') -> a : take (n - 1) r'
 
 -- | Returns the next item from @'Replicator' a@ and efficiently consumes
@@ -170,7 +170,7 @@ class Elim n a b where
 
 instance Elim 'Z a b where
   elim' b r =
-    consume r & \case
+    case consume r of
       () -> b
   {-# INLINE elim' #-}
 
@@ -180,6 +180,6 @@ instance Elim ('S 'Z) a b where
 
 instance (Elim ('S n) a b) => Elim ('S ('S n)) a b where
   elim' g r =
-    next r & \case
+    case next r of
       (a, r') -> elim' @('S n) (g a) r'
   {-# INLINE elim' #-}

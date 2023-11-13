@@ -172,15 +172,15 @@ instance GMovable U1 where
   gmove U1 = Ur U1
 
 instance (GMovable f, GMovable g) => GMovable (f :+: g) where
-  gmove (L1 a) = gmove a & \case (Ur x) -> Ur (L1 x)
-  gmove (R1 a) = gmove a & \case (Ur x) -> Ur (R1 x)
+  gmove (L1 a) = case gmove a of Ur x -> Ur (L1 x)
+  gmove (R1 a) = case gmove a of Ur x -> Ur (R1 x)
 
 instance (GMovable f, GMovable g) => GMovable (f :*: g) where
   gmove (a :*: b) =
-    gmove a & \case
-      (Ur x) ->
-        gmove b & \case
-          (Ur y) -> Ur (x :*: y)
+    case gmove a of
+      Ur x ->
+        case gmove b of
+          Ur y -> Ur (x :*: y)
 
 instance (Movable c) => GMovable (K1 i c) where
   gmove (K1 c) = lcoerce (move c)
@@ -192,7 +192,7 @@ instance GMovable (MP1 'Many f) where
   gmove (MP1 x) = Ur (MP1 x)
 
 instance (GMovable f) => GMovable (MP1 'One f) where
-  gmove (MP1 a) = gmove a & \case Ur x -> Ur (MP1 x)
+  gmove (MP1 a) = case gmove a of Ur x -> Ur (MP1 x)
 
 instance GMovable UChar where
   gmove (UChar c) = Unsafe.toLinear (\x -> Ur (UChar x)) c

@@ -295,7 +295,7 @@ mapMaybeWithKey f (HashMap _ cap arr) =
             then (Ur count, shiftSegmentBackward dec (end + 1) arr 0)
             else (Ur count, arr)
       | otherwise =
-          Array.unsafeRead arr ix & \case
+          case Array.unsafeRead arr ix of
             (Ur Nothing, arr1) ->
               mapAndPushBack (ix + 1) end (False, 0) count arr1
             (Ur (Just (RobinVal (PSL p) k v)), arr1) -> case f' k v of
@@ -397,7 +397,7 @@ intersectionWith combine (hm1 :: HashMap k a') hm2 =
       HashMap k c
     go _ hm (Ur []) acc = hm `lseq` acc
     go f hm (Ur ((k, b) : xs)) acc =
-      lookup k hm & \case
+      case lookup k hm of
         (Ur Nothing, hm') -> go f hm' (Ur xs) acc
         (Ur (Just a), hm') -> go f hm' (Ur xs) (insert k (f a b) acc)
 
@@ -446,7 +446,7 @@ lookup k hm =
 -- | Check if the given key exists.
 member :: (Keyed k) => k -> HashMap k v %1 -> (Ur Bool, HashMap k v)
 member k hm =
-  lookup k hm & \case
+  case lookup k hm of
     (Ur Nothing, hm') -> (Ur False, hm')
     (Ur (Just _), hm') -> (Ur True, hm')
 
@@ -557,7 +557,7 @@ shiftSegmentBackward ::
   Int ->
   RobinArr k v
 shiftSegmentBackward dec s arr ix =
-  Array.unsafeRead arr ix & \case
+  case Array.unsafeRead arr ix of
     (Ur Nothing, arr') -> arr'
     (Ur (Just (RobinVal 0 _ _)), arr') -> arr'
     (Ur (Just val), arr') ->

@@ -145,13 +145,13 @@ class Elim n a b where
 
 instance Elim 'Z a b where
   elim' b v =
-    consume v & \case
+    case consume v of
       () -> b
   {-# INLINE elim' #-}
 
 instance (1 <= 1 + PeanoToNat n, (1 + PeanoToNat n) - 1 ~ PeanoToNat n, Elim n a b) => Elim ('S n) a b where
   elim' g v =
-    uncons v & \case
+    case uncons v of
       (a, v') -> elim' @n (g a) v'
   {-# INLINE elim' #-}
 

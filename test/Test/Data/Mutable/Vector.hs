@@ -354,7 +354,7 @@ refToListViaPop = property $ do
   where
     popAll :: [a] -> Vector.Vector a %1 -> Ur [a]
     popAll acc vec =
-      Vector.pop vec Linear.& \case
+      case Vector.pop vec of
         (Ur Nothing, vec') -> vec' `lseq` Ur acc
         (Ur (Just x), vec') -> popAll (x : acc) vec'
 

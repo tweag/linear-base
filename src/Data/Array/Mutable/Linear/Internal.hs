@@ -190,7 +190,7 @@ slice ::
   Array a %1 ->
   (Array a, Array a)
 slice from targetSize arr =
-  size arr & \case
+  case size arr of
     (Ur s, Array old)
       | s < from + targetSize ->
           Unlifted.lseq
