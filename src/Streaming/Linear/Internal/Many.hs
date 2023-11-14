@@ -36,7 +36,7 @@ module Streaming.Linear.Internal.Many
 where
 
 import qualified Control.Functor.Linear as Control
-import Prelude.Linear (($), (&))
+import Prelude.Linear (($))
 import Streaming.Linear.Internal.Consume
 import Streaming.Linear.Internal.Type
 import Prelude (Either (..), Ord (..), Ordering (..))
@@ -115,7 +115,7 @@ unzip = loop
       Stream (Of (a, b)) m r %1 ->
       Stream (Of a) (Stream (Of b) m) r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop $ Control.lift m
         Step ((a, b) :> rest) -> Step (a :> Effect (Step (b :> Return (loop rest))))
@@ -169,14 +169,14 @@ zipWithR = loop
       Stream (Of b) m r2 %1 ->
       Stream (Of c) m (ZipResidual a b m r1 r2)
     loop f st1 st2 =
-      st1 & \case
+      case st1 of
         Effect ms -> Effect $ Control.fmap (\s -> loop f s st2) ms
         Return r1 ->
-          st2 & \case
+          case st2 of
             Return r2 -> Return $ Left3 (r1, r2)
             st2' -> Return $ Middle3 (r1, st2')
         Step (a :> as) ->
-          st2 & \case
+          case st2 of
             Effect ms ->
               Effect $ Control.fmap (\s -> loop f (Step (a :> as)) s) ms
             Return r2 -> Return $ Right3 (Step (a :> as), r2)
@@ -191,7 +191,7 @@ zipWith ::
   Stream (Of c) m (r1, r2)
 zipWith f s1 s2 = Control.do
   result <- zipWithR f s1 s2
-  result & \case
+  case result of
     Left3 rets -> Control.return rets
     Middle3 (r1, s2') -> Control.do
       r2 <- Control.lift $ effects s2'
@@ -251,20 +251,20 @@ zipWith3R = loop
       Stream (Of c) m r3 %1 ->
       Stream (Of d) m (ZipResidual3 a b c m r1 r2 r3)
     loop f s1 s2 s3 =
-      s1 & \case
+      case s1 of
         Effect ms -> Effect $ Control.fmap (\s -> loop f s s2 s3) ms
         Return r1 ->
-          (s2, s3) & \case
+          case (s2, s3) of
             (Return r2, Return r3) -> Return (Left r1, Left r2, Left r3)
             (s2', s3') -> Return (Left r1, Right s2', Right s3')
         Step (a :> as) ->
-          s2 & \case
+          case s2 of
             Effect ms ->
               Effect $
                 Control.fmap (\s -> loop f (Step $ a :> as) s s3) ms
             Return r2 -> Return (Right (Step $ a :> as), Left r2, Right s3)
             Step (b :> bs) ->
-              s3 & \case
+              case s3 of
                 Effect ms ->
                   Effect $
                     Control.fmap (\s -> loop f (Step $ a :> as) (Step $ b :> bs) s) ms
@@ -283,7 +283,7 @@ zipWith3 ::
   Stream (Of d) m (r1, r2, r3)
 zipWith3 f s1 s2 s3 = Control.do
   result <- zipWith3R f s1 s2 s3
-  result & \case
+  case result of
     (res1, res2, res3) -> Control.do
       r1 <- Control.lift $ extractResult res1
       r2 <- Control.lift $ extractResult res2
@@ -377,14 +377,14 @@ mergeBy comp s1 s2 = loop s1 s2
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m s %1 -> Stream (Of a) m (r, s)
     loop s1 s2 =
-      s1 & \case
+      case s1 of
         Return r ->
           Effect $ effects s2 Control.>>= \s -> Control.return $ Return (r, s)
         Effect ms ->
           Effect $
             ms Control.>>= \s1' -> Control.return $ mergeBy comp s1' s2
         Step (a :> as) ->
-          s2 & \case
+          case s2 of
             Return s ->
               Effect $ effects as Control.>>= \r -> Control.return $ Return (r, s)
             Effect ms ->

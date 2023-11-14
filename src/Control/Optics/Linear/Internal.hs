@@ -173,7 +173,7 @@ getConst' (Const x) = x
 
 lengthOf :: (MultIdentity r) => Optic_ (NonLinear.Kleisli (Const (Sum r))) s t a b -> s -> r
 lengthOf l s =
-  (gets l (const (Sum one)) s) & \case
+  case gets l (const (Sum one)) s of
     Sum r -> r
 
 -- XXX: the below two functions will be made redundant with multiplicity

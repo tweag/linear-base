@@ -23,9 +23,9 @@ elim3 = Replicator.elim
 
 manualElim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> Replicator a %1 -> [a]
 manualElim3 f r =
-  Replicator.next r & \case
+  case Replicator.next r of
     (x, r') ->
-      Replicator.next r' & \case
+      case Replicator.next r' of
         (y, r'') ->
-          Replicator.extract r'' & \case
+          case Replicator.extract r'' of
             z -> f x y z

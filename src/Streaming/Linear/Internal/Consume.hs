@@ -68,7 +68,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Data.Unrestricted.Linear
-import Prelude.Linear (($), (&), (.))
+import Prelude.Linear (($), (.))
 import Streaming.Linear.Internal.Process
 import Streaming.Linear.Internal.Type
 import qualified System.IO as System
@@ -112,7 +112,7 @@ stdoutLn' stream = loop stream
   where
     loop :: Stream (Of Text) IO r %1 -> IO r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return r
         Effect ms -> ms Control.>>= stdoutLn'
         Step (str :> stream) -> Control.do
@@ -130,7 +130,7 @@ toHandle handle stream = loop handle stream
   where
     loop :: Handle %1 -> Stream (Of Text) RIO r %1 -> RIO (r, Handle)
     loop handle stream =
-      stream & \case
+      case stream of
         Return r -> Control.return (r, handle)
         Effect ms -> ms Control.>>= toHandle handle
         Step (text :> stream') -> Control.do
@@ -170,7 +170,7 @@ effects stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return r
         Effect ms -> ms Control.>>= effects
         Step (_ :> stream') -> effects stream'
@@ -182,7 +182,7 @@ erase stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream Identity m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Step (_ :> stream') -> Step $ Identity (erase stream')
         Effect ms -> Effect $ ms Control.>>= (Control.return . erase)
@@ -242,7 +242,7 @@ mapM_ f stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return r
         Effect ms -> ms Control.>>= mapM_ f
         Step (a :> stream') -> Control.do
@@ -302,7 +302,7 @@ fold f x g stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m (Of b r)
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return $ g x :> r
         Effect ms -> ms Control.>>= fold f x g
         Step (a :> stream') -> fold f (f x a) g stream'
@@ -335,7 +335,7 @@ fold_ f x g stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m b
     loop stream =
-      stream & \case
+      case stream of
         Return r -> lseq r $ Control.return $ g x
         Effect ms -> ms Control.>>= fold_ f x g
         Step (a :> stream') -> fold_ f (f x a) g stream'
@@ -370,7 +370,7 @@ foldM f mx g stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m (b, r)
     loop stream =
-      stream & \case
+      case stream of
         Return r -> mx Control.>>= g Control.>>= (\b -> Control.return (b, r))
         Effect ms -> ms Control.>>= foldM f mx g
         Step (a :> stream') -> foldM f (mx Control.>>= \x -> f x a) g stream'
@@ -391,7 +391,7 @@ foldM_ f mx g stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m b
     loop stream =
-      stream & \case
+      case stream of
         Return r -> lseq r $ mx Control.>>= g
         Effect ms -> ms Control.>>= foldM_ f mx g
         Step (a :> stream') -> foldM_ f (mx Control.>>= \x -> f x a) g stream'
@@ -464,7 +464,7 @@ product_ stream = fold_ (*) 1 id stream
 -- first element, performing all monadic effects via 'effects'
 head :: (Control.Monad m) => Stream (Of a) m r %1 -> m (Of (Maybe a) r)
 head str =
-  str & \case
+  case str of
     Return r -> Control.return (Nothing :> r)
     Effect m -> m Control.>>= head
     Step (a :> rest) ->
@@ -475,7 +475,7 @@ head str =
 -- first element, performing all monadic effects via 'effects'
 head_ :: (Consumable r, Control.Monad m) => Stream (Of a) m r %1 -> m (Maybe a)
 head_ str =
-  str & \case
+  case str of
     Return r -> lseq r $ Control.return Nothing
     Effect m -> m Control.>>= head_
     Step (a :> rest) ->
@@ -491,7 +491,7 @@ last = loop Nothing
       Stream (Of a) m r %1 ->
       m (Of (Maybe a) r)
     loop m s =
-      s & \case
+      case s of
         Return r -> Control.return (m :> r)
         Effect m -> m Control.>>= last
         Step (a :> rest) -> loop (Just a) rest
@@ -506,7 +506,7 @@ last_ = loop Nothing
       Stream (Of a) m r %1 ->
       m (Maybe a)
     loop m s =
-      s & \case
+      case s of
         Return r -> lseq r $ Control.return m
         Effect m -> m Control.>>= last_
         Step (a :> rest) -> loop (Just a) rest
@@ -522,7 +522,7 @@ elem a stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m (Of Bool r)
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return $ False :> r
         Effect ms -> ms Control.>>= elem a
         Step (a' :> stream') -> case a == a' of
@@ -542,7 +542,7 @@ elem_ a stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m Bool
     loop stream =
-      stream & \case
+      case stream of
         Return r -> lseq r $ Control.return False
         Effect ms -> ms Control.>>= elem_ a
         Step (a' :> stream') -> case a == a' of
@@ -681,7 +681,7 @@ foldrM step stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return r
         Effect m -> m Control.>>= foldrM step
         Step (a :> as) -> step a (foldrM step as)
@@ -702,7 +702,7 @@ foldrT step stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> t m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return r
         Effect ms -> (Control.lift ms) Control.>>= foldrT step
         Step (a :> as) -> step a (foldrT step as)

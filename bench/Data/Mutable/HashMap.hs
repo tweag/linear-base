@@ -135,7 +135,7 @@ linear_hashmap inp@(BenchInput {pairs = kvs}) =
 
     look :: LMap.HashMap Key Int %1 -> Key -> LMap.HashMap Key Int
     look hmap k =
-      LMap.lookup k hmap Linear.& \case
+      case LMap.lookup k hmap of
         (Linear.Ur Nothing, hmap0) -> hmap0
         (Linear.Ur (Just v), hmap0) -> Linear.seq (force v) hmap0
 

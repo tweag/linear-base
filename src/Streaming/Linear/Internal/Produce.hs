@@ -49,7 +49,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Unrestricted.Linear
 import GHC.Stack
-import Prelude.Linear (($), (&))
+import Prelude.Linear (($))
 import Streaming.Linear.Internal.Consume (effects)
 import Streaming.Linear.Internal.Process
 import Streaming.Linear.Internal.Type
@@ -206,7 +206,7 @@ untilRight mEither = Effect loop
     loop :: m (Stream (Of a) m r)
     loop = Control.do
       either <- mEither
-      either & \case
+      case either of
         Left (Ur a) ->
           Control.return $ Step $ a :> (untilRight mEither)
         Right r -> Control.return $ Return r
@@ -249,7 +249,7 @@ take = loop
       | n <= 0 = Effect $ Control.fmap Control.return $ end s
       | otherwise = Effect $ Control.do
           next <- step s
-          next & \case
+          case next of
             Right r -> Control.return (Return r)
             Left fx ->
               Control.return $
@@ -270,11 +270,11 @@ untilM = loop
     loop :: (a -> m Bool) -> AffineStream (Of a) m r %1 -> Stream (Of a) m r
     loop test (AffineStream s step end) = Effect $ Control.do
       next <- step s
-      next & \case
+      case next of
         Right r -> Control.return (Return r)
         Left (a :> next) -> Control.do
           testResult <- test a
-          testResult & \case
+          case testResult of
             False ->
               Control.return $
                 Step $
@@ -294,7 +294,7 @@ until = loop
     loop :: (a -> Bool) -> AffineStream (Of a) m r %1 -> Stream (Of a) m r
     loop test (AffineStream s step end) = Effect $ Control.do
       next <- step s
-      next & \case
+      case next of
         Right r -> Control.return (Return r)
         Left (a :> next) -> case test a of
           True -> Control.fmap Control.return $ end next
@@ -318,7 +318,7 @@ zip = loop
       AffineStream (Of a) m r2 %1 ->
       Stream (Of (x, a)) m (r1, r2)
     loop stream (AffineStream s step end) =
-      stream & \case
+      case stream of
         Return r1 ->
           Effect $
             Control.fmap (\r2 -> Control.return $ (r1, r2)) $
@@ -328,7 +328,7 @@ zip = loop
             Control.fmap (\str -> loop str (AffineStream s step end)) m
         Step (x :> rest) -> Effect $ Control.do
           next <- step s
-          next & \case
+          case next of
             Right r2 -> Control.do
               r1 <- effects rest
               Control.return (Return (r1, r2))
@@ -410,7 +410,7 @@ cycle stream =
       (Ur (Stream f m r), Stream f m r) %1 ->
       m (Either (f (Ur (Stream f m r), Stream f m r)) r)
     stepStream (Ur s, str) =
-      str & \case
+      case str of
         Return r -> lseq r $ stepStream (Ur s, s)
         Effect m ->
           m Control.>>= (\stream -> stepStream (Ur s, stream))

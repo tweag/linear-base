@@ -96,7 +96,7 @@ import qualified Data.Sequence as Seq
 import qualified Data.Set as Set
 import Data.Unrestricted.Linear
 import GHC.Stack
-import Prelude.Linear (($), (&), (.))
+import Prelude.Linear (($), (.))
 import Streaming.Linear.Internal.Type
 import System.IO.Linear
 import Text.Read (readMaybe)
@@ -128,7 +128,7 @@ consFirstChunk ::
   Stream (Stream (Of a) m) m r %1 ->
   Stream (Stream (Of a) m) m r
 consFirstChunk a stream =
-  stream & \case
+  case stream of
     Return r -> Step (Step (a :> Return (Return r)))
     Effect m -> Effect $ Control.fmap (consFirstChunk a) m
     Step f -> Step (Step (a :> f))
@@ -151,7 +151,7 @@ destroyExposed stream0 construct theEffect done = loop stream0
       Stream f m r %1 ->
       b
     loop stream =
-      stream & \case
+      case stream of
         Return r -> done r
         Effect m -> theEffect (Control.fmap loop m)
         Step f -> construct (Control.fmap loop f)
@@ -180,7 +180,7 @@ next stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m (Either r (Ur a, Stream (Of a) m r))
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return $ Left r
         Effect ms -> ms Control.>>= next
         Step (a :> as) -> Control.return $ Right (Ur a, as)
@@ -196,7 +196,7 @@ uncons stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> m (Maybe (a, Stream (Of a) m r))
     loop stream =
-      stream & \case
+      case stream of
         Return r -> lseq r $ Control.return Nothing
         Effect ms -> ms Control.>>= uncons
         Step (a :> as) -> Control.return $ Just (a, as)
@@ -219,7 +219,7 @@ splitAt n stream = loop n stream
     loop :: Int -> Stream f m r %1 -> Stream f m (Stream f m r)
     loop n stream = case Prelude.compare n 0 of
       GT ->
-        stream & \case
+        case stream of
           Return r -> Return (Return r)
           Effect m -> Effect $ m Control.>>= (Control.return . splitAt n)
           Step f -> Step $ Control.fmap (splitAt (n - 1)) f
@@ -244,7 +244,7 @@ split x stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Stream (Of a) m) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ m Control.>>= (Control.return . split x)
         Step (a :> as) -> case a == x of
@@ -273,7 +273,7 @@ break f stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m (Stream (Of a) m r)
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return (Return r)
         Effect m -> Effect $ Control.fmap (break f) m
         Step (a :> as) -> case f a of
@@ -303,7 +303,7 @@ breaks f stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Stream (Of a) m) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (breaks f) m
         Step (a :> as) -> case f a of
@@ -347,7 +347,7 @@ breakWhen step x end pred stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m (Stream (Of a) m r)
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return (Return r)
         Effect m -> Effect $ Control.fmap (breakWhen step x end pred) m
         Step (a :> as) -> case pred (end (step x a)) of
@@ -395,11 +395,11 @@ groupBy equals stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Stream (Of a) m) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (groupBy equals) m
         Step (a :> as) ->
-          as & \case
+          case as of
             Return r -> Step (Step (a :> Return (Return r)))
             Effect m ->
               Effect $
@@ -523,7 +523,7 @@ separate stream = destroyExposed stream fromSum (Effect . Control.lift) Return
   where
     fromSum :: Sum f g (Stream f (Stream g m) r) %1 -> (Stream f (Stream g m) r)
     fromSum x =
-      x & \case
+      case x of
         InL fss -> Step fss
         InR gss -> Effect (Step $ Control.fmap Return gss)
 {-# INLINEABLE separate #-}
@@ -551,7 +551,7 @@ partition pred = loop
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) (Stream (Of a) m) r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect (Control.fmap loop (Control.lift m))
         Step (a :> as) -> case pred a of
@@ -576,7 +576,7 @@ partitionEithers = loop
       Stream (Of (Either a b)) m r %1 ->
       Stream (Of a) (Stream (Of b) m) r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop (Control.lift m)
         Step (Left a :> as) -> Step (a :> loop as)
@@ -593,7 +593,7 @@ catMaybes stream = loop stream
   where
     loop :: (Control.Monad m) => Stream (Of (Maybe a)) m r %1 -> Stream (Of a) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap catMaybes m
         Step (maybe :> as) -> case maybe of
@@ -614,7 +614,7 @@ mapMaybe f stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of b) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect ms -> Effect $ ms Control.>>= (Control.return . mapMaybe f)
         Step (a :> s) -> case f a of
@@ -639,12 +639,12 @@ mapMaybeM f stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of b) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (mapMaybeM f) m
         Step (a :> as) -> Effect $ Control.do
           mb <- f a
-          mb & \case
+          case mb of
             Nothing -> Control.return $ mapMaybeM f as
             Just (Ur b) -> Control.return $ Step (b :> mapMaybeM f as)
 {-# INLINEABLE mapMaybeM #-}
@@ -668,7 +668,7 @@ hoist f stream = loop stream
   where
     loop :: Stream f m r %1 -> Stream f n r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ f $ Control.fmap loop m
         Step f -> Step $ Control.fmap loop f
@@ -706,7 +706,7 @@ maps phi = loop
   where
     loop :: Stream f m r %1 -> Stream g m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (maps phi) m
         Step f -> Step (phi (Control.fmap loop f))
@@ -745,7 +745,7 @@ mapM f s = loop f s
       Stream (Of a) m r %1 ->
       Stream (Of b) m r
     loop f stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (loop f) m
         Step (a :> as) -> Effect $ Control.do
@@ -773,7 +773,7 @@ mapsPost phi = loop
   where
     loop :: Stream f m r %1 -> Stream g m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step f -> Step $ Control.fmap loop $ phi f
@@ -825,7 +825,7 @@ mapped phi = loop
   where
     loop :: Stream f m r %1 -> Stream g m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step f -> Effect $ Control.fmap Step $ phi $ Control.fmap loop f
@@ -854,7 +854,7 @@ mapsMPost phi = loop
   where
     loop :: Stream f m r %1 -> Stream g m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step f -> Effect $ Control.fmap (Step . Control.fmap loop) $ phi f
@@ -873,7 +873,7 @@ mappedPost phi = loop
   where
     loop :: Stream f m r %1 -> Stream g m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step f -> Effect $ Control.fmap (Step . Control.fmap loop) $ phi f
@@ -891,7 +891,7 @@ for stream expand = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream f m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (a :> as) -> Control.do
@@ -929,7 +929,7 @@ with s f = loop s
   where
     loop :: Stream (Of a) m r %1 -> Stream f m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (a :> as) -> Step $ Control.fmap (`lseq` (loop as)) (f a)
@@ -1060,7 +1060,7 @@ copy = Effect . Control.return . loop
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) (Stream (Of a) m) r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop (Control.lift m)
         Step (a :> as) -> Effect $ Step (a :> Return (Step (a :> loop as)))
@@ -1193,7 +1193,7 @@ chain f = loop
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (a :> as) -> Effect $ Control.do
@@ -1221,7 +1221,7 @@ sequence = loop
   where
     loop :: Stream (Of (m (Ur a))) m r %1 -> Stream (Of a) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (ma :> mas) -> Effect $ Control.do
@@ -1246,7 +1246,7 @@ nubOrdOn f xs = loop Set.empty xs
   where
     loop :: Set.Set b -> Stream (Of a) m r %1 -> Stream (Of a) m r
     loop !set stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (loop set) m
         Step (a :> as) -> case Set.member (f a) set of
@@ -1268,7 +1268,7 @@ nubIntOn f xs = loop IntSet.empty xs
   where
     loop :: IntSet.IntSet -> Stream (Of a) m r %1 -> Stream (Of a) m r
     loop !set stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (loop set) m
         Step (a :> as) -> case IntSet.member (f a) set of
@@ -1286,7 +1286,7 @@ filter pred = loop
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (a :> as) -> case pred a of
@@ -1305,12 +1305,12 @@ filterM pred = loop
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (a :> as) -> Effect $ Control.do
           bool <- pred a
-          bool & \case
+          case bool of
             True -> Control.return $ Step (a :> loop as)
             False -> Control.return $ loop as
 {-# INLINE filterM #-}
@@ -1332,7 +1332,7 @@ intersperse ::
   Stream (Of a) m r %1 ->
   Stream (Of a) m r
 intersperse x stream =
-  stream & \case
+  case stream of
     Return r -> Return r
     Effect m -> Effect $ Control.fmap (intersperse x) m
     Step (a :> as) -> loop a as
@@ -1341,7 +1341,7 @@ intersperse x stream =
     -- element named 'x'
     loop :: a -> Stream (Of a) m r %1 -> Stream (Of a) m r
     loop !a stream =
-      stream & \case
+      case stream of
         Return r -> Step (a :> Return r)
         Effect m -> Effect $ Control.fmap (loop a) m
         Step (a' :> as) -> Step (a :> Step (x :> loop a' as))
@@ -1379,7 +1379,7 @@ drop n stream = case compare n 0 of
     where
       loop :: Stream (Of a) m r %1 -> Stream (Of a) m r
       loop stream =
-        stream & \case
+        case stream of
           Return r -> Return r
           Effect m -> Effect $ Control.fmap (drop n) m
           Step (_ :> as) -> drop (n - 1) as
@@ -1407,7 +1407,7 @@ dropWhile pred = loop
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of a) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (a :> as) -> case pred a of
@@ -1448,7 +1448,7 @@ scan step begin done stream = Step (done begin :> loop begin stream)
   where
     loop :: x -> Stream (Of a) m r %1 -> Stream (Of b) m r
     loop !acc stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (loop acc) m
         Step (a :> as) -> Step (done acc' :> loop acc' as)
@@ -1486,7 +1486,7 @@ scanM step mx done stream = loop stream
   where
     loop :: Stream (Of a) m r %1 -> Stream (Of b) m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Effect $ Control.do
           Ur x <- mx
           Ur b <- done x
@@ -1525,7 +1525,7 @@ scanned step begin done = loop begin
   where
     loop :: x -> Stream (Of a) m r %1 -> Stream (Of (a, b)) m r
     loop !x stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap (loop x) m
         Step (a :> as) -> Control.do
@@ -1562,7 +1562,7 @@ delay seconds = loop
     loop :: Stream (Of a) IO r %1 -> Stream (Of a) IO r
     loop stream = Control.do
       e <- Control.lift $ next stream
-      e & \case
+      case e of
         Left r -> Return r
         Right (Ur a, rest) -> Control.do
           Step (a :> Return ()) -- same as yield
@@ -1605,7 +1605,7 @@ wrapEffect ::
   Stream f m r %1 ->
   Stream f m r
 wrapEffect ma action stream =
-  stream & \case
+  case stream of
     Return r -> Return r
     Effect m -> Effect $ Control.do
       a <- ma
@@ -1640,7 +1640,7 @@ slidingWindow n = setup (max 1 n :: Int) Seq.empty
     window :: Seq.Seq a -> Stream (Of a) m b %1 -> Stream (Of (Seq.Seq a)) m b
     window !sequ str = Control.do
       e <- Control.lift (next str)
-      e & \case
+      case e of
         Left r -> Control.return r
         Right (Ur a, rest) -> Control.do
           Step $ (sequ Seq.|> a) :> Return () -- same as yield
@@ -1653,7 +1653,7 @@ slidingWindow n = setup (max 1 n :: Int) Seq.empty
       window (Seq.drop 1 sequ) str
     setup n' sequ str = Control.do
       e <- Control.lift $ next str
-      e & \case
+      case e of
         Left r -> Control.do
           Step (sequ :> Return ()) -- same as yield
           Control.return r

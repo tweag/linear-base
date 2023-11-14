@@ -32,11 +32,11 @@ elim3 = V.elim
 
 manualElim3 :: (a %1 -> a %1 -> a %1 -> [a]) %1 -> V 3 a %1 -> [a]
 manualElim3 f v =
-  V.uncons v & \case
+  case V.uncons v of
     (x, v') ->
-      V.uncons v' & \case
+      case V.uncons v' of
         (y, v'') ->
-          V.uncons v'' & \case
+          case V.uncons v'' of
             (z, v''') ->
-              V.consume v''' & \case
+              case V.consume v''' of
                 () -> f x y z

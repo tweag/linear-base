@@ -65,7 +65,7 @@ import qualified Data.Functor.Linear as Data
 import Data.Functor.Sum
 import Data.Unrestricted.Linear
 import GHC.Stack
-import Prelude.Linear (($), (&), (.))
+import Prelude.Linear (($), (.))
 import Streaming.Linear.Internal.Process (destroyExposed)
 import Streaming.Linear.Internal.Type
 import qualified Streaming.Prelude.Linear as Stream
@@ -244,7 +244,7 @@ unfold step state = unfold' step state
       Stream f m r
     unfold' step state = Effect $ Control.do
       either <- step state
-      either & \case
+      case either of
         Left r -> Control.return $ Return r
         Right (fs) -> Control.return $ Step $ Control.fmap (unfold step) fs
 {-# INLINEABLE unfold #-}
@@ -261,7 +261,7 @@ untilJust action = loop
     loop :: Stream f m r
     loop = Effect $ Control.do
       maybeVal <- action
-      maybeVal & \case
+      case maybeVal of
         Nothing -> Control.return $ Step $ Data.pure loop
         Just r -> Control.return $ Return r
 {-# INLINEABLE untilJust #-}
@@ -344,7 +344,7 @@ mapsM transform = loop
   where
     loop :: Stream f m r %1 -> Stream g m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Step f -> Effect $ Control.fmap Step $ transform $ Control.fmap loop f
         Effect m -> Effect $ Control.fmap loop m
@@ -461,10 +461,10 @@ groups = loop
     loop :: Stream (Sum f g) m r %1 -> Stream (Sum (Stream f m) (Stream g m)) m r
     loop str = Control.do
       e <- Control.lift $ inspect str
-      e & \case
+      case e of
         Left r -> Control.return r
         Right ostr ->
-          ostr & \case
+          case ostr of
             InR gstr -> Step $ InR $ Control.fmap loop $ cleanR (Step (InR gstr))
             InL fstr -> Step $ InL $ Control.fmap loop $ cleanL (Step (InL fstr))
 
@@ -474,7 +474,7 @@ groups = loop
         go :: Stream (Sum f g) m r %1 -> Stream f m (Stream (Sum f g) m r)
         go s = Control.do
           e <- Control.lift $ inspect s
-          e & \case
+          case e of
             Left r -> Control.return $ Control.return r
             Right (InL fstr) -> Step $ Control.fmap go fstr
             Right (InR gstr) -> Control.return $ Step (InR gstr)
@@ -485,7 +485,7 @@ groups = loop
         go :: Stream (Sum f g) m r %1 -> Stream g m (Stream (Sum f g) m r)
         go s = Control.do
           e <- Control.lift $ inspect s
-          e & \case
+          case e of
             Left r -> Control.return $ Control.return r
             Right (InL fstr) -> Control.return $ Step (InL fstr)
             Right (InR gstr) -> Step $ Control.fmap go gstr
@@ -509,7 +509,7 @@ inspect = loop
   where
     loop :: Stream f m r %1 -> m (Either r (f (Stream f m r)))
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return (Left r)
         Effect m -> m Control.>>= loop
         Step fs -> Control.return (Right fs)
@@ -552,7 +552,7 @@ splitsAt n stream = loop n stream
       LT -> Prelude.error "splitsAt called with negative index" $ stream
       EQ -> Return stream
       GT ->
-        stream & \case
+        case stream of
           Return r -> Return $ Return r
           Effect m -> Effect $ Control.fmap (loop n) m
           Step f -> Step $ Control.fmap (loop (n - 1)) f
@@ -587,7 +587,7 @@ concats = loop
   where
     loop :: Stream (Stream f m) m r %1 -> Stream f m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step f -> Control.do
@@ -612,7 +612,7 @@ intercalates sep = go0
   where
     go0 :: Stream (t m) m r %1 -> t m r
     go0 f =
-      f & \case
+      case f of
         Return r -> Control.return r
         Effect m -> Control.lift m Control.>>= go0
         Step fstr -> Control.do
@@ -621,7 +621,7 @@ intercalates sep = go0
 
     go1 :: Stream (t m) m r %1 -> t m r
     go1 f =
-      f & \case
+      case f of
         Return r -> Control.return r
         Effect m -> Control.lift m Control.>>= go1
         Step fstr -> Control.do
@@ -736,7 +736,7 @@ decompose = loop
   where
     loop :: Stream (Compose m f) m r %1 -> Stream f m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Return r
         Effect m -> Effect $ Control.fmap loop m
         Step (Compose mfs) -> Effect $ Control.do
@@ -814,7 +814,7 @@ run = loop
   where
     loop :: (Control.Monad m) => Stream m m r %1 -> m r
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return r
         Effect m -> m Control.>>= loop
         Step mrest -> mrest Control.>>= loop
@@ -915,7 +915,7 @@ destroy stream0 construct theEffect done = theEffect (loop stream0)
   where
     loop :: Stream f m r %1 -> m b
     loop stream =
-      stream & \case
+      case stream of
         Return r -> Control.return $ done r
         Effect m -> m Control.>>= loop
         Step f -> Control.return $ construct $ Control.fmap (theEffect . loop) f

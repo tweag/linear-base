@@ -115,7 +115,7 @@ instance (Consumable a, Ord a) => Ord [a] where
   compare xs [] = xs `lseq` GT
   compare [] ys = ys `lseq` LT
   compare (x : xs) (y : ys) =
-    compare x y & \case
+    case compare x y of
       EQ -> compare xs ys
       res -> (xs, ys) `lseq` res
 

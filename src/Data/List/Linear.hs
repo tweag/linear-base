@@ -117,7 +117,7 @@ map = fmap
 filter :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> [a]
 filter _ [] = []
 filter p (x : xs) =
-  dup x & \case
+  case dup x of
     (x', x'') ->
       if p x'
         then x'' : filter p xs
@@ -149,10 +149,10 @@ splitAt i = Unsafe.toLinear (Prelude.splitAt i)
 span :: (Dupable a) => (a %1 -> Bool) -> [a] %1 -> ([a], [a])
 span _ [] = ([], [])
 span f (x : xs) =
-  dup x & \case
+  case dup x of
     (x', x'') ->
       if f x'
-        then span f xs & \case (ts, fs) -> (x'' : ts, fs)
+        then case span f xs of (ts, fs) -> (x'' : ts, fs)
         else ([x''], xs)
 
 -- The partition function takes a predicate a list and returns the
@@ -310,7 +310,7 @@ scanl1 f (x : xs) = scanl f x xs
 scanr :: (Dupable b) => (a %1 -> b %1 -> b) -> b %1 -> [a] %1 -> [b]
 scanr _ b [] = [b]
 scanr f b (a : as) =
-  scanr f b as & \case
+  case scanr f b as of
     (b' : bs') ->
       dup2 b' & \(b'', b''') ->
         f a b'' : b''' : bs'
@@ -322,7 +322,7 @@ scanr1 :: (Dupable a) => (a %1 -> a %1 -> a) -> [a] %1 -> [a]
 scanr1 _ [] = []
 scanr1 _ [a] = [a]
 scanr1 f (a : as) =
-  scanr1 f as & \case
+  case scanr1 f as of
     (a' : as') ->
       dup2 a' & \(a'', a''') ->
         f a a'' : a''' : as'
@@ -364,7 +364,7 @@ zipWith' _ [] [] = ([], Nothing)
 zipWith' _ (a : as) [] = ([], Just (Left (a :| as)))
 zipWith' _ [] (b : bs) = ([], Just (Right (b :| bs)))
 zipWith' f (a : as) (b : bs) =
-  zipWith' f as bs & \case
+  case zipWith' f as bs of
     (cs, rest) -> (f a b : cs, rest)
 
 zipWith3 :: forall a b c d. (Consumable a, Consumable b, Consumable c) => (a %1 -> b %1 -> c %1 -> d) -> [a] %1 -> [b] %1 -> [c] %1 -> [d]

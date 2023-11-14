@@ -70,11 +70,11 @@ pure x =
     (sf, sx)
     (\(sf', sx') -> givef sf' (givex sx'))
     ( \(sf', sx') ->
-        (dupsf sf', dupsx sx') & \case
+        case (dupsf sf', dupsx sx') of
           ((sf1, sf2), (sx1, sx2)) -> ((sf1, sx1), (sf2, sx2))
     )
     ( \(sf', sx') ->
-        consumesf sf' & \case
+        case consumesf sf' of
           () -> consumesx sx'
     )
 
@@ -84,11 +84,11 @@ liftA2 f (ReplicationStream sa givea dupsa consumesa) (ReplicationStream sb give
     (sa, sb)
     (\(sa', sb') -> f (givea sa') (giveb sb'))
     ( \(sa', sb') ->
-        (dupsa sa', dupsb sb') & \case
+        case (dupsa sa', dupsb sb') of
           ((sa1, sa2), (sb1, sb2)) -> ((sa1, sb1), (sa2, sb2))
     )
     ( \(sa', sb') ->
-        consumesa sa' & \case
+        case consumesa sa' of
           () -> consumesb sb'
     )
 -- We need to inline this to get good results with generic deriving

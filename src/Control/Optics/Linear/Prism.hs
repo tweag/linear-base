@@ -23,7 +23,7 @@
 -- -- (This is a bit of a toy example since we could use @over@ for this.)
 -- formatLicenceName :: PersonId %1-> PersonId
 -- formatLicenceName personId =
---   Data.fmap modLisc (match pIdLiscPrism personId) & \case
+--   case Data.fmap modLisc (match pIdLiscPrism personId) of
 --     Left personId' -> personId'
 --     Right lisc -> build pIdLiscPrism lisc
 --   where
