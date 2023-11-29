@@ -2,6 +2,9 @@
 
 Thank you very much for your interest in this project! We welcome contributions from anyone, given that they follow the few rules below.
 
+A great first step is to join our
+[![Discord](https://img.shields.io/badge/Discord-100000?style=flat&logo=Discord&logoColor=C3C3C3&labelColor=4179DA&color=010101)][discord] server
+
 ## Pull Request Process
 
 - Feel free to open a draft PR to first discuss the high level changes you intend to make before going deep into the implementation
@@ -62,3 +65,5 @@ You'll end with a file named `CHANGELOG-gen.md` that will list all the PRs and i
 - It is recommended to edit the PR titles in the listing, and add a concise description for the most important ones (or when a single line of text is not enough to describe the changes).
 - You might group PRs that are related to the same feature (or when one PR is overridden by a following one)
 - In case of doubt, use the changelog for `v0.2.0` as a reference of how to edit the changelog
+
+[discord]: https://discord.com/invite/7yg5GxzvDJ
