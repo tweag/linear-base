@@ -1,9 +1,9 @@
 # Linear base
 
 [![License MIT](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/tweag/linear-base/blob/master/LICENSE)
-[![Build status](https://badge.buildkite.com/5b60ab93dadba234a95e04e6568985918552dcc9e7685ede0d.svg?branch=master)](https://buildkite.com/tweag-1/linear-base)
 [![Hackage](https://img.shields.io/hackage/v/linear-base.svg?style=flat&color=brightgreen)][hackage-pkg]
 [![Stackage](https://stackage.org/package/linear-base/badge/nightly)][stackage-pkg]
+[![Discord](https://img.shields.io/badge/Discord-100000?style=flat&logo=Discord&logoColor=C3C3C3&labelColor=4179DA&color=010101)][discord]
 
 Linear base is a standard library for developing applications with linear
 types. It is named `linear-base` to be an analog to the original [`base`]
@@ -38,6 +38,10 @@ the top:
 ```
 {-# LANGUAGE LinearTypes #-}
 ```
+
+To get in touch, you can join our
+[![Discord](https://img.shields.io/badge/Discord-100000?style=flat&logo=Discord&logoColor=C3C3C3&labelColor=4179DA&color=010101)][discord] server
+
 
 ## User Guide
 
@@ -85,6 +89,9 @@ Linear base is maintained by [Tweag].
 To contribute please see the [Design Document] for instructions and advice on
 making pull requests.
 
+A great first step is to join our
+[![Discord](https://img.shields.io/badge/Discord-100000?style=flat&logo=Discord&logoColor=C3C3C3&labelColor=4179DA&color=010101)][discord] server
+
 ## Licence
 
 See the [Licence file](https://github.com/tweag/linear-base/blob/master/LICENSE).
@@ -97,3 +104,4 @@ Copyright © Tweag Holding and its affiliates.
 [Design Document]: https://github.com/tweag/linear-base/blob/master/docs/DESIGN.md
 [hackage-pkg]: https://hackage.haskell.org/package/linear-base
 [stackage-pkg]: https://www.stackage.org/nightly/package/linear-base
+[discord]: https://discord.com/invite/7yg5GxzvDJ
