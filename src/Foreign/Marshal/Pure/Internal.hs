@@ -29,10 +29,10 @@ import Foreign.Marshal.Utils
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.Storable.Tuple ()
-import Prelude.Linear hiding (Eq (..), ($))
+import Prelude.Linear hiding (Eq (..))
 import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
-import Prelude (Eq (..), return, ($), (<$>), (<*>), (=<<))
+import Prelude (Eq (..), return, (<$>), (<*>), (=<<))
 
 -- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
@@ -290,12 +290,12 @@ freeAll start end = do
 -- TODO: document individual functions
 
 -- | Given a linear computation that manages memory, run that computation.
-withPool :: (Pool %1 -> Ur b) %1 -> Ur b
-withPool scope = Unsafe.toLinear performScope scope
+withPool :: forall b. (Movable b) => (Pool %1 -> b) %1 -> b
+withPool scope = unur $ Unsafe.toLinear performScope scope
   where
     -- XXX: do ^ without `toLinear` by using linear IO
 
-    performScope :: (Pool %1 -> Ur b) -> Ur b
+    performScope :: (Pool %1 -> b) -> Ur b
     performScope scope' = unsafeDupablePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc
@@ -303,7 +303,7 @@ withPool scope = Unsafe.toLinear performScope scope
       start <- DLL nullPtr nullPtr <$> new end -- always at the start of the list
       poke backPtr start
       -- Run the computation
-      evaluate (scope' (Pool start))
+      evaluate (move $ scope' (Pool start))
         `finally`
         -- Clean up remaining variables.
         (freeAll start end)
