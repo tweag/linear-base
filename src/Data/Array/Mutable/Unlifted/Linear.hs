@@ -60,13 +60,32 @@ infixr 0 `lseq` -- same fixity as base.seq
 -- | Allocate a mutable array of given size using a default value.
 --
 -- The size should be non-negative.
-alloc :: Int -> a -> (Array# a %1 -> Ur b) %1 -> Ur b
-alloc (GHC.I# s) a f =
+alloc :: (Movable b) => Int -> a -> (Array# a %1 -> b) %1 -> b
+alloc i a f = case move (unsafe_alloc i a f) of
+  Ur b -> b
+{-# INLINEABLE alloc #-}
+
+-- The `alloc` function is split in two. One very unsafe below (it's very
+-- unsafe, because `unafe_alloc 57 0 id` returns an unrestricted _mutable_
+-- `Array#` breaking the module's invariants). Because `unsafe_alloc` calls
+-- `runRW#`, it's marked as `NOINLINE`.
+--
+-- It's made safe by the wrapping function `alloc`, which restricts `b` to be
+-- `Movable` (`Array#` is crucially not `Movable`, therefore `alloc 57 0 id`
+-- doesn't type). Furthermore, `alloc` cases on `move` to make sure that all the
+-- effects have been run by the time we evaluate the result of an `alloc`. It's
+-- fine that `alloc` is inlined: its semantics is preserved by program
+-- transformations. It's useful that `alloc` be inlined, because in most
+-- instance `case move … of` will trigger a case-of-known-constructor avoiding
+-- an extra allocation. This is in particular the case for the common case where
+-- `b = Ur x`.
+unsafe_alloc :: Int -> a -> (Array# a %1 -> b) %1 -> b
+unsafe_alloc (GHC.I# s) a f =
   let new = GHC.runRW# Prelude.$ \st ->
         case GHC.newArray# s a st of
           (# _, arr #) -> Array# arr
    in f new
-{-# NOINLINE alloc #-} -- prevents runRW# from floating outwards
+{-# NOINLINE unsafe_alloc #-} -- prevents runRW# from floating outwards
 
 -- For the reasoning behind these NOINLINE pragmas, see the discussion at:
 -- https://github.com/tweag/linear-base/pull/187#pullrequestreview-489183531

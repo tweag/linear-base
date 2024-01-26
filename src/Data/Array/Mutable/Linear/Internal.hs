@@ -62,11 +62,11 @@ data Array a = Array (Array# a)
 -- | Allocate a constant array given a size and an initial value
 -- The size must be non-negative, otherwise this errors.
 alloc ::
-  (HasCallStack) =>
+  (HasCallStack, Movable b) =>
   Int ->
   a ->
-  (Array a %1 -> Ur b) %1 ->
-  Ur b
+  (Array a %1 -> b) %1 ->
+  b
 alloc s x f
   | s < 0 =
       (error ("Array.alloc: negative size: " ++ show s) :: x %1 -> x)
@@ -89,11 +89,11 @@ allocBeside s x (Array orig)
 
 -- | Allocate an array from a list
 fromList ::
-  (HasCallStack) =>
+  (HasCallStack, Movable b) =>
   [a] ->
-  (Array a %1 -> Ur b) %1 ->
-  Ur b
-fromList list (f :: Array a %1 -> Ur b) =
+  (Array a %1 -> b) %1 ->
+  b
+fromList list (f :: Array a %1 -> b) =
   alloc
     (Prelude.length list)
     (error "invariant violation: unintialized array position")

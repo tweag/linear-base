@@ -29,8 +29,8 @@ type Keyed a = Linear.Keyed a
 -- # Constructors and Mutators
 -------------------------------------------------------------------------------
 
-empty :: (Keyed a) => Int -> (Set a %1 -> Ur b) %1 -> Ur b
-empty s (f :: Set a %1 -> Ur b) =
+empty :: (Keyed a, Movable b) => Int -> (Set a %1 -> b) %1 -> b
+empty s (f :: Set a %1 -> b) =
   Linear.empty s (\hm -> f (Set hm))
 
 toList :: (Keyed a) => Set a %1 -> Ur [a]
@@ -63,7 +63,7 @@ member :: (Keyed a) => a -> Set a %1 -> (Ur Bool, Set a)
 member a (Set hm) =
   Linear.member a hm Linear.& \(b, hm') -> (b, Set hm')
 
-fromList :: (Keyed a) => [a] -> (Set a %1 -> Ur b) %1 -> Ur b
+fromList :: (Keyed a, Movable b) => [a] -> (Set a %1 -> b) %1 -> b
 fromList xs f =
   Linear.fromList (Prelude.map (,()) xs) (\hm -> f (Set hm))
 

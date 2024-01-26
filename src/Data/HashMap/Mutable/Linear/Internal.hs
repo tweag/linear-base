@@ -133,10 +133,10 @@ data ProbeResult k v where
 -- | Run a computation with an empty 'HashMap' with given capacity.
 empty ::
   forall k v b.
-  (Keyed k) =>
+  (Keyed k, Movable b) =>
   Int ->
-  (HashMap k v %1 -> Ur b) %1 ->
-  Ur b
+  (HashMap k v %1 -> b) %1 ->
+  b
 empty size scope =
   let cap = max 1 size
    in Array.alloc cap Nothing (\arr -> scope (HashMap 0 cap arr))
@@ -151,10 +151,10 @@ allocBeside size (HashMap s' c' arr) =
 -- | Run a computation with an 'HashMap' containing given key-value pairs.
 fromList ::
   forall k v b.
-  (Keyed k) =>
+  (Keyed k, Movable b) =>
   [(k, v)] ->
-  (HashMap k v %1 -> Ur b) %1 ->
-  Ur b
+  (HashMap k v %1 -> b) %1 ->
+  b
 fromList xs scope =
   let cap =
         max

@@ -56,17 +56,17 @@ fromArray arr =
     & \(Ur size', arr') -> Vec size' arr'
 
 -- Allocate an empty vector
-empty :: (Vector a %1 -> Ur b) %1 -> Ur b
+empty :: (Movable b) => (Vector a %1 -> b) %1 -> b
 empty f = Array.fromList [] (f . fromArray)
 
 -- | Allocate a constant vector of a given non-negative size (and error on a
 -- bad size)
 constant ::
-  (HasCallStack) =>
+  (HasCallStack, Movable b) =>
   Int ->
   a ->
-  (Vector a %1 -> Ur b) %1 ->
-  Ur b
+  (Vector a %1 -> b) %1 ->
+  b
 constant size' x f
   | size' < 0 =
       (error ("Trying to construct a vector of size " ++ show size') :: x %1 -> x)
@@ -74,7 +74,7 @@ constant size' x f
   | otherwise = Array.alloc size' x (f . fromArray)
 
 -- | Allocator from a list
-fromList :: (HasCallStack) => [a] -> (Vector a %1 -> Ur b) %1 -> Ur b
+fromList :: (HasCallStack, Movable b) => [a] -> (Vector a %1 -> b) %1 -> b
 fromList xs f = Array.fromList xs (f . fromArray)
 
 -- | Number of elements inside the vector.
