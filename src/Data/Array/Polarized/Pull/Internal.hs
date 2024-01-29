@@ -113,3 +113,7 @@ reverse (Array f n) = Array (\x -> f (n + 1 - x)) n
 -- | Index a pull array (without checking bounds)
 index :: Array a %1 -> Int -> (a, Array a)
 index (Array f n) ix = (f ix, Array f n)
+
+-- | Index a pull array (with checking bounds)
+safeIndex :: Array a %1 -> Int -> (Maybe a, Array a)
+safeIndex (Array f n) ix = (if 0 <= ix && ix < n then Just (f ix) else Nothing, Array f n)

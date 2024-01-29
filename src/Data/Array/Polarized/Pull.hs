@@ -28,6 +28,7 @@ module Data.Array.Polarized.Pull
     split,
     reverse,
     index,
+    safeIndex,
   )
 where
 
