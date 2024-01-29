@@ -1,0 +1,38 @@
+	Thu May 11 11:53 2023 Time and Allocation Profiling Report  (Final)
+
+	   memory +RTS -p -RTS runParseWithoutDest
+       commit c86e68fca2a3f1ce4ea5aa18c31e336059d1ccbd
+
+-- removed all lines with no individual contribution to alloc with
+-- .*?([0-9]+\.[0-9])\s+?0\.0\s+?([0-9]+\.[0-9])\s+?([0-9]+\.[0-9])\n
+
+	total time  =        0.00 secs   (1 ticks @ 1000 us, 1 processor)
+	total alloc =   1,170,224 bytes  (excludes profiling overheads)
+
+COST CENTRE                     MODULE              SRC                                             %time %alloc
+
+parseWithoutDest'.\             Bench.Compact.SExpr memory/Bench/Compact/SExpr.hs:(107,21)-(122,4)  100.0   68.7
+reverse                         Data.List.Linear    src/Data/List/Linear.hs:143:1-7                   0.0    1.3
+parseWithoutDest'.splitOnSep    Bench.Compact.SExpr memory/Bench/Compact/SExpr.hs:123:7-90            0.0   13.7
+parseWithoutDest'.appendOrRet.\ Bench.Compact.SExpr memory/Bench/Compact/SExpr.hs:126:54-105          0.0    1.6
+loadSampleData                  Bench.Compact.SExpr memory/Bench/Compact/SExpr.hs:24:1-64             0.0    9.7
+CAF                             GHC.IO.Handle.FD    <entire-module>                                   0.0    3.0
+
+
+                                                                                                                                       individual      inherited
+COST CENTRE                                 MODULE                  SRC                                            no.      entries  %time %alloc   %time %alloc
+
+    main                                    Main                    memory/Main.hs:(29,1)-(43,9)                   9301           0    0.0    0.3   100.0   96.3
+    parseWithoutDest'.\                     Bench.Compact.SExpr     memory/Bench/Compact/SExpr.hs:(107,21)-(122,4) 9314         750  100.0   68.7   100.0   71.0
+    readStringWithoutDest.\                 Bench.Compact.SExpr     memory/Bench/Compact/SExpr.hs:101:21-60        9346         373    0.0    0.8     0.0    0.8
+    readStringWithoutDest.\                 Bench.Compact.SExpr     memory/Bench/Compact/SExpr.hs:100:27-61        9347          31    0.0    0.3     0.0    1.1
+    reverse                                 Data.List.Linear        src/Data/List/Linear.hs:143:1-7                9365           0    0.0    0.8     0.0    0.8
+    reverse                                 Data.List.Linear        src/Data/List/Linear.hs:143:1-7                9361           0    0.0    0.5     0.0    0.5
+    parseWithoutDest'.appendOrRet.\         Bench.Compact.SExpr     memory/Bench/Compact/SExpr.hs:126:54-105       9340         255    0.0    1.6     0.0    1.6
+    parseWithoutDest'.splitOnSep            Bench.Compact.SExpr     memory/Bench/Compact/SExpr.hs:123:7-90         9327           0    0.0   13.7     0.0   13.7
+    loadSampleData                          Bench.Compact.SExpr     memory/Bench/Compact/SExpr.hs:24:1-64          9305           0    0.0    9.7     0.0    9.7
+ CAF                                        GHC.Conc.Signal         <entire-module>                                9233           0    0.0    0.1     0.0    0.1
+ CAF                                        GHC.IO.Encoding         <entire-module>                                9198           0    0.0    0.3     0.0    0.3
+ CAF                                        GHC.IO.Handle.FD        <entire-module>                                9187           0    0.0    3.0     0.0    3.0
+ CAF                                        Text.Read.Lex           <entire-module>                                9140           0    0.0    0.1     0.0    0.1
+ CAF:loadSampleData2                        Bench.Compact.SExpr     <no location info>                             8953           0    0.0    0.2     0.0    0.2

@@ -29,6 +29,8 @@ common warnings
 library
     import: warnings
     exposed-modules:
+        Compact.Pure
+        Compact.Pure.Internal
         Control.Monad.IO.Class.Linear
         Control.Functor.Linear
         Control.Functor.Linear.Internal.Class
@@ -134,10 +136,12 @@ library
 
         base >=4.16 && <5,
         containers,
+        ghc-compact,
         ghc-prim,
         ghc-bignum,
         hashable,
         linear-generics >= 0.2,
+        reflection >= 2.1,
         storable-tuple,
         text,
         transformers,
@@ -158,6 +162,7 @@ test-suite test
         Test.Data.Polarized
         Test.Data.V
         Test.Data.Replicator
+        Test.Compact.Pure
 
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts -with-rtsopts=-N
@@ -165,11 +170,13 @@ test-suite test
         inspection-testing,
         tasty-inspection-testing,
         base,
+        ghc-compact,
         linear-base,
         containers,
         hedgehog,
         tasty,
         tasty-hedgehog >= 1.2,
+        tasty-hunit,
         mmorph,
         vector
 
@@ -226,3 +233,20 @@ benchmark mutable-data
         tasty-bench >= 0.3,
         unordered-containers,
         MonadRandom
+
+benchmark memory
+    import: warnings
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    hs-source-dirs:   memory
+    other-modules:
+        Bench.Compact.Pure
+        Bench.Compact.SExpr
+
+    default-language: Haskell2010
+    build-depends:
+        base,
+        deepseq,
+        ghc-compact,
+        linear-base,
+        tasty-bench >= 0.3
