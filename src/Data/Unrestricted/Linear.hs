@@ -68,22 +68,22 @@ module Data.Unrestricted.Linear
 
     -- * Performing non-linear actions on linearly bound values
     Consumable (..),
-    Dupable (..),
-    Movable (..),
     lseq,
+    Dupable (..),
     dup,
     dup3,
     dup4,
     dup5,
     dup6,
     dup7,
-    module Data.Unrestricted.Linear.Internal.Instances,
+    Movable (..),
+    ($^),
   )
 where
 
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Dupable
-import Data.Unrestricted.Linear.Internal.Instances
+import Data.Unrestricted.Linear.Internal.Instances ()
 import Data.Unrestricted.Linear.Internal.Movable
 import Data.Unrestricted.Linear.Internal.Ur
 import Data.Unrestricted.Linear.Internal.UrT
