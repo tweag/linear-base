@@ -55,14 +55,12 @@
 -- vecfilter vec f = Push.alloc (transfer (loop (Pull.fromVector vec) f))
 --   where
 --     loop :: Pull.Array a -> (a -> Bool) -> Pull.Array a
---     loop arr f = case Pull.findLength arr of
---       (0,_) -> Pull.fromFunction (error "empty") 0
---       (n,_) -> case Pull.split 1 arr of
---         (head, tail) -> case Pull.index head 0 of
---           (a,_) ->
---             if f a
---             then Pull.append (Pull.singleton a) (loop tail f)
---             else loop tail f
+--     loop arr f = case Pull.uncons arr of
+--       Nothing -> Pull.fromFunction (error "empty") 0
+--       Just (a, as) ->
+--         if f a
+--         then Pull.append (Pull.singleton a) (loop as f)
+--         else loop as f
 -- @
 --
 --

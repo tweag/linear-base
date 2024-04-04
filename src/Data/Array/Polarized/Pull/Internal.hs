@@ -110,6 +110,7 @@ split k (Array f n) = (fromFunction f (min k n), fromFunction (\x -> f (x + k)) 
 reverse :: Array a %1 -> Array a
 reverse (Array f n) = Array (\x -> f (n + 1 - x)) n
 
--- | Index a pull array (without checking bounds)
-index :: Array a %1 -> Int -> (a, Array a)
-index (Array f n) ix = (f ix, Array f n)
+-- | Decompose an array into its head and tail, returns @Nothing@ if the array is empty.
+uncons :: Array a %1 -> Maybe (a, Array a)
+uncons (Array _ 0) = Nothing
+uncons (Array f n) = Just (f 0, fromFunction (\x -> f (x + 1)) (n - 1))
