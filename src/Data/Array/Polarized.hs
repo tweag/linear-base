@@ -56,7 +56,7 @@
 --   where
 --     loop :: Pull.Array a -> (a -> Bool) -> Pull.Array a
 --     loop arr f = case Pull.uncons arr of
---       Nothing -> Pull.fromFunction (error "empty") 0
+--       Nothing -> Pull.empty
 --       Just (a, as) ->
 --         if f a
 --         then Pull.append (Pull.singleton a) (loop as f)

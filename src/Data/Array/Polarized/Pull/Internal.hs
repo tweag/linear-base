@@ -37,6 +37,10 @@ instance Data.Functor Array where
 -- is interesting in and of itself: I think this is like an n-ary With), and
 -- changing the other arrows makes no difference)
 
+-- | Create an empty pull array
+empty :: Array a
+empty = fromFunction (\_ -> error "Data.Array.Polarized.Pull.Internal.empty: this should never be called") 0
+
 -- | Produce a pull array of lenght 1 consisting of solely the given element.
 singleton :: a %1 -> Array a
 singleton = Unsafe.toLinear (\x -> fromFunction (\_ -> x) 1)

@@ -13,6 +13,7 @@ module Data.Array.Polarized.Pull
     fromVector,
     make,
     singleton,
+    empty,
 
     -- * Consumption
     toVector,
