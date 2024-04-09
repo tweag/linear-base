@@ -37,6 +37,10 @@ instance Data.Functor Array where
 -- is interesting in and of itself: I think this is like an n-ary With), and
 -- changing the other arrows makes no difference)
 
+-- | Create an empty pull array
+empty :: Array a
+empty = fromFunction (\_ -> error "Data.Array.Polarized.Pull.Internal.empty: this should never be called") 0
+
 -- | Produce a pull array of lenght 1 consisting of solely the given element.
 singleton :: a %1 -> Array a
 singleton = Unsafe.toLinear (\x -> fromFunction (\_ -> x) 1)
@@ -110,6 +114,7 @@ split k (Array f n) = (fromFunction f (min k n), fromFunction (\x -> f (x + k)) 
 reverse :: Array a %1 -> Array a
 reverse (Array f n) = Array (\x -> f (n + 1 - x)) n
 
--- | Index a pull array (without checking bounds)
-index :: Array a %1 -> Int -> (a, Array a)
-index (Array f n) ix = (f ix, Array f n)
+-- | Decompose an array into its head and tail, returns @Nothing@ if the array is empty.
+uncons :: Array a %1 -> Maybe (a, Array a)
+uncons (Array _ 0) = Nothing
+uncons (Array f n) = Just (f 0, fromFunction (\x -> f (x + 1)) (n - 1))

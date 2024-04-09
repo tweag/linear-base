@@ -6,6 +6,7 @@ module Test.Data.Polarized (polarizedArrayTests) where
 import qualified Data.Array.Polarized as Polar
 import qualified Data.Array.Polarized.Pull as Pull
 import qualified Data.Array.Polarized.Push as Push
+import Data.Functor.Linear (fmap)
 import qualified Data.Vector as Vector
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -34,10 +35,12 @@ polarizedArrayTests =
       testPropertyNamed "Push.make ~ Vec.replicate" "pushMake" pushMake,
       testPropertyNamed "Pull.append ~ Vec.append" "pullAppend" pullAppend,
       testPropertyNamed "Pull.asList . Pull.fromVector ~ id" "pullAsList" pullAsList,
+      testPropertyNamed "Pull.empty = []" "pullEmpty" pullEmpty,
       testPropertyNamed "Pull.singleton x = [x]" "pullSingleton" pullSingleton,
       testPropertyNamed "Pull.splitAt ~ splitAt" "pullSplitAt" pullSplitAt,
       testPropertyNamed "Pull.make ~ Vec.replicate" "pullMake" pullMake,
-      testPropertyNamed "Pull.zip ~ zip" "pullZip" pullZip
+      testPropertyNamed "Pull.zip ~ zip" "pullZip" pullZip,
+      testPropertyNamed "Pull.uncons ~ uncons" "pullUncons" pullUncons
     ]
 
 list :: Gen [Int]
@@ -88,6 +91,10 @@ pullAsList = property Prelude.$ do
   xs <- forAll list
   xs === Pull.asList (Pull.fromVector (Vector.fromList xs))
 
+pullEmpty :: Property
+pullEmpty = property Prelude.$ do
+  ([] :: [Int]) === Pull.asList Pull.empty
+
 pullSingleton :: Property
 pullSingleton = property Prelude.$ do
   x <- forAll randInt
@@ -115,3 +122,8 @@ pullZip = property Prelude.$ do
   let xs' = Pull.fromVector (Vector.fromList xs)
   let ys' = Pull.fromVector (Vector.fromList ys)
   zip xs ys === Pull.asList (Pull.zip xs' ys')
+
+pullUncons :: Property
+pullUncons = property Prelude.$ do
+  xs <- forAll list
+  uncons xs === fmap (fmap Pull.asList) (Pull.uncons (Pull.fromVector (Vector.fromList xs)))

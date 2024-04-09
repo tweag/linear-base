@@ -13,6 +13,7 @@ module Data.Array.Polarized.Pull
     fromVector,
     make,
     singleton,
+    empty,
 
     -- * Consumption
     toVector,
@@ -27,7 +28,7 @@ module Data.Array.Polarized.Pull
     findLength,
     split,
     reverse,
-    index,
+    uncons,
   )
 where
 
@@ -45,7 +46,7 @@ import Data.Array.Polarized.Pull.Internal
 import qualified Data.Functor.Linear as Data
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
-import Prelude.Linear hiding (foldMap, foldr, reverse, zip, zipWith)
+import Prelude.Linear hiding (foldMap, foldr, reverse, uncons, zip, zipWith)
 import qualified Unsafe.Linear as Unsafe
 
 -- | Convert a pull array into a list.
