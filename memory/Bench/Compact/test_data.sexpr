@@ -1,0 +1,98 @@
+(
+(ert-deftest company-works-as-expected-in-text-mode ()
+  :tags '(company)
+  (switch-to-buffer "*TESTING COMPANY MODE ~ Text*")
+
+  
+  (erase-buffer)
+  (insert "\n def first(x): pass")
+  (insert "\n def fierce(a, b): pass")
+
+  
+  (should company-mode)
+
+  
+  (insert "\n fi")
+  (company-manual-begin) 
+  (should (equal company-candidates '("fierce" "first")))
+
+  
+  (insert "\n fi")
+  (execute-kbd-macro (kbd "C-/ <return>"))
+  (should (looking-back "fierce"))
+
+  
+  (insert "\n fi")
+  (execute-kbd-macro (kbd "C-/ M-2"))
+  (should (looking-back "first"))
+
+  (kill-buffer))
+
+
+
+(ert-deftest company-shows-keywords-alongside-completions-alphabetically ()
+  :tags '(company)
+  (switch-to-buffer "*TESTING COMPANY MODE ~ Python*")
+  (python-mode)
+
+  
+  (erase-buffer)
+  (insert "\n def first(x): pass")
+  (insert "\n def fierce(a, b): pass")
+
+  
+  (insert "\n fi")
+  (company-manual-begin)
+  (should (equal company-candidates '("fierce" "first" #("finally" 0 7 (company-backend company-keywords)))))
+
+  
+  (execute-kbd-macro (kbd "C-g C-/ M-2")) 
+  (should (looking-back "finally"))
+
+  (kill-buffer))
+
+
+
+(ert-deftest hideshow-is-enabled-and-folds-by-default ()
+  :tags '(hideshow)
+  
+  (let* ((contents "function fierce(name) { \n return `${name}: ROAR` \n }")
+         (scratch.js (make-temp-file "scratch" nil ".js" contents)))
+
+    
+    (find-file scratch.js)
+    (should hs-minor-mode)
+
+    
+    (end-of-line)
+    (backward-char 2)
+    (should (hs-already-hidden-p))
+
+    
+    (-let [ov (hs-already-hidden-p)]
+      (-let [(first\n second\n) (-elem-indices "\n" (s-split "" contents))]
+        (should (equal (overlay-start ov) first\n)) 
+        (should (equal (overlay-end ov) (+ second\n 2))))) 
+
+    (kill-buffer)))
+
+
+
+(ert-deftest lsp-hover-shows-type-signature ()
+  
+  (-let [scratch.js (make-temp-file "scratch" nil ".js" "const first = (x, y) => 3")]
+    (find-file scratch.js)
+    (lsp-workspace-folders-add (f-parent scratch.js))
+    (lsp)
+
+    
+    (advice-add #'lsp--eldoc-message :before (lambda (&rest msg) (setq my/lsp-hover-message (substring-no-properties (car msg)))))
+
+    (end-of-buffer)
+    (insert "\n first")
+    (lsp-hover)  
+    (should (equal "const first: (x: any, y: any) => number" my/lsp-hover-message))
+
+    (save-buffer)
+    (kill-buffer)))
+)
