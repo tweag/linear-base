@@ -141,11 +141,12 @@ module Prelude.Linear
     -- * Doing non-linear operations inside linear functions
     -- $
     Consumable (..),
-    Dupable (..),
-    Movable (..),
     lseq,
+    Dupable (..),
     dup,
     dup3,
+    Movable (..),
+    ($^),
     forget,
   )
 where
