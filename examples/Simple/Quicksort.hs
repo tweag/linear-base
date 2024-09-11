@@ -1,6 +1,10 @@
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+-- Uncomment the line below to observe the generated (optimised) Core. It will
+-- land in a file named “Quicksort.dump-simpl”
+-- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
+
 -- | This module implements quicksort with mutable arrays from linear-base
 module Simple.Quicksort where
 
