@@ -57,4 +57,3 @@ propertyPairTest =
         (MkPair 3 4 :: Pair Int)
     )
       === (Sum 2, (MkPair 6 8))
-
