@@ -78,8 +78,8 @@ map f (V xs) = V $ Unsafe.toLinear (Vector.map (\x -> f x)) xs
 
 (<*>) :: V n (a %1 -> b) %1 -> V n a %1 -> V n b
 (V fs) <*> (V xs) =
-  V $
-    Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
+  V
+    $ Unsafe.toLinear2 (Vector.zipWith (\f x -> f $ x)) fs xs
 
 infixl 4 <*> -- same fixity as base.<*>
 

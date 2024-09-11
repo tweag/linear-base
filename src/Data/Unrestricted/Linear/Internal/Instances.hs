@@ -186,7 +186,8 @@ instance (KnownNat n, Consumable a) => Consumable (V n a) where
 
 instance (KnownNat n, Dupable a) => Dupable (V n a) where
   dupR (V xs) =
-    V . Unsafe.toLinear (Vector.fromListN (V.theLength @n))
+    V
+      . Unsafe.toLinear (Vector.fromListN (V.theLength @n))
       Data.<$> dupR (Unsafe.toLinear Vector.toList xs)
 
 -- Some stock instances
