@@ -1,1 +1,9 @@
 packages: *.cabal
+
+allow-newer: all
+index-state: 2024-09-13T13:31:57Z
+
+-- But as of 2024-09-11, the latest version of the `unix` 2.8.5.1 package has a conditional bound on `filepath` depending on the `os-string` flag (see https://hackage.haskell.org/package/unix-2.8.5.1/dependencies).
+-- With no extra parameter or setting, we get a dependency conflict on `filepath`, as other libs use a version of `filepath` incompatible with the one `unix` wants.
+-- Setting `filepath` to 1.4.2.2 fixes that.
+constraints: filepath ==1.4.2.2
