@@ -27,19 +27,19 @@ jobs:
         key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
         restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
     - name: Build Nix dependencies
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Init Cabal's config file
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal --config-file=/home/runner/.cabal/config user-config -f init"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal --config-file=/home/runner/.cabal/config user-config -f init"
     - name: Update Cabal's database
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal update"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal update"
     - name: Build Cabal's dependencies
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks --dependencies-only"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks --dependencies-only"
     - name: Build
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks"
     - name: Haddock
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run "cabal --allow-newer haddock"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal --allow-newer haddock"
     - name: cabal-docspec
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --pure --run cabal-docspec
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run cabal-docspec
 
   ormolu:
     name: check formatting with ormolu
@@ -56,9 +56,9 @@ jobs:
         key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-${{ github.sha }}
         restore-keys: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-
     - name: Build Nix dependencies
-      run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix-shell --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
     - name: check formatting
-      run: nix-shell --pure --run 'stack build ormolu && stack exec ormolu -- -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs")'
+      run: nix-shell --arg installHls 'false' --pure --run 'stack build ormolu && stack exec ormolu -- -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs")'
 
   stack-build:
     name: stack build
@@ -75,6 +75,6 @@ jobs:
         key: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
         restore-keys: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-
     - name: Build Nix dependencies
-      run: nix-shell --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix-shell --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
     - name: Build
-      run: nix-shell --pure --run "stack build --pedantic --test --bench --no-run-benchmarks"
+      run: nix-shell --arg installHls 'false' --pure --run "stack build --pedantic --test --bench --no-run-benchmarks"
