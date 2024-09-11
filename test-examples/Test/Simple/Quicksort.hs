@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Quicksort (quickSortTests) where
+module Test.Simple.Quicksort (quickSortTests) where
 
 import Data.List (sort)
 import Hedgehog

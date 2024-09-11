@@ -2,7 +2,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 -- | This module implements quicksort with mutable arrays from linear-base
-module Simple.Quicksort (quickSort) where
+module Simple.Quicksort where
 
 import Data.Array.Mutable.Linear (Array)
 import qualified Data.Array.Mutable.Linear as Array
