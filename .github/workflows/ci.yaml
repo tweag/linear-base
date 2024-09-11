@@ -10,7 +10,7 @@ jobs:
     name: cabal test - GHC ${{ matrix.ghc-version }}
     strategy:
       matrix:
-        ghc-version: [94, 96]
+        ghc-version: [96, 98, 910]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

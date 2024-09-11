@@ -1,4 +1,4 @@
-{ system ? builtins.currentSystem, sources ? import ./nix/sources.nix, ghcVersion ? "94" }:
+{ system ? builtins.currentSystem, sources ? import ./nix/sources.nix, ghcVersion ? "96" }:
 
 let
   selectHls = self: super: {
