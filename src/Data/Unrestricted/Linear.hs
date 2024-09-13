@@ -4,7 +4,7 @@
 -- = /Critical/ Definition: Restricted
 --
 -- In a linear function @f :: a %1-> b@, the argument @a@ must
--- be used in a linear way. Its use is __restricted__ while
+-- be used in a linear way. Its use is __restricted__. By contrast,
 -- an argument in a non-linear function is __unrestricted__.
 --
 -- Hence, a linear function with an argument of @Ur a@ (@Ur@ is short for
