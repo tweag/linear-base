@@ -1,4 +1,4 @@
-{ system ? builtins.currentSystem, sources ? import ./nix/sources.nix, ghcVersion ? "944" }:
+{ system ? builtins.currentSystem, sources ? import ./nix/sources.nix, ghcVersion ? "96", installHls ? true }:
 
 let
   selectHls = self: super: {
@@ -32,6 +32,5 @@ mkShell {
     stack-wrapped
     nix
     cabal-docspec
-    haskell-language-server
-  ];
+  ] ++ (if installHls then [ haskell-language-server ] else []);
 }

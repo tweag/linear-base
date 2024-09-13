@@ -21,13 +21,26 @@ source-repository head
     type:     git
     location: https://github.com/tweag/linear-base
 
-common warnings
-    ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wnoncanonical-monad-instances
+common build-opts
+    ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wnoncanonical-monad-instances
                  -- Additional warnings we may consider adding:
                  -- * -Wredundant-constraints : would need deactivating in the modules which use Nat
+common rts-opts-multithread
+    ghc-options: -threaded -rtsopts "-with-rtsopts=-N"
+common rts-opts-monothread-stats
+    ghc-options: -rtsopts "-with-rtsopts=-T"
 
 library
-    import: warnings
+    import: build-opts
+    hs-source-dirs:     src
+    if impl(ghc >= 9.4.0)
+        hs-source-dirs: src-version-changes/ghc94/after
+    else
+        hs-source-dirs: src-version-changes/ghc94/before
+    if impl(ghc >= 9.6.0)
+        hs-source-dirs: src-version-changes/ghc96/after
+    else
+        hs-source-dirs: src-version-changes/ghc96/before
     exposed-modules:
         Control.Monad.IO.Class.Linear
         Control.Functor.Linear
@@ -118,20 +131,8 @@ library
         System.IO.Resource.Linear
         System.IO.Resource.Linear.Internal
         Unsafe.Linear
-
-    hs-source-dirs:   src
-    if impl(ghc >= 9.4.0)
-        hs-source-dirs: src-version-changes/ghc94/after
-    else
-        hs-source-dirs: src-version-changes/ghc94/before
-    if impl(ghc >= 9.6.0)
-        hs-source-dirs: src-version-changes/ghc96/after
-    else
-        hs-source-dirs: src-version-changes/ghc96/before
-
     default-language: Haskell2010
     build-depends:
-
         base >=4.16 && <5,
         containers,
         ghc-prim,
@@ -145,7 +146,8 @@ library
         primitive
 
 test-suite test
-    import: warnings
+    import: build-opts
+    import: rts-opts-multithread
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   test
@@ -158,9 +160,7 @@ test-suite test
         Test.Data.Polarized
         Test.Data.V
         Test.Data.Replicator
-
     default-language: Haskell2010
-    ghc-options:      -threaded -rtsopts -with-rtsopts=-N
     build-depends:
         inspection-testing,
         tasty-inspection-testing,
@@ -174,7 +174,8 @@ test-suite test
         vector
 
 test-suite examples
-    import: warnings
+    import: build-opts
+    import: rts-opts-multithread
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   examples
@@ -189,9 +190,7 @@ test-suite examples
         Simple.Quicksort
         Simple.TopSort
         Generic.Traverse
-
     default-language: Haskell2010
-    ghc-options:      -threaded -rtsopts -with-rtsopts=-N
     build-depends:
         base,
         linear-base,
@@ -204,14 +203,14 @@ test-suite examples
         linear-generics
 
 benchmark mutable-data
-    import: warnings
+    import: build-opts
+    import: rts-opts-monothread-stats
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   bench
     other-modules:
         Data.Mutable.HashMap
         Data.Mutable.Array
-
     default-language: Haskell2010
     build-depends:
         base,
