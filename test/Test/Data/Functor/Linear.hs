@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Generic.Traverse (genericTraverseTests) where
+module Test.Data.Functor.Linear (genericTests) where
 
 import Data.Functor.Linear (genericTraverse)
 import qualified Data.Functor.Linear as Data
@@ -31,6 +31,13 @@ instance Data.Functor Pair where
 
 instance Data.Traversable Pair where
   traverse = genericTraverse
+
+genericTests :: TestTree
+genericTests =
+  testGroup
+    "Generic tests"
+    [ genericTraverseTests
+    ]
 
 genericTraverseTests :: TestTree
 genericTraverseTests =

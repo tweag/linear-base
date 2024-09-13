@@ -145,6 +145,23 @@ library
         vector >=0.12.2,
         primitive
 
+library examples
+    import: build-opts
+    hs-source-dirs: examples
+    exposed-modules:
+        Foreign.List
+        Foreign.Heap
+        Simple.FileIO
+        Simple.Pure
+        Simple.Quicksort
+        Simple.TopSort
+    build-depends:
+        base,
+        linear-base,
+        storable-tuple,
+        vector,
+        text
+
 test-suite test
     import: build-opts
     import: rts-opts-multithread
@@ -158,6 +175,7 @@ test-suite test
         Test.Data.Mutable.HashMap
         Test.Data.Mutable.Set
         Test.Data.Polarized
+        Test.Data.Functor.Linear
         Test.Data.V
         Test.Data.Replicator
     default-language: Haskell2010
@@ -171,25 +189,18 @@ test-suite test
         tasty,
         tasty-hedgehog >= 1.2,
         mmorph,
-        vector
+        vector,
+        linear-generics
 
-test-suite examples
+test-suite test-examples
     import: build-opts
     import: rts-opts-multithread
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
-    hs-source-dirs:   examples
+    hs-source-dirs:   test-examples
     other-modules:
         Test.Foreign
-        Test.Quicksort
-        Test.Generic
-        Foreign.List
-        Foreign.Heap
-        Simple.FileIO
-        Simple.Pure
-        Simple.Quicksort
-        Simple.TopSort
-        Generic.Traverse
+        Test.Simple.Quicksort
     default-language: Haskell2010
     build-depends:
         base,
@@ -197,12 +208,9 @@ test-suite examples
         tasty,
         tasty-hedgehog,
         hedgehog,
-        storable-tuple,
-        vector,
-        text,
-        linear-generics
+        examples
 
-benchmark mutable-data
+benchmark bench
     import: build-opts
     import: rts-opts-monothread-stats
     type:             exitcode-stdio-1.0
@@ -224,4 +232,5 @@ benchmark mutable-data
         random-shuffle,
         tasty-bench >= 0.3,
         unordered-containers,
-        MonadRandom
+        MonadRandom,
+        examples
