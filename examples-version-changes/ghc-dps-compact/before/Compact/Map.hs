@@ -1,0 +1,1 @@
+module Compact.Map () where

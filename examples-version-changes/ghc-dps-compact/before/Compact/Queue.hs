@@ -1,0 +1,1 @@
+module Compact.Queue () where

@@ -12,6 +12,7 @@ import Test.Data.Replicator (replicatorInspectionTests)
 import Test.Data.Set.Mutable (mutSetTests)
 import Test.Data.V (vInspectionTests)
 import Test.Data.Vector.Mutable (mutVecTests)
+import Test.Compact.Destination (destinationTests)
 import Test.Tasty
 
 main :: IO ()
@@ -29,7 +30,8 @@ allTests =
           mutSetTests,
           destArrayTests,
           polarizedArrayTests,
-          genericTests
+          genericTests,
+          destinationTests
         ],
       testGroup
         "Inspection tests"

@@ -10,3 +10,7 @@
  * `Foreign`
    * These are examples of explicitly allocating off the GC heap's
    memory and on the system heap's memory.
+ * `Compact`
+   * These are examples of using compact regions through the
+   destination-passing style interface.
+
