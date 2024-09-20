@@ -1,0 +1,2 @@
+module Compact.Destination () where
+

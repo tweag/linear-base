@@ -4,6 +4,10 @@ env:
   # Bump this number to invalidate the Github-actions cache
   cache-invalidation-key: 0
   nixpkgs-url: https://github.com/NixOS/nixpkgs/archive/574d1eac1c200690e27b8eb4e24887f8df7ac27c.tar.gz
+  NIX_PATH: https://github.com/NixOS/nixpkgs/archive/574d1eac1c200690e27b8eb4e24887f8df7ac27c.tar.gz
+  ghc-exe: $(pwd)/ghc-dps-compact-702220602b/bin/ghc
+  ghc-name: ghc-dps-compact-702220602b
+  ghc-internal-name: ghc-9.11.20240917-x86_64-unknown-linux
 
 jobs:
   cabal-test:
@@ -13,7 +17,9 @@ jobs:
         ghc-version: [96, 98, 910]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        lfs: false
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"
@@ -33,19 +39,69 @@ jobs:
     - name: Update Cabal's database
       run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal update"
     - name: Build Cabal's dependencies
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks --dependencies-only"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build --dependencies-only"
     - name: Build
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build --allow-newer --disable-tests --disable-benchmarks"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build"
     - name: Haddock
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal --allow-newer haddock"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal haddock"
     - name: cabal-docspec
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run cabal-docspec
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal-docspec"
+    - name: Build benchmarks
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build linear-base:bench:bench"
+    - name: Run benchmarks
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal bench 2>&1 | tee benchmark_ghc${{ matrix.ghc-version }}.txt"
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: linear-base_benchmarks_ghc${{ matrix.ghc-version }}
+        path: |
+          benchmark_ghc${{ matrix.ghc-version }}.txt
+        retention-days: 90
+
+  cabal-test-ghc-dps-compact:
+    name: cabal test - ${{ env.ghc-name }}
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        lfs: true
+    - name: Checkout LFS objects
+      run: git lfs checkout
+    - name: Build Nix dependencies
+      run: nix-shell --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
+    - name: Install custom GHC
+      run: nix-shell --pure --run "rm -rf ${{ env.ghc-name }} ${{ env.ghc-internal-name }} && tar xJf ${{ env.ghc-name }}.tar.xz && mv ${{ env.ghc-internal-name }} ${{ env.ghc-name }}"
+    - name: Init Cabal's config file
+      run: nix-shell --arg installHls 'false' --pure --run "cabal --config-file=$HOME/.cabal/config user-config -f init"
+    - name: Update Cabal's database
+      run: nix-shell --arg installHls 'false' --pure --run "cabal update"
+    - name: Build Cabal's dependencies
+      run: nix-shell --arg installHls 'false' --pure --run "cabal build -w ${{ env.ghc-exe }} --dependencies-only"
+    - name: Build
+      run: nix-shell --arg installHls 'false' --pure --run "cabal build -w ${{ env.ghc-exe }}"
+    - name: Haddock
+      run: nix-shell --arg installHls 'false' --pure --run "cabal haddock -w ${{ env.ghc-exe }}"
+    - name: cabal-docspec
+      run: nix-shell --arg installHls 'false' --pure --run "cabal-docspec -w ${{ env.ghc-exe }}"
+    - name: Build benchmarks
+      run: nix-shell --arg installHls 'false' --pure --run "cabal build linear-base:bench:bench"
+    - name: Run benchmarks
+      run: nix-shell --arg installHls 'false' --pure --run "cabal bench 2>&1 | tee benchmark_${{ env.ghc-name }}.txt"
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: linear-base_benchmarks_${{ env.ghc-name }}
+        path: |
+          benchmark_${{ env.ghc-name }}.txt
+        retention-days: 90
 
   ormolu:
     name: check formatting with ormolu
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        lfs: false
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"
@@ -64,7 +120,9 @@ jobs:
     name: stack build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        lfs: false
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"

@@ -3,15 +3,16 @@
 
 module Main where
 
-import Test.Data.Destination (destArrayTests)
+import Test.Data.Array.Destination (destArrayTests)
+import Test.Data.Array.Mutable (mutArrTests)
+import Test.Data.Array.Polarized (polarizedArrayTests)
 import Test.Data.Functor.Linear (genericTests)
-import Test.Data.Mutable.Array (mutArrTests)
-import Test.Data.Mutable.HashMap (mutHMTests)
-import Test.Data.Mutable.Set (mutSetTests)
-import Test.Data.Mutable.Vector (mutVecTests)
-import Test.Data.Polarized (polarizedArrayTests)
+import Test.Data.HashMap.Mutable (mutHMTests)
 import Test.Data.Replicator (replicatorInspectionTests)
+import Test.Data.Set.Mutable (mutSetTests)
 import Test.Data.V (vInspectionTests)
+import Test.Data.Vector.Mutable (mutVecTests)
+import Test.Compact.Destination (destinationTests)
 import Test.Tasty
 
 main :: IO ()
@@ -29,7 +30,8 @@ allTests =
           mutSetTests,
           destArrayTests,
           polarizedArrayTests,
-          genericTests
+          genericTests,
+          destinationTests
         ],
       testGroup
         "Inspection tests"

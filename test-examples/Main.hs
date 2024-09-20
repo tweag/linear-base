@@ -1,7 +1,7 @@
 module Main where
 
+import Test.Data.Array.Mutable.Quicksort (quicksortTests)
 import Test.Foreign (foreignGCTests)
-import Test.Simple.Quicksort (quickSortTests)
 import Test.Tasty
 
 main :: IO ()
@@ -12,5 +12,5 @@ allTests =
   testGroup
     "All tests"
     [ foreignGCTests,
-      quickSortTests
+      quicksortTests
     ]
