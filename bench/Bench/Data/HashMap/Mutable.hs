@@ -11,7 +11,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 
-module Data.Mutable.HashMap (benchmarks) where
+module Bench.Data.HashMap.Mutable (benchmarks) where
 
 import Control.DeepSeq (NFData (..), deepseq, force)
 import qualified Control.Monad.Random as Random

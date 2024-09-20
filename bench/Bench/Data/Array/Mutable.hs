@@ -11,7 +11,7 @@
 -- land in a file named “Array.dump-simpl”
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
 
-module Data.Mutable.Array (benchmarks) where
+module Bench.Data.Array.Mutable (benchmarks) where
 
 import Control.DeepSeq (rnf)
 import qualified Data.Array.Mutable.Linear as Array.Linear

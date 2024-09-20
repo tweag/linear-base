@@ -1,27 +1,15 @@
 {-# LANGUAGE NumericUnderscores #-}
 
-module Data.Mutable.Quicksort (benchmarks) where
+module Bench.Data.Array.Mutable.Quicksort (benchmarks) where
 
 import Control.DeepSeq (force)
 import Control.Exception (evaluate)
+import Data.Array.Mutable.Quicksort (qsortUsingArray, qsortUsingList)
 import Data.List (sort)
-import Simple.Quicksort (quickSort)
 import System.Random
 import Test.Tasty.Bench
 
 -- Follows thread from https://discourse.haskell.org/t/linear-haskell-quicksort-performance/10280
-
-qs :: (Ord a) => [a] -> [a]
-qs [] = []
-qs (x : xs) = qs ltx ++ x : qs gex
-  where
-    ltx = [y | y <- xs, y < x]
-    gex = [y | y <- xs, y >= x]
-
-linArrayQuicksort, lazyListQuicksort, stdLibSort :: [Int] -> [Int]
-linArrayQuicksort = quickSort
-lazyListQuicksort = qs
-stdLibSort = sort
 
 gen :: StdGen
 gen = mkStdGen 4541645642
@@ -40,12 +28,12 @@ benchmarks =
           env (randomListBuilder size) $ \randomList ->
             bgroup
               ("size " ++ (show size))
-              [ bench "linArrayQuicksort" $
-                  nf linArrayQuicksort randomList,
-                bench "lazyListQuicksort" $
-                  nf lazyListQuicksort randomList,
-                bench "stdLibSort" $
-                  nf stdLibSort randomList
+              [ bench "qsortUsingArray" $
+                  nf qsortUsingArray randomList,
+                bench "qsortUsingList" $
+                  nf qsortUsingList randomList,
+                bench "sortStdLib" $
+                  nf sort randomList
               ]
       )
         <$> sizes

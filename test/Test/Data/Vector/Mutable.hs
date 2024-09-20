@@ -15,7 +15,7 @@
 -- Remarks:
 --  * We don't test for failure on out-of-bound access
 --  * We don't test the empty constructor
-module Test.Data.Mutable.Vector
+module Test.Data.Vector.Mutable
   ( mutVecTests,
   )
 where

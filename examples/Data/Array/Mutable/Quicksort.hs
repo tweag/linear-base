@@ -6,7 +6,7 @@
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
 
 -- | This module implements quicksort with mutable arrays from linear-base
-module Simple.Quicksort where
+module Data.Array.Mutable.Quicksort where
 
 import Data.Array.Mutable.Linear (Array)
 import qualified Data.Array.Mutable.Linear as Array
@@ -17,15 +17,22 @@ import Prelude.Linear hiding (partition)
 -- # Quicksort
 -------------------------------------------------------------------------------
 
-quickSort :: [Int] -> [Int]
-quickSort xs = unur $ Array.fromList xs $ Array.toList . arrQuicksort
+qsortUsingList :: (Ord a) => [a] -> [a]
+qsortUsingList [] = []
+qsortUsingList (x : xs) = qsortUsingList ltx ++ x : qsortUsingList gex
+  where
+    ltx = [y | y <- xs, y < x]
+    gex = [y | y <- xs, y >= x]
 
-arrQuicksort :: Array Int %1 -> Array Int
-arrQuicksort arr =
+qsortUsingArray :: (Ord a) => [a] -> [a]
+qsortUsingArray xs = unur $ Array.fromList xs $ Array.toList . qsortArray
+
+qsortArray :: (Ord a) => Array a %1 -> Array a
+qsortArray arr =
   Array.size arr
     & \(Ur len, arr1) -> go 0 (len - 1) arr1
 
-go :: Int -> Int -> Array Int %1 -> Array Int
+go :: (Ord a) => Int -> Int -> Array a %1 -> Array a
 go lo hi arr
   | lo >= hi = arr
   | otherwise =
@@ -43,23 +50,23 @@ go lo hi arr
 -- @arr'[j] > pivot@ for @ix < j <= hi@,
 -- @arr'[k] = arr[k]@ for @k < lo@ and @k > hi@, and
 -- @arr'@ is a permutation of @arr@.
-partition :: Array Int %1 -> Int -> Int -> Int -> (Array Int, Ur Int)
-partition arr pivot lx rx
-  | (rx < lx) = (arr, Ur (lx - 1))
+partition :: (Ord a) => Array a %1 -> a -> Int -> Int -> (Array a, Ur Int)
+partition arr pivot lo hi
+  | (hi < lo) = (arr, Ur (lo - 1))
   | otherwise =
-      Array.read arr lx
+      Array.read arr lo
         & \(Ur lVal, arr1) ->
-          Array.read arr1 rx
+          Array.read arr1 hi
             & \(Ur rVal, arr2) -> case (lVal <= pivot, pivot < rVal) of
-              (True, True) -> partition arr2 pivot (lx + 1) (rx - 1)
-              (True, False) -> partition arr2 pivot (lx + 1) rx
-              (False, True) -> partition arr2 pivot lx (rx - 1)
+              (True, True) -> partition arr2 pivot (lo + 1) (hi - 1)
+              (True, False) -> partition arr2 pivot (lo + 1) hi
+              (False, True) -> partition arr2 pivot lo (hi - 1)
               (False, False) ->
-                swap arr2 lx rx
-                  & \arr3 -> partition arr3 pivot (lx + 1) (rx - 1)
+                swap arr2 lo hi
+                  & \arr3 -> partition arr3 pivot (lo + 1) (hi - 1)
 
 -- | @swap a i j@ exchanges the positions of values at @i@ and @j@ of @a@.
-swap :: (HasCallStack) => Array Int %1 -> Int -> Int -> Array Int
+swap :: (HasCallStack) => Array a %1 -> Int -> Int -> Array a
 swap arr i j =
   Array.read arr i
     & \(Ur ival, arr1) ->

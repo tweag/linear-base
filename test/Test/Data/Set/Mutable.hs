@@ -54,7 +54,7 @@
 -- for more about how ADT axioms work.
 --
 -- Remark: we are not testing @empty@ since it is trivial.
-module Test.Data.Mutable.Set
+module Test.Data.Set.Mutable
   ( mutSetTests,
   )
 where
