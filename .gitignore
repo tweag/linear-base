@@ -22,3 +22,6 @@ cabal.sandbox.config
 .stack-work/
 cabal.project.local
 .HTF/
+
+**/*.dump-simpl
+ghc-dps-compact-95615577d7

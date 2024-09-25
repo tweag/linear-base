@@ -3,6 +3,7 @@
 
 module Main where
 
+import Test.Compact.Destination (destinationTests)
 import Test.Data.Array.Destination (destArrayTests)
 import Test.Data.Array.Mutable (mutArrTests)
 import Test.Data.Array.Polarized (polarizedArrayTests)
@@ -29,7 +30,8 @@ allTests =
           mutSetTests,
           destArrayTests,
           polarizedArrayTests,
-          genericTests
+          genericTests,
+          destinationTests
         ],
       testGroup
         "Inspection tests"

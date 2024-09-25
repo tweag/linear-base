@@ -25,6 +25,7 @@ mkShell {
   # Set UTF-8 local so that run-tests can parse GHC's unicode output.
   LANG="C.UTF-8";
   NIX_PATH = "nixpkgs=${pkgs.path}";
+  LD_LIBRARY_PATH = "${gmp.out}/lib:${numactl.out}/lib";
 
   buildInputs = [
     haskell.compiler."ghc${ghcVersion}"
@@ -32,5 +33,8 @@ mkShell {
     stack-wrapped
     nix
     cabal-docspec
+    numactl
+    gmp
+    curl
   ] ++ (if installHls then [ haskell-language-server ] else []);
 }

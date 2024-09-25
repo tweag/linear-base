@@ -41,7 +41,13 @@ library
         hs-source-dirs: src-version-changes/ghc96/after
     else
         hs-source-dirs: src-version-changes/ghc96/before
+    if impl(ghc == 9.11.20241002)
+        hs-source-dirs: src-version-changes/ghc-dps-compact/after
+    else
+        hs-source-dirs: src-version-changes/ghc-dps-compact/before
     exposed-modules:
+        Compact.Destination
+        Compact.Destination.Internal
         Control.Monad.IO.Class.Linear
         Control.Functor.Linear
         Control.Functor.Linear.Internal.Class
@@ -135,6 +141,7 @@ library
     build-depends:
         base >=4.16 && <5,
         containers,
+        ghc-compact,
         ghc-prim,
         ghc-bignum,
         hashable,
@@ -143,11 +150,16 @@ library
         text,
         transformers,
         vector >=0.12.2,
-        primitive
+        primitive,
+        reflection
 
 library examples
     import: build-opts
     hs-source-dirs: examples
+    if impl(ghc == 9.11.20241002)
+        hs-source-dirs: examples-version-changes/ghc-dps-compact/after
+    else
+        hs-source-dirs: examples-version-changes/ghc-dps-compact/before
     exposed-modules:
         Foreign.List
         Foreign.Heap
@@ -155,12 +167,20 @@ library examples
         Simple.Pure
         Data.Array.Mutable.Quicksort
         Data.HashMap.Mutable.TopSort
+        Compact.BFTraversal
+        Compact.DList
+        Compact.Map
+        Compact.Queue
+        Compact.SExpr
     build-depends:
         base,
+        bytestring,
         linear-base,
         storable-tuple,
         vector,
-        text
+        text,
+        deepseq,
+        mtl
 
 test-suite test
     import: build-opts
@@ -168,6 +188,10 @@ test-suite test
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   test
+    if impl(ghc == 9.11.20241002)
+        hs-source-dirs: test-version-changes/ghc-dps-compact/after
+    else
+        hs-source-dirs: test-version-changes/ghc-dps-compact/before
     other-modules:
         Test.Data.Array.Destination
         Test.Data.Array.Mutable
@@ -178,6 +202,7 @@ test-suite test
         Test.Data.Functor.Linear
         Test.Data.V
         Test.Data.Replicator
+        Test.Compact.Destination
     default-language: Haskell2010
     build-depends:
         inspection-testing,
@@ -188,6 +213,7 @@ test-suite test
         hedgehog,
         tasty,
         tasty-hedgehog >= 1.2,
+        tasty-hunit,
         mmorph,
         vector,
         linear-generics
@@ -198,15 +224,28 @@ test-suite test-examples
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   test-examples
+    if impl(ghc == 9.11.20241002)
+        hs-source-dirs: test-examples-version-changes/ghc-dps-compact/after
+    else
+        hs-source-dirs: test-examples-version-changes/ghc-dps-compact/before
     other-modules:
         Test.Foreign
         Test.Data.Array.Mutable.Quicksort
+        Test.Compact.BFTraversal
+        Test.Compact.DList
+        Test.Compact.Map
+        Test.Compact.Queue
+        Test.Compact.SExpr
+        Test.Compact.Utils
+        Test.Compact
     default-language: Haskell2010
     build-depends:
         base,
+        bytestring,
         linear-base,
         tasty,
         tasty-hedgehog,
+        tasty-hunit,
         hedgehog,
         examples
 
@@ -216,13 +255,25 @@ benchmark bench
     type:             exitcode-stdio-1.0
     main-is:          Main.hs
     hs-source-dirs:   bench
+    if impl(ghc == 9.11.20241002)
+        hs-source-dirs: bench-version-changes/ghc-dps-compact/after
+    else
+        hs-source-dirs: bench-version-changes/ghc-dps-compact/before
     other-modules:
         Bench.Data.HashMap.Mutable
         Bench.Data.Array.Mutable
         Bench.Data.Array.Mutable.Quicksort
+        Bench.Compact.BFTraversal
+        Bench.Compact.DList
+        Bench.Compact.Map
+        Bench.Compact.Queue
+        Bench.Compact.SExpr
+        Bench.Compact.Utils
+        Bench.Compact
     default-language: Haskell2010
     build-depends:
         base,
+        bytestring,
         containers,
         vector,
         deepseq,
@@ -231,7 +282,9 @@ benchmark bench
         linear-base,
         random,
         random-shuffle,
+        tasty,
         tasty-bench >= 0.3,
         unordered-containers,
         MonadRandom,
-        examples
+        examples,
+        ghc-compact

@@ -9,7 +9,6 @@ module Test.Foreign (foreignGCTests) where
 
 import Control.Exception hiding (assert)
 import Control.Monad (void)
-import Data.Typeable
 import qualified Foreign.Heap as Heap
 import Foreign.List (List)
 import qualified Foreign.List as List
@@ -63,7 +62,7 @@ eqList ::
 eqList l1 l2 = move $ (List.toList l1) == (List.toList l2)
 
 data InjectedError = InjectedError
-  deriving (Typeable, Show)
+  deriving (Show)
 
 instance Exception InjectedError
 

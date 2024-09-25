@@ -1,5 +1,6 @@
 module Main where
 
+import qualified Bench.Compact as Compact
 import qualified Bench.Data.Array.Mutable as Array
 import qualified Bench.Data.Array.Mutable.Quicksort as Quicksort
 import qualified Bench.Data.HashMap.Mutable as HashMap
@@ -10,5 +11,6 @@ main = do
   defaultMain
     [ Array.benchmarks,
       Quicksort.benchmarks,
-      HashMap.benchmarks
+      HashMap.benchmarks,
+      Compact.benchmarks
     ]

@@ -59,6 +59,13 @@ lift f (Ur a) = Ur (f a)
 lift2 :: (a -> b -> c) -> Ur a %1 -> Ur b %1 -> Ur c
 lift2 f (Ur a) (Ur b) = Ur (f a b)
 
+instance (Prelude.Eq a) => Prelude.Eq (Ur a) where
+  Ur x == Ur y = x Prelude.== y
+  Ur x /= Ur y = x Prelude./= y
+
+instance (Prelude.Show a) => Prelude.Show (Ur a) where
+  show (Ur x) = "Ur (" Prelude.++ Prelude.show x Prelude.++ ")"
+
 instance Prelude.Functor Ur where
   fmap f (Ur a) = Ur (f a)
 
