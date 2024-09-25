@@ -153,8 +153,8 @@ library examples
         Foreign.Heap
         Simple.FileIO
         Simple.Pure
-        Simple.Quicksort
-        Simple.TopSort
+        Data.Array.Mutable.Quicksort
+        Data.HashMap.Mutable.TopSort
     build-depends:
         base,
         linear-base,
@@ -169,12 +169,12 @@ test-suite test
     main-is:          Main.hs
     hs-source-dirs:   test
     other-modules:
-        Test.Data.Destination
-        Test.Data.Mutable.Array
-        Test.Data.Mutable.Vector
-        Test.Data.Mutable.HashMap
-        Test.Data.Mutable.Set
-        Test.Data.Polarized
+        Test.Data.Array.Destination
+        Test.Data.Array.Mutable
+        Test.Data.Vector.Mutable
+        Test.Data.HashMap.Mutable
+        Test.Data.Set.Mutable
+        Test.Data.Array.Polarized
         Test.Data.Functor.Linear
         Test.Data.V
         Test.Data.Replicator
@@ -200,7 +200,7 @@ test-suite test-examples
     hs-source-dirs:   test-examples
     other-modules:
         Test.Foreign
-        Test.Simple.Quicksort
+        Test.Data.Array.Mutable.Quicksort
     default-language: Haskell2010
     build-depends:
         base,
@@ -217,9 +217,9 @@ benchmark bench
     main-is:          Main.hs
     hs-source-dirs:   bench
     other-modules:
-        Data.Mutable.HashMap
-        Data.Mutable.Array
-        Data.Mutable.Quicksort
+        Bench.Data.HashMap.Mutable
+        Bench.Data.Array.Mutable
+        Bench.Data.Array.Mutable.Quicksort
     default-language: Haskell2010
     build-depends:
         base,

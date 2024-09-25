@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Simple.Quicksort (quicksortTests) where
+module Test.Data.Array.Mutable.Quicksort (quicksortTests) where
 
+import Data.Array.Mutable.Quicksort (quicksortUsingArray, quicksortUsingList)
 import Data.List (sort)
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
-import Simple.Quicksort (quicksortUsingArray, quicksortUsingList)
 import Test.Tasty
 import Test.Tasty.Hedgehog (testPropertyNamed)
 

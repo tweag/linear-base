@@ -1,11 +1,11 @@
 {-# LANGUAGE NumericUnderscores #-}
 
-module Data.Mutable.Quicksort (benchmarks) where
+module Bench.Data.Array.Mutable.Quicksort (benchmarks) where
 
 import Control.DeepSeq (force)
 import Control.Exception (evaluate)
+import Data.Array.Mutable.Quicksort (quicksortUsingArray, quicksortUsingList)
 import Data.List (sort)
-import Simple.Quicksort (quicksortUsingArray, quicksortUsingList)
 import System.Random
 import Test.Tasty.Bench
 

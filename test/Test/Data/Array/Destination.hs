@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Test.Data.Destination (destArrayTests) where
+module Test.Data.Array.Destination (destArrayTests) where
 
 import qualified Data.Array.Destination as DArray
 import qualified Data.Vector as Vector

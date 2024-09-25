@@ -18,7 +18,7 @@
 -- * We don't test alter and hope insert and delete tests suffice
 -- * We don't test filterWithKey and hope the test for filter suffices
 -- * We don't test mapMaybe since mapMaybeWithKey is more general
-module Test.Data.Mutable.HashMap
+module Test.Data.HashMap.Mutable
   ( mutHMTests,
   )
 where

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Test.Data.Polarized (polarizedArrayTests) where
+module Test.Data.Array.Polarized (polarizedArrayTests) where
 
 import qualified Data.Array.Polarized as Polar
 import qualified Data.Array.Polarized.Pull as Pull

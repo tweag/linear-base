@@ -1,7 +1,7 @@
 module Main where
 
+import Test.Data.Array.Mutable.Quicksort (quicksortTests)
 import Test.Foreign (foreignGCTests)
-import Test.Simple.Quicksort (quicksortTests)
 import Test.Tasty
 
 main :: IO ()
