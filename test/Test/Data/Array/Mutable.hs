@@ -14,7 +14,7 @@
 -- Remarks:
 --  * We don't test for failure on out-of-bound access
 --  * We don't test the empty constructor because
-module Test.Data.Mutable.Array
+module Test.Data.Array.Mutable
   ( mutArrTests,
   )
 where

@@ -5,7 +5,7 @@
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 
-module Simple.TopSort where
+module Data.HashMap.Mutable.TopSort where
 
 import Data.Bifunctor.Linear (second)
 import qualified Data.Functor.Linear as Data

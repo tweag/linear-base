@@ -6,7 +6,7 @@
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dsuppress-uniques #-}
 
 -- | This module implements quicksort with mutable arrays from linear-base
-module Simple.Quicksort where
+module Data.Array.Mutable.Quicksort where
 
 import Data.Array.Mutable.Linear (Array)
 import qualified Data.Array.Mutable.Linear as Array
