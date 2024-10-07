@@ -49,7 +49,7 @@ jobs:
     - name: Build benchmarks
       run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build linear-base:bench:bench"
     - name: Run benchmarks in isolation
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "echo $'\n\n=== Benchmarks (isolation) ===\n\n' > benchmark_ghc${{ matrix.ghc-version }}.txt && cabal run -v0 linear-dest:bench:bench -- -l | grep -P 'All\.[^\.]+\.benchmark\.' | while read -r name; do cabal run -v0 linear-dest:bench:bench -- -p '"'$'"0 == \"'\""'$'"name\"'\"' 2>&1 | tee -a benchmark_ghc${{ matrix.ghc-version }}.txt; done"
+      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "echo $'\n\n=== Benchmarks (isolation) ===\n\n' > benchmark_ghc${{ matrix.ghc-version }}.txt && cabal run -v0 linear-base:bench:bench -- -l | grep -P 'All\.[^\.]+\.benchmark\.' | while read -r name; do cabal run -v0 linear-base:bench:bench -- -p '"'$'"0 == \"'\""'$'"name\"'\"' 2>&1 | tee -a benchmark_ghc${{ matrix.ghc-version }}.txt; done"
     - name: Upload benchmark results
       uses: actions/upload-artifact@v3
       with:
@@ -87,7 +87,7 @@ jobs:
     - name: Build benchmarks
       run: nix-shell --arg installHls 'false' --pure --run "cabal build -w ${{ env.ghc-exe }} linear-base:bench:bench"
     - name: Run benchmarks in isolation
-      run: nix-shell --arg installHls 'false' --pure --run "echo $'\n\n=== Benchmarks (isolation) ===\n\n' > benchmark_${{ env.ghc-name }}.txt && cabal run -w ${{ env.ghc-exe }} -v0 linear-dest:bench:bench -- -l | grep -P 'All\.[^\.]+\.benchmark\.' | while read -r name; do cabal run -w ${{ env.ghc-exe }} -v0 linear-dest:bench:bench -- -p '"'$'"0 == \"'\""'$'"name\"'\"' 2>&1 | tee -a benchmark_${{ env.ghc-name }}.txt; done"
+      run: nix-shell --arg installHls 'false' --pure --run "echo $'\n\n=== Benchmarks (isolation) ===\n\n' > benchmark_${{ env.ghc-name }}.txt && cabal run -w ${{ env.ghc-exe }} -v0 linear-base:bench:bench -- -l | grep -P 'All\.[^\.]+\.benchmark\.' | while read -r name; do cabal run -w ${{ env.ghc-exe }} -v0 linear-base:bench:bench -- -p '"'$'"0 == \"'\""'$'"name\"'\"' 2>&1 | tee -a benchmark_${{ env.ghc-name }}.txt; done"
     - name: Upload benchmark results
       uses: actions/upload-artifact@v3
       with:

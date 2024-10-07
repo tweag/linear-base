@@ -25,9 +25,6 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Prelude (Eq)
 
--- Launch with
--- cabal test -w $(pwd)/ghc@580d39a221/bin/ghc --allow-newer linear-dest:test:test --test-options='+RTS -N1 -RTS' --test-show-details=streaming
-
 destinationTests :: TestTree
 destinationTests =
   testGroup
