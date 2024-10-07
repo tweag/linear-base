@@ -83,7 +83,7 @@ jobs:
     - name: Haddock
       run: nix-shell --arg installHls 'false' --pure --run "cabal haddock -w ${{ env.ghc-exe }}"
     - name: cabal-docspec
-      run: nix-shell --arg installHls 'false' --pure --run "cabal-docspec -w ${{ env.ghc-exe }}"
+      run: nix-shell --arg installHls 'false' --pure --run "echo '# [DISABLED because of https://github.com/phadej/cabal-extras/issues/160]' cabal-docspec -w ${{ env.ghc-exe }}"
     - name: Build benchmarks
       run: nix-shell --arg installHls 'false' --pure --run "cabal build -w ${{ env.ghc-exe }} linear-base:bench:bench"
     - name: Run benchmarks in isolation
