@@ -60,7 +60,7 @@ jobs:
         retention-days: 90
 
   cabal-test-ghc-dps-compact:
-    name: cabal test - ${{ env.ghc-name }}
+    name: cabal test - ghc-dps-compact
     runs-on: [self-hosted, Linux, X64]
     steps:
     - uses: actions/checkout@v3
