@@ -12,6 +12,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeAbstractions #-}
 
 module Test.Compact.Destination (destinationTests) where
 
@@ -39,7 +40,7 @@ data Foo a b = MkFoo {unBar :: a, unBaz :: (b, b), unBoo :: a} deriving (Eq, Gen
 compOnFreshAlloc :: IO String
 compOnFreshAlloc = do
   let actual :: Ur (Int, Int)
-      !actual = withRegion $ \(_ :: Proxy r) t -> case dup2 t of
+      !actual = withRegion $ \ @r t -> case dup2 t of
         (t', t'') ->
           fromIncomplete_ $
             (alloc @r t')
@@ -60,7 +61,7 @@ compOnFreshAlloc = do
 compOnUsedAlloc :: IO String
 compOnUsedAlloc = do
   let actual :: Ur (Int, (Int, Int))
-      !actual = withRegion $ \(_ :: Proxy r) t -> case dup2 t of
+      !actual = withRegion $ \ @r t -> case dup2 t of
         (t', t'') ->
           fromIncomplete_ $
             (alloc @r t')
@@ -81,7 +82,7 @@ compOnUsedAlloc = do
 fillCustomDataAndExtract :: IO String
 fillCustomDataAndExtract = do
   let actual :: Ur (Foo Int Char, Int)
-      !actual = withRegion $ \(_ :: Proxy r) t ->
+      !actual = withRegion $ \ @r t ->
         fromIncomplete $
           (alloc @r t)
             <&> ( \d ->

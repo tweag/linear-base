@@ -9,6 +9,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing -Wno-type-defaults #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -16,7 +17,6 @@ module Compact.DList where
 
 import Compact.Destination
 import Control.Functor.Linear ((<&>))
-import Data.Proxy (Proxy)
 import Prelude.Linear hiding (concat, foldl', foldr)
 
 newtype DList r a = DList (Incomplete r [a] (Dest r [a]))
@@ -93,7 +93,7 @@ differenceListDestLeft :: [[a]] -> [a]
 differenceListDestLeft lists =
   unur
     ( withRegion
-        ( \(_ :: Proxy r) t ->
+        ( \ @r t ->
             let f :: (Token, DList r a) %1 -> [a] -> (Token, DList r a)
                 f (t, dl) ys =
                   let !(t', t'') = dup2 t

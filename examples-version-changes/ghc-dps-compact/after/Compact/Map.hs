@@ -10,6 +10,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing -Wno-type-defaults #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -18,7 +19,6 @@ module Compact.Map where
 import Compact.Destination
 import Control.Functor.Linear ((<&>))
 import Data.Kind (Type)
-import Data.Proxy (Proxy)
 import Prelude.Linear
 
 mapL :: forall a b. (a %1 -> b) -> [a] -> [b]
@@ -129,7 +129,7 @@ mapDestFS f l dl =
 -------------------------------------------------------------------------------
 
 dpsWrapper :: (forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()) -> (Int %1 -> Int) -> [Int] -> [Int]
-dpsWrapper impl f l = unur (withRegion (\(_ :: Proxy r) t -> fromIncomplete_ (alloc @r t <&> \d -> impl f l d)))
+dpsWrapper impl f l = unur (withRegion (\ @r t -> fromIncomplete_ (alloc @r t <&> \d -> impl f l d)))
 
 impls' :: (Int %1 -> Int) -> [([Int] -> [Int], String, Bool)]
 impls' f =

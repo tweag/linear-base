@@ -9,6 +9,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing -Wno-type-defaults #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -17,7 +18,6 @@ module Compact.Queue where
 import Compact.DList
 import qualified Compact.DList as DList
 import Compact.Destination
-import Data.Proxy (Proxy)
 import Data.Word
 import Prelude.Linear hiding ((*), (+), (<))
 import Prelude ((*), (+), (<))
@@ -114,7 +114,7 @@ funcImpl limit = go 0 (singletonF 1)
               else q'
 
 destImpl :: Word64 -> Word64
-destImpl limit = unur (withRegion (\(_ :: Proxy r) t -> let r = go 0 (singleton @r t (Ur 1)) in move r))
+destImpl limit = unur (withRegion (\ @r t -> let r = go 0 (singleton @r t (Ur 1)) in move r))
   where
     go :: (Region r) => Word64 -> Queue r (Ur Word64) %1 -> Word64
     go sum q = case dequeue q of

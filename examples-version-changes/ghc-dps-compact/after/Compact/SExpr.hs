@@ -11,6 +11,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -212,7 +213,7 @@ parseWithoutDest bs = case parseWithoutDest' bs 0 of
 parseWithDest :: ByteString -> Either SExprParseError SExpr
 parseWithDest bs =
   let Ur (sexpr, res) =
-        withRegion $ \(_ :: Proxy r) token ->
+        withRegion $ \ @r token ->
           fromIncomplete $
             alloc @r token
               <&> \d ->

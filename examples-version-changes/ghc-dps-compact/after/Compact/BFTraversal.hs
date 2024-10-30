@@ -14,6 +14,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -84,7 +85,7 @@ mapPhasesBFS f = runPhases NonLin.. bft' f
 mapAccumBFS :: forall a b s. (s -> a -> (s, b)) -> s -> BinTree a -> (BinTree b, s)
 mapAccumBFS f s0 tree =
   unur . withRegion $
-    \(_ :: Proxy r) token ->
+    \ @r token ->
       fromIncomplete $
         alloc @r token
           <&> \dtree -> go s0 (singletonN (Ur tree, dtree))

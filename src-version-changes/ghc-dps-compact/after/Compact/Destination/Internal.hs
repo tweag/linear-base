@@ -172,11 +172,11 @@ getRegionInfo :: forall r. (Region r) => RegionInfo
 getRegionInfo = reflect (Proxy :: Proxy r)
 {-# INLINE getRegionInfo #-}
 
-withRegion :: forall b. (forall (r :: Type). (Region r) => Proxy r -> Token %1 -> Ur b) %1 -> Ur b
+withRegion :: forall b. (forall (r :: Type). (Region r) => Token %1 -> Ur b) %1 -> Ur b
 withRegion = toLinear _withRegion
 {-# INLINE withRegion #-}
 
-_withRegion :: forall b. (forall (r :: Type). (Region r) => Proxy r -> Token %1 -> Ur b) -> Ur b
+_withRegion :: forall b. (forall (r :: Type). (Region r) => Token %1 -> Ur b) -> Ur b
 _withRegion f =
   unsafePerformIO $ do
     c <- (compact firstInhabitant)
@@ -185,7 +185,7 @@ _withRegion f =
     putDebugLn $
       "withRegion: allocating new region around @"
         ++ (show firstPtr)
-    let !result = reify (RegionInfo c) (\(proxy :: Proxy s) -> f @s proxy Token)
+    let !result = reify (RegionInfo c) (\(_ :: Proxy s) -> f @s Token)
     resultPtr <- IO (\s -> case anyToAddr# result s of (# s', addr# #) -> (# s', W# (addr2Word# addr#) #))
     putDebugLn $
       "withRegion: exiting and returning @"
