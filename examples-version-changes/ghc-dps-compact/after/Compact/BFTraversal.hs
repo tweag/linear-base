@@ -11,10 +11,10 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -83,11 +83,14 @@ mapPhasesBFS f = runPhases NonLin.. bft' f
 
 mapAccumBFS :: forall a b s. (s -> a -> (s, b)) -> s -> BinTree a -> (BinTree b, s)
 mapAccumBFS f s0 tree =
-  unur (withRegion (
-    \ @r token ->
-      fromIncomplete $
-        alloc @r token
-          <&> \dtree -> go s0 (singletonN (Ur tree, dtree))))
+  unur
+    ( withRegion
+        ( \ @r token ->
+            fromIncomplete $
+              alloc @r token
+                <&> \dtree -> go s0 (singletonN (Ur tree, dtree))
+        )
+    )
   where
     go :: forall r. (Region r) => s -> NaiveQueue (Ur (BinTree a), Dest r (BinTree b)) %1 -> Ur s
     go s q = case dequeueN q of

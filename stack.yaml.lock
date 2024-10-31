@@ -3,7 +3,42 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: ormolu-0.7.5.0@sha256:7f56ba2fde3291ac9ad8c77c4f027e247ff57deff1f5675d9c2cb5dd993d51c9,5774
+    pantry-tree:
+      sha256: 6256bb00b3fef0c68ea67829ace5d05483e200ade6b223af6da3ea1b76047899
+      size: 100728
+  original:
+    hackage: ormolu-0.7.5.0
+- completed:
+    hackage: Cabal-syntax-3.12.1.0@sha256:6dbb06fb08ff77520947fb4c1ef281c9cea5b8dc7fd9a41ad62273fa916cf4b2,7407
+    pantry-tree:
+      sha256: 62e4b1bbdf7fe7d5259f45811e6fd0131823a10a8ec8c5eaf25370d444ac263a
+      size: 11051
+  original:
+    hackage: Cabal-syntax-3.12.1.0@sha256:6dbb06fb08ff77520947fb4c1ef281c9cea5b8dc7fd9a41ad62273fa916cf4b2,7407
+- completed:
+    hackage: ghc-lib-parser-9.10.1.20240511@sha256:8bf3d512642fae8b38a119d0f440dc02477bed8520a5f3cd814a765505f80d76,17528
+    pantry-tree:
+      sha256: 1f1f9f83ac6e326fec01a46a5f3c3991d84a3d254e4ed6e0e84d84f92f12e30a
+      size: 37484
+  original:
+    hackage: ghc-lib-parser-9.10.1.20240511@sha256:8bf3d512642fae8b38a119d0f440dc02477bed8520a5f3cd814a765505f80d76,17528
+- completed:
+    hackage: text-2.1.1@sha256:78c3fb91055d0607a80453327f087b9dc82168d41d0dca3ff410d21033b5e87d,10653
+    pantry-tree:
+      sha256: 8251d517ceafa2680250ddb939f4a2b89bf231314cf6a218134af900e154d7cd
+      size: 8413
+  original:
+    hackage: text-2.1.1@sha256:78c3fb91055d0607a80453327f087b9dc82168d41d0dca3ff410d21033b5e87d,10653
+- completed:
+    hackage: parsec-3.1.17.0@sha256:8407cbd428d7f640a0fff8891bd2f7aca13cebe70a5e654856f8abec9a648b56,5149
+    pantry-tree:
+      sha256: 0922d72bd7115bbb590757bd92a827021dfe745ed6c0cd22856f767bee83d91f
+      size: 2810
+  original:
+    hackage: parsec-3.1.17.0@sha256:8407cbd428d7f640a0fff8891bd2f7aca13cebe70a5e654856f8abec9a648b56,5149
 snapshots:
 - completed:
     sha256: edbd50d7e7c85c13ad5f5835ae2db92fab1e9cf05ecf85340e2622ec0a303df1

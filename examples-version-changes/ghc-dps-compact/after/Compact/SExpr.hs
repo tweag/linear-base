@@ -9,9 +9,9 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TypeAbstractions #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
@@ -212,11 +212,13 @@ parseWithoutDest bs = case parseWithoutDest' bs 0 of
 parseWithDest :: ByteString -> Either SExprParseError SExpr
 parseWithDest bs =
   let Ur (sexpr, res) =
-        withRegion (\ @r token ->
-          fromIncomplete $
-            alloc @r token
-              <&> \d ->
-                move $ parseWithDest' bs 0 d)
+        withRegion
+          ( \ @r token ->
+              fromIncomplete $
+                alloc @r token
+                  <&> \d ->
+                    move $ parseWithDest' bs 0 d
+          )
    in case res of
         Left err -> Left err
         Right i ->
