@@ -19,7 +19,6 @@ module Test.Compact.Destination (destinationTests) where
 import Compact.Destination
 import Control.Functor.Linear ((<&>))
 import Control.Monad (return)
-import Data.Proxy (Proxy)
 import GHC.Generics (Generic)
 import Prelude.Linear hiding (Eq)
 import Test.Tasty
@@ -40,7 +39,7 @@ data Foo a b = MkFoo {unBar :: a, unBaz :: (b, b), unBoo :: a} deriving (Eq, Gen
 compOnFreshAlloc :: IO String
 compOnFreshAlloc = do
   let actual :: Ur (Int, Int)
-      !actual = withRegion $ \ @r t -> case dup2 t of
+      !actual = withRegion (\ @r t -> case dup2 t of
         (t', t'') ->
           fromIncomplete_ $
             (alloc @r t')
@@ -52,7 +51,7 @@ compOnFreshAlloc = do
                             `lseq` dr
                               & fillComp (alloc @r t'')
                               & fillLeaf 2
-                  )
+                  ))
       expected :: Ur (Int, Int)
       !expected = Ur (1, 2)
   assertEqual "same result" expected actual
@@ -61,7 +60,7 @@ compOnFreshAlloc = do
 compOnUsedAlloc :: IO String
 compOnUsedAlloc = do
   let actual :: Ur (Int, (Int, Int))
-      !actual = withRegion $ \ @r t -> case dup2 t of
+      !actual = withRegion (\ @r t -> case dup2 t of
         (t', t'') ->
           fromIncomplete_ $
             (alloc @r t')
@@ -73,7 +72,7 @@ compOnUsedAlloc = do
                             `lseq` dr
                               & fillComp ((alloc @r t'') <&> (\dp' -> case dp' & fill @'(,) of (dr1, dr2) -> dr1 & fillLeaf 2 `lseq` dr2))
                               & fillLeaf 3
-                  )
+                  ))
       expected :: Ur (Int, (Int, Int))
       !expected = Ur (1, (2, 3))
   assertEqual "same result" expected actual
@@ -82,7 +81,7 @@ compOnUsedAlloc = do
 fillCustomDataAndExtract :: IO String
 fillCustomDataAndExtract = do
   let actual :: Ur (Foo Int Char, Int)
-      !actual = withRegion $ \ @r t ->
+      !actual = withRegion (\ @r t ->
         fromIncomplete $
           (alloc @r t)
             <&> ( \d ->
@@ -96,7 +95,7 @@ fillCustomDataAndExtract = do
                           `lseq` dBoo
                             & fillLeaf 2
                           `lseq` Ur 14
-                )
+                ))
       expected :: Ur (Foo Int Char, Int)
       !expected = Ur (MkFoo 1 ('a', 'b') 2, 14)
   assertEqual "same result" expected actual

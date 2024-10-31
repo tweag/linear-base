@@ -23,7 +23,6 @@ import Control.Functor.Linear ((<&>))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BSC
 import Data.Char (isSpace)
-import Data.Proxy (Proxy)
 import GHC.Generics (Generic)
 import Prelude.Linear
 import qualified Prelude as NonLinear
@@ -213,11 +212,11 @@ parseWithoutDest bs = case parseWithoutDest' bs 0 of
 parseWithDest :: ByteString -> Either SExprParseError SExpr
 parseWithDest bs =
   let Ur (sexpr, res) =
-        withRegion $ \ @r token ->
+        withRegion (\ @r token ->
           fromIncomplete $
             alloc @r token
               <&> \d ->
-                move $ parseWithDest' bs 0 d
+                move $ parseWithDest' bs 0 d)
    in case res of
         Left err -> Left err
         Right i ->

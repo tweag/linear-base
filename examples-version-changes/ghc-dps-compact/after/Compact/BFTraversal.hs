@@ -25,7 +25,6 @@ import Compact.Queue hiding (impls)
 import Control.DeepSeq (NFData)
 import Control.Functor.Linear ((<&>))
 import Control.Monad.State.Lazy (runState, state)
-import Data.Proxy (Proxy)
 import GHC.Generics
 import Prelude.Linear
 import Prelude (Applicative, Functor, fmap, pure, (<*>))
@@ -84,11 +83,11 @@ mapPhasesBFS f = runPhases NonLin.. bft' f
 
 mapAccumBFS :: forall a b s. (s -> a -> (s, b)) -> s -> BinTree a -> (BinTree b, s)
 mapAccumBFS f s0 tree =
-  unur . withRegion $
+  unur (withRegion (
     \ @r token ->
       fromIncomplete $
         alloc @r token
-          <&> \dtree -> go s0 (singletonN (Ur tree, dtree))
+          <&> \dtree -> go s0 (singletonN (Ur tree, dtree))))
   where
     go :: forall r. (Region r) => s -> NaiveQueue (Ur (BinTree a), Dest r (BinTree b)) %1 -> Ur s
     go s q = case dequeueN q of
