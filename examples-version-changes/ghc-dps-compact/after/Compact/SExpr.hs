@@ -17,7 +17,7 @@
 
 module Compact.SExpr where
 
-import Compact.Destination.Internal
+import Compact.Destination
 import Control.DeepSeq (NFData)
 import Control.Functor.Linear ((<&>))
 import Data.ByteString.Char8 (ByteString)

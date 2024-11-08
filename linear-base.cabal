@@ -48,6 +48,8 @@ library
     exposed-modules:
         Compact.Destination
         Compact.Destination.Internal
+        Compact.Destination.GFill
+        Compact.Destination.Fill
         Control.Monad.IO.Class.Linear
         Control.Functor.Linear
         Control.Functor.Linear.Internal.Class

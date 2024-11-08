@@ -65,6 +65,10 @@ offsetAddr# :: Word# -> Word# -> Addr# -> Word# -> Addr#
 offsetAddr# bH# bW# addr# fieldIdx# = word2Addr# (addr2Word# addr# `plusWord#` bH# `plusWord#` (bW# `timesWord#` fieldIdx#))
 {-# INLINE offsetAddr# #-}
 
+getSlots0# :: a -> Word# -> Word# -> State# RealWorld -> (# State# RealWorld, (# #) #)
+getSlots0# _ _ _ s0 = (# s0, (#  #) #)
+{-# INLINE getSlots0# #-}
+
 getSlots1# :: a -> Word# -> Word# -> State# RealWorld -> (# State# RealWorld, (# Addr# #) #)
 getSlots1# x bH# bW# s0 = case anyToAddr# x s0 of
   (# s1, pXRaw# #) -> let pX# = align# bW# pXRaw# in (# s1, (# offsetAddr# bH# bW# pX# 0## #) #)
@@ -329,10 +333,6 @@ _fromIncomplete (Incomplete root uCompanion) = case getRegionInfo @r of
 
 data Dest r a = Dest Addr#
 
-fill :: forall lCtor (r :: Type) (a :: Type). (Fill lCtor a, Region r) => Dest r a %1 -> DestsOf lCtor r a
-fill = toLinear (_fill @lCtor @a @r)
-{-# INLINE fill #-}
-
 fillComp :: forall r a b. (Region r) => Incomplete r a b %1 -> Dest r a %1 -> b
 fillComp = toLinear2 _fillComp
 {-# INLINE fillComp #-}
@@ -355,120 +355,12 @@ _fillComp (Incomplete root companion) (Dest d#) = case runRW# $ \s0 -> case assi
   (# _, res #) -> res
 {-# INLINE _fillComp #-}
 
-class Fill lCtor (a :: Type) where
-  _fill :: forall (r :: Type). (Region r) => Dest r a -> DestsOf lCtor r a
+type family NotUnpacked a :: Constraint where
+  NotUnpacked a = NotUnpacked_ a ('DecidedUnpack)
 
-instance (specCtor ~ LiftedCtorToSpecCtor lCtor a, GFill# lCtor specCtor a) => Fill lCtor a where
-  _fill :: forall (r :: Type). (Region r) => Dest r a -> DestsOf lCtor r a
-  _fill (Dest d#) = case getRegionInfo @r of
-    (RegionInfo (Compact c# _ (MVar m#))) -> case runRW# (gFill# @lCtor @specCtor @a @r c# m# d#) of (# _, res #) -> res
-  {-# INLINE _fill #-}
-
--- ctor :: (Meta, [(Meta, Type)])
-class GFill# lCtor (specCtor :: (Meta, [(Meta, Type)])) (a :: Type) where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf specCtor r #)
-
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, _, _ #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case putMVar# m# () s3 of
-              s4 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) []) (# s4, () #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots1# xInRegion bH# bW# s3 of
-              (# s4, (# d0# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#]) (# s5, (Dest d0# :: Dest r t0) #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots2# xInRegion bH# bW# s3 of
-              (# s4, (# d0#, d1# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#, Ptr d1#]) (# s5, (Dest d0# :: Dest r t0, Dest d1# :: Dest r t1) #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots3# xInRegion bH# bW# s3 of
-              (# s4, (# d0#, d1#, d2# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#, Ptr d1#, Ptr d2#]) (# s5, (Dest d0# :: Dest r t0, Dest d1# :: Dest r t1, Dest d2# :: Dest r t2) #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots4# xInRegion bH# bW# s3 of
-              (# s4, (# d0#, d1#, d2#, d3# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#, Ptr d1#, Ptr d2#, Ptr d3#]) (# s5, (Dest d0# :: Dest r t0, Dest d1# :: Dest r t1, Dest d2# :: Dest r t2, Dest d3# :: Dest r t3) #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots5# xInRegion bH# bW# s3 of
-              (# s4, (# d0#, d1#, d2#, d3#, d4# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#, Ptr d1#, Ptr d2#, Ptr d3#, Ptr d4#]) (# s5, (Dest d0# :: Dest r t0, Dest d1# :: Dest r t1, Dest d2# :: Dest r t2, Dest d3# :: Dest r t3, Dest d4# :: Dest r t4) #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4), '( 'MetaSel f5 u5 ss5 ds5, t5)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4), '( 'MetaSel f5 u5 ss5 ds5, t5)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4), '( 'MetaSel f5 u5 ss5 ds5, t5)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots6# xInRegion bH# bW# s3 of
-              (# s4, (# d0#, d1#, d2#, d3#, d4#, d5# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#, Ptr d1#, Ptr d2#, Ptr d3#, Ptr d4#, Ptr d5#]) (# s5, (Dest d0# :: Dest r t0, Dest d1# :: Dest r t1, Dest d2# :: Dest r t2, Dest d3# :: Dest r t3, Dest d4# :: Dest r t4, Dest d5# :: Dest r t5) #)
-  {-# INLINE gFill# #-}
-
--- TODO: add constraints on ds_i variables to ensure no unpacking
-instance (Generic a, repA ~ Rep a (), metaA ~ GDatatypeMetaOf repA, Datatype metaA, 'MetaCons symCtor fix hasSel ~ metaCtor, Constructor metaCtor, LiftedCtorToSymbol lCtor ~ symCtor, 'Just '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4), '( 'MetaSel f5 u5 ss5 ds5, t5), '( 'MetaSel f6 u6 ss6 ds6, t6)]) ~ GSpecCtorOf symCtor (Rep a ())) => GFill# lCtor '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4), '( 'MetaSel f5 u5 ss5 ds5, t5), '( 'MetaSel f6 u6 ss6 ds6, t6)]) a where
-  gFill# :: forall (r :: Type). Compact# -> MVar# RealWorld () -> Addr# -> State# RealWorld -> (# State# RealWorld, GDestsOf '(metaCtor, '[ '( 'MetaSel f0 u0 ss0 ds0, t0), '( 'MetaSel f1 u1 ss1 ds1, t1), '( 'MetaSel f2 u2 ss2 ds2, t2), '( 'MetaSel f3 u3 ss3 ds3, t3), '( 'MetaSel f4 u4 ss4 ds4, t4), '( 'MetaSel f5 u5 ss5 ds5, t5), '( 'MetaSel f6 u6 ss6 ds6, t6)]) r #)
-  gFill# c# m# d# s0 =
-    case takeMVar# m# s0 of
-      (# s1, () #) ->
-        case compactAddHollow# c# (unsafeCoerceAddr (reifyInfoTablePtr# (# #) :: InfoTablePtrOf# lCtor)) s1 of
-          (# s2, xInRegion, bH#, bW# #) -> case assign# d# xInRegion s2 of
-            (# s3, pXInRegion# #) -> case getSlots7# xInRegion bH# bW# s3 of
-              (# s4, (# d0#, d1#, d2#, d3#, d4#, d5#, d6# #) #) -> case putMVar# m# () s4 of
-                s5 -> putDebugLn# (showFill (Ptr d#) (Ptr pXInRegion#) (conName @metaCtor undefined) [Ptr d0#, Ptr d1#, Ptr d2#, Ptr d3#, Ptr d4#, Ptr d5#, Ptr d6#]) (# s5, (Dest d0# :: Dest r t0, Dest d1# :: Dest r t1, Dest d2# :: Dest r t2, Dest d3# :: Dest r t3, Dest d4# :: Dest r t4, Dest d5# :: Dest r t5, Dest d6# :: Dest r t6) #)
-  {-# INLINE gFill# #-}
+type family NotUnpacked_ a b :: Constraint where
+  NotUnpacked_ a a = TypeError ('Text "Field has 'DecidedUnpack representation, which is not supported by fill")
+  NotUnpacked_ _ _ = ()
 
 type family GDestsOf (specCtor :: (Meta, [(Meta, Type)])) (r :: Type) :: Type where
   GDestsOf '(_, '[]) _ = ()
@@ -507,7 +399,7 @@ type family GSpecCtorOf (symCtor :: Symbol) (repA :: Type) :: Maybe (Meta, [(Met
   GSpecCtorOf symCtor ((f :+: g) p) = GSpecCtorOf symCtor (f p) <|> GSpecCtorOf symCtor (g p)
   GSpecCtorOf symCtor (V1 _) = 'Nothing
   GSpecCtorOf symCtor (M1 _ _ f p) = GSpecCtorOf symCtor (f p)
-  GSpecCtorOf _ _ = TypeError ('Text "No match for GHasCtor")
+  GSpecCtorOf _ _ = TypeError ('Text "No match for GSpecCtorOf")
 
 type family LiftedCtorToSpecCtor lCtor (a :: Type) :: (Meta, [(Meta, Type)]) where
   LiftedCtorToSpecCtor lCtor a = FromJust (GSpecCtorOf (LiftedCtorToSymbol lCtor) (Rep a ()))
