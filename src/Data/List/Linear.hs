@@ -191,13 +191,13 @@ dropWhile p (x : xs) =
 take :: (Consumable a) => Int -> [a] %1 -> [a]
 take _ [] = []
 take i (x : xs)
-  | i Prelude.< 0 = (x, xs) `lseq` []
+  | i Prelude.<= 0 = (x, xs) `lseq` []
   | otherwise = x : take (i - 1) xs
 
 drop :: (Consumable a) => Int -> [a] %1 -> [a]
 drop _ [] = []
 drop i (x : xs)
-  | i Prelude.< 0 = x : xs
+  | i Prelude.<= 0 = x : xs
   | otherwise = x `lseq` drop (i - 1) xs
 
 -- | The intersperse function takes an element and a list and
