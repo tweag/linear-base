@@ -5,6 +5,7 @@ module Main where
 
 import Test.Data.Destination (destArrayTests)
 import Test.Data.Functor.Linear (genericTests)
+import Test.Data.List (listTests)
 import Test.Data.Mutable.Array (mutArrTests)
 import Test.Data.Mutable.HashMap (mutHMTests)
 import Test.Data.Mutable.Set (mutSetTests)
@@ -29,6 +30,7 @@ allTests =
           mutSetTests,
           destArrayTests,
           polarizedArrayTests,
+          listTests,
           genericTests
         ],
       testGroup
