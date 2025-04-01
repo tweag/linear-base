@@ -170,14 +170,15 @@ test-suite test
     hs-source-dirs:   test
     other-modules:
         Test.Data.Destination
+        Test.Data.Functor.Linear
+        Test.Data.List
         Test.Data.Mutable.Array
-        Test.Data.Mutable.Vector
         Test.Data.Mutable.HashMap
         Test.Data.Mutable.Set
+        Test.Data.Mutable.Vector
         Test.Data.Polarized
-        Test.Data.Functor.Linear
-        Test.Data.V
         Test.Data.Replicator
+        Test.Data.V
     default-language: Haskell2010
     build-depends:
         inspection-testing,

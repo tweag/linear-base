@@ -13,12 +13,12 @@ jobs:
         ghc-version: [96, 98, 910]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Cabal dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cabal/packages
@@ -45,7 +45,7 @@ jobs:
     - name: Run benchmarks
       run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal bench 2>&1 | tee benchmark_ghc${{ matrix.ghc-version }}.txt"
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linear-base_benchmarks_ghc${{ matrix.ghc-version }}
         path: |
@@ -56,12 +56,12 @@ jobs:
     name: check formatting with ormolu
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Stack dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.stack
         key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-${{ github.sha }}
@@ -75,12 +75,12 @@ jobs:
     name: stack build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Stack dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.stack
         key: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
