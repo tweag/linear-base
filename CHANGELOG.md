@@ -1,5 +1,24 @@
 # Change Log
 
+## [v0.5.0](https://github.com/tweag/linear-base/tree/v0.5.0) (2025-04-07)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.4.0...v0.5.0)
+
+### Headline changes
+
+- Data.List.Linear.{take,drop} take one list element too many [\#484](https://github.com/tweag/linear-base/issues/484)
+- Remove pull array index \(unsafe\), add uncons. [\#475](https://github.com/tweag/linear-base/pull/475) ([sjoerdvisscher](https://github.com/sjoerdvisscher))
+- Adds missing Data.Num.Linear.\* instances for Word, Integer, Natural, Float, Word8/16/32/64 Int8/16/32/64 [\#467](https://github.com/tweag/linear-base/pull/467) ([Qqwy](https://github.com/Qqwy))
+- In scope-passing style: use a `Movable b` instead of `Ur b` (it's fully backward compatible compatible)[\#473](https://github.com/tweag/linear-base/pull/473) ([aspiwack](https://github.com/aspiwack))
+
+### Miscellaneous
+
+- Clarify Ur documentation [\#476](https://github.com/tweag/linear-base/issues/476)
+- Test with GHC 9.10 and GHC 9.12
+  - 9.10 [\#479](https://github.com/tweag/linear-base/pull/479) ([tbagrel1](https://github.com/tbagrel1))
+  - 9.12 [\#487](https://github.com/tweag/linear-base/pull/487) ([aspiwack](https://github.com/aspiwack))
+- Improve wording about Ur [\#478](https://github.com/tweag/linear-base/pull/478) ([aspiwack](https://github.com/aspiwack))
+
 ## [v0.4.0](https://github.com/tweag/linear-base/tree/v0.4.0) (2023-10-13)
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.3.1...v0.4.0)
