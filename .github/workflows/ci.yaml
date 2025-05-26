@@ -24,7 +24,7 @@ jobs:
       with:
         nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Cabal dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cabal/packages
@@ -108,7 +108,7 @@ jobs:
       with:
         nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Stack dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.stack
         key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-${{ github.sha }}
@@ -129,7 +129,7 @@ jobs:
       with:
         nix_path: "${{ env.nixpkgs-url }}"
     - name: Cache Stack dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.stack
         key: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
