@@ -66,7 +66,7 @@ offsetAddr# bH# bW# addr# fieldIdx# = word2Addr# (addr2Word# addr# `plusWord#` b
 {-# INLINE offsetAddr# #-}
 
 getSlots0# :: a -> Word# -> Word# -> State# RealWorld -> (# State# RealWorld, (# #) #)
-getSlots0# _ _ _ s0 = (# s0, (#  #) #)
+getSlots0# _ _ _ s0 = (# s0, (# #) #)
 {-# INLINE getSlots0# #-}
 
 getSlots1# :: a -> Word# -> Word# -> State# RealWorld -> (# State# RealWorld, (# Addr# #) #)

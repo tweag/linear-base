@@ -16,5 +16,5 @@ module Compact.Destination
   )
 where
 
-import Compact.Destination.Internal
 import Compact.Destination.Fill
+import Compact.Destination.Internal

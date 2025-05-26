@@ -18,12 +18,12 @@
 
 module Compact.Destination.Fill where
 
-import Compact.Destination.Internal
 import Compact.Destination.GFill
+import Compact.Destination.Internal
 import Data.Kind (Type)
 import GHC.Compact (Compact (..))
-import GHC.MVar (MVar (..))
 import GHC.Exts
+import GHC.MVar (MVar (..))
 import Unsafe.Linear (toLinear)
 
 class Fill lCtor (a :: Type) where
