@@ -1529,7 +1529,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^10
-        concatRightList.force: OK
+        concatListRight.force: OK
           5.89 μs ± 978 ns,  60 KB allocated, 182 B  copied,  69 MB peak memory
 
 All 1 tests passed (0.29s)
@@ -1537,7 +1537,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^10
-        concatRightList.copyCR: OK
+        concatListRight.copyCR: OK
           20.0 μs ± 3.4 μs, 124 KB allocated,   5 B  copied,  69 MB peak memory
 
 All 1 tests passed (0.26s)
@@ -1569,7 +1569,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^13
-        concatRightList.force: OK
+        concatListRight.force: OK
           48.7 μs ± 8.6 μs, 478 KB allocated, 8.6 KB copied,  69 MB peak memory
 
 All 1 tests passed (0.25s)
@@ -1577,7 +1577,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^13
-        concatRightList.copyCR: OK
+        concatListRight.copyCR: OK
           162  μs ±  31 μs, 796 KB allocated,  36 B  copied,  69 MB peak memory
 
 All 1 tests passed (0.20s)
@@ -1609,7 +1609,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^16
-        concatRightList.force: OK
+        concatListRight.force: OK
           817  μs ±  99 μs, 3.7 MB allocated, 707 KB copied,  69 MB peak memory
 
 All 1 tests passed (0.21s)
@@ -1617,7 +1617,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^16
-        concatRightList.copyCR: OK
+        concatListRight.copyCR: OK
           1.39 ms ± 219 μs, 6.2 MB allocated, 301 B  copied,  69 MB peak memory
 
 All 1 tests passed (0.18s)
@@ -1649,7 +1649,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^19
-        concatRightList.force: OK
+        concatListRight.force: OK
           20.5 ms ± 2.4 ms,  30 MB allocated,  24 MB copied, 142 MB peak memory
 
 All 1 tests passed (0.41s)
@@ -1657,7 +1657,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^19
-        concatRightList.copyCR: OK
+        concatListRight.copyCR: OK
           21.6 ms ± 1.4 ms,  50 MB allocated,  17 MB copied, 169 MB peak memory
 
 All 1 tests passed (0.80s)
@@ -1689,7 +1689,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^22
-        concatRightList.force: OK
+        concatListRight.force: OK
           167  ms ±  25 ms, 239 MB allocated, 189 MB copied, 843 MB peak memory
 
 All 1 tests passed (3.08s)
@@ -1697,7 +1697,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^22
-        concatRightList.copyCR: OK
+        concatListRight.copyCR: OK
           143  ms ± 7.6 ms, 400 MB allocated,  94 MB copied, 640 MB peak memory
 
 All 1 tests passed (1.51s)
@@ -1729,7 +1729,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^25
-        concatRightList.force: OK
+        concatListRight.force: OK
           1.518 s ± 165 ms, 1.9 GB allocated, 1.3 GB copied, 4.7 GB peak memory
 
 All 1 tests passed (13.89s)
@@ -1737,7 +1737,7 @@ All
   DPS interface for compact regions
     List and DList concatenation
       2^25
-        concatRightList.copyCR: OK
+        concatListRight.copyCR: OK
           1.699 s ± 321 ms, 3.1 GB allocated, 963 MB copied, 4.6 GB peak memory
 
 All 1 tests passed (17.27s)

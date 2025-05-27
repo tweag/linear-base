@@ -151,33 +151,33 @@ DPS interface for compact regions/map on List,2^25,mapDpsFoldL,6780,6250,6550,92
 DPS interface for compact regions/map on List,2^25,mapDpsFoldLS,6830,5220,6550,9220
 DPS interface for compact regions/map on List,2^25,mapDpsFoldSL,1490,3380,974,5630
 DPS interface for compact regions/map on List,2^25,mapDpsFoldS,1240,2360,974,5020
-DPS interface for compact regions/List and DList concatenation,2^10,concatRightList.force,0.00589,0.0586,0.000174,69
-DPS interface for compact regions/List and DList concatenation,2^10,concatRightList.copyCR,0.02,0.121,0.00000477,69
+DPS interface for compact regions/List and DList concatenation,2^10,concatListRight.force,0.00589,0.0586,0.000174,69
+DPS interface for compact regions/List and DList concatenation,2^10,concatListRight.copyCR,0.02,0.121,0.00000477,69
 DPS interface for compact regions/List and DList concatenation,2^10,concatDListFunLeft.force,0.00674,0.0615,0.000184,69
 DPS interface for compact regions/List and DList concatenation,2^10,concatDListFunLeft.copyCR,0.0203,0.124,0.00000858,69
 DPS interface for compact regions/List and DList concatenation,2^10,concatDListDpsLeft,0.0207,0.0693,0.00000477,69
-DPS interface for compact regions/List and DList concatenation,2^13,concatRightList.force,0.0487,0.467,0.0084,69
-DPS interface for compact regions/List and DList concatenation,2^13,concatRightList.copyCR,0.162,0.777,0.0000343,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatListRight.force,0.0487,0.467,0.0084,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatListRight.copyCR,0.162,0.777,0.0000343,69
 DPS interface for compact regions/List and DList concatenation,2^13,concatDListFunLeft.force,0.0575,0.489,0.0107,69
 DPS interface for compact regions/List and DList concatenation,2^13,concatDListFunLeft.copyCR,0.17,0.783,0.00186,69
 DPS interface for compact regions/List and DList concatenation,2^13,concatDListDpsLeft,0.17,0.394,0.0000296,69
-DPS interface for compact regions/List and DList concatenation,2^16,concatRightList.force,0.817,3.7,0.69,69
-DPS interface for compact regions/List and DList concatenation,2^16,concatRightList.copyCR,1.39,6.2,0.000287,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatListRight.force,0.817,3.7,0.69,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatListRight.copyCR,1.39,6.2,0.000287,69
 DPS interface for compact regions/List and DList concatenation,2^16,concatDListFunLeft.force,0.816,3.9,0.621,69
 DPS interface for compact regions/List and DList concatenation,2^16,concatDListFunLeft.copyCR,1.55,6.3,0.17,69
 DPS interface for compact regions/List and DList concatenation,2^16,concatDListDpsLeft,1.4,3,0.000259,69
-DPS interface for compact regions/List and DList concatenation,2^19,concatRightList.force,20.5,30,24,142
-DPS interface for compact regions/List and DList concatenation,2^19,concatRightList.copyCR,21.6,50,17,169
+DPS interface for compact regions/List and DList concatenation,2^19,concatListRight.force,20.5,30,24,142
+DPS interface for compact regions/List and DList concatenation,2^19,concatListRight.copyCR,21.6,50,17,169
 DPS interface for compact regions/List and DList concatenation,2^19,concatDListFunLeft.force,22.7,31,26,131
 DPS interface for compact regions/List and DList concatenation,2^19,concatDListFunLeft.copyCR,33.6,50,32,145
 DPS interface for compact regions/List and DList concatenation,2^19,concatDListDpsLeft,23,23,17,133
-DPS interface for compact regions/List and DList concatenation,2^22,concatRightList.force,167,239,189,843
-DPS interface for compact regions/List and DList concatenation,2^22,concatRightList.copyCR,143,400,94,640
+DPS interface for compact regions/List and DList concatenation,2^22,concatListRight.force,167,239,189,843
+DPS interface for compact regions/List and DList concatenation,2^22,concatListRight.copyCR,143,400,94,640
 DPS interface for compact regions/List and DList concatenation,2^22,concatDListFunLeft.force,241,252,262,702
 DPS interface for compact regions/List and DList concatenation,2^22,concatDListFunLeft.copyCR,308,410,339,805
 DPS interface for compact regions/List and DList concatenation,2^22,concatDListDpsLeft,161,191,94,673
-DPS interface for compact regions/List and DList concatenation,2^25,concatRightList.force,1520,1950,1330,4810
-DPS interface for compact regions/List and DList concatenation,2^25,concatRightList.copyCR,1700,3170,963,4710
+DPS interface for compact regions/List and DList concatenation,2^25,concatListRight.force,1520,1950,1330,4810
+DPS interface for compact regions/List and DList concatenation,2^25,concatListRight.copyCR,1700,3170,963,4710
 DPS interface for compact regions/List and DList concatenation,2^25,concatDListFunLeft.force,1580,2050,1840,4400
 DPS interface for compact regions/List and DList concatenation,2^25,concatDListFunLeft.copyCR,2320,3280,2660,5730
 DPS interface for compact regions/List and DList concatenation,2^25,concatDListDpsLeft,1370,1540,1020,5840

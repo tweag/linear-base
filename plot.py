@@ -286,13 +286,13 @@ draw(
     df,
     "DPS interface for compact regions/List and DList concatenation",
     [
-        "concatRightList.force",
-        # "concatRightList.copyCR",
+        "concatListRight.force",
+        # "concatListRight.copyCR",
         "concatDListFunLeft.force",
         # "concatDListFunLeft.copyCR",
         ("concatDListDpsLeft", 1),
     ],
-    "concatRightList.force",
+    "concatListRight.force",
     "Benchmark of iterated concatenations on lists and difference lists",
     "plot-concat.pdf"
 )

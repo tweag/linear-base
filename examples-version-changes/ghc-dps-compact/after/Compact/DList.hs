@@ -67,7 +67,7 @@ fromListN xs = DListN $ \ys -> xs ++ ys
 
 impls :: [([[Int]] -> [Int], String, Bool)]
 impls =
-  [ (concatRightList, "concatRightList", True),
+  [ (concatListRight, "concatListRight", True),
     (concatDListFunLeft, "concatDListFunLeft", True),
     (concatDListDpsLeft, "concatDListDpsLeft", False)
   ]
@@ -83,8 +83,8 @@ foldr f s (x : xs) = x `f` foldr f s xs
 concatLeft :: [[a]] -> [a]
 concatLeft = foldl' (\xs ys -> xs ++ ys) []
 
-concatRightList :: [[a]] -> [a]
-concatRightList = foldr (\xs ys -> xs ++ ys) []
+concatListRight :: [[a]] -> [a]
+concatListRight = foldr (\xs ys -> xs ++ ys) []
 
 concatDListFunLeft :: [[a]] -> [a]
 concatDListFunLeft lists = toListN (foldl' (\dl ys -> let !r = dl `concatN` (fromListN ys) in r) newN lists)
