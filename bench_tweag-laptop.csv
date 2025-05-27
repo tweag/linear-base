@@ -1,0 +1,263 @@
+Test Description,Size,Method,Time (ms),Allocated (MB),Copied (MB),Peak (MB)
+hashmaps/microbenchmarks,insertHeavy,Data.HashMap.Mutable.Linear,22.1,12,15,69
+hashmaps/microbenchmarks,insertHeavy,Data.HashMap.Strict,34,84,29,72
+DPS interface for compact regions/Breadth-first tree traversal,2^10,relabelDps,0.0648,0.438,0.00352,69
+DPS interface for compact regions/Breadth-first tree traversal,2^10,relabelPh.force,0.324,1.9,0.0977,69
+DPS interface for compact regions/Breadth-first tree traversal,2^10,relabelPh.copyCR,0.346,1.9,0.0986,69
+DPS interface for compact regions/Breadth-first tree traversal,2^13,relabelDps,0.62,3.3,0.229,69
+DPS interface for compact regions/Breadth-first tree traversal,2^13,relabelPh.force,9.15,15,9.1,71
+DPS interface for compact regions/Breadth-first tree traversal,2^13,relabelPh.copyCR,9.1,15,9.8,69
+DPS interface for compact regions/Breadth-first tree traversal,2^16,relabelDps,14.3,26,19,87
+DPS interface for compact regions/Breadth-first tree traversal,2^16,relabelPh.force,97,122,104,126
+DPS interface for compact regions/Breadth-first tree traversal,2^16,relabelPh.copyCR,102,125,106,118
+DPS interface for compact regions/Breadth-first tree traversal,2^19,relabelDps,180,209,271,262
+DPS interface for compact regions/Breadth-first tree traversal,2^19,relabelPh.force,839,974,881,512
+DPS interface for compact regions/Breadth-first tree traversal,2^19,relabelPh.copyCR,869,998,892,512
+DPS interface for compact regions/Breadth-first tree traversal,2^22,relabelDps,1590,1640,2560,1330
+DPS interface for compact regions/Breadth-first tree traversal,2^22,relabelPh.force,6490,7780,6860,3790
+DPS interface for compact regions/Breadth-first tree traversal,2^22,relabelPh.copyCR,6850,7990,7170,3790
+DPS interface for compact regions/Breadth-first tree traversal,2^25,relabelDps,12100,13300,19500,8500
+DPS interface for compact regions/Breadth-first tree traversal,2^25,relabelPh.force,60000,62500,55300,28700
+DPS interface for compact regions/Breadth-first tree traversal,2^25,relabelPh.copyCR,62800,63500,56300,28700
+DPS interface for compact regions/map on List,2^10,mapL.force,0.0131,0.102,0.000809,69
+DPS interface for compact regions/map on List,2^10,mapL.copyCR,0.0346,0.162,0.00000763,69
+DPS interface for compact regions/map on List,2^10,mapS.force,0.0126,0.0391,0.000239,69
+DPS interface for compact regions/map on List,2^10,mapS.copyCR,0.03,0.102,0.000128,69
+DPS interface for compact regions/map on List,2^10,mapSH.force,0.0112,0.0703,0.00034,69
+DPS interface for compact regions/map on List,2^10,mapSH.copyCR,0.0308,0.132,0.00000572,69
+DPS interface for compact regions/map on List,2^10,mapST.force,0.0132,0.0703,0.000551,69
+DPS interface for compact regions/map on List,2^10,mapST.copyCR,0.0326,0.133,0.000503,69
+DPS interface for compact regions/map on List,2^10,mapTRL.force,0.0135,0.0938,0.000876,69
+DPS interface for compact regions/map on List,2^10,mapTRL.copyCR,0.0255,0.156,0.000819,69
+DPS interface for compact regions/map on List,2^10,mapTRS.force,0.0092,0.0625,0.000393,69
+DPS interface for compact regions/map on List,2^10,mapTRS.copyCR,0.0197,0.124,0.000286,69
+DPS interface for compact regions/map on List,2^10,mapTRSH.force,0.00919,0.0625,0.000391,69
+DPS interface for compact regions/map on List,2^10,mapTRSH.copyCR,0.0197,0.124,0.000286,69
+DPS interface for compact regions/map on List,2^10,mapTRST.force,0.0127,0.0938,0.000876,69
+DPS interface for compact regions/map on List,2^10,mapTRST.copyCR,0.0256,0.156,0.000828,69
+DPS interface for compact regions/map on List,2^10,mapDpsTRL,0.0241,0.109,0.00000381,69
+DPS interface for compact regions/map on List,2^10,mapDpsTRS,0.0218,0.0781,0.00000381,69
+DPS interface for compact regions/map on List,2^10,mapDpsFoldL,0.0394,0.194,0.00038,69
+DPS interface for compact regions/map on List,2^10,mapDpsFoldLS,0.0336,0.164,0.000154,69
+DPS interface for compact regions/map on List,2^10,mapDpsFoldSL,0.0306,0.124,0.00000572,69
+DPS interface for compact regions/map on List,2^10,mapDpsFoldS,0.0244,0.0938,0.00000381,69
+DPS interface for compact regions/map on List,2^13,mapL.force,0.0852,0.811,0.0342,69
+DPS interface for compact regions/map on List,2^13,mapL.copyCR,0.181,1.1,0.0000505,69
+DPS interface for compact regions/map on List,2^13,mapS.force,0.107,0.498,0.0137,69
+DPS interface for compact regions/map on List,2^13,mapS.copyCR,0.199,0.814,0.0127,69
+DPS interface for compact regions/map on List,2^13,mapSH.force,0.0673,0.559,0.0205,69
+DPS interface for compact regions/map on List,2^13,mapSH.copyCR,0.161,0.899,0.0000353,69
+DPS interface for compact regions/map on List,2^13,mapST.force,0.121,0.749,0.0361,69
+DPS interface for compact regions/map on List,2^13,mapST.copyCR,0.225,1.1,0.0293,69
+DPS interface for compact regions/map on List,2^13,mapTRL.force,0.12,0.748,0.0576,69
+DPS interface for compact regions/map on List,2^13,mapTRL.copyCR,0.226,1.1,0.0527,69
+DPS interface for compact regions/map on List,2^13,mapTRS.force,0.0858,0.498,0.0264,69
+DPS interface for compact regions/map on List,2^13,mapTRS.copyCR,0.178,0.836,0.0293,69
+DPS interface for compact regions/map on List,2^13,mapTRSH.force,0.0835,0.498,0.0264,69
+DPS interface for compact regions/map on List,2^13,mapTRSH.copyCR,0.196,0.836,0.0293,69
+DPS interface for compact regions/map on List,2^13,mapTRST.force,0.121,0.748,0.0576,69
+DPS interface for compact regions/map on List,2^13,mapTRST.copyCR,0.223,1.1,0.0547,69
+DPS interface for compact regions/map on List,2^13,mapDpsTRL,0.201,0.715,0.0000334,69
+DPS interface for compact regions/map on List,2^13,mapDpsTRS,0.176,0.469,0.0000286,69
+DPS interface for compact regions/map on List,2^13,mapDpsFoldL,0.312,1.5,0.0195,69
+DPS interface for compact regions/map on List,2^13,mapDpsFoldLS,0.311,1.3,0.0234,69
+DPS interface for compact regions/map on List,2^13,mapDpsFoldSL,0.204,0.843,0.000041,69
+DPS interface for compact regions/map on List,2^13,mapDpsFoldS,0.186,0.594,0.0000305,69
+DPS interface for compact regions/map on List,2^16,mapL.force,2.82,6.5,3.9,74
+DPS interface for compact regions/map on List,2^16,mapL.copyCR,2.43,8.9,1.3,72
+DPS interface for compact regions/map on List,2^16,mapS.force,1.47,4,0.811,69
+DPS interface for compact regions/map on List,2^16,mapS.copyCR,2.07,6.6,0.848,69
+DPS interface for compact regions/map on List,2^16,mapSH.force,1.47,4.5,1.7,76
+DPS interface for compact regions/map on List,2^16,mapSH.copyCR,1.32,7,0.000313,69
+DPS interface for compact regions/map on List,2^16,mapST.force,2.15,6,2.4,69
+DPS interface for compact regions/map on List,2^16,mapST.copyCR,3.09,8.3,2.6,69
+DPS interface for compact regions/map on List,2^16,mapTRL.force,2.49,6,4,69
+DPS interface for compact regions/map on List,2^16,mapTRL.copyCR,2.9,8.5,2.9,69
+DPS interface for compact regions/map on List,2^16,mapTRS.force,1.84,4,2.5,69
+DPS interface for compact regions/map on List,2^16,mapTRS.copyCR,2.51,6.4,2.5,69
+DPS interface for compact regions/map on List,2^16,mapTRSH.force,1.9,4,2.5,69
+DPS interface for compact regions/map on List,2^16,mapTRSH.copyCR,2.6,6.3,2.5,69
+DPS interface for compact regions/map on List,2^16,mapTRST.force,2.48,6,4,69
+DPS interface for compact regions/map on List,2^16,mapTRST.copyCR,2.92,8.5,2.9,69
+DPS interface for compact regions/map on List,2^16,mapDpsTRL,1.72,5.5,0.000264,69
+DPS interface for compact regions/map on List,2^16,mapDpsTRS,1.46,3.5,0.000163,69
+DPS interface for compact regions/map on List,2^16,mapDpsFoldL,5.54,12,4,76
+DPS interface for compact regions/map on List,2^16,mapDpsFoldLS,5.02,10,3.3,79
+DPS interface for compact regions/map on List,2^16,mapDpsFoldSL,1.67,6.5,0.000321,69
+DPS interface for compact regions/map on List,2^16,mapDpsFoldS,1.5,4.5,0.00023,69
+DPS interface for compact regions/map on List,2^19,mapL.force,27.4,52,42,170
+DPS interface for compact regions/map on List,2^19,mapL.copyCR,30.8,72,14,165
+DPS interface for compact regions/map on List,2^19,mapS.force,70.4,32,55,159
+DPS interface for compact regions/map on List,2^19,mapS.copyCR,79.7,46,63,142
+DPS interface for compact regions/map on List,2^19,mapSH.force,39.8,36,42,164
+DPS interface for compact regions/map on List,2^19,mapSH.copyCR,28.5,56,14,166
+DPS interface for compact regions/map on List,2^19,mapST.force,100,48,98,184
+DPS interface for compact regions/map on List,2^19,mapST.copyCR,109,68,100,186
+DPS interface for compact regions/map on List,2^19,mapTRL.force,113,48,127,195
+DPS interface for compact regions/map on List,2^19,mapTRL.copyCR,115,68,124,187
+DPS interface for compact regions/map on List,2^19,mapTRS.force,71.6,32,81,185
+DPS interface for compact regions/map on List,2^19,mapTRS.copyCR,84.9,46,84,143
+DPS interface for compact regions/map on List,2^19,mapTRSH.force,72.2,32,82,184
+DPS interface for compact regions/map on List,2^19,mapTRSH.copyCR,78.9,46,84,142
+DPS interface for compact regions/map on List,2^19,mapTRST.force,106,48,127,194
+DPS interface for compact regions/map on List,2^19,mapTRST.copyCR,111,68,124,188
+DPS interface for compact regions/map on List,2^19,mapDpsTRL,22.6,44,13,165
+DPS interface for compact regions/map on List,2^19,mapDpsTRS,19.8,28,14,164
+DPS interface for compact regions/map on List,2^19,mapDpsFoldL,97.3,97,90,196
+DPS interface for compact regions/map on List,2^19,mapDpsFoldLS,92.4,81,88,192
+DPS interface for compact regions/map on List,2^19,mapDpsFoldSL,20.9,52,12,166
+DPS interface for compact regions/map on List,2^19,mapDpsFoldS,22,36,15,166
+DPS interface for compact regions/map on List,2^22,mapL.force,204,416,320,985
+DPS interface for compact regions/map on List,2^22,mapL.copyCR,162,576,112,873
+DPS interface for compact regions/map on List,2^22,mapS.force,452,259,566,926
+DPS interface for compact regions/map on List,2^22,mapS.copyCR,529,323,657,814
+DPS interface for compact regions/map on List,2^22,mapSH.force,196,287,319,987
+DPS interface for compact regions/map on List,2^22,mapSH.copyCR,148,448,116,821
+DPS interface for compact regions/map on List,2^22,mapST.force,520,387,743,891
+DPS interface for compact regions/map on List,2^22,mapST.copyCR,729,547,945,1130
+DPS interface for compact regions/map on List,2^22,mapTRL.force,595,383,1020,1130
+DPS interface for compact regions/map on List,2^22,mapTRL.copyCR,701,541,1130,1230
+DPS interface for compact regions/map on List,2^22,mapTRS.force,511,255,829,1020
+DPS interface for compact regions/map on List,2^22,mapTRS.copyCR,555,319,797,965
+DPS interface for compact regions/map on List,2^22,mapTRSH.force,504,255,829,1020
+DPS interface for compact regions/map on List,2^22,mapTRSH.copyCR,604,319,918,934
+DPS interface for compact regions/map on List,2^22,mapTRST.force,597,383,1020,1130
+DPS interface for compact regions/map on List,2^22,mapTRST.copyCR,1070,542,1230,1230
+DPS interface for compact regions/map on List,2^22,mapDpsTRL,239,352,112,824
+DPS interface for compact regions/map on List,2^22,mapDpsTRS,205,224,103,836
+DPS interface for compact regions/map on List,2^22,mapDpsFoldL,785,776,778,1230
+DPS interface for compact regions/map on List,2^22,mapDpsFoldLS,760,648,775,1230
+DPS interface for compact regions/map on List,2^22,mapDpsFoldSL,158,416,103,839
+DPS interface for compact regions/map on List,2^22,mapDpsFoldS,152,288,107,871
+DPS interface for compact regions/map on List,2^25,mapL.force,1630,3280,2760,6860
+DPS interface for compact regions/map on List,2^25,mapL.copyCR,1800,4610,974,4810
+DPS interface for compact regions/map on List,2^25,mapS.force,3400,2050,4200,6350
+DPS interface for compact regions/map on List,2^25,mapS.copyCR,4710,3280,5530,6140
+DPS interface for compact regions/map on List,2^25,mapSH.force,1600,2250,2760,7370
+DPS interface for compact regions/map on List,2^25,mapSH.copyCR,1700,3580,974,4810
+DPS interface for compact regions/map on List,2^25,mapST.force,4560,3070,6760,6660
+DPS interface for compact regions/map on List,2^25,mapST.copyCR,5360,4400,7580,8290
+DPS interface for compact regions/map on List,2^25,mapTRL.force,5040,3070,9110,7370
+DPS interface for compact regions/map on List,2^25,mapTRL.copyCR,5690,4400,9520,9010
+DPS interface for compact regions/map on List,2^25,mapTRS.force,5590,2050,6450,7480
+DPS interface for compact regions/map on List,2^25,mapTRS.copyCR,4480,2560,6960,6250
+DPS interface for compact regions/map on List,2^25,mapTRSH.force,3820,2050,6450,7480
+DPS interface for compact regions/map on List,2^25,mapTRSH.copyCR,4440,2560,6960,6250
+DPS interface for compact regions/map on List,2^25,mapTRST.force,5040,3070,9110,7370
+DPS interface for compact regions/map on List,2^25,mapTRST.copyCR,6300,4400,9630,9010
+DPS interface for compact regions/map on List,2^25,mapDpsTRL,1320,2870,974,4810
+DPS interface for compact regions/map on List,2^25,mapDpsTRS,1190,1840,974,5220
+DPS interface for compact regions/map on List,2^25,mapDpsFoldL,6780,6250,6550,9220
+DPS interface for compact regions/map on List,2^25,mapDpsFoldLS,6830,5220,6550,9220
+DPS interface for compact regions/map on List,2^25,mapDpsFoldSL,1490,3380,974,5630
+DPS interface for compact regions/map on List,2^25,mapDpsFoldS,1240,2360,974,5020
+DPS interface for compact regions/List and DList concatenation,2^10,concatRightList.force,0.00589,0.0586,0.000174,69
+DPS interface for compact regions/List and DList concatenation,2^10,concatRightList.copyCR,0.02,0.121,0.00000477,69
+DPS interface for compact regions/List and DList concatenation,2^10,concatDListFunLeft.force,0.00674,0.0615,0.000184,69
+DPS interface for compact regions/List and DList concatenation,2^10,concatDListFunLeft.copyCR,0.0203,0.124,0.00000858,69
+DPS interface for compact regions/List and DList concatenation,2^10,concatDListDpsLeft,0.0207,0.0693,0.00000477,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatRightList.force,0.0487,0.467,0.0084,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatRightList.copyCR,0.162,0.777,0.0000343,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatDListFunLeft.force,0.0575,0.489,0.0107,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatDListFunLeft.copyCR,0.17,0.783,0.00186,69
+DPS interface for compact regions/List and DList concatenation,2^13,concatDListDpsLeft,0.17,0.394,0.0000296,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatRightList.force,0.817,3.7,0.69,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatRightList.copyCR,1.39,6.2,0.000287,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatDListFunLeft.force,0.816,3.9,0.621,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatDListFunLeft.copyCR,1.55,6.3,0.17,69
+DPS interface for compact regions/List and DList concatenation,2^16,concatDListDpsLeft,1.4,3,0.000259,69
+DPS interface for compact regions/List and DList concatenation,2^19,concatRightList.force,20.5,30,24,142
+DPS interface for compact regions/List and DList concatenation,2^19,concatRightList.copyCR,21.6,50,17,169
+DPS interface for compact regions/List and DList concatenation,2^19,concatDListFunLeft.force,22.7,31,26,131
+DPS interface for compact regions/List and DList concatenation,2^19,concatDListFunLeft.copyCR,33.6,50,32,145
+DPS interface for compact regions/List and DList concatenation,2^19,concatDListDpsLeft,23,23,17,133
+DPS interface for compact regions/List and DList concatenation,2^22,concatRightList.force,167,239,189,843
+DPS interface for compact regions/List and DList concatenation,2^22,concatRightList.copyCR,143,400,94,640
+DPS interface for compact regions/List and DList concatenation,2^22,concatDListFunLeft.force,241,252,262,702
+DPS interface for compact regions/List and DList concatenation,2^22,concatDListFunLeft.copyCR,308,410,339,805
+DPS interface for compact regions/List and DList concatenation,2^22,concatDListDpsLeft,161,191,94,673
+DPS interface for compact regions/List and DList concatenation,2^25,concatRightList.force,1520,1950,1330,4810
+DPS interface for compact regions/List and DList concatenation,2^25,concatRightList.copyCR,1700,3170,963,4710
+DPS interface for compact regions/List and DList concatenation,2^25,concatDListFunLeft.force,1580,2050,1840,4400
+DPS interface for compact regions/List and DList concatenation,2^25,concatDListFunLeft.copyCR,2320,3280,2660,5730
+DPS interface for compact regions/List and DList concatenation,2^25,concatDListDpsLeft,1370,1540,1020,5840
+DPS interface for compact regions/Queue enqueue operations,2^10,enqueueHMQueue,0.0141,0.124,0.000699,69
+DPS interface for compact regions/Queue enqueue operations,2^10,enqueueEffQueueFun,0.0083,0.101,0.000392,69
+DPS interface for compact regions/Queue enqueue operations,2^10,enqueueEffQueueDps,0.0767,0.389,0.000285,69
+DPS interface for compact regions/Queue enqueue operations,2^13,enqueueHMQueue,0.134,1,0.0439,69
+DPS interface for compact regions/Queue enqueue operations,2^13,enqueueEffQueueFun,0.0753,0.81,0.0244,69
+DPS interface for compact regions/Queue enqueue operations,2^13,enqueueEffQueueDps,0.676,3.3,0.0127,69
+DPS interface for compact regions/Queue enqueue operations,2^16,enqueueHMQueue,2.51,8,3.7,69
+DPS interface for compact regions/Queue enqueue operations,2^16,enqueueEffQueueFun,1.21,6.5,1.6,69
+DPS interface for compact regions/Queue enqueue operations,2^16,enqueueEffQueueDps,10.1,26,5.6,81
+DPS interface for compact regions/Queue enqueue operations,2^19,enqueueHMQueue,87.1,64,137,121
+DPS interface for compact regions/Queue enqueue operations,2^19,enqueueEffQueueFun,59.6,52,96,107
+DPS interface for compact regions/Queue enqueue operations,2^19,enqueueEffQueueDps,116,212,84,156
+DPS interface for compact regions/Queue enqueue operations,2^22,enqueueHMQueue,980,512,1540,450
+DPS interface for compact regions/Queue enqueue operations,2^22,enqueueEffQueueFun,719,414,1230,411
+DPS interface for compact regions/Queue enqueue operations,2^22,enqueueEffQueueDps,967,1740,629,765
+DPS interface for compact regions/Queue enqueue operations,2^25,enqueueHMQueue,11500,4100,13300,3790
+DPS interface for compact regions/Queue enqueue operations,2^25,enqueueEffQueueFun,6120,3280,10200,2360
+DPS interface for compact regions/Queue enqueue operations,2^25,enqueueEffQueueDps,7370,13300,4610,5840
+DPS interface for compact regions/S-expression parser,2^10,parseSExpr.force,0.00644,0.0488,0.000216,69
+DPS interface for compact regions/S-expression parser,2^10,parseSExpr.copyCR,0.019,0.111,0.000217,69
+DPS interface for compact regions/S-expression parser,2^10,parseSExprDps,0.0223,0.0967,0.00000381,69
+DPS interface for compact regions/S-expression parser,2^13,parseSExpr.force,0.0586,0.389,0.0137,69
+DPS interface for compact regions/S-expression parser,2^13,parseSExpr.copyCR,0.158,0.691,0.00664,69
+DPS interface for compact regions/S-expression parser,2^13,parseSExprDps,0.184,0.582,0.0000582,69
+DPS interface for compact regions/S-expression parser,2^16,parseSExpr.force,0.868,3,0.832,69
+DPS interface for compact regions/S-expression parser,2^16,parseSExpr.copyCR,1.45,5.1,0.368,69
+DPS interface for compact regions/S-expression parser,2^16,parseSExprDps,1.44,4.3,0.000429,69
+DPS interface for compact regions/S-expression parser,2^19,parseSExpr.force,31,24,44,71
+DPS interface for compact regions/S-expression parser,2^19,parseSExpr.copyCR,42.8,39,46,94
+DPS interface for compact regions/S-expression parser,2^19,parseSExprDps,19.6,34,9.2,94
+DPS interface for compact regions/S-expression parser,2^22,parseSExpr.force,301,195,391,261
+DPS interface for compact regions/S-expression parser,2^22,parseSExpr.copyCR,333,325,366,376
+DPS interface for compact regions/S-expression parser,2^22,parseSExprDps,135,283,37,269
+DPS interface for compact regions/S-expression parser,2^25,parseSExpr.force,1350,784,1540,1330
+DPS interface for compact regions/S-expression parser,2^25,parseSExpr.copyCR,1830,1330,1540,1330
+DPS interface for compact regions/S-expression parser,2^25,parseSExprDps,832,1130,52,1230
+arrays,alloc,Data.Array.Mutable.Linear,0.000443,0.00762,0,69
+arrays,alloc,Data.Vector,0.000543,0.00762,0,69
+arrays,alloc,Data.Sequence,0.00295,0.000676,0,69
+arrays,toList,Data.Array.Mutable.Linear,0.00483,0.0684,0.00000191,69
+arrays,toList,Data.Vector,0.00397,0.0605,0.00000191,69
+arrays,toList,Data.Sequence,0.00312,0.0361,0.00000572,69
+arrays,map,Data.Array.Mutable.Linear,0.0032,0.0381,0.0000124,69
+arrays,map,Data.Vector,0.00321,0.0381,0.00000858,69
+arrays,map,Data.Sequence,0.00634,0.0654,0.0000143,69
+arrays,reads,Data.Array.Mutable.Linear,0.00197,0.0225,0,69
+arrays,reads,Data.Vector,0.00178,0.00762,0,69
+arrays,reads,Data.Sequence,0.0563,0,0,69
+arrays,successive writes (very unfair to vector),Data.Array.Mutable.Linear,0.00233,0.0225,0,69
+arrays,successive writes (very unfair to vector),Data.Vector,2.28,7.7,1.6,70
+arrays,successive writes (very unfair to vector),Data.Sequence,0.0855,0.566,0.00273,69
+quicksort,size 1000,qsortUsingArray,0.158,0.238,0.000021,69
+quicksort,size 1000,qsortUsingList,0.295,1.1,0.0127,69
+quicksort,size 1000,sortStdLib,0.133,0.496,0.00205,69
+quicksort,size 50000,qsortUsingArray,15.4,15,1,69
+quicksort,size 50000,qsortUsingList,38.2,88,23,70
+quicksort,size 50000,sortStdLib,23.1,38,6.2,69
+quicksort,size 1000000,qsortUsingArray,529,369,42,302
+quicksort,size 1000000,qsortUsingList,1470,2250,899,409
+quicksort,size 1000000,sortStdLib,1620,1020,664,260
+hashmaps,linear-base:Data.HashMap.Mutable.Linear,"Insert x, delete x, repeat for whole range",9.62,20,0.00107,69
+hashmaps,linear-base:Data.HashMap.Mutable.Linear,"Insert all, shuffle, modify all",89,50,35,69
+hashmaps,linear-base:Data.HashMap.Mutable.Linear,"Insert all, shuffle, lookup all",78.9,50,31,70
+hashmaps,linear-base:Data.HashMap.Mutable.Linear,"Insert all, shuffle, modify all, shuffle, lookup all",99.3,60,38,69
+hashmaps,linear-base:Data.HashMap.Mutable.Linear,"Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all",117,68,48,78
+hashmaps,unordered-containers:Data.HashMap.Strict,"Insert x, delete x, repeat for whole range",2.41,4.5,0.000319,69
+hashmaps,unordered-containers:Data.HashMap.Strict,"Insert all, shuffle, modify all",100,175,50,69
+hashmaps,unordered-containers:Data.HashMap.Strict,"Insert all, shuffle, lookup all",54.8,84,21,69
+hashmaps,unordered-containers:Data.HashMap.Strict,"Insert all, shuffle, modify all, shuffle, lookup all",122,175,50,69
+hashmaps,unordered-containers:Data.HashMap.Strict,"Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all",138,217,56,69
+hashmaps,hashtables:Data.HashTable.ST.Basic,"Insert x, delete x, repeat for whole range",9.77,2.4,0.000303,69
+hashmaps,hashtables:Data.HashTable.ST.Basic,"Insert all, shuffle, modify all",22.2,3,0.000508,69
+hashmaps,hashtables:Data.HashTable.ST.Basic,"Insert all, shuffle, lookup all",14.1,2.4,0.000282,69
+hashmaps,hashtables:Data.HashTable.ST.Basic,"Insert all, shuffle, modify all, shuffle, lookup all",24.2,4,0.000261,69
+hashmaps,hashtables:Data.HashTable.ST.Basic,"Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all",42.6,6.6,0.309,69
+hashmaps,hashtables:Data.HashTable.ST.Cuckoo,"Insert x, delete x, repeat for whole range",19.7,8.4,0.00977,69
+hashmaps,hashtables:Data.HashTable.ST.Cuckoo,"Insert all, shuffle, modify all",32.3,10,1.3,69
+hashmaps,hashtables:Data.HashTable.ST.Cuckoo,"Insert all, shuffle, lookup all",20.9,6.4,0.000732,69
+hashmaps,hashtables:Data.HashTable.ST.Cuckoo,"Insert all, shuffle, modify all, shuffle, lookup all",40.8,10,1.3,69
+hashmaps,hashtables:Data.HashTable.ST.Cuckoo,"Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all",56,14,1.5,69

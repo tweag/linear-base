@@ -1,0 +1,2055 @@
+=== Benchmarks (isolation) ===
+
+
+All
+  arrays
+    alloc
+      Data.Array.Mutable.Linear: OK
+        443  ns ±  48 ns, 7.8 KB allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.37s)
+All
+  arrays
+    alloc
+      Data.Vector: OK
+        543  ns ±  83 ns, 7.8 KB allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.30s)
+All
+  arrays
+    alloc
+      Data.Sequence: OK
+        2.95 μs ± 385 ns, 709 B  allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.30s)
+All
+  arrays
+    toList
+      Data.Array.Mutable.Linear: OK
+        4.83 μs ± 721 ns,  70 KB allocated,   2 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.27s)
+All
+  arrays
+    toList
+      Data.Vector: OK
+        3.97 μs ± 708 ns,  62 KB allocated,   2 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  arrays
+    toList
+      Data.Sequence: OK
+        3.12 μs ± 587 ns,  37 KB allocated,   6 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.31s)
+All
+  arrays
+    map
+      Data.Array.Mutable.Linear: OK
+        3.20 μs ± 373 ns,  39 KB allocated,  13 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.31s)
+All
+  arrays
+    map
+      Data.Vector: OK
+        3.21 μs ± 341 ns,  39 KB allocated,   9 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.30s)
+All
+  arrays
+    map
+      Data.Sequence: OK
+        6.34 μs ± 851 ns,  67 KB allocated,  15 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.30s)
+All
+  arrays
+    reads
+      Data.Array.Mutable.Linear: OK
+        1.97 μs ± 366 ns,  23 KB allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.27s)
+All
+  arrays
+    reads
+      Data.Vector: OK
+        1.78 μs ± 339 ns, 7.8 KB allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  arrays
+    reads
+      Data.Sequence: OK
+        56.3 μs ± 5.8 μs,   0 B  allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.27s)
+All
+  arrays
+    successive writes (very unfair to vector)
+      Data.Array.Mutable.Linear: OK
+        2.33 μs ± 417 ns,  23 KB allocated,   0 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  arrays
+    successive writes (very unfair to vector)
+      Data.Vector: OK
+        2.28 ms ± 216 μs, 7.7 MB allocated, 1.6 MB copied,  70 MB peak memory
+
+All 1 tests passed (0.66s)
+All
+  arrays
+    successive writes (very unfair to vector)
+      Data.Sequence: OK
+        85.5 μs ±  15 μs, 580 KB allocated, 2.8 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  quicksort
+    size 1000
+      qsortUsingArray: OK
+        158  μs ±  23 μs, 244 KB allocated,  22 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  quicksort
+    size 1000
+      qsortUsingList: OK
+        295  μs ±  44 μs, 1.1 MB allocated,  13 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  quicksort
+    size 1000
+      sortStdLib: OK
+        133  μs ±  22 μs, 508 KB allocated, 2.1 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  quicksort
+    size 50000
+      qsortUsingArray: OK
+        15.4 ms ± 2.5 ms,  15 MB allocated, 1.0 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.29s)
+All
+  quicksort
+    size 50000
+      qsortUsingList: OK
+        38.2 ms ± 6.9 ms,  88 MB allocated,  23 MB copied,  70 MB peak memory
+
+All 1 tests passed (0.31s)
+All
+  quicksort
+    size 50000
+      sortStdLib: OK
+        23.1 ms ± 4.6 ms,  38 MB allocated, 6.2 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.10s)
+All
+  quicksort
+    size 1000000
+      qsortUsingArray: OK
+        529  ms ±  10 ms, 369 MB allocated,  42 MB copied, 302 MB peak memory
+
+All 1 tests passed (3.97s)
+All
+  quicksort
+    size 1000000
+      qsortUsingList: OK
+        1.468 s ±  71 ms, 2.2 GB allocated, 899 MB copied, 409 MB peak memory
+
+All 1 tests passed (4.57s)
+All
+  quicksort
+    size 1000000
+      sortStdLib: OK
+        1.624 s ± 143 ms, 1.0 GB allocated, 664 MB copied, 260 MB peak memory
+
+All 1 tests passed (5.02s)
+All
+  hashmaps
+    linear-base:Data.HashMap.Mutable.Linear
+      Insert x, delete x, repeat for whole range: OK
+        9.62 ms ± 754 μs,  20 MB allocated, 1.1 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.36s)
+All
+  hashmaps
+    linear-base:Data.HashMap.Mutable.Linear
+      Insert all, shuffle, modify all: OK
+        89.0 ms ±  12 ms,  50 MB allocated,  35 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.29s)
+All
+  hashmaps
+    linear-base:Data.HashMap.Mutable.Linear
+      Insert all, shuffle, lookup all: OK
+        78.9 ms ±  14 ms,  50 MB allocated,  31 MB copied,  70 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  hashmaps
+    linear-base:Data.HashMap.Mutable.Linear
+      Insert all, shuffle, modify all, shuffle, lookup all: OK
+        99.3 ms ± 8.4 ms,  60 MB allocated,  38 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.32s)
+All
+  hashmaps
+    linear-base:Data.HashMap.Mutable.Linear
+      Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all: OK
+        117  ms ± 2.3 ms,  68 MB allocated,  48 MB copied,  78 MB peak memory
+
+All 1 tests passed (0.88s)
+All
+  hashmaps
+    unordered-containers:Data.HashMap.Strict
+      Insert x, delete x, repeat for whole range: OK
+        2.41 ms ± 376 μs, 4.5 MB allocated, 334 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.14s)
+All
+  hashmaps
+    unordered-containers:Data.HashMap.Strict
+      Insert all, shuffle, modify all: OK
+        100  ms ±  12 ms, 175 MB allocated,  50 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.33s)
+All
+  hashmaps
+    unordered-containers:Data.HashMap.Strict
+      Insert all, shuffle, lookup all: OK
+        54.8 ms ± 8.3 ms,  84 MB allocated,  21 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  hashmaps
+    unordered-containers:Data.HashMap.Strict
+      Insert all, shuffle, modify all, shuffle, lookup all: OK
+        122  ms ±  23 ms, 175 MB allocated,  50 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.39s)
+All
+  hashmaps
+    unordered-containers:Data.HashMap.Strict
+      Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all: OK
+        138  ms ± 7.4 ms, 217 MB allocated,  56 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.44s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Basic
+      Insert x, delete x, repeat for whole range: OK
+        9.77 ms ± 1.3 ms, 2.4 MB allocated, 318 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.36s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Basic
+      Insert all, shuffle, modify all: OK
+        22.2 ms ± 1.5 ms, 3.0 MB allocated, 533 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.38s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Basic
+      Insert all, shuffle, lookup all: OK
+        14.1 ms ± 1.1 ms, 2.4 MB allocated, 296 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.50s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Basic
+      Insert all, shuffle, modify all, shuffle, lookup all: OK
+        24.2 ms ± 1.6 ms, 4.0 MB allocated, 274 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.85s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Basic
+      Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all: OK
+        42.6 ms ± 3.4 ms, 6.6 MB allocated, 316 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.35s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Cuckoo
+      Insert x, delete x, repeat for whole range: OK
+        19.7 ms ± 2.8 ms, 8.4 MB allocated,  10 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.09s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Cuckoo
+      Insert all, shuffle, modify all: OK
+        32.3 ms ± 3.0 ms,  10 MB allocated, 1.3 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.13s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Cuckoo
+      Insert all, shuffle, lookup all: OK
+        20.9 ms ± 3.8 ms, 6.4 MB allocated, 768 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.37s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Cuckoo
+      Insert all, shuffle, modify all, shuffle, lookup all: OK
+        40.8 ms ± 3.5 ms,  10 MB allocated, 1.3 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.15s)
+All
+  hashmaps
+    hashtables:Data.HashTable.ST.Cuckoo
+      Insert all, shuffle, modify all, shuffle, modify all, shuffle, lookup all: OK
+        56.0 ms ± 4.7 ms,  14 MB allocated, 1.5 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  hashmaps
+    microbenchmarks
+      insertHeavy
+        Data.HashMap.Mutable.Linear: OK
+          22.1 ms ± 915 μs,  12 MB allocated,  15 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.37s)
+All
+  hashmaps
+    microbenchmarks
+      insertHeavy
+        Data.HashMap.Strict: OK
+          34.0 ms ± 5.8 ms,  84 MB allocated,  29 MB copied,  72 MB peak memory
+
+All 1 tests passed (0.54s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^10
+        relabelDps: OK
+          64.8 μs ±  12 μs, 449 KB allocated, 3.6 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^10
+        relabelPh.force: OK
+          324  μs ±  46 μs, 1.9 MB allocated, 100 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^10
+        relabelPh.copyCR: OK
+          346  μs ±  44 μs, 1.9 MB allocated, 101 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^13
+        relabelDps: OK
+          620  μs ±  89 μs, 3.3 MB allocated, 234 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^13
+        relabelPh.force: OK
+          9.15 ms ± 453 μs,  15 MB allocated, 9.1 MB copied,  71 MB peak memory
+
+All 1 tests passed (0.34s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^13
+        relabelPh.copyCR: OK
+          9.10 ms ± 1.5 ms,  15 MB allocated, 9.8 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.33s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^16
+        relabelDps: OK
+          14.3 ms ± 758 μs,  26 MB allocated,  19 MB copied,  87 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^16
+        relabelPh.force: OK
+          97.0 ms ±  15 ms, 122 MB allocated, 104 MB copied, 126 MB peak memory
+
+All 1 tests passed (0.73s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^16
+        relabelPh.copyCR: OK
+          102  ms ±  20 ms, 125 MB allocated, 106 MB copied, 118 MB peak memory
+
+All 1 tests passed (0.34s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^19
+        relabelDps: OK
+          180  ms ±  10 ms, 209 MB allocated, 271 MB copied, 262 MB peak memory
+
+All 1 tests passed (1.39s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^19
+        relabelPh.force: OK
+          839  ms ±  71 ms, 974 MB allocated, 881 MB copied, 512 MB peak memory
+
+All 1 tests passed (2.63s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^19
+        relabelPh.copyCR: OK
+          869  ms ± 136 ms, 998 MB allocated, 892 MB copied, 512 MB peak memory
+
+All 1 tests passed (2.74s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^22
+        relabelDps: OK
+          1.589 s ± 3.3 ms, 1.6 GB allocated, 2.5 GB copied, 1.3 GB peak memory
+
+All 1 tests passed (5.27s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^22
+        relabelPh.force: OK
+          6.488 s ± 1.04 s, 7.6 GB allocated, 6.7 GB copied, 3.7 GB peak memory
+
+All 1 tests passed (20.29s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^22
+        relabelPh.copyCR: OK
+          6.847 s ± 283 ms, 7.8 GB allocated, 7.0 GB copied, 3.7 GB peak memory
+
+All 1 tests passed (21.20s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^25
+        relabelDps: OK
+          12.064 s ± 190 ms,  13 GB allocated,  19 GB copied, 8.3 GB peak memory
+
+All 1 tests passed (41.30s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^25
+        relabelPh.force: OK
+          59.967 s ± 1.19 s,  61 GB allocated,  54 GB copied,  28 GB peak memory
+
+All 1 tests passed (195.82s)
+All
+  DPS interface for compact regions
+    Breadth-first tree traversal
+      2^25
+        relabelPh.copyCR: OK
+          62.839 s ± 4.57 s,  62 GB allocated,  55 GB copied,  28 GB peak memory
+
+All 1 tests passed (199.94s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapL.force: OK
+          13.1 μs ± 2.2 μs, 104 KB allocated, 848 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.34s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapL.copyCR: OK
+          34.6 μs ± 5.6 μs, 166 KB allocated,   8 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapS.force: OK
+          12.6 μs ± 1.5 μs,  40 KB allocated, 251 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.34s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapS.copyCR: OK
+          30.0 μs ± 5.8 μs, 104 KB allocated, 134 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapSH.force: OK
+          11.2 μs ± 1.4 μs,  72 KB allocated, 357 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.33s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapSH.copyCR: OK
+          30.8 μs ± 5.9 μs, 135 KB allocated,   6 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapST.force: OK
+          13.2 μs ± 1.6 μs,  72 KB allocated, 578 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.35s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapST.copyCR: OK
+          32.6 μs ± 3.8 μs, 136 KB allocated, 527 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.35s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRL.force: OK
+          13.5 μs ± 1.9 μs,  96 KB allocated, 919 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.31s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRL.copyCR: OK
+          25.5 μs ± 3.0 μs, 160 KB allocated, 859 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRS.force: OK
+          9.20 μs ± 1.0 μs,  64 KB allocated, 412 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.52s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRS.copyCR: OK
+          19.7 μs ± 2.8 μs, 127 KB allocated, 300 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRSH.force: OK
+          9.19 μs ± 1.4 μs,  64 KB allocated, 410 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRSH.copyCR: OK
+          19.7 μs ± 3.1 μs, 127 KB allocated, 300 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRST.force: OK
+          12.7 μs ± 1.4 μs,  96 KB allocated, 919 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapTRST.copyCR: OK
+          25.6 μs ± 3.0 μs, 160 KB allocated, 868 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.27s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapDpsTRL: OK
+          24.1 μs ± 3.3 μs, 112 KB allocated,   4 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.32s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapDpsTRS: OK
+          21.8 μs ± 4.2 μs,  80 KB allocated,   4 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapDpsFoldL: OK
+          39.4 μs ± 5.5 μs, 199 KB allocated, 398 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.24s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapDpsFoldLS: OK
+          33.6 μs ± 5.3 μs, 168 KB allocated, 161 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapDpsFoldSL: OK
+          30.6 μs ± 5.8 μs, 127 KB allocated,   6 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    map on List
+      2^10
+        mapDpsFoldS: OK
+          24.4 μs ± 3.4 μs,  96 KB allocated,   4 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapL.force: OK
+          85.2 μs ±  12 μs, 830 KB allocated,  35 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapL.copyCR: OK
+          181  μs ±  24 μs, 1.1 MB allocated,  53 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.22s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapS.force: OK
+          107  μs ±  14 μs, 510 KB allocated,  14 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapS.copyCR: OK
+          199  μs ±  33 μs, 834 KB allocated,  13 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapSH.force: OK
+          67.3 μs ±  12 μs, 572 KB allocated,  21 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapSH.copyCR: OK
+          161  μs ±  21 μs, 921 KB allocated,  37 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapST.force: OK
+          121  μs ±  15 μs, 767 KB allocated,  37 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapST.copyCR: OK
+          225  μs ±  26 μs, 1.1 MB allocated,  30 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.24s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRL.force: OK
+          120  μs ±  22 μs, 766 KB allocated,  59 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRL.copyCR: OK
+          226  μs ±  21 μs, 1.1 MB allocated,  54 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.24s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRS.force: OK
+          85.8 μs ±  12 μs, 510 KB allocated,  27 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRS.copyCR: OK
+          178  μs ±  22 μs, 856 KB allocated,  30 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.22s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRSH.force: OK
+          83.5 μs ±  11 μs, 510 KB allocated,  27 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRSH.copyCR: OK
+          196  μs ±  37 μs, 856 KB allocated,  30 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRST.force: OK
+          121  μs ±  23 μs, 766 KB allocated,  59 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapTRST.copyCR: OK
+          223  μs ±  42 μs, 1.1 MB allocated,  56 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.17s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapDpsTRL: OK
+          201  μs ±  27 μs, 732 KB allocated,  35 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapDpsTRS: OK
+          176  μs ±  26 μs, 480 KB allocated,  30 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.22s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapDpsFoldL: OK
+          312  μs ±  42 μs, 1.5 MB allocated,  20 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapDpsFoldLS: OK
+          311  μs ±  48 μs, 1.3 MB allocated,  24 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapDpsFoldSL: OK
+          204  μs ±  25 μs, 863 KB allocated,  43 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    map on List
+      2^13
+        mapDpsFoldS: OK
+          186  μs ±  28 μs, 608 KB allocated,  32 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.22s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapL.force: OK
+          2.82 ms ± 483 μs, 6.5 MB allocated, 3.9 MB copied,  74 MB peak memory
+
+All 1 tests passed (0.45s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapL.copyCR: OK
+          2.43 ms ± 459 μs, 8.9 MB allocated, 1.3 MB copied,  72 MB peak memory
+
+All 1 tests passed (0.24s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapS.force: OK
+          1.47 ms ± 150 μs, 4.0 MB allocated, 830 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.30s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapS.copyCR: OK
+          2.07 ms ±  92 μs, 6.6 MB allocated, 868 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.37s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapSH.force: OK
+          1.47 ms ± 132 μs, 4.5 MB allocated, 1.7 MB copied,  76 MB peak memory
+
+All 1 tests passed (0.48s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapSH.copyCR: OK
+          1.32 ms ± 187 μs, 7.0 MB allocated, 328 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapST.force: OK
+          2.15 ms ± 354 μs, 6.0 MB allocated, 2.4 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.14s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapST.copyCR: OK
+          3.09 ms ± 397 μs, 8.3 MB allocated, 2.6 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRL.force: OK
+          2.49 ms ± 427 μs, 6.0 MB allocated, 4.0 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.16s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRL.copyCR: OK
+          2.90 ms ± 357 μs, 8.5 MB allocated, 2.9 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.17s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRS.force: OK
+          1.84 ms ± 284 μs, 4.0 MB allocated, 2.5 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRS.copyCR: OK
+          2.51 ms ± 213 μs, 6.4 MB allocated, 2.5 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRSH.force: OK
+          1.90 ms ± 355 μs, 4.0 MB allocated, 2.5 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.13s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRSH.copyCR: OK
+          2.60 ms ± 479 μs, 6.3 MB allocated, 2.5 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.16s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRST.force: OK
+          2.48 ms ± 351 μs, 6.0 MB allocated, 4.0 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.15s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapTRST.copyCR: OK
+          2.92 ms ± 426 μs, 8.5 MB allocated, 2.9 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.17s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapDpsTRL: OK
+          1.72 ms ± 258 μs, 5.5 MB allocated, 277 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapDpsTRS: OK
+          1.46 ms ± 132 μs, 3.5 MB allocated, 171 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.29s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapDpsFoldL: OK
+          5.54 ms ± 728 μs,  12 MB allocated, 4.0 MB copied,  76 MB peak memory
+
+All 1 tests passed (0.42s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapDpsFoldLS: OK
+          5.02 ms ± 607 μs,  10 MB allocated, 3.3 MB copied,  79 MB peak memory
+
+All 1 tests passed (0.39s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapDpsFoldSL: OK
+          1.67 ms ± 176 μs, 6.5 MB allocated, 337 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    map on List
+      2^16
+        mapDpsFoldS: OK
+          1.50 ms ± 238 μs, 4.5 MB allocated, 241 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapL.force: OK
+          27.4 ms ± 797 μs,  52 MB allocated,  42 MB copied, 170 MB peak memory
+
+All 1 tests passed (0.98s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapL.copyCR: OK
+          30.8 ms ± 859 μs,  72 MB allocated,  14 MB copied, 165 MB peak memory
+
+All 1 tests passed (1.15s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapS.force: OK
+          70.4 ms ± 7.0 ms,  32 MB allocated,  55 MB copied, 159 MB peak memory
+
+All 1 tests passed (0.64s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapS.copyCR: OK
+          79.7 ms ±  15 ms,  46 MB allocated,  63 MB copied, 142 MB peak memory
+
+All 1 tests passed (0.70s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapSH.force: OK
+          39.8 ms ± 5.2 ms,  36 MB allocated,  42 MB copied, 164 MB peak memory
+
+All 1 tests passed (2.65s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapSH.copyCR: OK
+          28.5 ms ± 2.4 ms,  56 MB allocated,  14 MB copied, 166 MB peak memory
+
+All 1 tests passed (1.10s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapST.force: OK
+          100  ms ± 8.8 ms,  48 MB allocated,  98 MB copied, 184 MB peak memory
+
+All 1 tests passed (1.65s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapST.copyCR: OK
+          109  ms ±  15 ms,  68 MB allocated, 100 MB copied, 186 MB peak memory
+
+All 1 tests passed (0.94s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRL.force: OK
+          113  ms ±  22 ms,  48 MB allocated, 127 MB copied, 195 MB peak memory
+
+All 1 tests passed (1.82s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRL.copyCR: OK
+          115  ms ± 9.0 ms,  68 MB allocated, 124 MB copied, 187 MB peak memory
+
+All 1 tests passed (0.98s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRS.force: OK
+          71.6 ms ± 4.6 ms,  32 MB allocated,  81 MB copied, 185 MB peak memory
+
+All 1 tests passed (1.29s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRS.copyCR: OK
+          84.9 ms ± 3.4 ms,  46 MB allocated,  84 MB copied, 143 MB peak memory
+
+All 1 tests passed (0.75s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRSH.force: OK
+          72.2 ms ±  11 ms,  32 MB allocated,  82 MB copied, 184 MB peak memory
+
+All 1 tests passed (0.64s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRSH.copyCR: OK
+          78.9 ms ±  13 ms,  46 MB allocated,  84 MB copied, 142 MB peak memory
+
+All 1 tests passed (0.69s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRST.force: OK
+          106  ms ± 3.2 ms,  48 MB allocated, 127 MB copied, 194 MB peak memory
+
+All 1 tests passed (1.77s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapTRST.copyCR: OK
+          111  ms ±  11 ms,  68 MB allocated, 124 MB copied, 188 MB peak memory
+
+All 1 tests passed (0.95s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapDpsTRL: OK
+          22.6 ms ± 4.5 ms,  44 MB allocated,  13 MB copied, 165 MB peak memory
+
+All 1 tests passed (0.50s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapDpsTRS: OK
+          19.8 ms ± 2.9 ms,  28 MB allocated,  14 MB copied, 164 MB peak memory
+
+All 1 tests passed (0.76s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapDpsFoldL: OK
+          97.3 ms ±  13 ms,  97 MB allocated,  90 MB copied, 196 MB peak memory
+
+All 1 tests passed (0.38s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapDpsFoldLS: OK
+          92.4 ms ±  16 ms,  81 MB allocated,  88 MB copied, 192 MB peak memory
+
+All 1 tests passed (0.36s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapDpsFoldSL: OK
+          20.9 ms ± 3.5 ms,  52 MB allocated,  12 MB copied, 166 MB peak memory
+
+All 1 tests passed (0.81s)
+All
+  DPS interface for compact regions
+    map on List
+      2^19
+        mapDpsFoldS: OK
+          22.0 ms ± 2.7 ms,  36 MB allocated,  15 MB copied, 166 MB peak memory
+
+All 1 tests passed (0.43s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapL.force: OK
+          204  ms ±  36 ms, 416 MB allocated, 320 MB copied, 985 MB peak memory
+
+All 1 tests passed (2.11s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapL.copyCR: OK
+          162  ms ± 6.6 ms, 576 MB allocated, 112 MB copied, 873 MB peak memory
+
+All 1 tests passed (5.83s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapS.force: OK
+          452  ms ±  29 ms, 259 MB allocated, 566 MB copied, 926 MB peak memory
+
+All 1 tests passed (1.91s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapS.copyCR: OK
+          529  ms ±  55 ms, 323 MB allocated, 657 MB copied, 814 MB peak memory
+
+All 1 tests passed (2.11s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapSH.force: OK
+          196  ms ±  34 ms, 287 MB allocated, 319 MB copied, 987 MB peak memory
+
+All 1 tests passed (2.03s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapSH.copyCR: OK
+          148  ms ±  28 ms, 448 MB allocated, 116 MB copied, 821 MB peak memory
+
+All 1 tests passed (2.90s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapST.force: OK
+          520  ms ±  83 ms, 387 MB allocated, 743 MB copied, 891 MB peak memory
+
+All 1 tests passed (2.12s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapST.copyCR: OK
+          729  ms ±  72 ms, 547 MB allocated, 945 MB copied, 1.1 GB peak memory
+
+All 1 tests passed (2.69s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRL.force: OK
+          595  ms ±  27 ms, 383 MB allocated, 1.0 GB copied, 1.1 GB peak memory
+
+All 1 tests passed (2.26s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRL.copyCR: OK
+          701  ms ±  14 ms, 541 MB allocated, 1.1 GB copied, 1.2 GB peak memory
+
+All 1 tests passed (5.66s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRS.force: OK
+          511  ms ±  33 ms, 255 MB allocated, 829 MB copied, 1.0 GB peak memory
+
+All 1 tests passed (2.00s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRS.copyCR: OK
+          555  ms ±  21 ms, 319 MB allocated, 797 MB copied, 965 MB peak memory
+
+All 1 tests passed (2.17s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRSH.force: OK
+          504  ms ±  45 ms, 255 MB allocated, 829 MB copied, 1.0 GB peak memory
+
+All 1 tests passed (1.98s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRSH.copyCR: OK
+          604  ms ±  36 ms, 319 MB allocated, 918 MB copied, 934 MB peak memory
+
+All 1 tests passed (2.31s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRST.force: OK
+          597  ms ±  29 ms, 383 MB allocated, 1.0 GB copied, 1.1 GB peak memory
+
+All 1 tests passed (2.28s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapTRST.copyCR: OK
+          1.067 s ±  14 ms, 542 MB allocated, 1.2 GB copied, 1.2 GB peak memory
+
+All 1 tests passed (16.38s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapDpsTRL: OK
+          239  ms ± 9.2 ms, 352 MB allocated, 112 MB copied, 824 MB peak memory
+
+All 1 tests passed (8.71s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapDpsTRS: OK
+          205  ms ±  26 ms, 224 MB allocated, 103 MB copied, 836 MB peak memory
+
+All 1 tests passed (7.70s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapDpsFoldL: OK
+          785  ms ±  30 ms, 776 MB allocated, 778 MB copied, 1.2 GB peak memory
+
+All 1 tests passed (6.35s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapDpsFoldLS: OK
+          760  ms ±  24 ms, 648 MB allocated, 775 MB copied, 1.2 GB peak memory
+
+All 1 tests passed (6.04s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapDpsFoldSL: OK
+          158  ms ±  14 ms, 416 MB allocated, 103 MB copied, 839 MB peak memory
+
+All 1 tests passed (5.82s)
+All
+  DPS interface for compact regions
+    map on List
+      2^22
+        mapDpsFoldS: OK
+          152  ms ±  12 ms, 288 MB allocated, 107 MB copied, 871 MB peak memory
+
+All 1 tests passed (5.65s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapL.force: OK
+          1.626 s ± 178 ms, 3.2 GB allocated, 2.7 GB copied, 6.7 GB peak memory
+
+All 1 tests passed (30.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapL.copyCR: OK
+          1.800 s ±  27 ms, 4.5 GB allocated, 974 MB copied, 4.7 GB peak memory
+
+All 1 tests passed (32.65s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapS.force: OK
+          3.403 s ± 235 ms, 2.0 GB allocated, 4.1 GB copied, 6.2 GB peak memory
+
+All 1 tests passed (15.65s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapS.copyCR: OK
+          4.714 s ± 447 ms, 3.2 GB allocated, 5.4 GB copied, 6.0 GB peak memory
+
+All 1 tests passed (152.69s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapSH.force: OK
+          1.602 s ± 320 ms, 2.2 GB allocated, 2.7 GB copied, 7.2 GB peak memory
+
+All 1 tests passed (115.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapSH.copyCR: OK
+          1.695 s ±  31 ms, 3.5 GB allocated, 974 MB copied, 4.7 GB peak memory
+
+All 1 tests passed (29.84s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapST.force: OK
+          4.564 s ± 375 ms, 3.0 GB allocated, 6.6 GB copied, 6.5 GB peak memory
+
+All 1 tests passed (19.35s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapST.copyCR: OK
+          5.360 s ±  52 ms, 4.3 GB allocated, 7.4 GB copied, 8.1 GB peak memory
+
+All 1 tests passed (43.00s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRL.force: OK
+          5.039 s ± 945 ms, 3.0 GB allocated, 8.9 GB copied, 7.2 GB peak memory
+
+All 1 tests passed (19.01s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRL.copyCR: OK
+          5.689 s ± 139 ms, 4.3 GB allocated, 9.3 GB copied, 8.8 GB peak memory
+
+All 1 tests passed (100.47s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRS.force: OK
+          5.586 s ± 230 ms, 2.0 GB allocated, 6.3 GB copied, 7.3 GB peak memory
+
+All 1 tests passed (21.40s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRS.copyCR: OK
+          4.481 s ± 268 ms, 2.5 GB allocated, 6.8 GB copied, 6.1 GB peak memory
+
+All 1 tests passed (19.19s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRSH.force: OK
+          3.822 s ± 252 ms, 2.0 GB allocated, 6.3 GB copied, 7.3 GB peak memory
+
+All 1 tests passed (15.38s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRSH.copyCR: OK
+          4.444 s ± 284 ms, 2.5 GB allocated, 6.8 GB copied, 6.1 GB peak memory
+
+All 1 tests passed (17.60s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRST.force: OK
+          5.043 s ± 895 ms, 3.0 GB allocated, 8.9 GB copied, 7.2 GB peak memory
+
+All 1 tests passed (19.09s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapTRST.copyCR: OK
+          6.300 s ± 394 ms, 4.3 GB allocated, 9.4 GB copied, 8.8 GB peak memory
+
+All 1 tests passed (206.85s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapDpsTRL: OK
+          1.315 s ±  42 ms, 2.8 GB allocated, 974 MB copied, 4.7 GB peak memory
+
+All 1 tests passed (27.13s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapDpsTRS: OK
+          1.186 s ±  47 ms, 1.8 GB allocated, 974 MB copied, 5.1 GB peak memory
+
+All 1 tests passed (22.77s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapDpsFoldL: OK
+          6.781 s ± 806 ms, 6.1 GB allocated, 6.4 GB copied, 9.0 GB peak memory
+
+All 1 tests passed (221.45s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapDpsFoldLS: OK
+          6.834 s ± 1.35 s, 5.1 GB allocated, 6.4 GB copied, 9.0 GB peak memory
+
+All 1 tests passed (223.56s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapDpsFoldSL: OK
+          1.486 s ±  53 ms, 3.3 GB allocated, 974 MB copied, 5.5 GB peak memory
+
+All 1 tests passed (385.42s)
+All
+  DPS interface for compact regions
+    map on List
+      2^25
+        mapDpsFoldS: OK
+          1.236 s ±  55 ms, 2.3 GB allocated, 974 MB copied, 4.9 GB peak memory
+
+All 1 tests passed (23.66s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^10
+        concatRightList.force: OK
+          5.89 μs ± 978 ns,  60 KB allocated, 182 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.29s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^10
+        concatRightList.copyCR: OK
+          20.0 μs ± 3.4 μs, 124 KB allocated,   5 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^10
+        concatDListFunLeft.force: OK
+          6.74 μs ± 683 ns,  63 KB allocated, 193 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.31s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^10
+        concatDListFunLeft.copyCR: OK
+          20.3 μs ± 2.7 μs, 127 KB allocated,   9 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^10
+        concatDListDpsLeft: OK
+          20.7 μs ± 2.7 μs,  71 KB allocated,   5 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^13
+        concatRightList.force: OK
+          48.7 μs ± 8.6 μs, 478 KB allocated, 8.6 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^13
+        concatRightList.copyCR: OK
+          162  μs ±  31 μs, 796 KB allocated,  36 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^13
+        concatDListFunLeft.force: OK
+          57.5 μs ±  11 μs, 501 KB allocated,  11 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^13
+        concatDListFunLeft.copyCR: OK
+          170  μs ±  26 μs, 802 KB allocated, 1.9 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^13
+        concatDListDpsLeft: OK
+          170  μs ±  21 μs, 403 KB allocated,  31 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^16
+        concatRightList.force: OK
+          817  μs ±  99 μs, 3.7 MB allocated, 707 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^16
+        concatRightList.copyCR: OK
+          1.39 ms ± 219 μs, 6.2 MB allocated, 301 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^16
+        concatDListFunLeft.force: OK
+          816  μs ± 123 μs, 3.9 MB allocated, 636 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.32s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^16
+        concatDListFunLeft.copyCR: OK
+          1.55 ms ± 232 μs, 6.3 MB allocated, 174 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.19s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^16
+        concatDListDpsLeft: OK
+          1.40 ms ± 239 μs, 3.0 MB allocated, 272 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^19
+        concatRightList.force: OK
+          20.5 ms ± 2.4 ms,  30 MB allocated,  24 MB copied, 142 MB peak memory
+
+All 1 tests passed (0.41s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^19
+        concatRightList.copyCR: OK
+          21.6 ms ± 1.4 ms,  50 MB allocated,  17 MB copied, 169 MB peak memory
+
+All 1 tests passed (0.80s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^19
+        concatDListFunLeft.force: OK
+          22.7 ms ± 771 μs,  31 MB allocated,  26 MB copied, 131 MB peak memory
+
+All 1 tests passed (0.45s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^19
+        concatDListFunLeft.copyCR: OK
+          33.6 ms ± 2.9 ms,  50 MB allocated,  32 MB copied, 145 MB peak memory
+
+All 1 tests passed (0.33s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^19
+        concatDListDpsLeft: OK
+          23.0 ms ± 3.8 ms,  23 MB allocated,  17 MB copied, 133 MB peak memory
+
+All 1 tests passed (0.82s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^22
+        concatRightList.force: OK
+          167  ms ±  25 ms, 239 MB allocated, 189 MB copied, 843 MB peak memory
+
+All 1 tests passed (3.08s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^22
+        concatRightList.copyCR: OK
+          143  ms ± 7.6 ms, 400 MB allocated,  94 MB copied, 640 MB peak memory
+
+All 1 tests passed (1.51s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^22
+        concatDListFunLeft.force: OK
+          241  ms ±  47 ms, 252 MB allocated, 262 MB copied, 702 MB peak memory
+
+All 1 tests passed (2.14s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^22
+        concatDListFunLeft.copyCR: OK
+          308  ms ±  29 ms, 410 MB allocated, 339 MB copied, 805 MB peak memory
+
+All 1 tests passed (1.36s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^22
+        concatDListDpsLeft: OK
+          161  ms ±  21 ms, 191 MB allocated,  94 MB copied, 673 MB peak memory
+
+All 1 tests passed (1.69s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^25
+        concatRightList.force: OK
+          1.518 s ± 165 ms, 1.9 GB allocated, 1.3 GB copied, 4.7 GB peak memory
+
+All 1 tests passed (13.89s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^25
+        concatRightList.copyCR: OK
+          1.699 s ± 321 ms, 3.1 GB allocated, 963 MB copied, 4.6 GB peak memory
+
+All 1 tests passed (17.27s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^25
+        concatDListFunLeft.force: OK
+          1.583 s ± 193 ms, 2.0 GB allocated, 1.8 GB copied, 4.3 GB peak memory
+
+All 1 tests passed (9.83s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^25
+        concatDListFunLeft.copyCR: OK
+          2.321 s ± 340 ms, 3.2 GB allocated, 2.6 GB copied, 5.6 GB peak memory
+
+All 1 tests passed (10.43s)
+All
+  DPS interface for compact regions
+    List and DList concatenation
+      2^25
+        concatDListDpsLeft: OK
+          1.374 s ± 186 ms, 1.5 GB allocated, 1.0 GB copied, 5.7 GB peak memory
+
+All 1 tests passed (24.12s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^10
+        enqueueHMQueue: OK
+          14.1 μs ± 2.7 μs, 127 KB allocated, 733 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.23s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^10
+        enqueueEffQueueFun: OK
+          8.30 μs ± 1.4 μs, 103 KB allocated, 411 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.24s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^10
+        enqueueEffQueueDps: OK
+          76.7 μs ±  12 μs, 398 KB allocated, 299 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^13
+        enqueueHMQueue: OK
+          134  μs ±  13 μs, 1.0 MB allocated,  45 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^13
+        enqueueEffQueueFun: OK
+          75.3 μs ±  11 μs, 829 KB allocated,  25 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.22s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^13
+        enqueueEffQueueDps: OK
+          676  μs ±  92 μs, 3.3 MB allocated,  13 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^16
+        enqueueHMQueue: OK
+          2.51 ms ± 206 μs, 8.0 MB allocated, 3.7 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.25s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^16
+        enqueueEffQueueFun: OK
+          1.21 ms ± 214 μs, 6.5 MB allocated, 1.6 MB copied,  69 MB peak memory
+
+All 1 tests passed (0.16s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^16
+        enqueueEffQueueDps: OK
+          10.1 ms ± 813 μs,  26 MB allocated, 5.6 MB copied,  81 MB peak memory
+
+All 1 tests passed (0.20s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^19
+        enqueueHMQueue: OK
+          87.1 ms ± 3.7 ms,  64 MB allocated, 137 MB copied, 121 MB peak memory
+
+All 1 tests passed (0.65s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^19
+        enqueueEffQueueFun: OK
+          59.6 ms ± 9.8 ms,  52 MB allocated,  96 MB copied, 107 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^19
+        enqueueEffQueueDps: OK
+          116  ms ± 7.4 ms, 212 MB allocated,  84 MB copied, 156 MB peak memory
+
+All 1 tests passed (0.38s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^22
+        enqueueHMQueue: OK
+          980  ms ± 108 ms, 512 MB allocated, 1.5 GB copied, 450 MB peak memory
+
+All 1 tests passed (2.96s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^22
+        enqueueEffQueueFun: OK
+          719  ms ±  37 ms, 414 MB allocated, 1.2 GB copied, 411 MB peak memory
+
+All 1 tests passed (2.20s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^22
+        enqueueEffQueueDps: OK
+          967  ms ± 5.1 ms, 1.7 GB allocated, 629 MB copied, 765 MB peak memory
+
+All 1 tests passed (2.96s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^25
+        enqueueHMQueue: OK
+          11.470 s ± 1.42 s, 4.0 GB allocated,  13 GB copied, 3.7 GB peak memory
+
+All 1 tests passed (34.28s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^25
+        enqueueEffQueueFun: OK
+          6.125 s ± 673 ms, 3.2 GB allocated,  10 GB copied, 2.3 GB peak memory
+
+All 1 tests passed (18.62s)
+All
+  DPS interface for compact regions
+    Queue enqueue operations
+      2^25
+        enqueueEffQueueDps: OK
+          7.372 s ± 130 ms,  13 GB allocated, 4.5 GB copied, 5.7 GB peak memory
+
+All 1 tests passed (22.29s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^10
+        parseSExpr.force: OK
+          6.44 μs ± 692 ns,  50 KB allocated, 226 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.30s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^10
+        parseSExpr.copyCR: OK
+          19.0 μs ± 2.8 μs, 114 KB allocated, 228 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.24s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^10
+        parseSExprDps: OK
+          22.3 μs ± 2.8 μs,  99 KB allocated,   4 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.26s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^13
+        parseSExpr.force: OK
+          58.6 μs ± 6.8 μs, 398 KB allocated,  14 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.28s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^13
+        parseSExpr.copyCR: OK
+          158  μs ±  24 μs, 708 KB allocated, 6.8 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^13
+        parseSExprDps: OK
+          184  μs ±  26 μs, 596 KB allocated,  61 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.22s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^16
+        parseSExpr.force: OK
+          868  μs ± 101 μs, 3.0 MB allocated, 852 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.21s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^16
+        parseSExpr.copyCR: OK
+          1.45 ms ± 263 μs, 5.1 MB allocated, 377 KB copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^16
+        parseSExprDps: OK
+          1.44 ms ± 238 μs, 4.3 MB allocated, 450 B  copied,  69 MB peak memory
+
+All 1 tests passed (0.18s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^19
+        parseSExpr.force: OK
+          31.0 ms ± 2.8 ms,  24 MB allocated,  44 MB copied,  71 MB peak memory
+
+All 1 tests passed (0.50s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^19
+        parseSExpr.copyCR: OK
+          42.8 ms ± 5.8 ms,  39 MB allocated,  46 MB copied,  94 MB peak memory
+
+All 1 tests passed (0.16s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^19
+        parseSExprDps: OK
+          19.6 ms ± 1.7 ms,  34 MB allocated, 9.2 MB copied,  94 MB peak memory
+
+All 1 tests passed (0.17s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^22
+        parseSExpr.force: OK
+          301  ms ±  44 ms, 195 MB allocated, 391 MB copied, 261 MB peak memory
+
+All 1 tests passed (0.94s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^22
+        parseSExpr.copyCR: OK
+          333  ms ±  45 ms, 325 MB allocated, 366 MB copied, 376 MB peak memory
+
+All 1 tests passed (1.05s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^22
+        parseSExprDps: OK
+          135  ms ± 6.4 ms, 283 MB allocated,  37 MB copied, 269 MB peak memory
+
+All 1 tests passed (1.02s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^25
+        parseSExpr.force: OK
+          1.351 s ± 256 ms, 784 MB allocated, 1.5 GB copied, 1.3 GB peak memory
+
+All 1 tests passed (9.60s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^25
+        parseSExpr.copyCR: OK
+          1.833 s ± 322 ms, 1.3 GB allocated, 1.5 GB copied, 1.3 GB peak memory
+
+All 1 tests passed (13.45s)
+All
+  DPS interface for compact regions
+    S-expression parser
+      2^25
+        parseSExprDps: OK
+          832  ms ±  25 ms, 1.1 GB allocated,  52 MB copied, 1.2 GB peak memory
+
+All 1 tests passed (2.57s)

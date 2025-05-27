@@ -39,7 +39,7 @@ benchImpls name impls datasets = do
               if isLazy
                 then
                   [ bench (implName ++ ".force") $ (flip whnfAppIO) sampleData $ \sampleData -> evaluate $ force $ impl sampleData,
-                    bench (implName ++ ".copyIntoReg") $ (flip whnfAppIO) sampleData $ \sampleData -> do
+                    bench (implName ++ ".copyCR") $ (flip whnfAppIO) sampleData $ \sampleData -> do
                       resInRegion <- compact $ impl sampleData
                       evaluate $ getCompact $ resInRegion
                   ]
@@ -70,7 +70,7 @@ benchImpls name impls datasets = do
 --     if isLazy
 --       then case requestedImplVariant of
 --         ".force" -> evaluate $ rwhnf $ force $ impl sampleData
---         ".copyIntoReg" -> do
+--         ".copyCR" -> do
 --           resInRegion <- compact $ impl sampleData
 --           evaluate $ rwhnf $ getCompact $ resInRegion
 --         _ -> error ("variant '" ++ requestedImplVariant ++ "' not found (required for lazy impl)")

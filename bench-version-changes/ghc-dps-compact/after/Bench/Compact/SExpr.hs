@@ -16,7 +16,8 @@ dataSets =
     (evaluate . force =<< BSC.readFile (dataSetDir ++ "data_2_13.sexpr"), "2^13"),
     (evaluate . force =<< BSC.readFile (dataSetDir ++ "data_2_16.sexpr"), "2^16"),
     (evaluate . force =<< BSC.readFile (dataSetDir ++ "data_2_19.sexpr"), "2^19"),
-    (evaluate . force =<< BSC.readFile (dataSetDir ++ "data_2_22.sexpr"), "2^22")
+    (evaluate . force =<< BSC.readFile (dataSetDir ++ "data_2_22.sexpr"), "2^22"),
+    (evaluate . force =<< BSC.readFile (dataSetDir ++ "data_2_25.sexpr"), "2^25")
   ]
 
 sexprBenchgroup :: Benchmark

@@ -67,9 +67,9 @@ fromListN xs = DListN $ \ys -> xs ++ ys
 
 impls :: [([[Int]] -> [Int], String, Bool)]
 impls =
-  [ (concatRight, "concatRight", True),
-    (differenceListNaiveLeft, "differenceListNaiveLeft", True),
-    (differenceListDestLeft, "differenceListDestLeft", False)
+  [ (concatRightList, "concatRightList", True),
+    (concatDListFunLeft, "concatDListFunLeft", True),
+    (concatDListDpsLeft, "concatDListDpsLeft", False)
   ]
 
 foldl' :: forall a b. (a %1 -> b -> a) -> a %1 -> [b] -> a
@@ -83,14 +83,14 @@ foldr f s (x : xs) = x `f` foldr f s xs
 concatLeft :: [[a]] -> [a]
 concatLeft = foldl' (\xs ys -> xs ++ ys) []
 
-concatRight :: [[a]] -> [a]
-concatRight = foldr (\xs ys -> xs ++ ys) []
+concatRightList :: [[a]] -> [a]
+concatRightList = foldr (\xs ys -> xs ++ ys) []
 
-differenceListNaiveLeft :: [[a]] -> [a]
-differenceListNaiveLeft lists = toListN (foldl' (\dl ys -> let !r = dl `concatN` (fromListN ys) in r) newN lists)
+concatDListFunLeft :: [[a]] -> [a]
+concatDListFunLeft lists = toListN (foldl' (\dl ys -> let !r = dl `concatN` (fromListN ys) in r) newN lists)
 
-differenceListDestLeft :: [[a]] -> [a]
-differenceListDestLeft lists =
+concatDListDpsLeft :: [[a]] -> [a]
+concatDListDpsLeft lists =
   unur
     ( withRegion
         ( \ @r t ->

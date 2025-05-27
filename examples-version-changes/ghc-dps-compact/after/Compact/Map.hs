@@ -75,18 +75,18 @@ mapTRST f = go []
       let !cons = (f x) : acc
        in go cons xs
 
-mapDestTRL :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
-mapDestTRL _ [] dl = dl & fill @'[]
-mapDestTRL f (x : xs) dl = case dl & fill @'(:) of
-  (dh, dt) -> dh & fillLeaf (f x) `lseq` mapDestTRL f xs dt
+mapDpsTRL :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
+mapDpsTRL _ [] dl = dl & fill @'[]
+mapDpsTRL f (x : xs) dl = case dl & fill @'(:) of
+  (dh, dt) -> dh & fillLeaf (f x) `lseq` mapDpsTRL f xs dt
 
-mapDestTRS :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
-mapDestTRS _ [] dl = dl & fill @'[]
-mapDestTRS f (x : xs) dl = case dl & fill @'(:) of
-  (dh, dt) -> let !r = f x in dh & fillLeaf r `lseq` mapDestTRS f xs dt
+mapDpsTRS :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
+mapDpsTRS _ [] dl = dl & fill @'[]
+mapDpsTRS f (x : xs) dl = case dl & fill @'(:) of
+  (dh, dt) -> let !r = f x in dh & fillLeaf r `lseq` mapDpsTRS f xs dt
 
-mapDestFL :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
-mapDestFL f l dl =
+mapDpsFoldL :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
+mapDpsFoldL f l dl =
   (foldl_ fillConsF dl l) & fill @'[]
   where
     fillConsF :: Dest r [b] %1 -> a -> Dest r [b]
@@ -96,8 +96,8 @@ mapDestFL f l dl =
     foldl_ _ s [] = s
     foldl_ f s (x : xs) = foldl_ f (f s x) xs
 
-mapDestFSL :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
-mapDestFSL f l dl =
+mapDpsFoldSL :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
+mapDpsFoldSL f l dl =
   (foldl_ fillConsF dl l) & fill @'[]
   where
     fillConsF dl x = case dl & fill @'(:) of
@@ -106,8 +106,8 @@ mapDestFSL f l dl =
     foldl_ _ s [] = s
     foldl_ f s (x : xs) = let !r = (f s x) in foldl_ f r xs
 
-mapDestFLS :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
-mapDestFLS f l dl =
+mapDpsFoldLS :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
+mapDpsFoldLS f l dl =
   (foldl_ fillConsF dl l) & fill @'[]
   where
     fillConsF dl x = case dl & fill @'(:) of
@@ -116,8 +116,8 @@ mapDestFLS f l dl =
     foldl_ _ s [] = s
     foldl_ f s (x : xs) = foldl_ f (f s x) xs
 
-mapDestFS :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
-mapDestFS f l dl =
+mapDpsFoldS :: forall (r :: Type) a b. (Region r) => (a %1 -> b) -> [a] -> Dest r [b] %1 -> ()
+mapDpsFoldS f l dl =
   (foldl_ fillConsF dl l) & fill @'[]
   where
     fillConsF dl x = case dl & fill @'(:) of
@@ -141,12 +141,12 @@ impls' f =
     (mapTRS f, "mapTRS", True),
     (mapTRSH f, "mapTRSH", True),
     (mapTRST f, "mapTRST", True),
-    (dpsWrapper mapDestTRL f, "mapDestTRL", False),
-    (dpsWrapper mapDestTRS f, "mapDestTRS", False),
-    (dpsWrapper mapDestFL f, "mapDestFL", False),
-    (dpsWrapper mapDestFLS f, "mapDestFLS", False),
-    (dpsWrapper mapDestFSL f, "mapDestFSL", False),
-    (dpsWrapper mapDestFS f, "mapDestFS", False)
+    (dpsWrapper mapDpsTRL f, "mapDpsTRL", False),
+    (dpsWrapper mapDpsTRS f, "mapDpsTRS", False),
+    (dpsWrapper mapDpsFoldL f, "mapDpsFoldL", False),
+    (dpsWrapper mapDpsFoldLS f, "mapDpsFoldLS", False),
+    (dpsWrapper mapDpsFoldSL f, "mapDpsFoldSL", False),
+    (dpsWrapper mapDpsFoldS f, "mapDpsFoldS", False)
   ]
 
 impls :: [([Int] -> [Int], String, Bool)]

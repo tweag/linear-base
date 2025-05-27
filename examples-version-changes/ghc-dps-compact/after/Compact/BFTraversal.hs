@@ -105,14 +105,14 @@ mapAccumBFS f s0 tree =
 
 --------------------------------------------------------------------------------
 
-dpsRelabel :: BinTree () -> (BinTree Int, Int)
-dpsRelabel base = mapAccumBFS (\s _ -> (s + 1, s)) 0 base
+relabelDps :: BinTree () -> (BinTree Int, Int)
+relabelDps base = mapAccumBFS (\s _ -> (s + 1, s)) 0 base
 
-phasesRelabel :: BinTree () -> (BinTree Int, Int)
-phasesRelabel base = runState (mapPhasesBFS (\_ -> state (\s -> (s, s + 1))) base) 0
+relabelPh :: BinTree () -> (BinTree Int, Int)
+relabelPh base = runState (mapPhasesBFS (\_ -> state (\s -> (s, s + 1))) base) 0
 
 impls :: [(BinTree () -> (BinTree Int, Int), String, Bool)]
 impls =
-  [ (dpsRelabel, "dpsRelabel", False),
-    (phasesRelabel, "phasesRelabel", True)
+  [ (relabelDps, "relabelDps", False),
+    (relabelPh, "relabelPh", True)
   ]

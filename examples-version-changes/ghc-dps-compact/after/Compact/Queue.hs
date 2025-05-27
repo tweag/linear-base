@@ -89,8 +89,8 @@ dequeue (Queue l (DList i)) = case l of
 
 -------------------------------------------------------------------------------
 
-naiveImpl :: Word64 -> Word64
-naiveImpl limit = go 0 (singletonN 1)
+enqueueHMQueue :: Word64 -> Word64
+enqueueHMQueue limit = go 0 (singletonN 1)
   where
     go sum q = case dequeueN q of
       Nothing -> sum
@@ -101,8 +101,8 @@ naiveImpl limit = go 0 (singletonN 1)
               then q' `enqueueN` (2 * x) `enqueueN` (2 * x + 1)
               else q'
 
-funcImpl :: Word64 -> Word64
-funcImpl limit = go 0 (singletonF 1)
+enqueueEffQueueFun :: Word64 -> Word64
+enqueueEffQueueFun limit = go 0 (singletonF 1)
   where
     go sum q = case dequeueF q of
       Nothing -> sum
@@ -113,8 +113,8 @@ funcImpl limit = go 0 (singletonF 1)
               then q' `enqueueF` (2 * x) `enqueueF` (2 * x + 1)
               else q'
 
-destImpl :: Word64 -> Word64
-destImpl limit = unur (withRegion (\ @r t -> let r = go 0 (singleton @r t (Ur 1)) in move r))
+enqueueEffQueueDps :: Word64 -> Word64
+enqueueEffQueueDps limit = unur (withRegion (\ @r t -> let r = go 0 (singleton @r t (Ur 1)) in move r))
   where
     go :: (Region r) => Word64 -> Queue r (Ur Word64) %1 -> Word64
     go sum q = case dequeue q of
@@ -128,7 +128,7 @@ destImpl limit = unur (withRegion (\ @r t -> let r = go 0 (singleton @r t (Ur 1)
 
 impls :: [(Word64 -> Word64, String, Bool)]
 impls =
-  [ (naiveImpl, "naiveImpl", False),
-    (funcImpl, "funcImpl", False),
-    (destImpl, "destImpl", False)
+  [ (enqueueHMQueue, "enqueueHMQueue", False),
+    (enqueueEffQueueFun, "enqueueEffQueueFun", False),
+    (enqueueEffQueueDps, "enqueueEffQueueDps", False)
   ]

@@ -26,5 +26,5 @@ cabal.project.local
 **/*.dump-simpl
 ghc-dps-compact-95615577d7
 benchmark_*.txt
-*.csv
+benchmark*.csv
 plot_*.pdf
