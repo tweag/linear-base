@@ -23,4 +23,7 @@ dataSets =
         else Node () (go (currentDepth + 1) maxDepth) (go (currentDepth + 1) maxDepth)
 
 bftraversalBenchgroup :: Benchmark
-bftraversalBenchgroup = Utils.benchImpls "Breadth-first tree traversal" BFTraversal.impls dataSets
+bftraversalBenchgroup = benchImpls "Breadth-first tree traversal" BFTraversal.impls dataSets
+
+bftraversalLaunch :: String -> Maybe (IO ())
+bftraversalLaunch = launchImpl "Breadth-first tree traversal" BFTraversal.impls dataSets

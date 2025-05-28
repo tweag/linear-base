@@ -19,3 +19,6 @@ dataSets =
 
 queueBenchgroup :: Benchmark
 queueBenchgroup = benchImpls "Queue enqueue operations" Queue.impls dataSets
+
+queueLaunch :: String -> Maybe (IO ())
+queueLaunch = launchImpl "Queue enqueue operations" Queue.impls dataSets

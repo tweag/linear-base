@@ -17,9 +17,10 @@ plt.rcParams.update({
 })
 
 # Constants
-PEAK_BASE = 69         # Subtracted from peak memory values (in MB)
-PEAK_THRESHOLD = 10    # Minimum required baseline peak after subtraction (in MB)
+PEAK_BASE = 6        # Subtracted from peak memory values (in MB)
+PEAK_THRESHOLD = 6    # Minimum required baseline peak after subtraction (in MB)
 
+ROOT_DIR = "/home/thomas/tweag/tbagrel-phd-manuscript/graphics/"
 
 def dedup_list(seq):
     """Remove duplicates from a list while preserving order."""
@@ -241,7 +242,7 @@ draw(
     ],
     "relabelPh.force",
     "Benchmark of breadth-first tree relabeling",
-    "plot-bft.pdf"
+    f"{ROOT_DIR}plot-bft.pdf"
 )
 
 ###############################################################################
@@ -276,7 +277,7 @@ draw(
     ],
     "mapL.force",
     "Benchmark of map function on list",
-    "plot-map.pdf"
+    f"{ROOT_DIR}plot-map.pdf"
 )
 
 ###############################################################################
@@ -294,7 +295,7 @@ draw(
     ],
     "concatListRight.force",
     "Benchmark of iterated concatenations on lists and difference lists",
-    "plot-concat.pdf"
+    f"{ROOT_DIR}plot-concat.pdf"
 )
 
 ###############################################################################
@@ -310,7 +311,7 @@ draw(
     ],
     "enqueueHMQueue",
     "Benchmark of enqueue operations on queue",
-    "plot-queue.pdf"
+    f"{ROOT_DIR}plot-queue.pdf"
 )
 
 ###############################################################################
@@ -326,5 +327,5 @@ draw(
     ],
     "parseSExpr.force",
     "Benchmark of S-expression parser",
-    "plot-parser.pdf"
+    f"{ROOT_DIR}plot-parser.pdf"
 )

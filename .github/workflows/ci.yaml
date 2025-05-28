@@ -87,7 +87,7 @@ jobs:
     - name: Build benchmarks
       run: nix-shell --arg installHls 'false' --pure --run "cabal build -w ${{ env.ghc-exe }} linear-base:bench:bench"
     - name: Run benchmarks in isolation
-      run: nix-shell --arg installHls 'false' --pure --run "echo $'=== Benchmarks (isolation) ===\n\n' > benchmark_${{ env.ghc-name }}.txt && cabal run -w ${{ env.ghc-exe }} -v0 linear-base:bench:bench -- -l | while read -r name; do cabal run -w ${{ env.ghc-exe }} -v0 linear-base:bench:bench -- --timeout 60 -p '"'$'"0 == \"'\""'$'"name\"'\"' 2>&1 | tee -a benchmark_${{ env.ghc-name }}.txt; done"
+      run: nix-shell --arg installHls 'false' --pure --run "echo $'=== Benchmarks (isolation) ===\n\n' > benchmark_${{ env.ghc-name }}.txt && cabal run -w ${{ env.ghc-exe }} -v0 linear-base:bench:bench -- -l | while read -r name; do cabal run -w ${{ env.ghc-exe }} -v0 linear-base:bench:bench -- --timeout 1200 --stdev 10 -p '"'$'"0 == \"'\""'$'"name\"'\"' 2>&1 | tee -a benchmark_${{ env.ghc-name }}.txt; done"
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:

@@ -20,3 +20,6 @@ dataSets =
 
 dlistBenchgroup :: Benchmark
 dlistBenchgroup = benchImpls "List and DList concatenation" DList.impls dataSets
+
+dlistLaunch :: String -> Maybe (IO ())
+dlistLaunch = launchImpl "List and DList concatenation" DList.impls dataSets

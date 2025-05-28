@@ -22,3 +22,6 @@ dataSets =
 
 mapBenchgroup :: Benchmark
 mapBenchgroup = benchImpls "map on List" Map.impls dataSets
+
+mapLaunch :: String -> Maybe (IO ())
+mapLaunch = launchImpl "map on List" Map.impls dataSets

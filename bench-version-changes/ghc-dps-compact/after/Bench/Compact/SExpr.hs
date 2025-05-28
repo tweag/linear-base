@@ -21,4 +21,7 @@ dataSets =
   ]
 
 sexprBenchgroup :: Benchmark
-sexprBenchgroup = Utils.benchImpls "S-expression parser" SExpr.impls dataSets
+sexprBenchgroup = benchImpls "S-expression parser" SExpr.impls dataSets
+
+sexprLaunch :: String -> Maybe (IO ())
+sexprLaunch = launchImpl "S-expression parser" SExpr.impls dataSets

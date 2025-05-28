@@ -289,4 +289,5 @@ benchmark bench
         unordered-containers,
         MonadRandom,
         examples,
-        ghc-compact
+        ghc-compact,
+        split

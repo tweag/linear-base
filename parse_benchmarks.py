@@ -6,7 +6,7 @@ import sys
 
 from decimal import Decimal, getcontext
 
-def format_significant_decimal(x, digits=3):
+def format_significant_decimal(x, digits=5):
     if x == 0:
         return "0"
     

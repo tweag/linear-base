@@ -12,6 +12,8 @@ module Bench.Compact.Utils where
 import Control.DeepSeq
 import Control.Exception (evaluate)
 import Data.Functor ((<&>))
+import Data.List (find)
+import qualified Data.List.Split as Split
 import GHC.Compact (compact, getCompact)
 import Test.Tasty (testGroup)
 import Test.Tasty.Bench
@@ -82,3 +84,42 @@ benchImpls name impls datasets = do
 --   go' [] = error ("requested size '" ++ requestedSize ++ "' not found")
 --   go' ((loadSampleData, sizeName):_) | sizeName == requestedSize = loadSampleData
 --   go' (_:xs) = go' xs
+
+launchImpl ::
+  forall m a r.
+  (NFData a, NFData r) =>
+  String -> -- expected testName
+  [(a %m -> r, String, Bool)] ->
+  [(IO a, String)] ->
+  String -> -- full request string
+  Maybe (IO ())
+launchImpl name impls datasets request =
+  let segments = Split.splitOn "." request
+   in case segments of
+        ("All" : "DPS interface for compact regions" : testName : sizeName : rest)
+          | testName == name ->
+              case rest of
+                [implFullName] -> matchImpl sizeName implFullName Nothing
+                [implBase, suffix] -> matchImpl sizeName implBase (Just suffix)
+                _ -> Nothing
+          | otherwise -> Nothing
+        _ -> Nothing
+  where
+    matchImpl sizeName implBaseName suffix = do
+      (loadData, _) <- find ((== sizeName) . snd) datasets
+      (implFn, _, isLazy) <- find (\(_, n, _) -> n == implBaseName) impls
+      case (isLazy, suffix) of
+        (False, Nothing) ->
+          Just $
+            loadData >>= \sampleData ->
+              evaluate $ rwhnf $ implFn sampleData
+        (True, Just "force") ->
+          Just $
+            loadData >>= \sampleData ->
+              evaluate $ rwhnf $ force $ implFn sampleData
+        (True, Just "copyCR") ->
+          Just $
+            loadData >>= \sampleData ->
+              compact (implFn sampleData) >>= \res ->
+                evaluate $ rwhnf $ getCompact res
+        _ -> Nothing
