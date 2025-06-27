@@ -6,6 +6,7 @@ import matplotlib.colors as mcolors
 import colorsys
 import sys
 import scipy.stats
+from collections import defaultdict
 
 SHOW_TITLES=False
 
@@ -17,8 +18,8 @@ plt.rcParams.update({
 })
 
 # Constants
-PEAK_BASE = 6        # Subtracted from peak memory values (in MB)
-PEAK_THRESHOLD = 6    # Minimum required baseline peak after subtraction (in MB)
+PEAK_BASE = 5.5        # Subtracted from peak memory values (in MB)
+PEAK_THRESHOLD = 5    # Minimum required baseline peak after subtraction (in MB)
 
 ROOT_DIR = "/home/thomas/tweag/tbagrel-phd-manuscript/graphics/"
 
@@ -60,6 +61,48 @@ def compute_fallback_baseline(size, methods, alloc_pivot, copied_pivot, mean_all
             num += a * r_alloc #+ c * r_copied
             denom += r_alloc**2 #+ r_copied**2
     return num / denom if denom > 0 else np.nan
+
+def apply_global_offset_to_all_points(x_series_list, y_series_list, offset_ratio=0.005):
+    """
+    Applies vertical offsets to avoid overlapping (x, y) points globally,
+    with offset proportional to the overall y-range of all data combined.
+
+    Parameters:
+    - x_series_list: list of x arrays (one per series)
+    - y_series_list: list of y arrays (one per series)
+    - offset_ratio: fraction of global y-range used as offset magnitude
+    """
+    from collections import defaultdict
+    import numpy as np
+
+    # Flatten all points with (x, y, series_index, point_index)
+    all_points = []
+    for series_index, (xs, ys) in enumerate(zip(x_series_list, y_series_list)):
+        for point_index, (x, y) in enumerate(zip(xs, ys)):
+            all_points.append((x, y, series_index, point_index))
+
+    # Group points by exact (x, y)
+    point_groups = defaultdict(list)
+    for pt in all_points:
+        key = (pt[0], pt[1])
+        point_groups[key].append(pt)
+
+    # Compute global y-range over all points
+    all_y = np.concatenate([np.array(ys) for ys in y_series_list])
+    y_range = np.ptp(all_y)  # peak-to-peak range
+    abs_offset = offset_ratio * y_range if y_range > 0 else offset_ratio
+
+    # Prepare adjusted copies
+    adjusted_series_list = [np.array(ys).copy() for ys in y_series_list]
+
+    # Apply symmetric offsets to overlapping points
+    for group in point_groups.values():
+        if len(group) > 1:
+            for j, (x, y, series_idx, point_idx) in enumerate(group):
+                delta = abs_offset * (j - (len(group) - 1) / 2)
+                adjusted_series_list[series_idx][point_idx] += delta
+
+    return adjusted_series_list
 
 def draw(df, test_description, methods, method_baseline, title, output_file=None):
     # Start fresh
@@ -126,15 +169,23 @@ def draw(df, test_description, methods, method_baseline, title, output_file=None
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7.5), sharex=False)
 
     # --- Time plot (all sizes included) ---
+    rel_time_series = []
     for method in methods:
         rel_time = time_pivot[method] / time_pivot[method_baseline]
-        ax1.plot(time_pivot.index, rel_time, marker='o', color=method_colors[method],
-                 label=f"\\texttt{{{method}}}", linewidth=1.5, alpha=1.0)
+        rel_time_series.append(np.array(rel_time))
+
+    # Compute adjusted values with cross-method offset
+    rel_time_adjusted_list = apply_global_offset_to_all_points([time_pivot.index]*(len(rel_time_series)), rel_time_series)
+
+    # Now plot each method with its adjusted y-values
+    for method, rel_time_adjusted in zip(methods, rel_time_adjusted_list):
+        ax1.plot(time_pivot.index, rel_time_adjusted, marker='o', color=method_colors[method],
+                label=f"\\texttt{{{method}}}", linewidth=2, alpha=1.0)
 
     ax1.set_xscale("log", base=2)
     ax1.set_xticks(xticks)
     ax1.set_xticklabels(xtick_labels)
-    ax1.axhline(1.0, color='gray', linestyle='--', linewidth=1)
+    #ax1.axhline(1.0, color='gray', linestyle='--', linewidth=1)
     ax1.set_ylabel(f"Relative time in \\textit{{ms}} (vs. \\texttt{{{method_baseline}}})")
     ax1.set_xlabel("Input size (nb. of elements)")
     ax1.set_title("Time (lower is better)")
@@ -144,9 +195,14 @@ def draw(df, test_description, methods, method_baseline, title, output_file=None
     # --- Memory plot ---
 
     sizes = sorted(set(filtered_df["SizeNum"]))
+    
+    x_series_all = []
+    y_series_all = []
+    plot_metadata = []  # to keep (method, type, x_series)
+    
     for method in methods:
         color = method_colors[method]
-        style = {'linewidth': 1.5, 'alpha': 1.0}
+        style = {'linewidth': 2, 'alpha': 1.0}
 
         peak_points_x, peak_points_y = [], []
         alloc_points_x, alloc_points_y = [], []
@@ -196,18 +252,28 @@ def draw(df, test_description, methods, method_baseline, title, output_file=None
                     peak_points_x.append(size)
                     peak_points_y.append(peak_val / baseline)
 
-        # Plot all collected points
-        ax2.plot(peak_points_x, peak_points_y, marker='o', linestyle='-', color=color,
-                 label=f"\\texttt{{{method}}} peak", **style)
-        ax2.plot(alloc_points_x, alloc_points_y, marker='+', linestyle='--', color=color,
-                 label=f"\\texttt{{{method}}} allocated", **style)
-        ax2.plot(copied_points_x, copied_points_y, marker='d', linestyle=':', color=color,
-                 label=f"\\texttt{{{method}}} copied", **style)
+        color = method_colors[method]
+
+        # Append to unified list
+        x_series_all.extend([peak_points_x, alloc_points_x, copied_points_x])
+        y_series_all.extend([peak_points_y, alloc_points_y, copied_points_y])
+        plot_metadata.extend([
+            (method, 'peak', peak_points_x, 'o', '-', color),
+            (method, 'allocated', alloc_points_x, '+', '--', color),
+            (method, 'copied', copied_points_x, 'd', ':', color),
+        ])
+
+    adjusted_y_all = apply_global_offset_to_all_points(x_series_all, y_series_all)
+
+    # Plot each adjusted series
+    for adjusted_y, (method, label, x_vals, marker, linestyle, color) in zip(adjusted_y_all, plot_metadata):
+        ax2.plot(x_vals, adjusted_y, marker=marker, linestyle=linestyle, color=color,
+                label=f"\\texttt{{{method}}} {label}", **style)
 
     ax2.set_xscale("log", base=2)
     ax2.set_xticks(xticks)
     ax2.set_xticklabels(xtick_labels)
-    ax2.axhline(1.0, color='gray', linestyle='--', linewidth=1)
+    #ax2.axhline(1.0, color='gray', linestyle='--', linewidth=1)
     ax2.set_ylabel(f"Relative memory usage in \\textit{{MB}} (vs. \\texttt{{{method_baseline}}} peak)")
     ax2.set_xlabel("Input size (nb. of elements)")
     ax2.set_title("Memory (lower is better)")
@@ -257,7 +323,7 @@ draw(
         # "mapS.force",
         # "mapS.copyCR",
         "mapSH.force",
-        # "mapSH.copyCR",
+        "mapSH.copyCR",
         # "mapST.force",
         # "mapST.copyCR",
         # "mapTRL.force",
