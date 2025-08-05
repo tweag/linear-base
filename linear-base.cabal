@@ -71,6 +71,7 @@ library
         Data.Bifunctor.Linear.Internal.Bifunctor
         Data.Bifunctor.Linear.Internal.SymmetricMonoidal
         Data.Bool.Linear
+        Data.Complex.Linear
         Data.Either.Linear
         Data.Functor.Linear
         Data.Functor.Linear.Internal.Functor
