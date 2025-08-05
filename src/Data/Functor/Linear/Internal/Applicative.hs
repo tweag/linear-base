@@ -23,6 +23,7 @@ module Data.Functor.Linear.Internal.Applicative
 where
 
 import qualified Control.Monad.Trans.Reader as NonLinear
+import Data.Complex
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
@@ -119,6 +120,11 @@ deriving via
   Generically1 Identity
   instance
     Applicative Identity
+
+deriving via
+  Generically1 Complex
+  instance
+    Applicative Complex
 
 instance (Applicative f, Applicative g) => Applicative (Compose f g) where
   pure x = Compose (pure (pure x))

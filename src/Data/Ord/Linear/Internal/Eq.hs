@@ -12,6 +12,7 @@ module Data.Ord.Linear.Internal.Eq
 where
 
 import Data.Bool.Linear
+import Data.Complex
 import Data.Int (Int16, Int32, Int64, Int8)
 import Data.Unrestricted.Linear
 import Data.Word (Word16, Word32, Word64, Word8)
@@ -99,6 +100,8 @@ deriving via MovableEq Word32 instance Eq Word32
 deriving via MovableEq Word64 instance Eq Word64
 
 deriving via MovableEq Word8 instance Eq Word8
+
+deriving via MovableEq (Complex a) instance (Movable a, Prelude.Eq a) => Eq (Complex a)
 
 newtype MovableEq a = MovableEq a
 

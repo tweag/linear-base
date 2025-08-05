@@ -26,6 +26,7 @@ module Data.Unrestricted.Linear.Internal.Consumable
   )
 where
 
+import Data.Complex
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.Monoid as Monoid
 import qualified Data.Replicator.Linear.Internal as Replicator
@@ -163,6 +164,11 @@ deriving via
   Generically (Ur a)
   instance
     Consumable (Ur a)
+
+deriving via
+  Generically (Complex a)
+  instance
+    (_) => Consumable (Complex a)
 
 -- Data.Semigroup instances
 

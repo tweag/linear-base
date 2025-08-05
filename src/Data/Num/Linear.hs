@@ -42,6 +42,7 @@ where
 
 -- TODO: flesh out laws
 
+import Data.Complex
 import qualified Data.Int
 import Data.Monoid.Linear
 import Data.Unrestricted.Linear
@@ -350,4 +351,41 @@ deriving via MovableNum Data.Word.Word64 instance Semiring Data.Word.Word64
 deriving via MovableNum Data.Word.Word64 instance Ring Data.Word.Word64
 deriving via MovableNum Data.Word.Word64 instance FromInteger Data.Word.Word64
 deriving via MovableNum Data.Word.Word64 instance Num Data.Word.Word64
+
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => Additive (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => AddIdentity (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => AdditiveGroup (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => Multiplicative (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => MultIdentity (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => Semiring (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => Ring (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => FromInteger (Complex a)
+deriving via
+  MovableNum (Complex a)
+  instance
+    (Movable a, Prelude.RealFloat a) => Num (Complex a)
 {- ORMOLU_ENABLE -}

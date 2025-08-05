@@ -31,6 +31,7 @@ import qualified Control.Functor.Linear.Internal.Class as Control
 import qualified Control.Functor.Linear.Internal.Instances as Control
 import Control.Functor.Linear.Internal.Kan
 import qualified Control.Functor.Linear.Internal.State as Control
+import Data.Complex
 import Data.Functor.Const
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
@@ -192,6 +193,9 @@ instance Traversable UInt where
   traverse = genericTraverse
 
 instance Traversable UWord where
+  traverse = genericTraverse
+
+instance Traversable Complex where
   traverse = genericTraverse
 
 -- | This type class derives the definition of 'genericTraverse' by induction on

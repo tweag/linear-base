@@ -29,6 +29,7 @@ module Data.Unrestricted.Linear.Internal.Dupable
   )
 where
 
+import Data.Complex
 import Data.List.NonEmpty (NonEmpty)
 import Data.Replicator.Linear.Internal (Replicator (..))
 import qualified Data.Replicator.Linear.Internal as Replicator
@@ -215,6 +216,11 @@ deriving via
   Generically (a, b, c, d, e)
   instance
     (Dupable a, Dupable b, Dupable c, Dupable d, Dupable e) => Dupable (a, b, c, d, e)
+
+deriving via
+  Generically (Complex a)
+  instance
+    (Dupable a) => Dupable (Complex a)
 
 deriving newtype instance (Dupable a) => Dupable (Semigroup.Sum a)
 

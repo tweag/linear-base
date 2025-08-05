@@ -23,6 +23,7 @@ module Data.Unrestricted.Linear.Internal.Movable
   )
 where
 
+import Data.Complex
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.List.NonEmpty (NonEmpty (..))
@@ -143,6 +144,11 @@ instance (Movable a) => Movable (NonEmpty a) where
 
 instance Movable (Ur a) where
   move (Ur a) = Ur (Ur a)
+
+deriving via
+  Generically (Complex a)
+  instance
+    (Movable a) => Movable (Complex a)
 
 -- Some stock instances
 deriving newtype instance (Movable a) => Movable (Semigroup.Sum a)

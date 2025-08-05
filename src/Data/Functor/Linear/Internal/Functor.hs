@@ -26,6 +26,7 @@ import qualified Control.Monad.Trans.Except as NonLinear
 import qualified Control.Monad.Trans.Maybe as NonLinear
 import qualified Control.Monad.Trans.Reader as NonLinear
 import qualified Control.Monad.Trans.State.Strict as Strict
+import Data.Complex
 import Data.Functor.Compose
 import Data.Functor.Const
 import Data.Functor.Identity
@@ -115,6 +116,11 @@ deriving via
   Generically1 Identity
   instance
     Functor Identity
+
+deriving via
+  Generically1 Complex
+  instance
+    Functor Complex
 
 instance (Functor f, Functor g) => Functor (Sum f g) where
   fmap f (InL fa) = InL (fmap f fa)
