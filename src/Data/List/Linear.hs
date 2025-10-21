@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
