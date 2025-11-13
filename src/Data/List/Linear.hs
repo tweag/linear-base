@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -80,6 +80,7 @@ module Data.List.Linear
     zip3,
     zipWith,
     zipWith',
+    zipFold,
     zipWith3,
     unzip,
     unzip3,
@@ -354,18 +355,53 @@ zip3 :: (Consumable a, Consumable b, Consumable c) => [a] %1 -> [b] %1 -> [c] %1
 zip3 = zipWith3 (,,)
 
 zipWith :: (Consumable a, Consumable b) => (a %1 -> b %1 -> c) -> [a] %1 -> [b] %1 -> [c]
-zipWith f xs ys =
-  zipWith' f xs ys & \(ret, leftovers) ->
-    leftovers `lseq` ret
+zipWith f =
+  zipFold (\a b cs -> f a b : cs) [] consume2 consume2
+  where
+    consume2 :: forall x y z. (Consumable x, Consumable y) => x %1 -> y %1 -> [z]
+    consume2 x y = x `lseq` y `lseq` []
 
 -- | Same as 'zipWith', but returns the leftovers instead of consuming them.
+-- Because the leftovers are returned at toplevel, @zipWith'@ is pretty strict:
+-- forcing the first cons cell of the returned list forces all the recursive
+-- calls.
 zipWith' :: (a %1 -> b %1 -> c) -> [a] %1 -> [b] %1 -> ([c], Maybe (Either (NonEmpty a) (NonEmpty b)))
-zipWith' _ [] [] = ([], Nothing)
-zipWith' _ (a : as) [] = ([], Just (Left (a :| as)))
-zipWith' _ [] (b : bs) = ([], Just (Right (b :| bs)))
-zipWith' f (a : as) (b : bs) =
-  case zipWith' f as bs of
-    (cs, rest) -> (f a b : cs, rest)
+zipWith' f =
+  zipFold
+    (\a b !(cs, rest) -> ((f a b : cs), rest))
+    ([], Nothing)
+    (\a as -> ([], Just (Left (a :| as))))
+    (\b bs -> ([], Just (Right (b :| bs))))
+
+-- | A function which combines zipping and 'foldr'. It's more general than all
+-- the zip-family functions ('zip', 'zip'', 'zipWith', 'zipWith'').
+--
+-- If @k < n@, then
+--
+-- * @'zipFold' cons nil lefta leftb [a₁, a₂, …, aₙ] [b₁, b₂, …, bₖ] = cons a₁ b₁ (cons a₂ b₂ (… (cons aₖ bₖ (lefta aₖ₊₁ [aₖ₊₂, …, aₙ]))))@
+-- * @'zipFold' cons nil lefta leftb [a₁, a₂, …, aₖ] [b₁, b₂, …, bₙ] = cons a₁ b₁ (cons a₂ b₂ (… (cons aₖ bₖ (leftb bₖ₊₁ [bₖ₊₂, …, bₙ]))))@
+-- * @'zipFold' cons nil lefta leftb [a₁, a₂, …, aₖ] [b₁, b₂, …, bₖ] = cons a₁ b₁ (cons a₂ b₂ (… (cons aₖ bₖ nil)))@
+zipFold ::
+  forall r a b.
+  -- | Combines elements at the same index
+  (a %1 -> b %1 -> r %1 -> r) ->
+  -- | Starting value if both lists have the same length
+  r ->
+  -- | Starting value if the first list is longer
+  (a %1 -> [a] %1 -> r) ->
+  -- | Starting value if the second list is longer
+  (b %1 -> [b] %1 -> r) ->
+  [a] %1 ->
+  [b] %1 ->
+  r
+zipFold cons nil lefta leftb =
+  go
+  where
+    go :: [a] %1 -> [b] %1 -> r
+    go [] [] = nil
+    go (a : as) [] = lefta a as
+    go [] (b : bs) = leftb b bs
+    go (a : as) (b : bs) = cons a b (go as bs)
 
 zipWith3 :: forall a b c d. (Consumable a, Consumable b, Consumable c) => (a %1 -> b %1 -> c %1 -> d) -> [a] %1 -> [b] %1 -> [c] %1 -> [d]
 zipWith3 _ [] ys zs = (ys, zs) `lseq` []
