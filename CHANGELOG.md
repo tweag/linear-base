@@ -1,5 +1,13 @@
 # Change Log
 
+## [v0.6.0](https://github.com/tweag/linear-base/tree/v0.6.0) (2025-11-18)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.5.0...v0.6.0)
+
+### Headline changes
+
+- Make List.zipWith as lazy as expected [\#492](https://github.com/tweag/linear-base/pull/492) ([aspiwack](https://github.com/aspiwack))
+
 ## [v0.5.0](https://github.com/tweag/linear-base/tree/v0.5.0) (2025-04-07)
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.4.0...v0.5.0)
