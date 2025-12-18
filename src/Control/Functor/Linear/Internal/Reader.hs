@@ -1,5 +1,9 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS -Wno-orphans #-}
 {-# LANGUAGE LinearTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_HADDOCK hide #-}
 
@@ -28,8 +32,10 @@ import qualified Control.Monad.Trans.Reader as NonLinear
 import Data.Functor.Identity
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
+import Data.Kind (FUN)
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Dupable
+import GHC.Exts (Multiplicity (..))
 import Prelude.Linear.Internal (runIdentity', ($), (.))
 
 -- # Linear ReaderT
@@ -119,3 +125,9 @@ runReaderT' (NonLinear.ReaderT f) = f
 
 instance MonadTrans (NonLinear.ReaderT r) where
   lift x = NonLinear.ReaderT (\_ -> x)
+
+deriving via Reader r instance (Dupable r) => Data.Applicative (FUN 'One r)
+
+deriving via Reader r instance (Dupable r) => Applicative (FUN 'One r)
+
+deriving via Reader r instance (Dupable r) => Monad (FUN 'One r)
