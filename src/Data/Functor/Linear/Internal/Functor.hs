@@ -32,6 +32,7 @@ import Data.Functor.Identity
 import Data.Functor.Product
 import Data.Functor.Sum
 import Data.Kind (FUN)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Ur
 import GHC.Types (Multiplicity (..))
@@ -75,6 +76,11 @@ instance Functor [] where
       go :: [a] %1 -> [b]
       go [] = []
       go (a : as) = f a : go as
+
+deriving via
+  Generically1 NonEmpty
+  instance
+    Functor NonEmpty
 
 deriving via
   Generically1 (Const x)

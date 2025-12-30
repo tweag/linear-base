@@ -34,6 +34,7 @@ import qualified Control.Functor.Linear.Internal.State as Control
 import Data.Functor.Const
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
+import Data.List.NonEmpty (NonEmpty (..))
 import GHC.Types (Multiplicity (..))
 import Generics.Linear
 import Prelude.Linear.Internal
@@ -130,6 +131,12 @@ instance Traversable [] where
     where
       go [] = Control.pure []
       go (x : xs) = Control.liftA2 (:) (f x) (go xs)
+
+instance Traversable NonEmpty where
+  -- We define traverse explicitly both to allow specialization
+  -- to the appropriate Applicative and to allow specialization to
+  -- the passed function. The generic definition allows neither, sadly.
+  traverse f (x :| xs) = (:|) Control.<$> f x Control.<*> traverse f xs
 
 instance Traversable ((,) a) where
   traverse = genericTraverse
