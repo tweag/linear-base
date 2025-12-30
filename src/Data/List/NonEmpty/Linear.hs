@@ -35,7 +35,6 @@ module Data.List.NonEmpty.Linear
     uncons,
     unfoldr,
     NonLinear.sort,
-    NonLinear.sortOn,
     reverse,
     append,
     appendList,
