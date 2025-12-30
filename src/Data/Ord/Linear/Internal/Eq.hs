@@ -13,6 +13,7 @@ where
 
 import Data.Bool.Linear
 import Data.Int (Int16, Int32, Int64, Int8)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Unrestricted.Linear
 import Data.Word (Word16, Word32, Word64, Word8)
 import Prelude.Linear.Internal
@@ -46,6 +47,9 @@ instance (Consumable a, Eq a) => Eq [a] where
   [] == [] = True
   (x : xs) == (y : ys) = x == y && xs == ys
   xs == ys = (xs, ys) `lseq` False
+
+instance (Consumable a, Eq a) => Eq (NonEmpty a) where
+  (x :| xs) == (y :| ys) = x == y && xs == ys
 
 instance (Consumable a, Eq a) => Eq (Prelude.Maybe a) where
   Prelude.Nothing == Prelude.Nothing = True
