@@ -43,6 +43,7 @@ library
         hs-source-dirs: src-version-changes/ghc96/before
     exposed-modules:
         Control.Monad.IO.Class.Linear
+        Control.Monad.ST.Linear
         Control.Functor.Linear
         Control.Functor.Linear.Internal.Class
         Control.Functor.Linear.Internal.Instances
