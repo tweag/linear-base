@@ -79,6 +79,7 @@ library
         Data.HashMap.Mutable.Linear
         Data.HashMap.Mutable.Linear.Internal
         Data.List.Linear
+        Data.List.NonEmpty.Linear
         Data.Maybe.Linear
         Data.Monoid.Linear
         Data.Monoid.Linear.Internal.Monoid

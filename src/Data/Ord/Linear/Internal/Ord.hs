@@ -15,6 +15,7 @@ where
 
 import Data.Bool.Linear (Bool (..), not)
 import Data.Int (Int16, Int32, Int64, Int8)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid.Linear
 import Data.Ord (Ordering (..))
 import Data.Ord.Linear.Internal.Eq
@@ -118,6 +119,10 @@ instance (Consumable a, Ord a) => Ord [a] where
     case compare x y of
       EQ -> compare xs ys
       res -> (xs, ys) `lseq` res
+
+instance (Consumable a, Ord a) => Ord (NonEmpty a) where
+  compare (x :| xs) (y :| ys) =
+    compare x y <> compare xs ys
 
 instance (Ord a, Ord b) => Ord (a, b) where
   (a, b) `compare` (a', b') =

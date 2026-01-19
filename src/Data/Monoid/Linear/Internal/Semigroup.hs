@@ -11,6 +11,7 @@
 module Data.Monoid.Linear.Internal.Semigroup
   ( -- * Semigroup
     Semigroup (..),
+    sconcat,
 
     -- * Endo
     Endo (..),
@@ -34,6 +35,7 @@ import qualified Data.Functor.Compose as Functor
 import Data.Functor.Const (Const (..))
 import Data.Functor.Identity (Identity (..))
 import qualified Data.Functor.Product as Functor
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Monoid as Monoid
 import Data.Ord (Down (..))
 import Data.Proxy (Proxy (..))
@@ -64,6 +66,13 @@ import Prelude (Either (..), Maybe (..))
 class Semigroup a where
   (<>) :: a %1 -> a %1 -> a
   infixr 6 <> -- same fixity as base.<>
+
+sconcat :: (Semigroup a) => NonEmpty a %1 -> a
+sconcat (x :| xs :: NonEmpty a) = go x xs
+  where
+    go :: a %1 -> [a] %1 -> a
+    go acc [] = acc
+    go acc (x' : xs') = go (acc <> x') xs'
 
 -- | An @'Endo' a@ is just a linear function of type @a %1-> a@.
 -- This has a classic monoid definition with 'id' and '(.)'.
