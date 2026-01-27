@@ -1,5 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs #-}
@@ -25,7 +27,9 @@ import qualified Data.Functor.Linear as Data
 import Data.Hashable
 import qualified Data.Maybe as NonLinear
 import Data.Unrestricted.Linear
+import GHC.TypeLits (ErrorMessage (..))
 import Prelude.Linear hiding (filter, insert, lookup, mapMaybe, read, (+))
+import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
 import Unsafe.Coerce (unsafeCoerce)
 import qualified Unsafe.Linear as Unsafe
 import Prelude ((+))
@@ -481,8 +485,8 @@ instance Data.Functor (HashMap k) where
         )
         arr
 
-instance Prelude.Semigroup (HashMap k v) where
-  (<>) = error "Prelude.<>: invariant violation, unrestricted HashMap"
+instance (Unsatisfiable ('Text "Using Prelude's Semigroup methods on a Data.HashMap.Mutable.Linear is vacuous as there can't be an unrestricted such Hashmap")) => Prelude.Semigroup (HashMap k v) where
+  (<>) = unsatisfiable
 
 instance (Keyed k) => Semigroup (HashMap k v) where
   (<>) = union

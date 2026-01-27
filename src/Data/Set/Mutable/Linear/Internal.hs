@@ -1,10 +1,13 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_HADDOCK hide #-}
@@ -14,7 +17,9 @@ module Data.Set.Mutable.Linear.Internal where
 import qualified Data.HashMap.Mutable.Linear as Linear
 import Data.Monoid.Linear
 import Data.Unrestricted.Linear
+import GHC.TypeLits (ErrorMessage (..))
 import qualified Prelude.Linear as Linear hiding (insert)
+import Prelude.Linear.Unsatisfiable (Unsatisfiable, unsatisfiable)
 import Prelude (Bool, Int)
 import qualified Prelude
 
@@ -70,8 +75,11 @@ fromList xs f =
 -- # Typeclass Instances
 -------------------------------------------------------------------------------
 
-instance Prelude.Semigroup (Set a) where
-  (<>) = Prelude.error "Prelude.(<>): invariant violation, unrestricted Set"
+instance
+  (Unsatisfiable ('Text "Using Prelude's Semigroup methods on a Data.Set.Mutable.Linear is vacuous as there can't be an unrestricted such Set")) =>
+  Prelude.Semigroup (Set a)
+  where
+  (<>) = unsatisfiable
 
 instance (Keyed a) => Semigroup (Set a) where
   (<>) = union
