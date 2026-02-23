@@ -21,10 +21,13 @@
 -- other classes (for cleanness) in this module to avoid this dependence.
 module Data.Unrestricted.Linear.Internal.Instances where
 
+import Data.ByteString (ByteString)
+import Data.ByteString.Short (ShortByteString)
 import qualified Data.Functor.Linear.Internal.Applicative as Data
 import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.Monoid.Linear
 import Data.Replicator.Linear.Internal.Instances ()
+import qualified Data.Text
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Dupable
 import Data.Unrestricted.Linear.Internal.Movable
@@ -189,6 +192,27 @@ instance (KnownNat n, Dupable a) => Dupable (V n a) where
     V
       . Unsafe.toLinear (Vector.fromListN (V.theLength @n))
       Data.<$> dupR (Unsafe.toLinear Vector.toList xs)
+
+instance Movable ByteString where
+  move = Unsafe.toLinear $ \s -> s `seq` Ur s
+
+deriving via (AsMovable ByteString) instance Consumable ByteString
+
+deriving via (AsMovable ByteString) instance Dupable ByteString
+
+instance Movable ShortByteString where
+  move = Unsafe.toLinear $ \s -> s `seq` Ur s
+
+deriving via (AsMovable ShortByteString) instance Consumable ShortByteString
+
+deriving via (AsMovable ShortByteString) instance Dupable ShortByteString
+
+instance Movable Data.Text.Text where
+  move = Unsafe.toLinear $ \s -> s `seq` Ur s
+
+deriving via (AsMovable Data.Text.Text) instance Consumable Data.Text.Text
+
+deriving via (AsMovable Data.Text.Text) instance Dupable Data.Text.Text
 
 -- Some stock instances
 
