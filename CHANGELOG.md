@@ -1,5 +1,16 @@
 # Change Log
 
+## [v0.7.0](https://github.com/tweag/linear-base/tree/v0.7.0) (2026-02-27)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.6.0...v0.7.0)
+
+### Headline changes
+
+- Add instance Consumable/Dupable/Movable for ByteString, ShortByteString and Text [\#501](https://github.com/tweag/linear-base/pull/501) ([Bodigrim](https://github.com/Bodigrim))
+- feat: Adds missing instances for `NonEmpty` and adds some Linear counterpart of `Data.List.NonEmpty` [\#495](https://github.com/tweag/linear-base/pull/495) ([konn](https://github.com/konn))
+- use Unsatisfiable for banned instances \(unrestricted Monoid / Semigroup for linear containers\) [\#494](https://github.com/tweag/linear-base/pull/494) ([konn](https://github.com/konn))
+- Control Monad instance for linear arrows [\#493](https://github.com/tweag/linear-base/pull/493) ([konn](https://github.com/konn))
+
 ## [v0.6.0](https://github.com/tweag/linear-base/tree/v0.6.0) (2025-11-18)
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.5.0...v0.6.0)
