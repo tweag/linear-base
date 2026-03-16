@@ -42,6 +42,7 @@ import Prelude.Linear
 import qualified System.IO as System
 import qualified System.IO.Linear as Linear
 import qualified Prelude
+import Control.Functor.Linear (pure)
 
 -- XXX: This would be better as a multiplicity-parametric relative monad, but
 -- until we have multiplicity polymorphism, we use a linear monad.
@@ -114,6 +115,14 @@ instance Control.Monad RIO where
 -- files
 
 type Handle = Resource System.Handle
+
+-- | See @System.IO.'System.IO.withFile'@
+withFile :: FilePath -> System.IOMode -> (Handle %1 -> RIO (Ur r, Handle)) -> RIO (Ur r)
+withFile path mode callback = Control.do
+  h <- openFile path mode 
+  (r,h') <- callback h
+  release h'
+  Control.return $ r
 
 -- | See @System.IO.'System.IO.openFile'@
 openFile :: FilePath -> System.IOMode -> RIO Handle

@@ -39,6 +39,7 @@ module System.IO.Resource.Linear
 
     -- ** File I/O
     openFile,
+    withFile,
     openBinaryFile,
     System.IOMode (..),
 
