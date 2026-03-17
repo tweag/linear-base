@@ -38,8 +38,7 @@ module System.IO.Resource.Linear
     Handle,
 
     -- ** File I/O
-    openFile,
-    withFile,
+    openFile,    
     openBinaryFile,
     System.IOMode (..),
 
@@ -55,13 +54,16 @@ module System.IO.Resource.Linear
     System.SeekMode (..),
     hTell,
 
+    -- *** Compatibility functions
+    withFile,
+
     -- * Creating new types of resources
     -- $new-resources
     Resource,
     release,
     unsafeAcquire,
     unsafeFromSystemIOResource,
-    unsafeFromSystemIOResource_,
+    unsafeFromSystemIOResource_,    
 
     -- * Deprecated symbols
     UnsafeResource,

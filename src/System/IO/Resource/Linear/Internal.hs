@@ -116,7 +116,11 @@ instance Control.Monad RIO where
 
 type Handle = Resource System.Handle
 
--- | See @System.IO.'System.IO.withFile'@
+-- | This function is provided for compatibility with
+-- @System.IO.'System.IO.withFile'@, to facilitate porting code to the @RIO@
+-- monad. Since, the @RIO@ monad guarantees the resources are properly released,
+-- even when an exception is raised, it isn't recommended to use 'withFile' in
+-- new code.
 withFile :: FilePath -> System.IOMode -> (Handle %1 -> RIO (Ur r, Handle)) -> RIO (Ur r)
 withFile path mode callback = Control.do
   h <- openFile path mode 
