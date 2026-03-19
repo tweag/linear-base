@@ -42,6 +42,9 @@ module System.IO.Resource.Linear
     openBinaryFile,
     System.IOMode (..),
 
+    -- *** Compatibility functions
+    withFile,
+
     -- ** Working with Handles
     hClose,
     hIsEOF,
@@ -52,10 +55,7 @@ module System.IO.Resource.Linear
     hPutStrLn,
     hSeek,
     System.SeekMode (..),
-    hTell,
-
-    -- *** Compatibility functions
-    withFile,
+    hTell,    
 
     -- * Creating new types of resources
     -- $new-resources
