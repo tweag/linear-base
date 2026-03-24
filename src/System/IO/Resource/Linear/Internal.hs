@@ -118,13 +118,13 @@ type Handle = Resource System.Handle
 
 -- | This function is provided for compatibility with
 -- @System.IO.'System.IO.withFile'@, to facilitate porting code to the @RIO@
--- monad. The `System.IO.withFile` function is technically a non-linear function
--- due to the use of `bracket` which means that this function is simply the
--- composition of `openFile`, the callback function, and `release‘; no
--- additional checks are included. Since, the @RIO@ monad guarantees the
--- resources are properly released, even when an exception is raised, it isn't
--- recommended to use 'withFile' in new code, because it doesn't provide any
--- additional guarantees.
+-- monad. The @System.IO.'System.IO.withFile'@ function is technically a
+-- non-linear function due to the use of `bracket` which means that this
+-- function is simply the composition of `openFile`, the callback function, and
+-- `release‘; no additional checks are included. Since, the @RIO@ monad
+-- guarantees the resources are properly released, even when an exception is
+-- raised, it isn't recommended to use 'withFile' in new code, because it
+-- doesn't provide any additional guarantees.
 withFile :: FilePath -> System.IOMode -> (Handle %1 -> RIO (Ur r, Handle)) -> RIO (Ur r)
 withFile path mode callback = Control.do
   h <- openFile path mode 
