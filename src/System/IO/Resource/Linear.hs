@@ -38,7 +38,7 @@ module System.IO.Resource.Linear
     Handle,
 
     -- ** File I/O
-    openFile,    
+    openFile,
     openBinaryFile,
     System.IOMode (..),
 
@@ -55,7 +55,7 @@ module System.IO.Resource.Linear
     hPutStrLn,
     hSeek,
     System.SeekMode (..),
-    hTell,    
+    hTell,
 
     -- * Creating new types of resources
     -- $new-resources
@@ -63,7 +63,7 @@ module System.IO.Resource.Linear
     release,
     unsafeAcquire,
     unsafeFromSystemIOResource,
-    unsafeFromSystemIOResource_,    
+    unsafeFromSystemIOResource_,
 
     -- * Deprecated symbols
     UnsafeResource,

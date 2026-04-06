@@ -130,7 +130,7 @@ type Handle = Resource System.Handle
 -- provide it merely as a porting tool.
 withFile :: FilePath -> System.IOMode -> (Handle %1 -> RIO (Ur r, Handle)) -> RIO (Ur r)
 withFile path mode callback = Control.do
-  h <- openFile path mode 
+  h <- openFile path mode
   (r,h') <- callback h
   release h'
   Control.return $ r
