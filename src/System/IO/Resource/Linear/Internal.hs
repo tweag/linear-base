@@ -14,6 +14,7 @@
 module System.IO.Resource.Linear.Internal where
 
 import Control.Exception (finally, mask, onException)
+import Control.Functor.Linear (pure)
 import qualified Control.Functor.Linear as Control
 import qualified Control.Monad as Ur (fmap)
 import qualified Data.Functor.Linear as Data
@@ -42,7 +43,6 @@ import Prelude.Linear
 import qualified System.IO as System
 import qualified System.IO.Linear as Linear
 import qualified Prelude
-import Control.Functor.Linear (pure)
 
 -- XXX: This would be better as a multiplicity-parametric relative monad, but
 -- until we have multiplicity polymorphism, we use a linear monad.
@@ -131,7 +131,7 @@ type Handle = Resource System.Handle
 withFile :: FilePath -> System.IOMode -> (Handle %1 -> RIO (Ur r, Handle)) -> RIO (Ur r)
 withFile path mode callback = Control.do
   h <- openFile path mode
-  (r,h') <- callback h
+  (r, h') <- callback h
   release h'
   Control.return $ r
 
