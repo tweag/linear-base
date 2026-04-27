@@ -88,9 +88,12 @@ run (RIO action) = do
       result <- action'
       Control.return $ move result
 
--- | Should not be applied to a function that acquires or releases resources.
-unsafeFromSystemIO :: System.IO a %1 -> RIO a
-unsafeFromSystemIO action = RIO (\_ -> Linear.fromSystemIO action)
+-- | Coerces a standard IO action into a 'RIO' action.
+-- Note that the value @a@ must be used linearly in the 'RIO' monad.
+fromSystemIO :: System.IO a %1 -> RIO a
+fromSystemIO action =
+  -- Should not be applied to a function that acquires or releases resources.
+  RIO (\_ -> Linear.fromSystemIO action)
 
 -- monad
 
@@ -235,7 +238,7 @@ unsafeFromSystemIOResource ::
   (a -> System.IO b) ->
   (Resource a %1 -> RIO (Ur b, Resource a))
 unsafeFromSystemIOResource action (UnsafeResource key resource) =
-  unsafeFromSystemIO
+  fromSystemIO
     ( do
         c <- action resource
         Prelude.return (Ur c, UnsafeResource key resource)

@@ -62,6 +62,7 @@ module Streaming.Linear.Internal.Consume
 where
 
 import qualified Control.Functor.Linear as Control
+import Control.Monad.IO.Class.Linear (liftSystemIO)
 import qualified Data.Bool.Linear as Linear
 import Data.Functor.Identity
 import Data.Text (Text)
@@ -116,7 +117,7 @@ stdoutLn' stream = loop stream
         Return r -> Control.return r
         Effect ms -> ms Control.>>= stdoutLn'
         Step (str :> stream) -> Control.do
-          fromSystemIO $ Text.putStrLn str
+          liftSystemIO $ Text.putStrLn str
           stdoutLn' stream
 {-# INLINEABLE stdoutLn' #-}
 
