@@ -88,19 +88,23 @@ run (RIO action) = do
       result <- action'
       Control.return $ move result
 
+-- | Coerces a linear IO action into a 'RIO' action.
+fromIO :: Linear.IO a %1 -> RIO a
+fromIO action = RIO (\_ -> action)
+
 -- | Coerces a standard IO action into a 'RIO' action.
 -- Note that the value @a@ must be used linearly in the 'RIO' monad.
 fromSystemIO :: System.IO a %1 -> RIO a
 fromSystemIO action =
   -- Should not be applied to a function that acquires or releases resources.
-  RIO (\_ -> Linear.fromSystemIO action)
+  fromIO (Linear.fromSystemIO action)
 
 -- | Coerces a standard IO action into a 'RIO' action, allowing you to use
 -- the result of type @a@ in a non-linear manner by wrapping it inside
 -- 'Ur'.
 fromSystemIOU :: System.IO a -> RIO (Ur a)
 fromSystemIOU action =
-  fromSystemIO (Ur Prelude.<$> action)
+  fromIO (Linear.fromSystemIOU action)
 
 -- monad
 

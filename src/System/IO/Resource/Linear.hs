@@ -32,7 +32,8 @@ module System.IO.Resource.Linear
     RIO,
     run,
 
-    -- * Interfacing with "System.IO"
+    -- * Interfacing with IO
+    fromIO,
     fromSystemIO,
     fromSystemIOU,
 
