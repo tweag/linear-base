@@ -34,6 +34,7 @@ module System.IO.Resource.Linear
 
     -- * Interfacing with "System.IO"
     fromSystemIO,
+    fromSystemIOU,
 
     -- * Using Resource Handles
     -- $monad

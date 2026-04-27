@@ -45,6 +45,7 @@ module Streaming.Linear.Internal.Produce
 where
 
 import qualified Control.Functor.Linear as Control
+import Control.Monad.IO.Class.Linear (liftSystemIOU)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Unrestricted.Linear
@@ -344,7 +345,7 @@ stdinLn = AffineStream () getALine Control.pure
   where
     getALine :: () %1 -> IO (Either (Of Text ()) ())
     getALine () = Control.do
-      Ur line <- fromSystemIOU System.getLine
+      Ur line <- liftSystemIOU System.getLine
       Control.return $ Left (Text.pack line :> ())
 
 -- | An affine stream of reading lines, crashing on failed parse.
@@ -353,7 +354,7 @@ readLn = AffineStream () readALine Control.pure
   where
     readALine :: (Read a) => () %1 -> IO (Either (Of a ()) ())
     readALine () = Control.do
-      Ur line <- fromSystemIOU System.getLine
+      Ur line <- liftSystemIOU System.getLine
       Control.return $ Left (Prelude.read line :> ())
 
 -- | An affine stream iterating an initial state forever.

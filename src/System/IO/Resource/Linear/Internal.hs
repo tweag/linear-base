@@ -95,6 +95,13 @@ fromSystemIO action =
   -- Should not be applied to a function that acquires or releases resources.
   RIO (\_ -> Linear.fromSystemIO action)
 
+-- | Coerces a standard IO action into a 'RIO' action, allowing you to use
+-- the result of type @a@ in a non-linear manner by wrapping it inside
+-- 'Ur'.
+fromSystemIOU :: System.IO a -> RIO (Ur a)
+fromSystemIOU action =
+  fromSystemIO (Ur Prelude.<$> action)
+
 -- monad
 
 instance Control.Functor RIO where
