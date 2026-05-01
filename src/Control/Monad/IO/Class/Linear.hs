@@ -7,6 +7,8 @@ import qualified Control.Functor.Linear as Linear
 import Prelude.Linear
 import qualified System.IO as System
 import qualified System.IO.Linear as Linear
+import System.IO.Resource.Linear (RIO)
+import qualified System.IO.Resource.Linear as RIO
 
 -- | Like 'NonLinear.MonadIO' but allows to lift both linear
 -- and non-linear 'IO' actions into a linear monad.
@@ -19,3 +21,6 @@ class (Linear.Monad m) => MonadIO m where
 
 instance MonadIO Linear.IO where
   liftIO = id
+
+instance MonadIO RIO where
+  liftIO = RIO.fromIO

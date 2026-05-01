@@ -32,6 +32,11 @@ module System.IO.Resource.Linear
     RIO,
     run,
 
+    -- * Interfacing with IO
+    fromIO,
+    fromSystemIO,
+    fromSystemIOU,
+
     -- * Using Resource Handles
     -- $monad
     -- $files
