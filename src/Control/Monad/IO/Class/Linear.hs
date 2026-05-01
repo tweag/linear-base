@@ -24,3 +24,9 @@ instance MonadIO Linear.IO where
 
 instance MonadIO RIO where
   liftIO = RIO.fromIO
+
+instance (MonadIO m) => MonadIO (Linear.StateT s m) where
+  liftIO = Linear.lift . liftIO
+
+instance (MonadIO m, Dupable r) => MonadIO (Linear.ReaderT r m) where
+  liftIO = Linear.lift . liftIO
