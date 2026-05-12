@@ -1,5 +1,14 @@
 # Change Log
 
+## [v0.8.0](https://github.com/tweag/linear-base/tree/v0.8.0) (2026-05-12)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.7.0...v0.8.0)
+
+### Headline changes
+
+- Add MonadIO instances for StateT and ReaderT [\#506](https://github.com/tweag/linear-base/pull/506) ([dcastro](https://github.com/dcastro))
+- Coerce `System.IO` and `Linear.IO` into `RIO` [\#505](https://github.com/tweag/linear-base/pull/505) ([dcastro](https://github.com/dcastro))
+
 ## [v0.7.0](https://github.com/tweag/linear-base/tree/v0.7.0) (2026-02-27)
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.6.0...v0.7.0)
