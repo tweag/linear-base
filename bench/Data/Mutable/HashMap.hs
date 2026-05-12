@@ -22,7 +22,7 @@ import qualified Data.HashMap.Strict as Map
 import qualified Data.HashTable.ST.Basic as BasicST
 import qualified Data.HashTable.ST.Cuckoo as CuckooST
 import Data.Hashable (Hashable (..), hashWithSalt)
-import Data.List (foldl')
+import qualified Data.List as List
 import qualified Data.Unrestricted.Linear as Linear
 import GHC.Generics (Generic)
 import qualified Prelude.Linear as Linear
@@ -199,7 +199,7 @@ vanilla_hashmap_strict inp@(BenchInput {pairs = kvs}) =
       bench (descriptions !! n) $ nf (\xs -> f xs Map.empty) kvs
 
     foldlx :: (b -> a -> b) -> [a] -> b -> b
-    foldlx f xs b = foldl' f b xs
+    foldlx f xs b = List.foldl' f b xs
 
     look :: Map.HashMap Key Int -> Key -> Map.HashMap Key Int
     look m k = case m Map.!? k of
@@ -208,7 +208,7 @@ vanilla_hashmap_strict inp@(BenchInput {pairs = kvs}) =
 
     bench1 :: Benchmark
     bench1 = mkBench 0 $
-      \xs hm -> foldl' (\m (k, v) -> Map.delete k (Map.insert k v m)) hm xs
+      \xs hm -> List.foldl' (\m (k, v) -> Map.delete k (Map.insert k v m)) hm xs
 
     bench2 :: Benchmark
     bench2 = mkBench 1 $

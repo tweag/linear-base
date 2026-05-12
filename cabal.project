@@ -3,4 +3,4 @@ packages: *.cabal
 tests: True
 benchmarks: True
 allow-newer: all
-index-state: 2024-09-13T13:31:57Z
+index-state: 2026-05-12T09:26:21Z
