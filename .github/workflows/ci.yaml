@@ -24,26 +24,26 @@ jobs:
           ~/.cabal/packages
           ~/.cabal/store
           dist-newstyle
-        key: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
-        restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
+        key: cabal-deps-${{ runner.os }}-${{ hashFiles('flake.lock') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: cabal-deps-${{ runner.os }}-${{ hashFiles('flake.lock') }}-${{ matrix.ghc-version }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('linear-base.cabal') }}-
     - name: Build Nix dependencies
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command echo '=== Nix dependencies installed ==='
     - name: Init Cabal's config file
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal --config-file=/home/runner/.cabal/config user-config -f init"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal --config-file=/home/runner/.cabal/config user-config -f init
     - name: Update Cabal's database
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal update"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal update
     - name: Build Cabal's dependencies
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build --dependencies-only"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal build --dependencies-only
     - name: Build
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal build
     - name: Haddock
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal haddock"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal haddock
     - name: cabal-docspec
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal-docspec"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal-docspec
     - name: Build benchmarks
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal build linear-base:bench:bench"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal build linear-base:bench:bench
     - name: Run benchmarks
-      run: nix-shell --arg ghcVersion '"${{ matrix.ghc-version }}"' --arg installHls 'false' --pure --run "cabal bench 2>&1 | tee benchmark_ghc${{ matrix.ghc-version }}.txt"
+      run: nix develop .#devShells.x86_64-linux.ci-"${{ matrix.ghc-version }}" --command cabal bench 2>&1 | tee benchmark_ghc${{ matrix.ghc-version }}.txt
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
@@ -60,16 +60,10 @@ jobs:
     - uses: cachix/install-nix-action@v15
       with:
         nix_path: "${{ env.nixpkgs-url }}"
-    - name: Cache Stack dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.stack
-        key: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-${{ github.sha }}
-        restore-keys: stack-deps-ormolu-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock') }}-
     - name: Build Nix dependencies
-      run: nix-shell --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix develop .#devShells.x86_64-linux.ci-stack --command echo '=== Nix dependencies installed ==='
     - name: check formatting
-      run: nix-shell --arg installHls 'false' --pure --run 'stack build ormolu && stack exec ormolu -- -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs")'
+      run: nix develop .#devShells.x86_64-linux.ci-stack --command ormolu -m check $(find . -type f -name "*.hs-boot" -o -name "*.hs")
 
   stack-build:
     name: stack build
@@ -83,9 +77,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.stack
-        key: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
-        restore-keys: stack-deps-${{ runner.os }}-${{ hashFiles('nix/sources.json') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-
+        key: stack-deps-${{ runner.os }}-${{ hashFiles('flake.lock') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-${{ github.sha }}
+        restore-keys: stack-deps-${{ runner.os }}-${{ hashFiles('flake.lock') }}-v${{ env.cache-invalidation-key }}-${{ hashFiles('stack.yaml.lock', 'linear-base.cabal') }}-
     - name: Build Nix dependencies
-      run: nix-shell --arg installHls 'false' --pure --run "echo '=== Nix dependencies installed ==='"
+      run: nix develop .#devShells.x86_64-linux.ci-stack --command echo '=== Nix dependencies installed ==='
     - name: Build
-      run: nix-shell --arg installHls 'false' --pure --run "stack build --pedantic --test --bench --no-run-benchmarks"
+      run: nix develop .#devShells.x86_64-linux.ci-stack --command stack build --pedantic --test --bench --no-run-benchmarks
