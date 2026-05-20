@@ -35,7 +35,7 @@ import qualified Data.Functor.Linear.Internal.Functor as Data
 import Data.Kind (FUN)
 import Data.Unrestricted.Linear.Internal.Consumable
 import Data.Unrestricted.Linear.Internal.Dupable
-import GHC.Exts (Multiplicity (..))
+import GHC.Types (Multiplicity (..))
 import Prelude.Linear.Internal (runIdentity', ($), (.))
 
 -- # Linear ReaderT
