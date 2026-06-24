@@ -1,5 +1,13 @@
 # Change Log
 
+## [v0.8.1](https://github.com/tweag/linear-base/tree/v0.8.1) (2026-06-24)
+
+[Full Changelog](https://github.com/tweag/linear-base/compare/v0.8.0...v0.8.1)
+
+### Headline changes
+
+- Restore compatibility with GHC 9.2: Import Multiplicity from GHC.Types [\#509](https://github.com/tweag/linear-base/pull/509) ([tomsmeding](https://github.com/tomsmeding))
+
 ## [v0.8.0](https://github.com/tweag/linear-base/tree/v0.8.0) (2026-05-12)
 
 [Full Changelog](https://github.com/tweag/linear-base/compare/v0.7.0...v0.8.0)
