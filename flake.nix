@@ -13,7 +13,7 @@
         stack-ghc-version = "ghc9103";
 
         # Versions used by CI's Cabal-based matrix
-        ci-ghc-versions = ["96" "98" "910" "912"];
+        ci-ghc-versions = ["94" "96" "98" "910" "912"];
 
         cabal-docspec = import ./nix/cabal-docspec.nix { inherit pkgs; };
 
