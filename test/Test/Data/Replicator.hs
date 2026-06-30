@@ -4,7 +4,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -O -dno-suppress-type-signatures -fplugin=Test.Tasty.Inspection.Plugin #-}
 
-module Test.Data.Replicator (replicatorInspectionTests) where
+-- Exporting internal functions to work around a 9.14 bug. See https://github.com/nomeata/inspection-testing/pull/93#issuecomment-3324019486
+module Test.Data.Replicator (replicatorInspectionTests, elim3, manualElim3) where
 
 import Data.Replicator.Linear (Replicator)
 import qualified Data.Replicator.Linear as Replicator
