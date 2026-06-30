@@ -5,7 +5,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -O -dno-suppress-type-signatures -fplugin=Test.Tasty.Inspection.Plugin #-}
 
-module Test.Data.V (vInspectionTests) where
+-- Exporting internal functions to work around a 9.14 bug. See https://github.com/nomeata/inspection-testing/pull/93#issuecomment-3324019486
+module Test.Data.V (vInspectionTests, make3, manualMake3, elim3, manualElim3) where
 
 import Data.V.Linear (V)
 import qualified Data.V.Linear as V
