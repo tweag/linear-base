@@ -34,6 +34,50 @@ import System.IO.Unsafe
 import qualified Unsafe.Linear as Unsafe
 import Prelude (Eq (..), return, (<$>), (<*>), (=<<))
 
+{-
+
+Note [linear types and unsafeDupablePerformIO]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The docs for `unsafeDupablePerformIO` warn against the following:
+
+> (...) when you use unsafeDupablePerformIO, there is a possibility that the
+> IO action may be performed multiple times (...)
+
+> It may even happen that one of the duplicated IO actions is only run partially,
+> and then interrupted in the middle without an exception being raised.
+> Therefore, functions like bracket cannot be used safely within unsafeDupablePerformIO.
+
+However, if a thunk captures linear free variables, then GHC guarantees the thunk will not be duplicated,
+and thus it is safe to use with `unsafeDupablePerformIO`, even if it calls `bracket`.
+
+In the example below, the thunk `f x` captures the linear free variable `x`,
+so GHC guarantees the thunk `y` will not be duplicated.
+
+```
+%1 x = 1 :: Int
+
+f :: Int %1 -> Int
+f i = i
+
+y = f x
+```
+
+In this module:
+Under normal circumstances, `alloc` and `deconstruct` would not be safe to use with `unsafeDupablePerformIO`.
+`alloc` modifies the pool's linked list, duplicating and interrupting the thunk would lead to a broken linked list.
+`deconstruct` frees resources, and duplicating that thunk would lead to double-free errors.
+
+However:
+1. `alloc` takes a `Pool` linearly.
+2. the public API ensures `Pool`s can only be bound linearly
+   (they're always created with `withPool`, and there's no `Movable Pool` instance).
+
+Therefore, a thunk `alloc somePool` will *always* capture a linear free variable `somePool`,
+and so the thunk can't be duplicated and can be evaluated with `unsafeDupablePerformIO`.
+
+-}
+
 -- XXX: [2018-02-09] I'm having trouble with the `constraints` package (it seems
 -- that the version of Type.Reflection.Unsafe in the linear ghc compiler is not
 -- the one that was released with 8.2, and that `mtl` fails to compile against
@@ -299,7 +343,7 @@ withPool scope = unur $ Unsafe.toLinear performScope scope
     -- XXX: do ^ without `toLinear` by using linear IO
 
     performScope :: (Pool %1 -> b) -> Ur b
-    performScope scope' = unsafeDupablePerformIO $ do
+    performScope scope' = unsafePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc
       let end = DLL backPtr nullPtr nullPtr -- always at the end of the list
@@ -378,10 +422,12 @@ alloc a (Pool pool) =
   where
     -- XXX: should be improved by using linear IO
     mkPtr :: a -> Box a
-    mkPtr a' = unsafeDupablePerformIO $ do
-      ptr <- reprNew a'
-      poolPtr <- insertAfter pool (castPtr ptr :: Ptr ())
-      return (Box poolPtr ptr)
+    mkPtr a' =
+      -- It's safe to use `unsafeDupablePerformIO` here, see Note [linear types and unsafeDupablePerformIO].
+      unsafeDupablePerformIO $ do
+        ptr <- reprNew a'
+        poolPtr <- insertAfter pool (castPtr ptr :: Ptr ())
+        return (Box poolPtr ptr)
 
 -- TODO: would be better in linear IO, for we pretend that we are making an
 -- unrestricted 'a', where really we are not.
@@ -392,10 +438,12 @@ reprPeek ptr | Dict <- storable @(AsKnown a) = do
 
 -- | Retrieve the value stored on system heap memory.
 deconstruct :: (Representable a) => Box a %1 -> a
-deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $
-  mask_ $ do
-    res <- reprPeek ptr
-    delete =<< peek poolPtr
-    free ptr
-    free poolPtr
-    return res
+deconstruct (Box poolPtr ptr) =
+  -- It's safe to use `unsafeDupablePerformIO` here, see Note [linear types and unsafeDupablePerformIO].
+  unsafeDupablePerformIO $
+    mask_ $ do
+      res <- reprPeek ptr
+      delete =<< peek poolPtr
+      free ptr
+      free poolPtr
+      return res
