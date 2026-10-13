@@ -296,7 +296,7 @@ withPool scope = unur $ Unsafe.toLinear performScope scope
     -- XXX: do ^ without `toLinear` by using linear IO
 
     performScope :: (Pool %1 -> b) -> Ur b
-    performScope scope' = unsafeDupablePerformIO $ do
+    performScope scope' = unsafePerformIO $ do
       -- Initialise the pool
       backPtr <- malloc
       let end = DLL backPtr nullPtr nullPtr -- always at the end of the list
@@ -375,7 +375,7 @@ alloc a (Pool pool) =
   where
     -- XXX: should be improved by using linear IO
     mkPtr :: a -> Box a
-    mkPtr a' = unsafeDupablePerformIO $ do
+    mkPtr a' = unsafePerformIO $ do
       ptr <- reprNew a'
       poolPtr <- insertAfter pool (castPtr ptr :: Ptr ())
       return (Box poolPtr ptr)
@@ -389,7 +389,7 @@ reprPeek ptr | Dict <- storable @(AsKnown a) = do
 
 -- | Retrieve the value stored on system heap memory.
 deconstruct :: (Representable a) => Box a %1 -> a
-deconstruct (Box poolPtr ptr) = unsafeDupablePerformIO $
+deconstruct (Box poolPtr ptr) = unsafePerformIO $
   mask_ $ do
     res <- reprPeek ptr
     delete =<< peek poolPtr
