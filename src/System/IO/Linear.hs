@@ -202,5 +202,7 @@ catch ::
 catch body handler =
   fromSystemIO $ System.catch (toSystemIO body) (\e -> toSystemIO (handler e))
 
-mask_ :: IO a -> IO a
-mask_ action = fromSystemIO (System.mask_ (toSystemIO action))
+mask_ :: IO a %1 -> IO a
+mask_ =
+  -- `System.mask_` runs its argument exactly once and doesn't catch exceptions, so it's safe to make it linear.
+  Unsafe.toLinear (\action -> fromSystemIO (System.mask_ (toSystemIO action)))
