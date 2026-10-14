@@ -45,6 +45,7 @@ module System.IO.Linear
     newIORef,
     readIORef,
     writeIORef,
+    atomicModifyIORef',
 
     -- * Catching and Throwing Exceptions
     -- $exceptions
@@ -179,6 +180,9 @@ readIORef r = fromSystemIOU (System.readIORef r)
 
 writeIORef :: IORef a -> a -> IO ()
 writeIORef r a = fromSystemIO $ System.writeIORef r a
+
+atomicModifyIORef' :: IORef a -> (a -> (a, b)) -> IO (Ur b)
+atomicModifyIORef' r f = fromSystemIOU $ System.atomicModifyIORef' r f
 
 -- $exceptions
 --
