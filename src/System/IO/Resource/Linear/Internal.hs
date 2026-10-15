@@ -198,9 +198,11 @@ release :: Resource a %1 -> RIO ()
 release (UnsafeResource key _) = RIO (\st -> Linear.mask_ (releaseWith key st))
   where
     releaseWith key rrm = Control.do
-      Ur (ReleaseMap releaseMap) <- Linear.readIORef rrm
-      () <- releaseMap IntMap.! key
-      Linear.writeIORef rrm (ReleaseMap (IntMap.delete key releaseMap))
+      Ur releaseAction <- Linear.atomicModifyIORef' rrm $ \(ReleaseMap releaseMap) ->
+        ( ReleaseMap (IntMap.delete key releaseMap),
+          releaseMap IntMap.! key
+        )
+      releaseAction
 
 -- | Deprecated alias of the 'release' function
 unsafeRelease :: Resource a %1 -> RIO ()
