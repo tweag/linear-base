@@ -193,7 +193,7 @@ instance Semigroup (Proxy a) where
   Proxy <> Proxy = Proxy
 
 -- Cannot add instance Semigroup a => Semigroup (ST s a); I think that it would require a linear ST monad
--- Cannot add instance Semigroup b => Semigroup (a -> b); would require Dupable a
+-- Cannot add instance Semigroup b => Semigroup (a %1 -> b); would require Dupable a
 
 instance (Semigroup a, Semigroup b) => Semigroup (a, b) where
   (x1, x2) <> (y1, y2) = (x1 <> y1, x2 <> y2)
@@ -223,3 +223,6 @@ instance (Semigroup a, Semigroup b, Semigroup c, Semigroup d, Semigroup e) => Se
 instance (Prelude.Semigroup a) => Semigroup (Ur.Ur a) where
   (<>) = Ur.lift2 (Prelude.<>)
   {-# INLINE (<>) #-}
+
+instance (Semigroup b) => Semigroup (a -> b) where
+  f <> g = \a -> f a <> g a
