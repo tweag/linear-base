@@ -138,6 +138,9 @@ instance Functor Ur where
 instance Functor (FUN 'One a) where
   fmap = (.)
 
+instance Functor ((->) r) where
+  fmap f g = \r -> f (g r)
+
 ---------------------------------
 -- Monad transformer instances --
 ---------------------------------

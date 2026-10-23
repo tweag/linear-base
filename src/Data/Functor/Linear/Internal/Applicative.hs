@@ -115,6 +115,10 @@ deriving via
   instance
     (Monoid a, Monoid b, Monoid c) => Applicative ((,,,) a b c)
 
+instance Applicative ((->) r) where
+  pure = const
+  mf <*> ma = \r -> mf r (ma r)
+
 deriving via
   Generically1 Identity
   instance

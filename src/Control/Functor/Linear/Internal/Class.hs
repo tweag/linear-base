@@ -254,6 +254,16 @@ deriving via
 instance Functor (FUN 'One a) where
   fmap = (.)
 
+instance Functor ((->) r) where
+  fmap f g = \r -> f (g r)
+
+instance Applicative ((->) r) where
+  pure f = const f
+  mf <*> ma = \r -> mf r (ma r)
+
+instance Monad ((->) r) where
+  ma >>= f = \r -> f (ma r) r
+
 ------------------------
 -- Generics instances --
 ------------------------
