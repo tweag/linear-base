@@ -117,7 +117,7 @@ instance Monoid (Proxy a) where
   mempty = Proxy
 
 -- Cannot add instance Monoid a => Monoid (ST s a); I think that it would require a linear ST monad
--- Cannot add instance Monoid b => Monoid (a -> b); would require Dupable a
+-- Cannot add instance Monoid b => Monoid (a %1 -> b); would require Dupable a
 
 instance (Monoid a, Monoid b) => Monoid (a, b) where
   mempty = (mempty, mempty)
@@ -147,3 +147,6 @@ instance (Monoid a, Monoid b, Monoid c, Monoid d, Monoid e) => Monoid (a, b, c, 
 instance (Prelude.Monoid a) => Monoid (Ur.Ur a) where
   mempty = Ur.Ur Prelude.mempty
   {-# INLINE mempty #-}
+
+instance (Monoid b) => Monoid (a -> b) where
+  mempty = const mempty
