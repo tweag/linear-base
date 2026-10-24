@@ -63,6 +63,7 @@ import Data.IORef (IORef)
 import qualified Data.IORef as System
 import GHC.Exts (RealWorld, State#)
 import qualified GHC.IO as System (IO (..))
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import Prelude.Linear hiding (IO)
 import qualified System.IO as System
 import qualified Unsafe.Linear as Unsafe
@@ -191,8 +192,8 @@ atomicModifyIORef' r f = fromSystemIOU $ System.atomicModifyIORef' r f
 -- See [here](http://dev.stephendiehl.com/hask/index.html#control.exception)
 -- to learn about exceptions.
 
-throwIO :: (Exception e) => e -> IO a
-throwIO e = fromSystemIO $ System.throwIO e
+throwIO :: (HasCallStack, Exception e) => e -> IO a
+throwIO e = withFrozenCallStack (fromSystemIO $ System.throwIO e)
 
 catch ::
   (Exception e) =>
