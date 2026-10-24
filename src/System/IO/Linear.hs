@@ -1,4 +1,6 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LinearTypes #-}
 {-# LANGUAGE MagicHash #-}
@@ -51,13 +53,20 @@ module System.IO.Linear
     -- $exceptions
     throwIO,
     catch,
+    try,
+    mask,
     mask_,
+    bracket,
+    bracket_,
+    finally,
+    onException,
   )
 where
 
 import Control.Exception (Exception)
-import qualified Control.Exception as System (catch, mask_, throwIO)
+import qualified Control.Exception as System (bracket, catch, finally, mask, onException, throwIO, try)
 import qualified Control.Functor.Linear as Control
+import qualified Control.Monad as System
 import qualified Data.Functor.Linear as Data
 import Data.IORef (IORef)
 import qualified Data.IORef as System
@@ -203,5 +212,66 @@ catch ::
 catch body handler =
   fromSystemIO $ System.catch (toSystemIO body) (\e -> toSystemIO (handler e))
 
-mask_ :: IO a -> IO a
-mask_ action = fromSystemIO (System.mask_ (toSystemIO action))
+try :: (Exception e) => IO (Ur a) -> IO (Ur (Either e a))
+try io =
+  fromSystemIOU $ System.try do
+    Ur a <- toSystemIO io
+    System.return a
+
+mask_ :: IO a %1 -> IO a
+mask_ io =
+  mask (\_ -> io)
+
+mask :: ((forall a. IO a %1 -> IO a) -> IO b) %1 -> IO b
+mask =
+  -- `System.mask` runs its argument exactly once and doesn't catch exceptions, so it's safe to make it linear.
+  -- The `restore` action also evaluates its argument exactly once, so it can also be made linear.
+  Unsafe.toLinear
+    \action ->
+      fromSystemIO
+        ( System.mask \restore ->
+            toSystemIO
+              ( action
+                  ( Unsafe.toLinear \innerAction ->
+                      fromSystemIO (restore (toSystemIO innerAction))
+                  )
+              )
+        )
+
+bracket ::
+  forall a b c.
+  (Consumable b) =>
+  -- The resource `a` must be wrapped in `Ur`: it may be used more than once.
+  -- All 3 arrows are linear: each IO operation will be used once (assuming `bracket` doesn't throw).
+  -- The value of the `release` function will be discarded, so it has to be `Consumable`
+  IO (Ur a) %1 ->
+  (a -> IO b) %1 ->
+  (a -> IO c) %1 ->
+  IO c
+bracket acquire release use =
+  fromSystemIO $
+    Unsafe.toLinear3
+      System.bracket
+      (toSystemIO acquire)
+      (\(Ur a) -> toSystemIO (Control.void (release a)))
+      (\(Ur a) -> toSystemIO (use a))
+
+bracket_ :: (Consumable a, Consumable b) => IO a %1 -> IO b %1 -> IO c %1 -> IO c
+bracket_ acquire release use =
+  fromSystemIO $
+    Unsafe.toLinear3
+      System.bracket
+      -- NOTE: the value `a` is NOT consumed in `acquire`.
+      -- If `consume` throws, then `release` would never run, and the resource would leak.
+      -- Instead, we pass the resource `a` through to `use`, and then consume it.
+      (toSystemIO acquire)
+      (\_ -> toSystemIO (Control.void release))
+      (\a -> toSystemIO (a `lseq` use))
+
+onException :: (Consumable b) => IO a %1 -> IO b -> IO a
+onException io handler =
+  fromSystemIO $ Unsafe.toLinear2 System.onException (toSystemIO io) (toSystemIO (Control.void handler))
+
+finally :: (Consumable b) => IO a %1 -> IO b %1 -> IO a
+finally io handler =
+  fromSystemIO $ Unsafe.toLinear2 System.finally (toSystemIO io) (toSystemIO (Control.void handler))
