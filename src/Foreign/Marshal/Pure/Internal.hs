@@ -268,6 +268,12 @@ delete link = do
   poke (next prevLink) nextLink
   poke (prev nextLink) prevLink
 
+  -- This link "owns" the `prev` and `next` pointers (they point to copies of the neighbours' links),
+  -- so we must also free them.
+  free (prev link)
+  free (elt link)
+  free (next link)
+
 -- /Doubly-linked list
 
 -- @freeAll start end@ frees all pointer in the linked list. Assumes that @end@
@@ -282,9 +288,6 @@ freeAll start end = do
       free (prev end)
     else do
       delete nextLink
-      free (prev nextLink)
-      free (elt nextLink)
-      free (next nextLink)
       freeAll start end
 
 -- TODO: document individual functions
