@@ -7,7 +7,7 @@
 -- are different from the data functors in @Data.Functor.Linear@.
 --
 -- This distinction and the use-cases of each group of functors is explained in
--- [this blog post](https://tweag.io/posts/2020-01-16-data-vs-control.html).
+-- [this blog post](https://tweag.io/blog/2020-01-16-data-vs-control/).
 module Control.Functor.Linear
   ( -- * Control functor hierarchy
     Functor (..),

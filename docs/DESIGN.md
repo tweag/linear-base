@@ -83,13 +83,13 @@ take the containers as the first parameter
 (similar to functions in `Control.Concurrent.MVar`). See [issue #147][issue-147] for some
 more details.
 
-[functors]: https://www.tweag.io/posts/2020-01-16-data-vs-control.html
+[functors]: https://www.tweag.io/blog/2020-01-16-data-vs-control/
 [examples/Simple/FileIO.hs]: https://github.com/tweag/linear-base/tree/master/examples/Simple/FileIO.hs
 [`Data.Unrestricted.Linear`]: https://github.com/tweag/linear-base/tree/master/src/Data/Unrestricted/Linear.hs
 [`Num`]: https://github.com/tweag/linear-base/tree/master/src/Data/Num/Linear.hs
 [`base`]: https://hackage.haskell.org/package/base
 [`Data.Array.Mutable.Linear`]: https://github.com/tweag/linear-base/blob/master/src/Data/Array/Mutable/Linear.hs
-[blog post]: https://www.tweag.io/posts/2020-01-16-data-vs-control.html
+[blog post]: https://www.tweag.io/blog/2020-01-16-data-vs-control/
 [contributor's guide]: ../CONTRIBUTING.md
 [`System.IO.Resource.Linear`]: https://github.com/tweag/linear-base/blob/master/src/System/IO/Resource/Linear.hs
 [issue-147]: https://github.com/tweag/linear-base/issues/147
