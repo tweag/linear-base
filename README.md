@@ -80,7 +80,7 @@ There are plenty of excellent resources and examples to help you.
  * [Practical Linearity in a higher-order polymorphic language – Haskell Exchange 2018](https://skillsmatter.com/skillscasts/11067-keynote-linear-haskell-practical-linearity-in-a-higher-order-polymorphic-language)
  * [Implementing Linear Haskell](https://www.youtube.com/watch?v=uxv62QQajx8)
  * [In-place array update with linear types – ZuriHac 2020](https://www.youtube.com/watch?v=I7-JuVNvz78)
- * [Typecheck Your Memory Management with Linear Types – Haskell Exchange 2017](https://skillsmatter.com/skillscasts/14896-typecheck-your-memory-management-with-linear-types)
+ * [Typecheck Your Memory Management with Linear Types – Haskell Exchange 2020](https://skillsmatter.com/skillscasts/14896-typecheck-your-memory-management-with-linear-types)
 
 ## Contributing
 
