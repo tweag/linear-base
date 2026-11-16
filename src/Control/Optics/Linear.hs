@@ -14,7 +14,7 @@
 -- If you don't know anything about optics, we suggest looking at the
 -- resources below and playing with the @lens@ package.
 --
---  * [A great intro-to-lenses talk by Simon Peyton Jones](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation)
+--  * [A great intro-to-lenses talk by Simon Peyton Jones](https://www.youtube.com/watch?v=dxGaKn4REaY)
 --  * [A nice introductory blog post](https://tech.fpcomplete.com/haskell/tutorial/lens)
 --  * [A friendly introduction to prisms and isos](https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial)
 --  * [The wiki of the @lens@ package](https://github.com/ekmett/lens/wiki)

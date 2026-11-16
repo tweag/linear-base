@@ -7,7 +7,7 @@
 -- non-linear, unrestricted, functors, there is a split between data functors,
 -- which represent containers, and control functors which represent effects.
 -- Please read this
--- [blog post](https://www.tweag.io/posts/2020-01-16-data-vs-control.html).
+-- [blog post](https://www.tweag.io/blog/2020-01-16-data-vs-control/).
 -- For more details, see "Control.Functor.Linear".
 --
 -- * Linear data functors should be thought of as containers of data.
